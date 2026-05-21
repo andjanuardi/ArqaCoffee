@@ -189,7 +189,7 @@ function simulateMove(orderId) {
 function completeDelivery(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
-  if (o.payment_status === "unpaid" && o.payment_method !== "digital" && o.payment_method !== "qris" && o.payment_method !== "bank_transfer" && o.payment_method !== "") {
+  if (o.payment_status === "unpaid" && !["digital", "qris", "bank_transfer"].includes(o.payment_method)) {
     o.status = "delivered";
     addNotification({
       title: 'Pesanan Telah Diantar',
