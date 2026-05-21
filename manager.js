@@ -10,6 +10,7 @@
             if (tab === 'staff') return renderStaffManagement();
             if (tab === 'promos') return renderAdminPromos(); // Reuse admin promo view
             if (tab === 'tables-mgmt') return renderAdminTablesMgmt();
+            if (tab === 'profile') return renderGenericProfile();
             return renderManagerDashboard();
         }
 
@@ -141,12 +142,6 @@
       <span class="text-sm" style="color:var(--muted)">${formatDate(today)}</span>
     </div>
     
-    <div class="card mb-6 flex items-center gap-4 cursor-pointer" onclick="startBarcodeScan()" style="border-color:rgba(52,152,219,.3)">
-      <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-xl" style="background:linear-gradient(135deg,#3498db,#2980b9);color:#fff"><i class="fas fa-barcode"></i></div>
-      <div class="flex-1"><div class="font-semibold text-sm">Scan Barcode Absen</div><div class="text-xs" style="color:var(--muted)">Pindai ID Card atau Barcode Karyawan</div></div>
-      <i class="fas fa-chevron-right" style="color:var(--muted)"></i>
-    </div>
-
     <div class="space-y-3">
       ${staff.map(s => {
                 const att = DB.attendances.find(a => a.user_id === s.id && !a.check_out);
@@ -154,61 +149,19 @@
                 return `
         <div class="card flex items-center gap-4">
           <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold" style="background:var(--accent);color:#fff">${s.avatar}</div>
-          <div class="flex-1">
+          <div class="flex-1 min-w-0">
             <div class="font-semibold text-sm">${s.name}</div>
             <div class="text-xs" style="color:var(--muted)">${getRoleLabel(s.role)}</div>
             ${att ? `<div class="text-xs mt-1" style="color:var(--success)"><i class="fas fa-clock mr-1"></i>Check-in: ${formatTime(att.check_in)}</div>` : ''}
+            ${att && att.lat ? `<div class="text-[10px] mt-0.5" style="color:var(--muted)"><i class="fas fa-map-pin mr-1"></i>${att.lat.toFixed(4)}, ${att.lng.toFixed(4)}</div>` : ''}
           </div>
-          <div>
+          <div class="flex-shrink-0">
             ${isCheckedIn ? `<span class="badge badge-cooking">Aktif</span>` : `<span class="badge badge-pending">Off</span>`}
           </div>
         </div>`;
             }).join('')}
     </div>
   </div>`;
-        }
-
-        function startBarcodeScan() {
-            const staff = DB.users.filter(u => ['manager', 'cashier', 'kitchen', 'courier'].includes(u.role));
-            showModal(`
-    <div class="text-center">
-      <h3 class="font-display text-xl font-bold mb-2">Scan Barcode Absen</h3>
-      <p class="text-sm mb-6" style="color:var(--muted)">Arahkan scanner ke ID Card Karyawan</p>
-      <div class="qr-scanner-area mb-6 flex items-center justify-center" style="background:rgba(0,0,0,.3)">
-        <div class="qr-line"></div>
-        <i class="fas fa-barcode text-5xl" style="color:var(--accent);opacity:.3"></i>
-      </div>
-      <p class="text-xs mb-4" style="color:var(--muted)">Atau pilih secara manual (Demo):</p>
-      <div class="grid grid-cols-2 gap-3 mb-6">
-        ${staff.map(s => {
-                const att = DB.attendances.find(a => a.user_id === s.id && !a.check_out);
-                return `<button class="card text-center py-2 text-sm font-semibold" onclick="handleBarcodeScan('${s.id}')">
-          <i class="fas ${att ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} mb-1" style="color:${att ? 'var(--warning)' : 'var(--success)'}"></i><br>${s.name}
-        </button>`
-        }).join('')}
-      </div>
-      <button onclick="closeModal()" class="btn-secondary">Batal</button>
-    </div>
-  `);
-        }
-
-        function handleBarcodeScan(userId) {
-            const att = DB.attendances.find(a => a.user_id === userId && !a.check_out);
-            if (att) {
-                checkOut(att.id);
-            } else {
-                checkIn(userId);
-            }
-            closeModal();
-        }
-
-        function checkIn(userId) {
-            DB.attendances.push({ id: 'a' + Date.now(), user_id: userId, check_in: new Date().toISOString(), check_out: null, status: 'present' });
-            showToast('Check-in berhasil', 'success'); render();
-        }
-        function checkOut(attId) {
-            const a = DB.attendances.find(x => x.id === attId); if (a) a.check_out = new Date().toISOString();
-            showToast('Check-out berhasil', 'success'); render();
         }
 
         function renderStaffManagement() {
