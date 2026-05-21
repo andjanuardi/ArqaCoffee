@@ -30,6 +30,16 @@
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Menu</div><div class="text-lg font-bold mt-1">${DB.menuItems.length}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pengguna</div><div class="text-lg font-bold mt-1">${DB.users.length}</div></div>
     </div>
+    ${(() => {
+      const lowStock = DB.stockItems.filter(s => s.current_quantity <= s.min_quantity);
+      if (!lowStock.length) return '';
+      return `
+    <div class="card mb-4" style="border-color:rgba(231,76,60,.3)">
+      <h3 class="font-semibold text-sm mb-2" style="color:var(--danger)"><i class="fas fa-exclamation-triangle mr-1"></i>Peringatan Stok Rendah</h3>
+      <div class="space-y-2">
+        ${lowStock.map(s => `<div class="flex justify-between text-sm"><span>${s.name}</span><span style="color:var(--danger)">${s.current_quantity} / ${s.min_quantity} ${s.unit}</span></div>`).join('')}
+      </div>
+    </div>`})()}
     <div class="grid md:grid-cols-2 gap-4 mb-6">
       <div class="card"><canvas id="chart-admin-revenue" height="200"></canvas></div>
       <div class="card">

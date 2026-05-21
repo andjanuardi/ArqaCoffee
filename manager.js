@@ -37,6 +37,26 @@
         ${lowStock.map(s => `<div class="flex justify-between text-sm"><span>${s.name}</span><span style="color:var(--danger)">${s.current_quantity} / ${s.min_quantity} ${s.unit}</span></div>`).join('')}
       </div>
     </div>`: ''}
+    <div class="card mb-4">
+      <h3 class="font-semibold text-sm mb-3">Pesanan Terkini</h3>
+      <div class="space-y-2 max-h-64 overflow-y-auto">
+        ${DB.orders.slice(0, 6).map(o => `
+        <div class="flex justify-between items-center text-sm py-2 border-b" style="border-color:var(--border)">
+          <div><span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span><span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span></div>
+          <span>${formatCurrency(o.total_amount)}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="card mb-4">
+      <h3 class="font-semibold text-sm mb-3">Status Meja</h3>
+      <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
+        ${DB.tables.map(t => `
+        <div class="text-center py-3 rounded-xl" style="background:${t.status === 'available' ? 'rgba(39,174,96,.1)' : 'rgba(231,76,60,.1)'}">
+          <i class="fas fa-chair mb-1" style="color:${t.status === 'available' ? 'var(--success)' : 'var(--danger)'}"></i>
+          <div class="text-xs font-semibold">${t.number}</div>
+        </div>`).join('')}
+      </div>
+    </div>
     <div class="card mb-4"><canvas id="chart-revenue" height="200"></canvas></div>
     <div class="card"><canvas id="chart-orders" height="160"></canvas></div>
   </div>`;
