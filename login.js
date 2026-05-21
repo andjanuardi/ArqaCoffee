@@ -47,6 +47,9 @@
             <input id="login-pass" type="password" placeholder="Password" class="input-field flex-1 text-sm" value="">
             <button onclick="handleLogin()" class="btn-primary whitespace-nowrap">Masuk</button>
           </div>
+          <div class="text-center mt-4">
+            <button onclick="showCustomerRegisterModal()" class="text-sm font-semibold" style="color:var(--accent);background:none;border:none;cursor:pointer"><i class="fas fa-user-plus mr-1"></i>Register Pelanggan Baru</button>
+          </div>
         </div>
       </div>
       <p class="text-center mt-6 text-xs" style="color:var(--muted)">v1.0 MVP — ARQA Coffee Management System</p>
@@ -68,6 +71,38 @@
         function getDefaultTab(role) {
             const m = { admin: 'overview', manager: 'dashboard', cashier: 'orders', kitchen: 'queue', courier: 'available', customer: 'menu' };
             return m[role] || 'menu';
+        }
+        function showCustomerRegisterModal() {
+            showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-4">Daftar Pelanggan Baru</h3>
+      <div class="space-y-3">
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama Lengkap</label><input id="reg-name" class="input-field text-sm" placeholder="Nama Anda"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Email</label><input id="reg-email" type="email" class="input-field text-sm" placeholder="email@example.com"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Password</label><input id="reg-pass" type="password" class="input-field text-sm" placeholder="Min. 6 karakter"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nomor Telepon</label><input id="reg-phone" class="input-field text-sm" placeholder="08xxxxxxxxxx"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Alamat</label><textarea id="reg-address" class="input-field text-sm min-h-[80px]" placeholder="Alamat lengkap"></textarea></div>
+      </div>
+      <button onclick="registerCustomer()" class="btn-primary w-full mt-4 text-center">Daftar & Masuk</button>
+    </div>
+  `);
+        }
+        function registerCustomer() {
+            const name = document.getElementById('reg-name')?.value;
+            const email = document.getElementById('reg-email')?.value;
+            const pass = document.getElementById('reg-pass')?.value;
+            const phone = document.getElementById('reg-phone')?.value;
+            const address = document.getElementById('reg-address')?.value;
+            if (!name || !name.trim() || !email || !email.trim()) { showToast('Nama dan email wajib diisi', 'warning'); return }
+            if (DB.users.find(u => u.email === email.trim())) { showToast('Email sudah terdaftar', 'error'); return }
+            const u = { id: 'u' + Date.now(), name: name.trim(), email: email.trim(), password: pass || 'password123', role: 'customer', phone: phone?.trim() || '', address: address?.trim() || '', avatar: name.trim()[0].toUpperCase() };
+            DB.users.push(u);
+            State.currentUser = u;
+            State.currentView = 'main';
+            State.currentTab.customer = 'menu';
+            closeModal();
+            render();
+            showToast('Akun berhasil dibuat, selamat datang!', 'success');
         }
         function afterLoginRender() { }
 
