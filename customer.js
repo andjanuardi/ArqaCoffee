@@ -336,7 +336,7 @@ function renderCustomerCart() {
       </div>`
       }
     </div>
-    <button onclick="placeOrder()" class="btn-primary w-full text-center flex items-center justify-center gap-2">
+    <button onclick="confirmPlaceOrder()" class="btn-primary w-full text-center flex items-center justify-center gap-2">
       <i class="fas fa-check"></i> ${State.payTiming === "later" ? "Pesan Sekarang, Bayar Nanti" : "Bayar & Proses Pesanan"}
     </button>
   </div>`;
@@ -370,6 +370,45 @@ function updateCartQty(i, d) {
 function removeCartItem(i) {
   State.cart.splice(i, 1);
   render();
+}
+
+function confirmPlaceOrder() {
+  const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
+  const grandTotal = Math.round(total * 1.1);
+  const itemsList = State.cart.map(c =>
+    `${c.menu_item.name} x${c.quantity} = ${formatCurrency(c.unit_price * c.quantity)}`
+  ).join('</div><div class="text-sm" style="color:var(--muted)">');
+
+  showModal(`
+    <div>
+      <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl" style="background:rgba(224,122,58,.1);color:var(--accent)">
+        <i class="fas fa-receipt"></i>
+      </div>
+      <h3 class="font-display text-lg font-bold mb-1 text-center">Konfirmasi Pesanan</h3>
+      <p class="text-xs text-center mb-4" style="color:var(--muted)">Pastikan pesanan Anda sudah benar</p>
+
+      <div class="p-3 rounded-xl mb-4" style="background:var(--bg2)">
+        <div class="text-xs font-semibold mb-2" style="color:var(--muted)">Rincian Pesanan</div>
+        <div>${itemsList}</div>
+        <div class="border-t pt-2 mt-2" style="border-color:var(--border)">
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">Subtotal</span><span>${formatCurrency(total)}</span></div>
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">Pajak (10%)</span><span>${formatCurrency(Math.round(total * 0.1))}</span></div>
+          <div class="flex justify-between font-bold mt-1"><span>Total</span><span style="color:var(--accent)">${formatCurrency(grandTotal)}</span></div>
+        </div>
+      </div>
+
+      <div class="text-xs mb-4" style="color:var(--muted)">
+        <i class="fas ${State.orderType === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>
+        ${State.orderType === "dine-in" ? "Makan di tempat" + (State.selectedTable ? " — Meja " + (getTable(State.selectedTable)?.number || "-") : "") : "Pesan Antar"}
+        ${State.payTiming === "later" ? ' — <span style="color:var(--warning)">Bayar Nanti</span>' : ""}
+      </div>
+
+      <div class="flex gap-3">
+        <button onclick="closeModal()" class="btn-secondary flex-1">Kembali</button>
+        <button onclick="closeModal();placeOrder()" class="btn-primary flex-1">Pesan Sekarang</button>
+      </div>
+    </div>
+  `);
 }
 
 function placeOrder() {
