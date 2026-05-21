@@ -49,6 +49,9 @@
           </div>
           <div class="text-center mt-4">
             <button onclick="showCustomerRegisterModal()" class="text-sm font-semibold" style="color:var(--accent);background:none;border:none;cursor:pointer"><i class="fas fa-user-plus mr-1"></i>Register Pelanggan Baru</button>
+            <div class="mt-2">
+              <button onclick="showForgotPasswordModal()" class="text-xs font-medium" style="color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:3px"><i class="fas fa-lock mr-1"></i>Lupa Password?</button>
+            </div>
           </div>
         </div>
       </div>
@@ -103,6 +106,30 @@
             closeModal();
             render();
             showToast('Akun berhasil dibuat, selamat datang!', 'success');
+        }
+        function showForgotPasswordModal() {
+            showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-4">Lupa Password</h3>
+      <p class="text-sm mb-4" style="color:var(--muted)">Masukkan email Anda, kami akan mereset password ke <strong>password123</strong></p>
+      <div class="space-y-3">
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Email</label><input id="forgot-email" type="email" class="input-field text-sm" placeholder="email@example.com"></div>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:10px">Batal</button>
+        <button onclick="resetPassword()" class="btn-primary flex-1 text-center">Reset Password</button>
+      </div>
+    </div>
+  `);
+        }
+        function resetPassword() {
+            const email = document.getElementById('forgot-email')?.value;
+            if (!email || !email.trim()) { showToast('Masukkan email Anda', 'warning'); return }
+            const u = DB.users.find(u => u.email === email.trim());
+            if (!u) { showToast('Email tidak ditemukan', 'error'); return }
+            u.password = 'password123';
+            closeModal();
+            showToast('Password berhasil direset ke "password123"', 'success');
         }
         function afterLoginRender() { }
 
