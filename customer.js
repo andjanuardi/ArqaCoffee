@@ -570,7 +570,7 @@ function renderCustomerOrders() {
               .join(", ")}
           </div>
           ${o.status === "rejected" && o.reject_reason ? `<div class="mt-2 text-xs p-2 rounded" style="background:rgba(231,76,60,.1);color:var(--danger);border:1px solid rgba(231,76,60,.2)"><i class="fas fa-ban mr-1"></i><strong>Ditolak:</strong> ${o.reject_reason}</div>` : ""}
-          ${o.order_type === "delivery" && o.status === "delivering" ? `<div class="mt-3 flex gap-2"><button onclick="event.stopPropagation();showTrackingMap('${o.id}')" class="btn-primary btn-sm flex-1"><i class="fas fa-map-marker-alt mr-1"></i>Lacak Kurir</button><button onclick="event.stopPropagation();openChatModal('${o.id}')" class="btn-secondary btn-sm flex-1" style="background:rgba(224,122,58,.1);color:var(--accent);border-color:transparent;"><i class="fas fa-comment-alt mr-1"></i>Chat Kurir</button></div>` : ""}
+          ${o.order_type === "delivery" && o.status === "delivering" ? `<div class="mt-3 flex gap-2"><button onclick="event.stopPropagation();showTrackingMap('${o.id}')" class="btn-primary btn-sm flex-1"><i class="fas fa-map-marker-alt mr-1"></i>Lacak Kurir</button><button onclick="event.stopPropagation();openChatModal('${o.id}')" class="btn-secondary btn-sm flex-1" style="background:rgba(224,122,58,.1);color:var(--accent);border-color:transparent;position:relative"><i class="fas fa-comment-alt mr-1"></i>Chat Kurir${getUnreadCount(o.id) > 0 ? `<span class="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style="background:var(--danger);color:#fff">${getUnreadCount(o.id)}</span>` : ""}</button></div>` : ""}
           ${o.status === "pending" ? `<div class="mt-3 flex justify-end"><button onclick="event.stopPropagation();cancelOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded-lg" style="color:var(--danger); background:rgba(231,76,60,.1)">Batal Pesanan</button></div>` : ""}
         </div>`;
         })
@@ -871,11 +871,27 @@ function renderCustomerProfile() {
   </div>`;
 }
 
+function getUnreadCount(orderId) {
+  const o = DB.orders.find(x => x.id === orderId);
+  if (!o || !o.messages || !o.messages.length) return 0;
+  const myId = State.currentUser.id;
+  const lastRead = o.lastReadAt?.[myId] || 0;
+  if (State.currentUser.role === 'customer') {
+    return o.messages.filter(m => m.sender_id !== myId && m.sender_id === o.courier_id && new Date(m.timestamp).getTime() > lastRead).length;
+  }
+  if (State.currentUser.role === 'courier') {
+    return o.messages.filter(m => m.sender_id !== myId && m.sender_id === o.user_id && new Date(m.timestamp).getTime() > lastRead).length;
+  }
+  return 0;
+}
+
 // Fitur Chat
 function openChatModal(orderId) {
   const o = DB.orders.find((x) => x.id === orderId);
   if (!o) return;
   if (!o.messages) o.messages = [];
+  if (!o.lastReadAt) o.lastReadAt = {};
+  o.lastReadAt[State.currentUser.id] = Date.now();
 
   const currentUserId = State.currentUser.id;
 
