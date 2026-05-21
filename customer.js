@@ -148,7 +148,7 @@ function selectTable(tid) {
 function startDeliveryOrder() {
   State.orderType = "delivery";
   State.selectedTable = null;
-  if (selectedPayment === "cash") selectedPayment = "digital";
+  if (selectedPayment === "cash") selectedPayment = "qris";
   showToast("Mode Pesan Antar aktif", "info");
   render();
 }
@@ -327,8 +327,9 @@ function renderCustomerCart() {
         State.payTiming !== "later"
           ? `
       <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Metode Pembayaran</label>
-      <div class="grid grid-cols-${State.orderType === "delivery" ? "1" : "2"} gap-3">
-        <div class="card text-center py-3 cursor-pointer text-sm" onclick="selectPayment('digital')" style="${selectedPayment === "digital" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-wallet mb-1" style="color:var(--accent)"></i><br>Digital</div>
+      <div class="grid grid-cols-${State.orderType === "delivery" ? "2" : "3"} gap-3">
+        <div class="card text-center py-3 cursor-pointer text-sm" onclick="selectPayment('qris')" style="${selectedPayment === "qris" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-qrcode mb-1" style="color:var(--accent)"></i><br>QRIS</div>
+        <div class="card text-center py-3 cursor-pointer text-sm" onclick="selectPayment('bank_transfer')" style="${selectedPayment === "bank_transfer" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-university mb-1" style="color:var(--accent)"></i><br>Transfer Bank</div>
         ${State.orderType !== "delivery" ? `<div class="card text-center py-3 cursor-pointer text-sm" onclick="selectPayment('cash')" style="${selectedPayment === "cash" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-money-bill mb-1" style="color:var(--success)"></i><br>Tunai</div>` : ""}
       </div>`
           : `
@@ -344,11 +345,14 @@ function renderCustomerCart() {
   </div>`;
 }
 
-let selectedPayment = "digital";
+let selectedPayment = "qris";
 if (!State.payTiming) State.payTiming = "now";
 function selectPayment(p) {
   selectedPayment = p;
   render();
+}
+function isDigitalSelected() {
+  return selectedPayment === "qris" || selectedPayment === "bank_transfer";
 }
 function selectPayTiming(t) {
   State.payTiming = t;
@@ -360,7 +364,7 @@ function selectOrderType(t) {
     startQRScan();
   }
   if (t === "delivery" && selectedPayment === "cash") {
-    selectedPayment = "digital";
+    selectedPayment = "qris";
   }
   render();
 }
@@ -486,7 +490,7 @@ function placeOrder() {
     payment_status:
       State.payTiming === "later"
         ? "unpaid"
-        : selectedPayment === "digital"
+        : isDigitalSelected()
           ? "paid"
           : "unpaid",
     delivery_address:
@@ -606,7 +610,7 @@ function showOrderDetail(id) {
       </div>
       <div class="border-t pt-3" style="border-color:var(--border)">
         <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
-        <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "digital" ? "Digital" : o.payment_method === "" ? "Bayar Nanti" : "Tunai"}</span></div>
+        <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "qris" ? "QRIS" : o.payment_method === "bank_transfer" ? "Transfer Bank" : o.payment_method === "" ? "Bayar Nanti" : "Tunai"}</span></div>
         <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}">${o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>
       </div>
       ${o.payment_status === "unpaid" && o.status !== "completed" ? `<button onclick="payOrder('${o.id}')" class="btn-primary w-full mt-4 text-center">Bayar Sekarang</button>` : ""}
@@ -619,7 +623,7 @@ function payOrder(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
   o.payment_status = "paid";
-  o.payment_method = "digital";
+  o.payment_method = "qris";
   closeModal();
   showToast("Pembayaran berhasil!", "success");
   render();

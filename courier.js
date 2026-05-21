@@ -189,7 +189,7 @@ function simulateMove(orderId) {
 function completeDelivery(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
-  if (o.payment_status === "unpaid" && o.payment_method !== "digital" && o.payment_method !== "") {
+  if (o.payment_status === "unpaid" && o.payment_method !== "digital" && o.payment_method !== "qris" && o.payment_method !== "bank_transfer" && o.payment_method !== "") {
     o.status = "delivered";
     addNotification({
       title: 'Pesanan Telah Diantar',
@@ -293,7 +293,7 @@ function showCourierOrderDetail(id) {
       </div>
       <div class="border-t pt-3" style="border-color:var(--border)">
         <div class="flex justify-between font-bold"><span>Total Pendapatan</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
-        <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Metode Pembayaran</span><span>${o.payment_method === 'digital' ? 'Digital' : o.payment_method === "" ? 'Bayar Nanti' : 'Tunai/COD'}</span></div>
+        <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Metode Pembayaran</span><span>${o.payment_method === 'qris' ? 'QRIS' : o.payment_method === 'bank_transfer' ? 'Transfer Bank' : o.payment_method === 'digital' ? 'Digital' : o.payment_method === "" ? 'Bayar Nanti' : 'Tunai/COD'}</span></div>
         <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}">${o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>
         <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Waktu Selesai</span><span>${formatTime(o.created_at)}</span></div>
       </div>
