@@ -14,7 +14,7 @@ function renderCashierView() {
 
 function renderCashierOrders() {
   const pending = DB.orders.filter((o) =>
-    ["pending", "cooking", "ready"].includes(o.status)
+    ["pending", "cooking", "ready", "delivered"].includes(o.status)
   );
   const completed = DB.orders
     .filter((o) => o.status === "completed" || o.status === "rejected")
@@ -70,6 +70,7 @@ function renderCashierOrders() {
               ${o.status === "pending" && o.accepted ? `<span class="badge" style="background:rgba(46,204,113,.15);color:var(--success)">Diterima</span>` : ""}
               ${o.status === "ready" && o.payment_status === "unpaid" ? `<button onclick="processPayment('${o.id}')" class="btn-primary btn-sm">Bayar</button>` : ""}
               ${o.status === "ready" && o.payment_status === "paid" ? `<button onclick="updateOrderStatus('${o.id}','completed')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
+              ${o.status === "delivered" && o.payment_status === "unpaid" ? `<button onclick="settleDelivery('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#3498db,#2980b9)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran</button>` : ""}
             </div>
           </div>
         </div>`;
@@ -212,6 +213,20 @@ function processCashPayment(id) {
   notifyPayment(o, 'Tunai');
   showToast(
     `Pembayaran #${o.id.slice(-5).toUpperCase()} berhasil (Tunai)`,
+    "success",
+  );
+  render();
+}
+
+function settleDelivery(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  o.status = "completed";
+  o.payment_status = "paid";
+  o.payment_method = "cod";
+  notifyPayment(o, 'COD (Setoran Kurir)');
+  showToast(
+    `Setoran diterima — Pesanan #${o.id.slice(-5).toUpperCase()} selesai`,
     "success",
   );
   render();

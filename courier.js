@@ -37,12 +37,80 @@ function renderCourierAvailable() {
             return mi ? mi.name + " x" + i.quantity : "";
           })
           .join(", ")}</div>
-        <button onclick="acceptDelivery('${o.id}')" class="btn-primary w-full text-center">Ambil Pesanan</button>
+        <div class="flex gap-2">
+          <button onclick="rejectCourierOrder('${o.id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:10px;border-radius:10px;font-size:13px;font-weight:600"><i class="fas fa-times mr-1"></i>Tolak</button>
+          <button onclick="acceptDelivery('${o.id}')" class="btn-primary flex-1 text-center">Ambil Pesanan</button>
+        </div>
       </div>`,
         )
         .join("")}
     </div>
   </div>`;
+}
+
+function rejectCourierOrder(orderId) {
+  const o = DB.orders.find((x) => x.id === orderId);
+  if (!o) return;
+  showModal(`
+    <div class="text-center">
+      <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl" style="background:rgba(231,76,60,.1);color:var(--danger)">
+        <i class="fas fa-times-circle"></i>
+      </div>
+      <h3 class="font-display text-lg font-bold mb-2">Tolak Pesanan #${o.id.slice(-5).toUpperCase()}?</h3>
+      <p class="text-sm mb-4" style="color:var(--muted)">Pilih alasan menolak pesanan ini.</p>
+      <div class="text-left mb-4">
+        <label class="text-xs font-semibold mb-2 block" style="color:var(--muted)">Alasan Penolakan</label>
+        <select id="courier-reject-reason" class="input-field text-sm w-full mb-3" style="background:var(--bg2);" onchange="document.getElementById('courier-reject-other-container').style.display = this.value === 'Lainnya' ? 'block' : 'none'">
+          <option value="">-- Pilih Alasan --</option>
+          <option value="Jarak terlalu jauh">Jarak terlalu jauh</option>
+          <option value="Sedang sibuk">Sedang sibuk</option>
+          <option value="Kendala kendaraan">Kendala kendaraan</option>
+          <option value="Alamat tidak jelas">Alamat tidak jelas</option>
+          <option value="Pesanan terlalu banyak">Pesanan terlalu banyak</option>
+          <option value="Lainnya">Lainnya...</option>
+        </select>
+        <div id="courier-reject-other-container" style="display:none;">
+          <input type="text" id="courier-reject-other" class="input-field text-sm w-full" placeholder="Ketik alasan spesifik di sini...">
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="closeModal()" class="btn-secondary flex-1">Batal</button>
+        <button onclick="confirmRejectCourierOrder('${orderId}')" class="btn-primary flex-1" style="background:var(--danger);border-color:var(--danger);">Tolak Pesanan</button>
+      </div>
+    </div>
+  `);
+}
+
+function confirmRejectCourierOrder(orderId) {
+  const reasonEl = document.getElementById("courier-reject-reason");
+  let reason = reasonEl ? reasonEl.value : "";
+  if (reason === "Lainnya") {
+    const otherEl = document.getElementById("courier-reject-other");
+    reason = otherEl ? otherEl.value.trim() : "";
+  }
+  if (!reason) {
+    showToast("Silakan pilih atau isi alasan penolakan", "warning");
+    return;
+  }
+  const o = DB.orders.find((x) => x.id === orderId);
+  if (!o) { closeModal(); return; }
+  if (o.courier_id !== State.currentUser.id && o.courier_id !== null) {
+    showToast("Pesanan sudah diambil kurir lain", "warning");
+    closeModal();
+    return;
+  }
+  o.courier_id = null;
+  addNotification({
+    title: 'Pesanan Ditolak Kurir',
+    message: '#' + o.id.slice(-5).toUpperCase() + ' — Alasan: ' + reason,
+    type: 'warning',
+    icon: 'fa-ban',
+    targetRoles: ['manager', 'admin'],
+    relatedOrderId: o.id
+  });
+  showToast("Pesanan ditolak", "info");
+  closeModal();
+  render();
 }
 
 function acceptDelivery(id) {
@@ -119,10 +187,24 @@ function simulateMove(orderId) {
 function completeDelivery(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
-  o.status = "completed";
-  if (o.payment_method === "cod") o.payment_status = "paid";
-  notifyDeliveryCompleted(o);
-  showToast("Pengantaran selesai!", "success");
+  if (o.payment_status === "unpaid" && o.payment_method !== "digital") {
+    o.status = "delivered";
+    addNotification({
+      title: 'Pesanan Telah Diantar',
+      message: '#' + o.id.slice(-5).toUpperCase() + ' — menunggu setoran dari kurir',
+      type: 'delivery',
+      icon: 'fa-hand-holding-dollar',
+      targetRoles: ['cashier'],
+      relatedOrderId: o.id
+    });
+    notifyDeliveryCompleted(o);
+    showToast("Pesanan terkirim — setorkan uang ke kasir", "success");
+  } else {
+    o.status = "completed";
+    if (o.payment_method === "cod") o.payment_status = "paid";
+    notifyDeliveryCompleted(o);
+    showToast("Pengantaran selesai!", "success");
+  }
   render();
 }
 
