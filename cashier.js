@@ -8,6 +8,7 @@ function renderCashierView() {
   if (tab === "report") return renderCashierReport();
   if (tab === "profile") return renderCashierProfile();
   if (tab === "create") return renderCashierCreateOrder();
+  if (tab === "tables-mgmt") return renderAdminTablesMgmt();
   return renderCashierOrders();
 }
 
@@ -373,7 +374,11 @@ function submitCashierOrder() {
         <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Pilih Meja</label>
         <select id="manual-table-id" class="input-field w-full text-sm">
           <option value="">-- Tanpa Meja / Pilih Nanti --</option>
-          ${DB.tables.map((t) => `<option value="${t.id}" ${editingOrder && editingOrder.table_id === t.id ? "selected" : ""}>Meja ${t.number} (${t.capacity} orang)</option>`).join("")}
+          ${DB.tables.map((t) => {
+            const isSelected = editingOrder && editingOrder.table_id === t.id;
+            const isOccupied = t.status === "occupied" && !isSelected;
+            return `<option value="${t.id}" ${isSelected ? "selected" : ""} ${isOccupied ? "disabled" : ""}>Meja ${t.number} (${t.capacity} orang) ${isOccupied ? "(Terisi)" : ""}</option>`;
+          }).join("")}
         </select>
       </div>
       <div class="mb-6">

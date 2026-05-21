@@ -61,7 +61,7 @@
         function renderBottomNav(role) {
             const tabs = {
                 customer: [{ id: 'menu', icon: 'fa-utensils', label: 'Menu' }, { id: 'cart', icon: 'fa-shopping-bag', label: 'Keranjang' }, { id: 'orders', icon: 'fa-receipt', label: 'Pesanan' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
-                cashier: [{ id: 'orders', icon: 'fa-clipboard-list', label: 'Pesanan' }, { id: 'payment', icon: 'fa-credit-card', label: 'Bayar' }, { id: 'report', icon: 'fa-chart-bar', label: 'Laporan' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
+                cashier: [{ id: 'orders', icon: 'fa-clipboard-list', label: 'Pesanan' }, { id: 'payment', icon: 'fa-credit-card', label: 'Bayar' }, { id: 'report', icon: 'fa-chart-bar', label: 'Laporan' }, { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Meja' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
                 kitchen: [{ id: 'queue', icon: 'fa-fire-burner', label: 'Antrian' }, { id: 'history', icon: 'fa-clock-rotate-left', label: 'Riwayat' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
                 courier: [{ id: 'available', icon: 'fa-box', label: 'Tersedia' }, { id: 'active', icon: 'fa-route', label: 'Aktif' }, { id: 'history', icon: 'fa-clock-rotate-left', label: 'Riwayat' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
             };
@@ -89,6 +89,7 @@
                 { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
             ] : [
                 { id: 'dashboard', icon: 'fa-gauge-high', label: 'Dashboard' },
+                { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Kelola Meja' },
                 { id: 'promos', icon: 'fa-tags', label: 'Kelola Promo' },
                 { id: 'finance', icon: 'fa-chart-pie', label: 'Keuangan' },
                 { id: 'stock', icon: 'fa-warehouse', label: 'Stok Bahan' },

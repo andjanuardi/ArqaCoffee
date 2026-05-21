@@ -9,6 +9,7 @@
             if (tab === 'attendance') return renderAttendance();
             if (tab === 'staff') return renderStaffManagement();
             if (tab === 'promos') return renderAdminPromos(); // Reuse admin promo view
+            if (tab === 'tables-mgmt') return renderAdminTablesMgmt();
             return renderManagerDashboard();
         }
 
