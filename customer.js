@@ -325,14 +325,14 @@ function renderCustomerCart() {
         State.payTiming !== "later"
           ? `
       <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Metode Pembayaran</label>
-      <div class="grid grid-cols-${State.orderType === 'delivery' ? '1' : '2'} gap-3">
+      <div class="grid grid-cols-${State.orderType === "delivery" ? "1" : "2"} gap-3">
         <div class="card text-center py-3 cursor-pointer text-sm" onclick="selectPayment('digital')" style="${selectedPayment === "digital" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-wallet mb-1" style="color:var(--accent)"></i><br>Digital</div>
-        ${State.orderType !== 'delivery' ? `<div class="card text-center py-3 cursor-pointer text-sm" onclick="selectPayment('cash')" style="${selectedPayment === "cash" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-money-bill mb-1" style="color:var(--success)"></i><br>Tunai</div>` : ""}
+        ${State.orderType !== "delivery" ? `<div class="card text-center py-3 cursor-pointer text-sm" onclick="selectPayment('cash')" style="${selectedPayment === "cash" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-money-bill mb-1" style="color:var(--success)"></i><br>Tunai</div>` : ""}
       </div>`
           : `
       <div class="flex items-center gap-2 p-3 rounded-xl text-xs" style="background:rgba(243,156,18,.1);color:var(--warning)">
         <i class="fas fa-info-circle"></i>
-        <span>${State.orderType === 'delivery' ? 'Pesanan akan diantar kurir. Siapkan uang tunai.' : 'Pesanan akan dibuat dengan status <b>Belum Bayar</b>. Silakan bayar di kasir.'}</span>
+        <span>${State.orderType === "delivery" ? "Pesanan akan diantar kurir. Siapkan uang tunai." : "Pesanan akan dibuat dengan status <b>Belum Bayar</b>. Silakan bayar di kasir."}</span>
       </div>`
       }
     </div>
@@ -402,7 +402,7 @@ function placeOrder() {
         o.table_id === State.selectedTable &&
         o.payment_status === "unpaid" &&
         o.status !== "completed" &&
-        o.status !== "cancelled"
+        o.status !== "cancelled",
     );
 
     if (existingOrder) {
@@ -413,18 +413,21 @@ function placeOrder() {
           unit_price: c.unit_price,
           notes: c.notes,
           status: "pending",
-        }))
+        })),
       );
       existingOrder.total_amount += grandTotal;
-      
-      if (existingOrder.status === "served" || existingOrder.status === "ready") {
+
+      if (
+        existingOrder.status === "served" ||
+        existingOrder.status === "ready"
+      ) {
         existingOrder.status = "pending"; // kembalikan ke pending agar dapur tahu ada item baru
       }
-      
+
       State.cart = [];
       showToast(
         `Pesanan digabungkan ke #${existingOrder.id.slice(-5).toUpperCase()}`,
-        "success"
+        "success",
       );
       switchTab("orders");
       return;
@@ -512,6 +515,7 @@ function renderCustomerOrders() {
               })
               .join(", ")}
           </div>
+          ${o.status === "rejected" && o.reject_reason ? `<div class="mt-2 text-xs p-2 rounded" style="background:rgba(231,76,60,.1);color:var(--danger);border:1px solid rgba(231,76,60,.2)"><i class="fas fa-ban mr-1"></i><strong>Ditolak:</strong> ${o.reject_reason}</div>` : ""}
           ${o.order_type === "delivery" && o.status === "delivering" ? `<div class="mt-3 flex gap-2"><button onclick="event.stopPropagation();showTrackingMap('${o.id}')" class="btn-primary btn-sm flex-1"><i class="fas fa-map-marker-alt mr-1"></i>Lacak Kurir</button><button onclick="event.stopPropagation();openChatModal('${o.id}')" class="btn-secondary btn-sm flex-1" style="background:rgba(224,122,58,.1);color:var(--accent);border-color:transparent;"><i class="fas fa-comment-alt mr-1"></i>Chat Kurir</button></div>` : ""}
           ${o.status === "pending" ? `<div class="mt-3 flex justify-end"><button onclick="event.stopPropagation();cancelOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded-lg" style="color:var(--danger); background:rgba(231,76,60,.1)">Batal Pesanan</button></div>` : ""}
         </div>`;
@@ -535,6 +539,7 @@ function showOrderDetail(id) {
         ${o.table_id ? " — Meja " + (getTable(o.table_id)?.number || "") : ""}
         ${o.delivery_address ? "<br>" + o.delivery_address : ""}
       </div>
+      ${o.status === "rejected" && o.reject_reason ? `<div class="card mb-4 text-sm" style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2)"><i class="fas fa-ban mr-1" style="color:var(--danger)"></i><strong>Pesanan Ditolak:</strong> ${o.reject_reason}</div>` : ""}
       <div class="space-y-2 mb-4">
         ${o.items
           .map((i) => {
@@ -606,12 +611,12 @@ function cancelOrder(id) {
 function confirmCancelOrder(id) {
   const reasonEl = document.getElementById("cancel-reason");
   let reason = reasonEl ? reasonEl.value : "";
-  
+
   if (reason === "Lainnya") {
     const otherEl = document.getElementById("cancel-reason-other");
     reason = otherEl ? otherEl.value.trim() : "";
   }
-  
+
   if (!reason) {
     showToast("Silakan lengkapi alasan pembatalan", "warning");
     return;
@@ -623,21 +628,30 @@ function confirmCancelOrder(id) {
     return;
   }
   const o = DB.orders[idx];
-  
+
   if (o.status !== "pending") {
-    showToast("Pesanan tidak dapat dibatalkan karena sudah diproses", "warning");
+    showToast(
+      "Pesanan tidak dapat dibatalkan karena sudah diproses",
+      "warning",
+    );
     closeModal();
     return;
   }
-  
+
   if (o.order_type === "dine-in" && o.table_id) {
-    const hasOtherOrders = DB.orders.some(x => x.id !== id && x.table_id === o.table_id && x.status !== "completed" && x.status !== "cancelled");
+    const hasOtherOrders = DB.orders.some(
+      (x) =>
+        x.id !== id &&
+        x.table_id === o.table_id &&
+        x.status !== "completed" &&
+        x.status !== "cancelled",
+    );
     if (!hasOtherOrders) {
       const t = getTable(o.table_id);
       if (t) t.status = "available";
     }
   }
-  
+
   DB.orders.splice(idx, 1);
   showToast("Pesanan berhasil dibatalkan dan dihapus", "success");
   closeModal();
@@ -754,18 +768,20 @@ function saveDeliveryLocation() {
   if (State.tempDeliveryLocation) {
     State.deliveryLocation = { ...State.tempDeliveryLocation };
     showToast("Mengambil data alamat dari lokasi...", "info");
-    
+
     const { lat, lng } = State.deliveryLocation;
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-      .then(res => res.json())
-      .then(data => {
+    fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+    )
+      .then((res) => res.json())
+      .then((data) => {
         if (data && data.display_name) {
           State.deliveryAddress = data.display_name;
           showToast("Alamat berhasil disesuaikan dengan titik map", "success");
           render();
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Geocoding failed", err);
         showToast("Titik lokasi disimpan", "success");
       });
@@ -795,28 +811,33 @@ function renderCustomerProfile() {
 
 // Fitur Chat
 function openChatModal(orderId) {
-  const o = DB.orders.find(x => x.id === orderId);
+  const o = DB.orders.find((x) => x.id === orderId);
   if (!o) return;
   if (!o.messages) o.messages = [];
-  
+
   const currentUserId = State.currentUser.id;
-  
-  showModal(`
+
+  showModal(
+    `
     <div class="flex flex-col" style="height: 60vh;">
       <div class="flex justify-between items-center mb-4 pb-3 border-b" style="border-color:var(--border)">
-        <h3 class="font-display text-lg font-bold">Chat ${State.currentUser.role === 'courier' ? 'Pelanggan' : 'Kurir'}</h3>
+        <h3 class="font-display text-lg font-bold">Chat ${State.currentUser.role === "courier" ? "Pelanggan" : "Kurir"}</h3>
         <button onclick="closeModal()" class="text-xl" style="color:var(--muted)"><i class="fas fa-times"></i></button>
       </div>
       <div id="chat-messages" class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2" style="-webkit-overflow-scrolling:touch;">
-        ${o.messages.length === 0 ? '<p class="text-center text-sm mt-10" style="color:var(--muted)">Mulai percakapan...</p>' : ''}
-        ${o.messages.map(m => `
-          <div class="flex ${m.sender_id === currentUserId ? 'justify-end' : 'justify-start'}">
-            <div class="max-w-[80%] rounded-2xl ${m.image ? 'p-1' : 'px-4 py-2'} text-sm" style="background:${m.sender_id === currentUserId ? 'var(--accent)' : 'var(--bg2)'}; color:${m.sender_id === currentUserId ? '#fff' : 'inherit'}">
+        ${o.messages.length === 0 ? '<p class="text-center text-sm mt-10" style="color:var(--muted)">Mulai percakapan...</p>' : ""}
+        ${o.messages
+          .map(
+            (m) => `
+          <div class="flex ${m.sender_id === currentUserId ? "justify-end" : "justify-start"}">
+            <div class="max-w-[80%] rounded-2xl ${m.image ? "p-1" : "px-4 py-2"} text-sm" style="background:${m.sender_id === currentUserId ? "var(--accent)" : "var(--bg2)"}; color:${m.sender_id === currentUserId ? "#fff" : "inherit"}">
               ${m.image ? `<img src="${m.image}" class="w-full rounded-xl object-cover cursor-pointer" style="max-height:200px" onclick="window.open(this.src)">` : m.text}
-              <div class="text-[10px] mt-1 text-right ${m.image ? 'px-2 pb-1' : ''}" style="opacity:0.7">${formatTime(m.timestamp)}</div>
+              <div class="text-[10px] mt-1 text-right ${m.image ? "px-2 pb-1" : ""}" style="opacity:0.7">${formatTime(m.timestamp)}</div>
             </div>
           </div>
-        `).join('')}
+        `,
+          )
+          .join("")}
       </div>
       <div class="flex gap-2 items-center">
         <input type="file" id="chat-image-input" accept="image/*" onchange="sendChatImage('${orderId}')" style="display:none">
@@ -825,43 +846,45 @@ function openChatModal(orderId) {
         <button onclick="sendChatMessage('${orderId}')" class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:var(--accent);color:#fff"><i class="fas fa-paper-plane"></i></button>
       </div>
     </div>
-  `, () => {
-    setTimeout(() => {
-      const el = document.getElementById('chat-messages');
-      if (el) el.scrollTop = el.scrollHeight;
-      document.getElementById('chat-input')?.focus();
-    }, 100);
-  });
+  `,
+    () => {
+      setTimeout(() => {
+        const el = document.getElementById("chat-messages");
+        if (el) el.scrollTop = el.scrollHeight;
+        document.getElementById("chat-input")?.focus();
+      }, 100);
+    },
+  );
 }
 
 function sendChatMessage(orderId) {
-  const o = DB.orders.find(x => x.id === orderId);
+  const o = DB.orders.find((x) => x.id === orderId);
   if (!o) return;
-  const input = document.getElementById('chat-input');
+  const input = document.getElementById("chat-input");
   if (!input || !input.value.trim()) return;
-  
+
   if (!o.messages) o.messages = [];
   o.messages.push({
     sender_id: State.currentUser.id,
     text: input.value.trim(),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
-  
+
   openChatModal(orderId);
 }
 
 function sendChatImage(orderId) {
-  const o = DB.orders.find(x => x.id === orderId);
+  const o = DB.orders.find((x) => x.id === orderId);
   if (!o) return;
-  const input = document.getElementById('chat-image-input');
+  const input = document.getElementById("chat-image-input");
   if (!input || !input.files || !input.files[0]) return;
-  
+
   const file = input.files[0];
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = function (e) {
     const img = new Image();
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
+    img.onload = function () {
+      const canvas = document.createElement("canvas");
       // Resize to avoid huge base64 strings
       const MAX_WIDTH = 600;
       let scaleSize = 1;
@@ -870,20 +893,20 @@ function sendChatImage(orderId) {
       }
       canvas.width = img.width * scaleSize;
       canvas.height = img.height * scaleSize;
-      
-      const ctx = canvas.getContext('2d');
+
+      const ctx = canvas.getContext("2d");
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-      
+
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.6);
+
       if (!o.messages) o.messages = [];
       o.messages.push({
         sender_id: State.currentUser.id,
         image: dataUrl,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       openChatModal(orderId);
-    }
+    };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
