@@ -31,6 +31,7 @@ function renderCourierAvailable() {
           <span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
         </div>
         <div class="text-sm mb-1"><i class="fas fa-map-marker-alt mr-1" style="color:var(--accent)"></i>${o.delivery_address}</div>
+        ${o.delivery_detail ? `<div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-info-circle mr-1"></i>${o.delivery_detail}</div>` : ""}
         <div class="text-xs mb-3" style="color:var(--muted)">${o.items
           .map((i) => {
             const mi = getMenuItem(i.menu_item_id);
@@ -149,7 +150,8 @@ function renderCourierActive() {
           <div><span class="font-bold">#${o.id.slice(-5).toUpperCase()}</span><span class="badge badge-delivering ml-2">Dalam Perjalanan</span></div>
           <span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
         </div>
-        <div class="text-sm mb-3"><i class="fas fa-map-marker-alt mr-1" style="color:var(--accent)"></i>${o.delivery_address}</div>
+        <div class="text-sm mb-1"><i class="fas fa-map-marker-alt mr-1" style="color:var(--accent)"></i>${o.delivery_address}</div>
+        ${o.delivery_detail ? `<div class="text-xs mb-2" style="color:var(--muted)"><i class="fas fa-info-circle mr-1"></i>${o.delivery_detail}</div>` : ""}
         <div id="map-courier-${o.id}" class="mb-3" style="height:200px;border-radius:12px"></div>
         <div class="flex gap-2">
           <button onclick="simulateMove('${o.id}')" class="btn-secondary btn-sm flex-1 text-center"><i class="fas fa-location-arrow mr-1"></i>Update</button>
@@ -254,7 +256,7 @@ function renderCourierHistory() {
         .map(
           (o) => `
       <div class="card flex justify-between items-center py-3 cursor-pointer hover:scale-[1.02] transition-transform" onclick="showCourierOrderDetail('${o.id}')">
-        <div><span class="font-semibold text-sm">#${o.id.slice(-5).toUpperCase()}</span><div class="text-xs" style="color:var(--muted)">${o.delivery_address?.slice(0, 30) || ""}</div></div>
+         <div><span class="font-semibold text-sm">#${o.id.slice(-5).toUpperCase()}</span><div class="text-xs" style="color:var(--muted)">${o.delivery_address?.slice(0, 30) || ""}</div>${o.delivery_detail ? `<div class="text-xs" style="color:var(--muted)">${o.delivery_detail?.slice(0, 30) || ""}</div>` : ""}</div>
         <span class="font-bold text-sm" style="color:var(--success)">${formatCurrency(o.total_amount)}</span>
       </div>`,
         )
@@ -274,6 +276,7 @@ function showCourierOrderDetail(id) {
       </div>
       <div class="text-sm mb-4">
         <i class="fas fa-map-marker-alt mr-2" style="color:var(--accent)"></i>${o.delivery_address}
+        ${o.delivery_detail ? `<div class="text-xs mt-1" style="color:var(--muted)"><i class="fas fa-info-circle mr-1"></i>${o.delivery_detail}</div>` : ""}
       </div>
       <div class="space-y-2 mb-4">
         ${o.items

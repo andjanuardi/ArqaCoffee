@@ -304,7 +304,9 @@ function renderCustomerCart() {
         <label class="text-xs font-semibold block" style="color:var(--muted)">Alamat Pengiriman</label>
         <button onclick="pickDeliveryLocation()" class="text-xs font-bold flex items-center gap-1" style="color:var(--accent)"><i class="fas fa-map-marker-alt"></i> Pilih Titik Lokasi</button>
       </div>
-      <input id="delivery-address" class="input-field text-sm mb-2" placeholder="Masukkan alamat lengkap..." value="${State.deliveryAddress || ""}" oninput="State.deliveryAddress = this.value">
+      <input id="delivery-address" class="input-field text-sm mb-2" placeholder="Masukkan alamat lengkap..." value="${State.deliveryAddress || ""}" readonly style="cursor:not-allowed;opacity:.7">
+      <label class="text-xs font-semibold mt-2 mb-1 block" style="color:var(--muted)">Detail Alamat</label>
+      <input id="delivery-detail" class="input-field text-sm mb-2" placeholder="Nomor rumah, blok, patokan, dll..." value="${State.deliveryDetail || ""}" oninput="State.deliveryDetail = this.value">
       ${State.deliveryLocation ? `<div class="text-[10px] flex items-center gap-1" style="color:var(--success)"><i class="fas fa-check-circle"></i> Titik koordinat lokasi tersimpan</div>` : ""}
     </div>`
         : ""
@@ -493,6 +495,12 @@ function placeOrder() {
           State.deliveryAddress ||
           ""
         : "",
+    delivery_detail:
+      State.orderType === "delivery"
+        ? document.getElementById("delivery-detail")?.value ||
+          State.deliveryDetail ||
+          ""
+        : "",
     delivery_location:
       State.orderType === "delivery" && State.deliveryLocation
         ? State.deliveryLocation
@@ -511,6 +519,7 @@ function placeOrder() {
   State.cart = [];
   State.deliveryLocation = null;
   State.deliveryAddress = "";
+  State.deliveryDetail = "";
   notifyOrderPlaced(order, State.currentUser.name);
   showToast(
     `Pesanan #${order.id.slice(-5).toUpperCase()} berhasil dibuat!`,
