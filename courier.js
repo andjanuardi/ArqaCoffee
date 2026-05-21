@@ -83,8 +83,9 @@ function renderCourierActive() {
         <div class="text-sm mb-3"><i class="fas fa-map-marker-alt mr-1" style="color:var(--accent)"></i>${o.delivery_address}</div>
         <div id="map-courier-${o.id}" class="mb-3" style="height:200px;border-radius:12px"></div>
         <div class="flex gap-2">
-          <button onclick="simulateMove('${o.id}')" class="btn-secondary btn-sm flex-1 text-center"><i class="fas fa-location-arrow mr-1"></i>Update Lokasi</button>
-          <button onclick="completeDelivery('${o.id}')" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-check mr-1"></i>Selesai Diantar</button>
+          <button onclick="simulateMove('${o.id}')" class="btn-secondary btn-sm flex-1 text-center"><i class="fas fa-location-arrow mr-1"></i>Update</button>
+          <button onclick="openChatModal('${o.id}')" class="btn-secondary btn-sm flex-1 text-center" style="background:rgba(224,122,58,.1);color:var(--accent);border-color:transparent;"><i class="fas fa-comment-alt mr-1"></i>Chat</button>
+          <button onclick="completeDelivery('${o.id}')" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-check mr-1"></i>Selesai</button>
         </div>
       </div>`,
         )
