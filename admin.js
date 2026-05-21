@@ -248,6 +248,7 @@
 
 
         function renderAdminMenuMgmt() {
+            autoUpdateMenuAvailability();
             return `
   <div class="animate-fade-up">
     <div class="flex justify-between items-center mb-4">
@@ -268,6 +269,32 @@
       </div>`).join('')}
     </div>
   </div>`;
+        }
+
+        function autoUpdateMenuAvailability() {
+          const lowStockIds = DB.stockItems.filter(s => s.current_quantity <= s.min_quantity).map(s => s.id);
+          if (!DB.menuStockMapping) return;
+          let changed = [];
+          DB.menuItems.forEach(m => {
+            const deps = DB.menuStockMapping[m.id];
+            if (!deps || deps.length === 0) return;
+            const hasLowStock = deps.some(sid => lowStockIds.includes(sid));
+            const newAvail = !hasLowStock;
+            if (m.is_available !== newAvail) {
+              m.is_available = newAvail;
+              changed.push(m.name + ': ' + (newAvail ? 'Tersedia' : 'Habis'));
+              if (!newAvail) {
+                addNotification({
+                  title: 'Menu Otomatis Habis',
+                  message: m.name + ' — bahan baku tidak mencukupi',
+                  type: 'warning',
+                  icon: 'fa-circle-exclamation',
+                  targetRoles: ['cashier', 'kitchen']
+                });
+              }
+            }
+          });
+          if (changed.length) showToast('Status menu diperbarui: ' + changed.join(', '), 'info');
         }
 
         function toggleMenuAvail(id) {
