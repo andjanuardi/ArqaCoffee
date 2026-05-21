@@ -59,6 +59,7 @@ function acceptDelivery(id) {
     longitude: 107.6191,
     recorded_at: new Date().toISOString(),
   });
+  notifyDeliveryTaken(o, State.currentUser.name);
   showToast("Pesanan diambil — mulai pengantaran", "success");
   render();
 }
@@ -120,6 +121,7 @@ function completeDelivery(id) {
   if (!o) return;
   o.status = "completed";
   if (o.payment_method === "cod") o.payment_status = "paid";
+  notifyDeliveryCompleted(o);
   showToast("Pengantaran selesai!", "success");
   render();
 }

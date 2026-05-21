@@ -32,7 +32,7 @@
         <div class="flex items-center gap-3">
           <button onclick="showNotifPanel()" class="w-10 h-10 rounded-xl flex items-center justify-center relative" style="background:var(--card)">
             <i class="fas fa-bell" style="color:var(--muted)"></i>
-            <span class="absolute -top-1 -right-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center" style="background:var(--danger);color:#fff">${DB.orders.filter(o => o.status === 'pending').length}</span>
+            <span class="absolute -top-1 -right-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center" style="background:var(--danger);color:#fff">${getUnreadCount()}</span>
           </button>
           <div class="flex items-center gap-2 cursor-pointer" onclick="handleLogout()">
             <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold" style="background:var(--accent);color:#fff">${u.avatar}</div>
@@ -121,5 +121,5 @@
         function toggleDrawer() { State.sidebarOpen = !State.sidebarOpen; render() }
         function switchTab(id) { State.currentTab[State.currentUser.role] = id; render() }
         function handleLogout() { State.currentUser = null; State.currentView = 'login'; State.cart = []; State.sidebarOpen = false; Object.values(State.mapInstances).forEach(m => { try { m.remove() } catch (e) { } }); State.mapInstances = {}; Object.values(State.chartInstances).forEach(c => { try { c.destroy() } catch (e) { } }); State.chartInstances = {}; render() }
-        function showNotifPanel() { showToast('Panel notifikasi — segera hadir', 'info') }
+        function showNotifPanel() { renderNotifPanel() }
 

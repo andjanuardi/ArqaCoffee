@@ -86,6 +86,7 @@ function updateItemStatus(orderId, menuItemId, newStatus) {
   // Check if all items are ready
   if (o.items.every((i) => i.status === "ready")) {
     o.status = "ready";
+    notifyStatusChange(o, 'ready');
   } else if (o.items.some((i) => i.status === "cooking")) {
     o.status = "cooking";
   }
@@ -185,6 +186,7 @@ function confirmRejectKitchenOrder(orderId) {
     }
   }
 
+  notifyRejected(o, reason);
   showToast(`Pesanan #${o.id.slice(-5).toUpperCase()} ditolak: ${reason}`, "info");
   closeModal();
   render();

@@ -262,6 +262,15 @@
 
         function toggleMenuAvail(id) {
             const m = DB.menuItems.find(x => x.id === id); if (m) { m.is_available = !m.is_available; showToast(`${m.name}: ${m.is_available ? 'Tersedia' : 'Habis'}`, 'info'); render() }
+            if (m && !m.is_available) {
+              addNotification({
+                title: 'Menu Habis',
+                message: m.name + ' — ditandai tidak tersedia',
+                type: 'warning',
+                icon: 'fa-circle-exclamation',
+                targetRoles: ['cashier', 'kitchen']
+              });
+            }
         }
 
         function showEditMenuItemModal(id) {

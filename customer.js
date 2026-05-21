@@ -425,6 +425,7 @@ function placeOrder() {
       }
 
       State.cart = [];
+      notifyOrderPlaced(existingOrder, State.currentUser.name);
       showToast(
         `Pesanan digabungkan ke #${existingOrder.id.slice(-5).toUpperCase()}`,
         "success",
@@ -471,6 +472,7 @@ function placeOrder() {
   State.cart = [];
   State.deliveryLocation = null;
   State.deliveryAddress = "";
+  notifyOrderPlaced(order, State.currentUser.name);
   showToast(
     `Pesanan #${order.id.slice(-5).toUpperCase()} berhasil dibuat!`,
     "success",
@@ -652,6 +654,14 @@ function confirmCancelOrder(id) {
     }
   }
 
+  addNotification({
+    title: 'Pesanan Dibatalkan',
+    message: '#' + o.id.slice(-5).toUpperCase() + ' dibatalkan oleh pelanggan: ' + reason,
+    type: 'warning',
+    icon: 'fa-ban',
+    targetRoles: ['cashier', 'kitchen'],
+    relatedOrderId: o.id
+  });
   DB.orders.splice(idx, 1);
   showToast("Pesanan berhasil dibatalkan dan dihapus", "success");
   closeModal();

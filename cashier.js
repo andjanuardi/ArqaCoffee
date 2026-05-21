@@ -177,6 +177,14 @@ function acceptCashierOrder(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
   o.accepted = true;
+  addNotification({
+    title: 'Pesanan Diterima Kasir',
+    message: '#' + o.id.slice(-5).toUpperCase() + ' — diterima, menunggu dapur',
+    type: 'order',
+    icon: 'fa-check-circle',
+    targetRoles: ['kitchen'],
+    relatedOrderId: o.id
+  });
   showToast(
     `Pesanan #${o.id.slice(-5).toUpperCase()} diterima — menunggu dapur`,
     "success",
@@ -189,6 +197,7 @@ function processPayment(id) {
   if (!o) return;
   o.payment_status = "paid";
   o.payment_method = "digital";
+  notifyPayment(o, 'Digital');
   showToast(
     `Pembayaran #${o.id.slice(-5).toUpperCase()} berhasil (Digital)`,
     "success",
@@ -200,6 +209,7 @@ function processCashPayment(id) {
   if (!o) return;
   o.payment_status = "paid";
   o.payment_method = "cash";
+  notifyPayment(o, 'Tunai');
   showToast(
     `Pembayaran #${o.id.slice(-5).toUpperCase()} berhasil (Tunai)`,
     "success",
@@ -469,6 +479,7 @@ function finalizeManualOrder() {
       })),
     };
     DB.orders.unshift(order);
+    notifyOrderPlaced(order, info);
     showToast("Pesanan manual berhasil dibuat!", "success");
   }
 
