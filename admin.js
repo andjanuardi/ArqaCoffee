@@ -135,6 +135,7 @@
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama</label><input id="edit-user-name" class="input-field text-sm" value="${u.name}"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Email</label><input id="edit-user-email" class="input-field text-sm" value="${u.email}"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Telepon</label><input id="edit-user-phone" class="input-field text-sm" value="${u.phone || ''}"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Password <span class="text-[10px]" style="color:var(--muted)">(kosongkan jika tidak diubah)</span></label><input id="edit-user-pass" type="password" class="input-field text-sm" placeholder="Password baru"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Peran</label>
           <select id="edit-user-role" class="input-field text-sm">
             <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
@@ -160,9 +161,11 @@
             const name = document.getElementById('edit-user-name')?.value;
             const email = document.getElementById('edit-user-email')?.value;
             const phone = document.getElementById('edit-user-phone')?.value;
+            const pass = document.getElementById('edit-user-pass')?.value;
             const role = document.getElementById('edit-user-role')?.value;
             if (!name || !email) { showToast('Nama dan email wajib diisi', 'warning'); return }
             u.name = name; u.email = email; u.phone = phone; u.role = role; u.avatar = name[0].toUpperCase();
+            if (pass) u.password = pass;
             closeModal(); showToast('Pengguna berhasil diperbarui', 'success'); render();
         }
 
