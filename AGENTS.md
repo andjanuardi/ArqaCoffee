@@ -47,16 +47,16 @@ const State = {
 ## DB data structures (data.js)
 | Property | Shape | Notes |
 |---|---|---|
-| `DB.users` | `[{id, name, email, password, role, phone, avatar}]` | IDs `u1..uN` |
-| `DB.tables` | `[{id, number, qr_code, status}]` | status: "available"\|"occupied". IDs `t1..tN` |
+| `DB.users` | `[{id, name, email, password, role, phone, avatar, address}]` | IDs `u1..uN` |
+| `DB.tables` | `[{id, number, qr_code, status, capacity}]` | status: "available"\|"occupied". IDs `t1..tN` |
 | `DB.menuItems` | `[{id, name, description, price, category, image, is_available}]` | categories: coffee/non-coffee/food/snack. IDs `m1..mN` |
-| `DB.orders` | `[{id, user_id, table_id, order_type, status, total_amount, payment_method, payment_status, delivery_address, items, courier_id?, customer_name?, promo_id?, promo_discount?, accepted?, reject_reason?}]` | status: pending→cooking→ready→delivering→delivered→completed\|cancelled\|rejected. Items `[{menu_item_id, quantity, unit_price, notes, status}]` |
+| `DB.orders` | `[{id, user_id, table_id, order_type, status, total_amount, payment_method, payment_status, delivery_address, delivery_detail, delivery_location, customer_name, accepted, promo_id, promo_discount, items, courier_id?, reject_reason?, messages?, lastReadAt?}]` | status: pending→cooking→ready→delivering→delivered→completed\|cancelled\|rejected. Items `[{menu_item_id, quantity, unit_price, notes, status}]` |
 | `DB.stockItems` | `[{id, name, unit, current_quantity, min_quantity, updated_at}]` | IDs `s1..sN` |
 | `DB.menuStockMapping` | `{menuId: [stockId, ...]}` | Used by autoUpdateMenuAvailability() |
 | `DB.stockMovements` | `[{id, stock_item_id, user_id, type, quantity, notes, created_at}]` | type: "in"\|"out" |
-| `DB.attendances` | `[{id, user_id, check_in, check_out?, lat?, lng?, status}]` | check_out null = still working |
+| `DB.attendances` | `[{id, user_id, check_in, check_out?, lat, lng, status}]` | check_out null = still working |
 | `DB.courierTracking` | `[{id, order_id, courier_id, latitude, longitude, recorded_at}]` | |
-| `DB.promos` | `[{id, code, title, icon, color, desc, discount_type?, discount_value?, start_date?, end_date?, menu_ids?, terms, is_active}]` | discount_type: "percent"\|"fixed" |
+| `DB.promos` | `[{id, code, title, icon, color, desc, discount_type, discount_value, start_date?, end_date?, menu_ids, image, terms, is_active}]` | discount_type: "percent"\|"fixed" |
 | `DB.dailySales` | `[{date, revenue, orders}]` | 7-day rolling window |
 | `DB.expenses` | `[{date, category, amount, note}]` | categories: Bahan Baku/Operasional/Gaji/Lainnya |
 

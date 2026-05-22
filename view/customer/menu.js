@@ -58,12 +58,12 @@ function renderCustomerMenu() {
           : ""
       }
       ${
-        DB.promos && DB.promos.filter((p) => p.is_active && p.id !== State.activePromoId).length > 0
+        DB.promos && DB.promos.filter((p) => p.is_active && isPromoActiveByDate(p) && p.id !== State.activePromoId).length > 0
           ? `
     <div class="promo-carousel" id="promo-carousel">
       <div class="promo-track" id="promo-track">
         ${DB.promos
-          .filter((p) => p.is_active && p.id !== State.activePromoId)
+          .filter((p) => p.is_active && isPromoActiveByDate(p) && p.id !== State.activePromoId)
           .map(
             (p) => {
               const discLabel = p.discount_type === 'fixed' ? formatCurrency(p.discount_value) : p.discount_value + '%';
@@ -81,7 +81,7 @@ function renderCustomerMenu() {
           )
           .join("")}
       </div>
-      ${DB.promos.filter((p) => p.is_active && p.id !== State.activePromoId).length > 1 ? '<div class="promo-dots" id="promo-dots"></div>' : ''}
+      ${DB.promos.filter((p) => p.is_active && isPromoActiveByDate(p) && p.id !== State.activePromoId).length > 1 ? '<div class="promo-dots" id="promo-dots"></div>' : ''}
     </div>`
           : ""
       }
@@ -113,6 +113,14 @@ function renderCustomerMenu() {
     </div>
     ${items.length === 0 ? '<div class="text-center py-12"><i class="fas fa-mug-saucer text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Menu tidak ditemukan</p></div>' : ""}
   </div>`;
+}
+
+function isPromoActiveByDate(p) {
+  if (!p.start_date && !p.end_date) return true;
+  const now = new Date();
+  if (p.start_date && new Date(p.start_date) > now) return false;
+  if (p.end_date && new Date(p.end_date) < now) return false;
+  return true;
 }
 
 function getGreeting() {

@@ -28,7 +28,7 @@ function renderAdminTablesMgmt() {
 
 function addTable() {
   const num = (DB.tables.length + 1).toString();
-  DB.tables.push({ id: 't' + Date.now(), number: num, qr_code: 'ARQA-T' + num, status: 'available' });
+  DB.tables.push({ id: 't' + Date.now(), number: num, qr_code: 'ARQA-T' + num, status: 'available', capacity: 4 });
   showToast(`Meja ${num} ditambahkan`, 'success'); render();
 }
 
