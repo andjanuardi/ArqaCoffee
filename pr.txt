@@ -4,9 +4,9 @@
 
 Admin
 #. Indikator Pengeluaran tidak ada di dashboard (selesai)
-#. indicator jumalh pegawai aktif
-#. Buat judul indicator grafik
-#. tambahkan buttom navbar di admin
+#. indicator jumalh pegawai aktif (selesai)
+#. Buat judul indicator grafik 
+#. tambahkan buttom navbar di admin 
 #. tambahkan tombol selengkapnya di indicator stock barang
 #. fungsikan tombol card indicator
 #. indicator pesanan terkini, tambahkan informasi nomor meja jika dine-in. jika delivery, tambahkan informasi alamat. tambahkan tombol selengkapnya.
