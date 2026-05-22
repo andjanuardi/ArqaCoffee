@@ -1,0 +1,46 @@
+#. logo profil hilangkan atau fungsikan
+#. pencarian menu pada pelanggan jangan render ulang
+#. jadikan card promo auto slide (selesai)
+
+Admin
+#. Indikator Pengeluaran tidak ada di dashboard
+#. indicator jumalh pegawai aktif
+#. Buat judul indicator grafik
+#. tambahkan buttom navbar di admin
+#. tambahkan tombol selengkapnya di indicator stock barang
+#. fungsikan tombol card indicator
+#. indicator pesanan terkini, tambahkan informasi nomor meja jika dine-in. jika delivery, tambahkan informasi alamat. tambahkan tombol selengkapnya.
+#. pada indicator meja, jika tombol meja di tekan, maka akan menampilkan detail informasi.
+#. hilangkan fitur setup wizard.
+#.tambahkan fitur menambah katagori pada saat menambah menu.
+#. hilangkan fitur resep bahan saat menambah menu.
+#. tambahkan pilihan upload gambar atau url gambar pada tambah menu dan edit menu
+#. fungsikan tombol tersedia
+#. tambahkan tombol hapus menu pada edit menu
+#. tambahkan filter menu pada Kelola menu
+#. tambahkan tombol non-aktif pengguna pada edit pengguna tanpa user lain dapat merubah
+#. katagorikan pengguna kariawan dan pelanggan. tambahkan form pencarian
+#. tambahkan form input ubah password pengguna edit pengguna.
+#. tambahkan tombol hapus meja di atas kiri card
+#. tambahkan input menu pada edit dan tambah promo. tambahkan form input nilai diskon. tambahkan tanggal mulai s/d berakhir promo. ganti ikon menjadi upload gambar atau url gambar
+#. tambahkan laporan keuangan berdasarkan dari internet
+
+Komponen	Visualisasi
+Pendapatan Harian	Grafik garis/tren
+Biaya Operasional	Diagram batang per kategori
+Laba/Rugi Bersih	Indikator hijau (untung) / merah (rugi)
+Arus Kas	Grafik aliran masuk/keluar
+Inventaris Stok	Tabel + notifikasi stok rendah
+Produk Terlaris	Pie chart menu favorit
+
+#. tambahkan pencarian, dan urutkan paling atas dari jumlah stok bahan yang akan habis, tambahkan fitur edit dan hapus pada card pada sto bahan baku.
+#. tambahkan informasi laporan harian dan bulanan pada presensi pada masing2 karyawan.
+
+
+
+Manager
+#. tambahkan Kelola pengguna, hanya saja menejer tidak dapat meng edit dan hapus admin.
+#. hapus halaman staff pada menejer
+
+
+
