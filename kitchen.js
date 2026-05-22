@@ -62,6 +62,7 @@ function renderKitchenQueue() {
               <div class="font-semibold">${i.menu_item.name} <span style="color:var(--accent)">x${i.quantity}</span></div>
               <div class="text-xs mt-1" style="color:var(--muted)">${formatCurrency(i.unitPrice * i.quantity)}</div>
               ${i.notes ? `<div class="text-xs mt-1" style="color:var(--warning)"><i class="fas fa-note-sticky mr-1"></i>${i.notes}</div>` : ""}
+              ${renderRecipeInfo(i.menu_item_id, i.quantity)}
             </div>
             <div class="flex gap-2">
               ${i.status === "pending" ? `
@@ -76,6 +77,19 @@ function renderKitchenQueue() {
         .join("")}
     </div>
   </div>`;
+}
+
+function renderRecipeInfo(menuItemId, orderQty) {
+  const recipe = DB.menuStockMapping && DB.menuStockMapping[menuItemId];
+  if (!recipe || !recipe.length) return '';
+  const items = recipe.map(r => {
+    const sid = typeof r === 'string' ? r : r.id;
+    const needQty = (typeof r === 'string' ? 1 : (r.qty || 1)) * orderQty;
+    const s = DB.stockItems.find(x => x.id === sid);
+    const cukup = s && s.current_quantity >= needQty;
+    return `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${cukup ? 'rgba(39,174,96,.12)' : 'rgba(231,76,60,.12)'};color:${cukup ? 'var(--success)' : 'var(--danger)'}">${s ? s.name : '?'} ${needQty}${s ? s.unit : ''}</span>`;
+  }).join(' ');
+  return `<div class="flex flex-wrap gap-1 mt-1.5">${items}</div>`;
 }
 
 function updateItemStatus(orderId, menuItemId, newStatus) {
@@ -256,7 +270,10 @@ function showKitchenOrderDetail(id) {
     ${o.items.map(i => {
             const mi = getMenuItem(i.menu_item_id); return mi ? `
     <div class="flex justify-between text-sm">
-      <span>${mi.name} x${i.quantity} ${i.notes ? '<span style="color:var(--muted)">(' + i.notes + ')</span>' : ''}</span>
+      <div>
+        <span>${mi.name} x${i.quantity} ${i.notes ? '<span style="color:var(--muted)">(' + i.notes + ')</span>' : ''}</span>
+        ${renderRecipeInfo(i.menu_item_id, i.quantity)}
+      </div>
       <span style="color:var(--muted)">${formatCurrency(i.unit_price * i.quantity)}</span>
     </div>`: ''
         }).join('')}
