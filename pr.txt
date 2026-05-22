@@ -21,7 +21,7 @@ Admin
 #. tambahkan tombol non-aktif pengguna pada edit pengguna tanpa user lain dapat merubah
 #. katagorikan pengguna kariawan dan pelanggan. tambahkan form pencarian
 #. tambahkan form input ubah password pengguna edit pengguna.
-#. tambahkan tombol hapus meja di atas kiri card
+#. tambahkan tombol hapus meja di atas kiri card (selesai)
 #. tambahkan input menu pada edit dan tambah promo. tambahkan form input nilai diskon. tambahkan tanggal mulai s/d berakhir promo. ganti ikon menjadi upload gambar atau url gambar
 #. tambahkan laporan keuangan berdasarkan dari internet
 

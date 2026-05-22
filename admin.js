@@ -426,7 +426,8 @@
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       ${DB.tables.map(t => `
-      <div class="card text-center">
+      <div class="card text-center" style="position:relative">
+        <button onclick="event.stopPropagation(); if(confirm('Hapus Meja ${t.number}?')) deleteTable('${t.id}')" class="btn-sm" style="position:absolute;top:6px;left:6px;background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px;line-height:1"><i class="fas fa-trash"></i></button>
         <div class="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center text-2xl" style="background:${t.status === 'available' ? 'rgba(39,174,96,.1)' : 'rgba(231,76,60,.1)'}">
           <i class="fas fa-chair" style="color:${t.status === 'available' ? 'var(--success)' : 'var(--danger)'}"></i>
         </div>
@@ -443,6 +444,13 @@
 
         function toggleTableStatus(id) {
             const t = DB.tables.find(x => x.id === id); if (t) { t.status = t.status === 'available' ? 'occupied' : 'available'; render() }
+        }
+
+        function deleteTable(id) {
+            const t = DB.tables.find(x => x.id === id);
+            if (!t) return;
+            DB.tables = DB.tables.filter(x => x.id !== id);
+            showToast('Meja ' + t.number + ' dihapus', 'info'); render();
         }
 
 
