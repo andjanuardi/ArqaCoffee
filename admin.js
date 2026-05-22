@@ -238,6 +238,41 @@
             }
         }
 
+        function renderImageInput(prefix, currentVal) {
+            const hasImage = currentVal && currentVal !== 'https://picsum.photos/seed/';
+            return `
+            <div class="flex gap-2 mb-2">
+              <button type="button" onclick="document.getElementById('${prefix}-img-mode').value='upload';document.getElementById('${prefix}-img-file').click()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px"><i class="fas fa-upload mr-1"></i>Upload</button>
+              <button type="button" onclick="document.getElementById('${prefix}-img-mode').value='url';document.getElementById('${prefix}-img-url').style.display='block';this.style.background='rgba(224,122,58,.1)';this.style.borderColor='var(--accent)'" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px"><i class="fas fa-link mr-1"></i>URL</button>
+            </div>
+            <input type="hidden" id="${prefix}-img-mode" value="${hasImage ? 'url' : 'upload'}">
+            <input type="file" id="${prefix}-img-file" accept="image/*" style="display:none" onchange="previewImage(this,'${prefix}-img-preview')">
+            <input type="text" id="${prefix}-img-url" class="input-field text-sm" placeholder="https://..." value="${currentVal || ''}" style="${hasImage ? '' : 'display:none'}">
+            <div id="${prefix}-img-preview" class="mt-2 ${hasImage ? '' : 'hidden'}" style="${hasImage ? '' : 'display:none'}">${hasImage ? `<img src="${currentVal}" style="width:80px;height:80px;object-fit:cover;border-radius:10px">` : ''}</div>`;
+        }
+
+        function previewImage(input, previewId) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const el = document.getElementById(previewId);
+                if (el) { el.innerHTML = '<img src="' + e.target.result + '" style="width:80px;height:80px;object-fit:cover;border-radius:10px">'; el.style.display = 'block'; }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function getImageValue(prefix) {
+            const mode = document.getElementById(prefix + '-img-mode')?.value;
+            if (mode === 'upload') {
+                const fileInput = document.getElementById(prefix + '-img-file');
+                if (fileInput && fileInput.files && fileInput.files[0]) {
+                    return ''; // will be resolved from preview
+                }
+            }
+            return document.getElementById(prefix + '-img-url')?.value || '';
+        }
+
         function showEditMenuItemModal(id) {
             const m = DB.menuItems.find(x => x.id === id);
             if (!m) return;
@@ -247,7 +282,9 @@
       <div class="space-y-3">
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama Item</label><input id="edit-menu-name" class="input-field text-sm" value="${m.name}"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Deskripsi</label><textarea id="edit-menu-desc" class="input-field text-sm min-h-[60px]">${m.description || ''}</textarea></div>
-        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">URL Gambar</label><input id="edit-menu-image" class="input-field text-sm" value="${m.image}"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Gambar</label>
+          ${renderImageInput('edit', m.image)}
+        </div>
         <div class="grid grid-cols-2 gap-3">
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Harga</label><input id="edit-menu-price" type="number" class="input-field text-sm" value="${m.price}"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kategori</label>
@@ -265,7 +302,13 @@
             if (!m) return;
             const name = document.getElementById('edit-menu-name')?.value;
             const price = parseInt(document.getElementById('edit-menu-price')?.value || '0');
-            const image = document.getElementById('edit-menu-image')?.value;
+            const mode = document.getElementById('edit-img-mode')?.value;
+            let image = document.getElementById('edit-img-url')?.value;
+            if (mode === 'upload') {
+                const preview = document.getElementById('edit-img-preview');
+                const img = preview && preview.querySelector('img');
+                if (img) image = img.src;
+            }
             let cat = document.getElementById('edit-menu-cat')?.value;
             if (cat === '__new__' || !cat) {
               cat = document.getElementById('edit-menu-cat-custom')?.value.trim() || m.category;
@@ -298,32 +341,41 @@
     <div>
       <h3 class="font-display text-lg font-bold mb-4">Tambah Menu</h3>
       <div class="space-y-3">
-        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama</label><input id="new-menu-name" class="input-field text-sm" placeholder="Nama item"></div>
-        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Deskripsi</label><input id="new-menu-desc" class="input-field text-sm" placeholder="Deskripsi singkat"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama Item</label><input id="add-menu-name" class="input-field text-sm" placeholder="Nama menu"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Deskripsi</label><textarea id="add-menu-desc" class="input-field text-sm min-h-[60px]" placeholder="Deskripsi menu"></textarea></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Gambar</label>
+          ${renderImageInput('add', '')}
+        </div>
         <div class="grid grid-cols-2 gap-3">
-          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Harga</label><input id="new-menu-price" type="number" class="input-field text-sm" placeholder="25000"></div>
+          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Harga</label><input id="add-menu-price" type="number" class="input-field text-sm" placeholder="0"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kategori</label>
-            ${getCategoryOptions()}
+            ${getCategoryOptions('', 'add')}
           </div>
         </div>
-        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">URL Gambar</label><input id="new-menu-image" class="input-field text-sm" placeholder="https://... (kosongi untuk gambar otomatis)"></div>
       </div>
-      <button onclick="addMenuItem()" class="btn-primary w-full mt-4 text-center">Simpan</button>
+      <button onclick="addMenuItem()" class="btn-primary w-full mt-4 text-center">Tambah</button>
     </div>
   `);
         }
 
         function addMenuItem() {
-            const name = document.getElementById('new-menu-name')?.value;
-            const price = parseInt(document.getElementById('new-menu-price')?.value || '0');
+            const name = document.getElementById('add-menu-name')?.value;
+            const price = parseInt(document.getElementById('add-menu-price')?.value || '0');
             if (!name) { showToast('Nama menu wajib diisi', 'warning'); return }
             const id = 'm' + Date.now();
-            const img = document.getElementById('new-menu-image')?.value || `https://picsum.photos/seed/${Date.now()}/400/300`;
-            let cat = document.getElementById('new-menu-cat')?.value;
-            if (cat === '__new__') {
-              cat = document.getElementById('new-menu-cat-custom')?.value.trim() || 'coffee';
+            const mode = document.getElementById('add-img-mode')?.value;
+            let image = document.getElementById('add-img-url')?.value;
+            if (mode === 'upload') {
+                const preview = document.getElementById('add-img-preview');
+                const img = preview && preview.querySelector('img');
+                if (img) image = img.src;
             }
-            DB.menuItems.push({ id, name, description: document.getElementById('new-menu-desc')?.value || '', price, category: cat, image: img, is_available: true });
+            if (!image) image = `https://picsum.photos/seed/${Date.now()}/400/300`;
+            let cat = document.getElementById('add-menu-cat')?.value;
+            if (cat === '__new__' || !cat) {
+              cat = document.getElementById('add-menu-cat-custom')?.value.trim() || 'coffee';
+            }
+            DB.menuItems.push({ id, name, description: document.getElementById('add-menu-desc')?.value || '', price, category: cat, image, is_available: true });
             closeModal(); showToast('Menu ditambahkan', 'success'); render();
         }
 

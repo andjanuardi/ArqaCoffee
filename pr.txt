@@ -14,7 +14,7 @@ Admin
 #. hilangkan fitur setup wizard.(selesai)
 #.tambahkan fitur menambah katagori pada saat menambah menu.(selesai)
 #. hilangkan fitur resep bahan saat menambah menu. (selesai)
-#. tambahkan pilihan upload gambar atau url gambar pada tambah menu dan edit menu
+#. tambahkan pilihan upload gambar atau url gambar pada tambah menu dan edit menu (selesai)
 #. fungsikan tombol tersedia
 #. tambahkan tombol hapus menu pada edit menu
 #. tambahkan filter menu pada Kelola menu
