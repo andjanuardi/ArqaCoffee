@@ -10,6 +10,7 @@
             if (tab === 'staff') return renderStaffManagement();
             if (tab === 'promos') return renderAdminPromos(); // Reuse admin promo view
             if (tab === 'tables-mgmt') return renderAdminTablesMgmt();
+            if (tab === 'menu-mgmt') return renderAdminMenuMgmt();
             if (tab === 'profile') return renderGenericProfile();
             return renderManagerDashboard();
         }
@@ -89,16 +90,31 @@
         }
 
         function renderStockManagement() {
+            const filterMenuId = State.stockMenuFilter || '';
+            const menuOpts = DB.menuItems.filter(m => DB.menuStockMapping && DB.menuStockMapping[m.id]).map(m =>
+              `<option value="${m.id}" ${filterMenuId === m.id ? 'selected' : ''}>${m.name}</option>`
+            ).join('');
+            const filtered = filterMenuId && DB.menuStockMapping && DB.menuStockMapping[filterMenuId]
+              ? DB.stockItems.filter(s => DB.menuStockMapping[filterMenuId].some(r => (typeof r === 'string' ? r : r.id) === s.id))
+              : DB.stockItems;
             return `
   <div class="animate-fade-up">
     <div class="flex justify-between items-center mb-4">
       <h2 class="font-display text-xl font-bold">Stok Bahan Baku</h2>
       <button onclick="showAddStockModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
     </div>
+    <div class="card mb-4" style="padding:10px">
+      <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Filter Berdasarkan Resep Menu</label>
+      <select onchange="State.stockMenuFilter=this.value;render()" class="input-field text-sm">
+        <option value="">Semua Bahan</option>
+        ${menuOpts}
+      </select>
+    </div>
     <div class="space-y-3">
-      ${DB.stockItems.map(s => {
+      ${filtered.map(s => {
                 const pct = Math.min(100, Math.round(s.current_quantity / (s.min_quantity * 3) * 100));
                 const isLow = s.current_quantity <= s.min_quantity;
+                const usedIn = DB.menuItems.filter(m => DB.menuStockMapping && DB.menuStockMapping[m.id] && DB.menuStockMapping[m.id].some(r => (typeof r === 'string' ? r : r.id) === s.id));
                 return `
         <div class="card ${isLow ? 'animate-breathe' : ''}">
           <div class="flex justify-between items-center mb-2">
@@ -113,6 +129,7 @@
               <button onclick="adjustStock('${s.id}','out')" class="btn-sm" style="background:rgba(231,76,60,.15);color:var(--danger);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-minus"></i></button>
             </div>
           </div>
+          ${usedIn.length ? `<div class="flex flex-wrap gap-1 mt-2 pt-2 border-t" style="border-color:var(--border)">${usedIn.map(m => `<span class="text-[10px] px-2 py-0.5 rounded" style="background:rgba(224,122,58,.12);color:var(--accent)"><i class="fas fa-utensils mr-0.5"></i>${m.name}</span>`).join('')}</div>` : ''}
         </div>`;
             }).join('')}
     </div>
