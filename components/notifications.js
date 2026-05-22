@@ -61,7 +61,6 @@ function renderNotifPanel() {
   if (!role) return;
   var notifs = getRoleNotifications().slice(0, 20);
   var hasUnread = notifs.some(function(n) { return !n.read[role]; });
-
   showModal(`
     <div class="flex flex-col" style="height: 65vh;">
       <div class="flex justify-between items-center mb-4 pb-3 border-b" style="border-color:var(--border)">
@@ -73,7 +72,7 @@ function renderNotifPanel() {
       </div>
       <div id="notif-list" class="flex-1 overflow-y-auto space-y-2 pr-1" style="-webkit-overflow-scrolling:touch;">
         ${notifs.length === 0 ? '<div class="text-center py-12"><i class="fas fa-bell-slash text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Tidak ada notifikasi</p></div>' : ''}
-          ${notifs.map(function(n) {
+        ${notifs.map(function(n) {
           var unread = !n.read[role];
           return `
         <div class="card p-3 ${unread ? 'cursor-pointer' : 'opacity-60'}" style="${unread ? 'border-left:3px solid var(--accent)' : ''}" onclick="${unread ? "markAsRead('" + n.id + "');closeModal();" : ''}">
@@ -105,7 +104,7 @@ function notifyOrderPlaced(order, customerName) {
     type: 'order',
     icon: 'fa-shopping-bag',
     targetRoles: ['cashier', 'kitchen'],
-    relatedOrderId: order.id
+    relatedOrderId: order.id,
   });
   addNotification({
     title: 'Pesanan Dibuat',
@@ -113,7 +112,7 @@ function notifyOrderPlaced(order, customerName) {
     type: 'order',
     icon: 'fa-check-circle',
     targetRoles: ['customer'],
-    relatedOrderId: order.id
+    relatedOrderId: order.id,
   });
 }
 
@@ -132,7 +131,7 @@ function notifyStatusChange(order, newStatus) {
     type: 'order',
     icon: newStatus === 'ready' ? 'fa-circle-check' : newStatus === 'cooking' ? 'fa-fire' : newStatus === 'delivering' ? 'fa-motorcycle' : 'fa-check',
     targetRoles: roles,
-    relatedOrderId: order.id
+    relatedOrderId: order.id,
   });
 }
 
@@ -144,7 +143,7 @@ function notifyPayment(order, method) {
     type: 'payment',
     icon: 'fa-credit-card',
     targetRoles: ['cashier', 'manager', 'admin'],
-    relatedOrderId: order.id
+    relatedOrderId: order.id,
   });
   addNotification({
     title: 'Pembayaran Berhasil',
@@ -152,7 +151,7 @@ function notifyPayment(order, method) {
     type: 'payment',
     icon: 'fa-check-circle',
     targetRoles: ['customer'],
-    relatedOrderId: order.id
+    relatedOrderId: order.id,
   });
 }
 
@@ -164,7 +163,7 @@ function notifyRejected(order, reason) {
     type: 'warning',
     icon: 'fa-ban',
     targetRoles: ['customer', 'cashier'],
-    relatedOrderId: order.id
+    relatedOrderId: order.id,
   });
 }
 
@@ -176,7 +175,7 @@ function notifyDeliveryTaken(order, courierName) {
     type: 'delivery',
     icon: 'fa-motorcycle',
     targetRoles: ['customer', 'cashier'],
-    relatedOrderId: order.id
+    relatedOrderId: order.id,
   });
 }
 
@@ -188,7 +187,7 @@ function notifyDeliveryCompleted(order) {
     type: 'delivery',
     icon: 'fa-circle-check',
     targetRoles: ['customer', 'cashier', 'courier'],
-    relatedOrderId: order.id
+    relatedOrderId: order.id,
   });
 }
 
@@ -198,6 +197,6 @@ function notifyLowStock(item) {
     message: item.name + ' tersisa ' + item.current_quantity + ' ' + item.unit + ' (min: ' + item.min_quantity + ')',
     type: 'stock',
     icon: 'fa-exclamation-triangle',
-    targetRoles: ['manager', 'admin']
+    targetRoles: ['manager', 'admin'],
   });
 }

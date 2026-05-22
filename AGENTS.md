@@ -1,13 +1,13 @@
 # ARQA Coffee — Agent Guide
 
 ## Project
-Vanilla JS SPA (no bundler/framework). Café management with 6 roles: admin, manager, cashier, kitchen, courier, customer. All UI in Indonesian, dark theme. No test runner, no lint/typecheck config, no persistence (data resets on reload).
+Vanilla JS SPA (no bundler/framework). Café management with 6 roles: admin, manager, cashier, kitchen, courier, customer. All UI in Indonesian, dark theme. No test runner, no lint/typecheck config. **Data is persisted to localStorage** (key `arqa_db`) — auto-saves every 3 seconds via `setInterval` in `init.js`. Clears on `localStorage.clear()` or if the seed data needs resetting.
 
 ## How to run
 Open `index.html` in a browser. No build step, no dev server, no npm install.
 
-## Script load order (18 scripts via `<script src="">`)
-data.js → helpers.js → toast.js → notifications.js → render.js → login.js → shell.js → customer.js → cashier.js → kitchen.js → courier.js → manager.js → admin.js → profile.js → modal.js → hooks.js → init.js
+## Script load order (23 scripts via `<script src="">`)
+data/db.js → state/store.js → helpers.js → components/toast.js → components/notifications.js → view/render.js → view/login.js → view/shell.js → view/customer.js → view/customer-orders.js → view/cashier.js → view/cashier-create.js → view/kitchen.js → view/courier.js → view/shared.js → view/manager.js → view/admin.js → view/profile.js → components/modal.js → components/hooks.js → init.js
 
 CDN deps (loaded before app scripts): Tailwind 3, Leaflet 1.9.4, Chart.js, Font Awesome 6, Google Fonts (Poppins + Playfair Display).
 
@@ -21,7 +21,7 @@ CDN deps (loaded before app scripts): Tailwind 3, Leaflet 1.9.4, Chart.js, Font 
 5. `afterRender()` (hooks.js) calls `initCharts()`, `initMaps()`, `initPromoCarousel()`.
 6. **Always call `render()` after any data mutation** to refresh the UI.
 
-## State (data.js:700)
+## State (store.js:1)
 ```js
 const State = {
   currentUser: null,   // obj from DB.users

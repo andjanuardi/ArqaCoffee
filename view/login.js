@@ -1,16 +1,16 @@
 // ============================================================
-        // LOGIN SCREEN
-        // ============================================================
-        function renderLogin() {
-            const roles = [
-                { role: 'admin', icon: 'fa-shield-halved', label: 'Admin', color: '#e74c3c', desc: 'Akses penuh semua modul' },
-                { role: 'manager', icon: 'fa-chart-line', label: 'Manager', color: '#3498db', desc: 'Monitoring & laporan' },
-                { role: 'cashier', icon: 'fa-cash-register', label: 'Kasir', color: '#27ae60', desc: 'Kelola pesanan & bayar' },
-                { role: 'kitchen', icon: 'fa-fire-burner', label: 'Juru Masak', color: '#e07a3a', desc: 'Proses pesanan dapur' },
-                { role: 'courier', icon: 'fa-motorcycle', label: 'Kurir', color: '#9b59b6', desc: 'Antar pesanan delivery' },
-                { role: 'customer', icon: 'fa-user', label: 'Pelanggan', color: '#1abc9c', desc: 'Pesan & lacak pesanan' },
-            ];
-            return `
+// LOGIN SCREEN
+// ============================================================
+function renderLogin() {
+  const roles = [
+    { role: 'admin', icon: 'fa-shield-halved', label: 'Admin', color: '#e74c3c', desc: 'Akses penuh semua modul' },
+    { role: 'manager', icon: 'fa-chart-line', label: 'Manager', color: '#3498db', desc: 'Monitoring & laporan' },
+    { role: 'cashier', icon: 'fa-cash-register', label: 'Kasir', color: '#27ae60', desc: 'Kelola pesanan & bayar' },
+    { role: 'kitchen', icon: 'fa-fire-burner', label: 'Juru Masak', color: '#e07a3a', desc: 'Proses pesanan dapur' },
+    { role: 'courier', icon: 'fa-motorcycle', label: 'Kurir', color: '#9b59b6', desc: 'Antar pesanan delivery' },
+    { role: 'customer', icon: 'fa-user', label: 'Pelanggan', color: '#1abc9c', desc: 'Pesan & lacak pesanan' },
+  ];
+  return `
   <div class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style="background:linear-gradient(135deg,#0a1a1f 0%,#112830 40%,#162e38 70%,#0a1a1f 100%)">
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
       <div class="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-10" style="background:radial-gradient(circle,var(--accent),transparent)"></div>
@@ -58,25 +58,39 @@
       <p class="text-center mt-6 text-xs" style="color:var(--muted)">v1.0 MVP — ARQA Coffee Management System</p>
     </div>
   </div>`;
-        }
+}
 
-        function quickLogin(role) {
-            const u = DB.users.find(u => u.role === role);
-            if (u) { State.currentUser = u; State.currentView = 'main'; State.currentTab[role] = getDefaultTab(role); render(); showToast(`Selamat datang, ${u.name}!`, 'success') }
-        }
-        function handleLogin() {
-            const e = document.getElementById('login-email').value;
-            const p = document.getElementById('login-pass').value;
-            const u = DB.users.find(u => u.email === e && u.password === p);
-            if (u) { State.currentUser = u; State.currentView = 'main'; State.currentTab[u.role] = getDefaultTab(u.role); render(); showToast(`Selamat datang, ${u.name}!`, 'success') }
-            else showToast('Email atau password salah', 'error');
-        }
-        function getDefaultTab(role) {
-            const m = { admin: 'overview', manager: 'dashboard', cashier: 'orders', kitchen: 'queue', courier: 'available', customer: 'menu' };
-            return m[role] || 'menu';
-        }
-        function showCustomerRegisterModal() {
-            showModal(`
+function quickLogin(role) {
+  const u = DB.users.find(u => u.role === role);
+  if (u) {
+    State.currentUser = u;
+    State.currentView = 'main';
+    State.currentTab[role] = getDefaultTab(role);
+    render();
+    showToast(`Selamat datang, ${u.name}!`, 'success');
+  }
+}
+
+function handleLogin() {
+  const e = document.getElementById('login-email').value;
+  const p = document.getElementById('login-pass').value;
+  const u = DB.users.find(u => u.email === e && u.password === p);
+  if (u) {
+    State.currentUser = u;
+    State.currentView = 'main';
+    State.currentTab[u.role] = getDefaultTab(u.role);
+    render();
+    showToast(`Selamat datang, ${u.name}!`, 'success');
+  } else showToast('Email atau password salah', 'error');
+}
+
+function getDefaultTab(role) {
+  const m = { admin: 'overview', manager: 'dashboard', cashier: 'orders', kitchen: 'queue', courier: 'available', customer: 'menu' };
+  return m[role] || 'menu';
+}
+
+function showCustomerRegisterModal() {
+  showModal(`
     <div>
       <h3 class="font-display text-lg font-bold mb-4">Daftar Pelanggan Baru</h3>
       <div class="space-y-3">
@@ -89,26 +103,28 @@
       <button onclick="registerCustomer()" class="btn-primary w-full mt-4 text-center">Daftar & Masuk</button>
     </div>
   `);
-        }
-        function registerCustomer() {
-            const name = document.getElementById('reg-name')?.value;
-            const email = document.getElementById('reg-email')?.value;
-            const pass = document.getElementById('reg-pass')?.value;
-            const phone = document.getElementById('reg-phone')?.value;
-            const address = document.getElementById('reg-address')?.value;
-            if (!name || !name.trim() || !email || !email.trim()) { showToast('Nama dan email wajib diisi', 'warning'); return }
-            if (DB.users.find(u => u.email === email.trim())) { showToast('Email sudah terdaftar', 'error'); return }
-            const u = { id: 'u' + Date.now(), name: name.trim(), email: email.trim(), password: pass || 'password123', role: 'customer', phone: phone?.trim() || '', address: address?.trim() || '', avatar: name.trim()[0].toUpperCase() };
-            DB.users.push(u);
-            State.currentUser = u;
-            State.currentView = 'main';
-            State.currentTab.customer = 'menu';
-            closeModal();
-            render();
-            showToast('Akun berhasil dibuat, selamat datang!', 'success');
-        }
-        function showForgotPasswordModal() {
-            showModal(`
+}
+
+function registerCustomer() {
+  const name = document.getElementById('reg-name')?.value;
+  const email = document.getElementById('reg-email')?.value;
+  const pass = document.getElementById('reg-pass')?.value;
+  const phone = document.getElementById('reg-phone')?.value;
+  const address = document.getElementById('reg-address')?.value;
+  if (!name || !name.trim() || !email || !email.trim()) { showToast('Nama dan email wajib diisi', 'warning'); return; }
+  if (DB.users.find(u => u.email === email.trim())) { showToast('Email sudah terdaftar', 'error'); return; }
+  const u = { id: 'u' + Date.now(), name: name.trim(), email: email.trim(), password: pass || 'password123', role: 'customer', phone: phone?.trim() || '', address: address?.trim() || '', avatar: name.trim()[0].toUpperCase() };
+  DB.users.push(u);
+  State.currentUser = u;
+  State.currentView = 'main';
+  State.currentTab.customer = 'menu';
+  closeModal();
+  render();
+  showToast('Akun berhasil dibuat, selamat datang!', 'success');
+}
+
+function showForgotPasswordModal() {
+  showModal(`
     <div>
       <h3 class="font-display text-lg font-bold mb-4">Lupa Password</h3>
       <p class="text-sm mb-4" style="color:var(--muted)">Masukkan email Anda, kami akan mereset password ke <strong>password123</strong></p>
@@ -121,15 +137,16 @@
       </div>
     </div>
   `);
-        }
-        function resetPassword() {
-            const email = document.getElementById('forgot-email')?.value;
-            if (!email || !email.trim()) { showToast('Masukkan email Anda', 'warning'); return }
-            const u = DB.users.find(u => u.email === email.trim());
-            if (!u) { showToast('Email tidak ditemukan', 'error'); return }
-            u.password = 'password123';
-            closeModal();
-            showToast('Password berhasil direset ke "password123"', 'success');
-        }
-        function afterLoginRender() { }
+}
 
+function resetPassword() {
+  const email = document.getElementById('forgot-email')?.value;
+  if (!email || !email.trim()) { showToast('Masukkan email Anda', 'warning'); return; }
+  const u = DB.users.find(u => u.email === email.trim());
+  if (!u) { showToast('Email tidak ditemukan', 'error'); return; }
+  u.password = 'password123';
+  closeModal();
+  showToast('Password berhasil direset ke "password123"', 'success');
+}
+
+function afterLoginRender() { }

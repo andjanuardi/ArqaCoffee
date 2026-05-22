@@ -97,7 +97,6 @@ function updateItemStatus(orderId, menuItemId, newStatus) {
   if (!o) return;
   const item = o.items.find((i) => i.menu_item_id === menuItemId);
   if (item) item.status = newStatus;
-  // Kurangi stok bahan saat mulai memasak
   if (newStatus === "cooking" && DB.menuStockMapping && DB.menuStockMapping[menuItemId]) {
     const orderQty = item ? item.quantity : 1;
     DB.menuStockMapping[menuItemId].forEach((r) => {
@@ -121,7 +120,6 @@ function updateItemStatus(orderId, menuItemId, newStatus) {
     });
     autoUpdateMenuAvailability();
   }
-  // Check if all items are ready
   if (o.items.every((i) => i.status === "ready")) {
     o.status = "ready";
     notifyStatusChange(o, 'ready');
@@ -212,7 +210,6 @@ function confirmRejectKitchenOrder(orderId) {
   o.status = "rejected";
   o.reject_reason = reason;
 
-  // Bebaskan meja jika dine-in dan tidak ada order aktif lain
   if (o.order_type === "dine-in" && o.table_id) {
     const hasOtherOrders = DB.orders.some(
       (x) => x.id !== orderId && x.table_id === o.table_id &&

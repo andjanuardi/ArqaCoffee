@@ -119,7 +119,6 @@ function acceptDelivery(id) {
   if (!o) return;
   o.courier_id = State.currentUser.id;
   o.status = "delivering";
-  // Add tracking point
   DB.courierTracking.push({
     id: "ct" + Date.now(),
     order_id: o.id,
@@ -182,7 +181,6 @@ function simulateMove(orderId) {
   }
   showToast("Lokasi diupdate", "info");
   render();
-  // Re-init map
   setTimeout(() => initCourierMap(orderId), 300);
 }
 
