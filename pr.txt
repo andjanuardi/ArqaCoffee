@@ -17,7 +17,7 @@ Admin
 #. tambahkan pilihan upload gambar atau url gambar pada tambah menu dan edit menu (selesai)
 #. fungsikan tombol tersedia 
 #. tambahkan tombol hapus menu pada edit menu (selesai)
-#. tambahkan filter menu pada Kelola menu
+#. tambahkan filter menu pada Kelola menu (selesai)
 #. tambahkan tombol non-aktif pengguna pada edit pengguna tanpa user lain dapat merubah
 #. katagorikan pengguna kariawan dan pelanggan. tambahkan form pencarian
 #. tambahkan form input ubah password pengguna edit pengguna.
