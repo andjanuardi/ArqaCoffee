@@ -12,7 +12,7 @@ Admin
 #. indicator pesanan terkini, tambahkan informasi nomor meja jika dine-in. jika delivery, tambahkan informasi alamat. tambahkan tombol selengkapnya.
 #. pada indicator meja, jika tombol meja di tekan, maka akan menampilkan detail informasi.
 #. hilangkan fitur setup wizard.(selesai)
-#.tambahkan fitur menambah katagori pada saat menambah menu.
+#.tambahkan fitur menambah katagori pada saat menambah menu.(selesai)
 #. hilangkan fitur resep bahan saat menambah menu.
 #. tambahkan pilihan upload gambar atau url gambar pada tambah menu dan edit menu
 #. fungsikan tombol tersedia

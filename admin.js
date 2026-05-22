@@ -264,12 +264,7 @@
         <div class="grid grid-cols-2 gap-3">
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Harga</label><input id="edit-menu-price" type="number" class="input-field text-sm" value="${m.price}"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kategori</label>
-            <select id="edit-menu-cat" class="input-field text-sm">
-              <option value="coffee" ${m.category === 'coffee' ? 'selected' : ''}>Kopi</option>
-              <option value="non-coffee" ${m.category === 'non-coffee' ? 'selected' : ''}>Non-Kopi</option>
-              <option value="food" ${m.category === 'food' ? 'selected' : ''}>Makanan</option>
-              <option value="snack" ${m.category === 'snack' ? 'selected' : ''}>Snack</option>
-            </select>
+            ${getCategoryOptions(m.category, 'edit')}
           </div>
         </div>
         <div>
@@ -288,7 +283,10 @@
             const name = document.getElementById('edit-menu-name')?.value;
             const price = parseInt(document.getElementById('edit-menu-price')?.value || '0');
             const image = document.getElementById('edit-menu-image')?.value;
-            const cat = document.getElementById('edit-menu-cat')?.value;
+            let cat = document.getElementById('edit-menu-cat')?.value;
+            if (cat === '__new__' || !cat) {
+              cat = document.getElementById('edit-menu-cat-custom')?.value.trim() || m.category;
+            }
             if (!name) { showToast('Nama menu wajib diisi', 'warning'); return }
             m.name = name;
             m.price = price;
@@ -310,6 +308,20 @@
             closeModal(); showToast('Menu berhasil diperbarui', 'success'); render();
         }
 
+        function getCategoryOptions(selected, prefix) {
+            prefix = prefix || 'new';
+            const cats = [...new Set(DB.menuItems.map(m => m.category).filter(Boolean))];
+            if (!cats.includes('coffee')) cats.unshift('coffee');
+            if (!cats.includes('non-coffee')) cats.unshift('non-coffee');
+            if (!cats.includes('food')) cats.push('food');
+            if (!cats.includes('snack')) cats.push('snack');
+            const unique = [...new Set(cats)];
+            const labelMap = { coffee: 'Kopi', 'non-coffee': 'Non-Kopi', food: 'Makanan', snack: 'Snack' };
+            const opts = unique.map(c => `<option value="${c}" ${selected === c ? 'selected' : ''}>${labelMap[c] || c}</option>`).join('');
+            return `<select id="${prefix}-menu-cat" class="input-field text-sm" onchange="if(this.value==='__new__'){document.getElementById('${prefix}-cat-container').style.display='block';this.style.display='none'}">${opts}<option value="__new__">+ Tambah Baru...</option></select>
+            <div id="${prefix}-cat-container" style="display:none"><input id="${prefix}-menu-cat-custom" class="input-field text-sm mt-1" placeholder="Nama kategori baru..."></div>`;
+        }
+
         function showAddMenuItemModal() {
             const stockOpts = DB.stockItems.map(s => `
               <div class="flex items-center gap-2 py-1.5">
@@ -327,7 +339,7 @@
         <div class="grid grid-cols-2 gap-3">
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Harga</label><input id="new-menu-price" type="number" class="input-field text-sm" placeholder="25000"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kategori</label>
-            <select id="new-menu-cat" class="input-field text-sm"><option value="coffee">Kopi</option><option value="non-coffee">Non-Kopi</option><option value="food">Makanan</option><option value="snack">Snack</option></select>
+            ${getCategoryOptions()}
           </div>
         </div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">URL Gambar</label><input id="new-menu-image" class="input-field text-sm" placeholder="https://... (kosongi untuk gambar otomatis)"></div>
@@ -347,7 +359,11 @@
             if (!name) { showToast('Nama menu wajib diisi', 'warning'); return }
             const id = 'm' + Date.now();
             const img = document.getElementById('new-menu-image')?.value || `https://picsum.photos/seed/${Date.now()}/400/300`;
-            DB.menuItems.push({ id, name, description: document.getElementById('new-menu-desc')?.value || '', price, category: document.getElementById('new-menu-cat')?.value || 'coffee', image: img, is_available: true });
+            let cat = document.getElementById('new-menu-cat')?.value;
+            if (cat === '__new__') {
+              cat = document.getElementById('new-menu-cat-custom')?.value.trim() || 'coffee';
+            }
+            DB.menuItems.push({ id, name, description: document.getElementById('new-menu-desc')?.value || '', price, category: cat, image: img, is_available: true });
             // Simpan resep
             if (!DB.menuStockMapping) DB.menuStockMapping = {};
             const recipe = [];
