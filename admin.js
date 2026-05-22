@@ -188,7 +188,7 @@
           <div class="text-xs" style="color:var(--muted)">${m.category} — ${formatCurrency(m.price)}</div>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="event.stopPropagation(); toggleMenuAvail('${m.id}')" class="text-xs px-3 py-1 rounded-lg" style="background:${m.is_available ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)'};color:${m.is_available ? 'var(--success)' : 'var(--danger)'}">${m.is_available ? 'Tersedia' : 'Habis'}</button>
+          <button onclick="event.stopPropagation(); toggleMenuAvail('${m.id}')" class="text-xs px-3 py-1 rounded-lg" style="background:${m.is_available ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)'};color:${m.is_available ? 'var(--success)' : 'var(--danger)'}">${m.is_available ? 'Tersedia' : 'Tidak Tersedia'}</button>
         </div>
       </div>`).join('')}
     </div>
@@ -210,10 +210,10 @@
             const newAvail = !insufficient;
             if (m.is_available !== newAvail) {
               m.is_available = newAvail;
-              changed.push(m.name + ': ' + (newAvail ? 'Tersedia' : 'Habis'));
+              changed.push(m.name + ': ' + (newAvail ? 'Tersedia' : 'Tidak Tersedia'));
               if (!newAvail) {
                 addNotification({
-                  title: 'Menu Otomatis Habis',
+                  title: 'Menu Otomatis Tidak Tersedia',
                   message: m.name + ' — bahan baku tidak mencukupi',
                   type: 'warning',
                   icon: 'fa-circle-exclamation',
@@ -226,10 +226,10 @@
         }
 
         function toggleMenuAvail(id) {
-            const m = DB.menuItems.find(x => x.id === id); if (m) { m.is_available = !m.is_available; showToast(`${m.name}: ${m.is_available ? 'Tersedia' : 'Habis'}`, 'info'); render() }
+            const m = DB.menuItems.find(x => x.id === id); if (m) { m.is_available = !m.is_available; showToast(`${m.name}: ${m.is_available ? 'Tersedia' : 'Tidak Tersedia'}`, 'info'); render() }
             if (m && !m.is_available) {
               addNotification({
-                title: 'Menu Habis',
+                title: 'Menu Tidak Tersedia',
                 message: m.name + ' — ditandai tidak tersedia',
                 type: 'warning',
                 icon: 'fa-circle-exclamation',
@@ -292,9 +292,20 @@
           </div>
         </div>
       </div>
-      <button onclick="saveEditMenuItem('${m.id}')" class="btn-primary w-full mt-4 text-center">Simpan Perubahan</button>
+      <div class="flex gap-2 mt-4">
+        <button onclick="deleteMenuItem('${m.id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.15);color:var(--danger);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:10px"><i class="fas fa-trash mr-1"></i>Hapus</button>
+        <button onclick="saveEditMenuItem('${m.id}')" class="btn-primary flex-1 text-center">Simpan Perubahan</button>
+      </div>
     </div>
   `);
+        }
+
+        function deleteMenuItem(id) {
+            const m = DB.menuItems.find(x => x.id === id);
+            if (!m) return;
+            if (!confirm('Hapus menu "' + m.name + '"? Tindakan ini tidak dapat dibatalkan.')) return;
+            DB.menuItems = DB.menuItems.filter(x => x.id !== id);
+            closeModal(); showToast('Menu dihapus', 'info'); render();
         }
 
         function saveEditMenuItem(id) {
