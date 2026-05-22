@@ -34,7 +34,7 @@ Inventaris Stok	Tabel + notifikasi stok rendah
 Produk Terlaris	Pie chart menu favorit
 
 #. tambahkan pencarian, dan urutkan paling atas dari jumlah stok bahan yang akan habis, tambahkan fitur edit dan hapus pada card pada sto bahan baku.
-#. tambahkan informasi laporan harian dan bulanan pada presensi pada masing2 karyawan.
+#. tambahkan informasi laporan harian dan bulanan pada presensi pada masing2 karyawan. (selesai)
 
 
 
