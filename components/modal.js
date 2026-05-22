@@ -82,9 +82,7 @@ function updateModalQty(d) {
   modalQty = Math.max(1, modalQty + d);
   const el = document.getElementById('modal-qty');
   if (el) el.textContent = modalQty;
-  const activeItem = State._activeMenuItem;
-  if (activeItem) {
-    const t = document.getElementById('modal-total');
-    if (t) t.textContent = formatCurrency(activeItem.price * modalQty);
-  }
+  const unitPrice = typeof State._activeDiscPrice === 'number' ? State._activeDiscPrice : (State._activeMenuItem && State._activeMenuItem.price) || 0;
+  const t = document.getElementById('modal-total');
+  if (t) t.textContent = formatCurrency(unitPrice * modalQty);
 }

@@ -4,19 +4,28 @@
 function showMenuItem(id) {
   const m = getMenuItem(id);
   if (!m) return;
-  let qty = 1;
-  const activePromo = State.activePromoId ? DB.promos.find(x => x.id === State.activePromoId) : null;
-  const hasPromo = activePromo && activePromo.is_active && (!activePromo.menu_ids || !activePromo.menu_ids.length || activePromo.menu_ids.includes(m.id));
-  const discPrice = hasPromo && activePromo.discount_type === 'fixed'
-    ? Math.max(0, m.price - activePromo.discount_value)
-    : hasPromo
-      ? Math.round(m.price * (1 - activePromo.discount_value / 100))
-      : m.price;
+  State._activeMenuItem = m;
+  const activePromo = State.activePromoId
+    ? DB.promos.find((x) => x.id === State.activePromoId)
+    : null;
+  const hasPromo =
+    activePromo &&
+    activePromo.is_active &&
+    (!activePromo.menu_ids ||
+      !activePromo.menu_ids.length ||
+      activePromo.menu_ids.includes(m.id));
+  const discPrice =
+    hasPromo && activePromo.discount_type === "fixed"
+      ? Math.max(0, m.price - activePromo.discount_value)
+      : hasPromo
+        ? Math.round(m.price * (1 - activePromo.discount_value / 100))
+        : m.price;
+  State._activeDiscPrice = discPrice;
   showModal(`
     <div>
       <div class="relative">
         <img src="${m.image}" alt="${m.name}" class="w-full h-48 object-cover rounded-xl mb-4" onerror="this.src='https://picsum.photos/seed/${m.id}/400/300'">
-        ${hasPromo ? '<div class="absolute top-2 left-2 text-[10px] font-bold px-3 py-1 rounded-full" style="background:var(--success);color:#fff"><i class="fas fa-tag mr-1"></i>Diskon Promo</div>' : ''}
+        ${hasPromo ? '<div class="absolute top-2 left-2 text-[10px] font-bold px-3 py-1 rounded-full" style="background:var(--success);color:#fff"><i class="fas fa-tag mr-1"></i>Diskon Promo</div>' : ""}
       </div>
       <div class="flex justify-between items-start mb-2">
         <h3 class="font-display text-xl font-bold">${m.name}</h3>
@@ -33,12 +42,12 @@ function showMenuItem(id) {
         <span class="text-sm font-semibold">Jumlah</span>
         <div class="flex items-center gap-3">
           <div class="qty-btn" onclick="updateModalQty(-1)">-</div>
-          <span id="modal-qty" class="font-bold text-lg w-8 text-center">${qty}</span>
+          <span id="modal-qty" class="font-bold text-lg w-8 text-center">1</span>
           <div class="qty-btn" onclick="updateModalQty(1)">+</div>
         </div>
       </div>
       <button onclick="addToCart('${m.id}')" class="btn-primary w-full flex items-center justify-center gap-2">
-        <i class="fas fa-plus"></i> Tambah ke Keranjang — <span id="modal-total">${formatCurrency(m.price)}</span>
+        <i class="fas fa-plus"></i> Tambah ke Keranjang — <span id="modal-total">${formatCurrency(discPrice)}</span>
       </button>
     </div>
   `);
@@ -72,7 +81,9 @@ function renderCustomerCart() {
   const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
   const discount = calcPromoDiscount();
   const afterDiscount = total - discount;
-  const activePromo = State.activePromoId ? DB.promos.find(x => x.id === State.activePromoId) : null;
+  const activePromo = State.activePromoId
+    ? DB.promos.find((x) => x.id === State.activePromoId)
+    : null;
   if (State.cart.length === 0) {
     return `<div class="text-center py-16 animate-fade-up">
       <i class="fas fa-shopping-bag text-5xl mb-4" style="color:var(--border)"></i>
@@ -86,16 +97,20 @@ function renderCustomerCart() {
     <h2 class="font-display text-xl font-bold mb-4">Keranjang Anda</h2>
     <div class="space-y-3 mb-6">
       ${State.cart
-        .map(
-          (c, i) => {
-            const eligible = activePromo && activePromo.is_active && (!activePromo.menu_ids || !activePromo.menu_ids.length || activePromo.menu_ids.includes(c.menu_item_id));
-            return `
+        .map((c, i) => {
+          const eligible =
+            activePromo &&
+            activePromo.is_active &&
+            (!activePromo.menu_ids ||
+              !activePromo.menu_ids.length ||
+              activePromo.menu_ids.includes(c.menu_item_id));
+          return `
       <div class="card flex items-center gap-4">
         <img src="${c.menu_item.image}" class="w-16 h-16 rounded-xl object-cover" onerror="this.src='https://picsum.photos/seed/${c.menu_item.id}/100/100'">
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2">
             <div class="font-semibold text-sm truncate">${c.menu_item.name}</div>
-            ${eligible ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style="background:rgba(39,174,96,.15);color:var(--success)">Diskon</span>' : ''}
+            ${eligible ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style="background:rgba(39,174,96,.15);color:var(--success)">Diskon</span>' : ""}
           </div>
           <div class="text-xs" style="color:var(--muted)">${c.notes || "Tanpa catatan"}</div>
           <div class="flex items-center gap-2 mt-1">
@@ -108,18 +123,22 @@ function renderCustomerCart() {
           <div class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(c.unit_price * c.quantity)}</div>
           <button onclick="removeCartItem(${i})" class="text-xs mt-1" style="color:var(--danger)"><i class="fas fa-trash"></i></button>
         </div>
-      </div>`;}
-        )
+      </div>`;
+        })
         .join("")}
     </div>
-    ${activePromo ? `<div class="flex items-center gap-2 mb-3 text-xs p-3 rounded-xl" style="background:rgba(39,174,96,.1);color:var(--success)">
+    ${
+      activePromo
+        ? `<div class="flex items-center gap-2 mb-3 text-xs p-3 rounded-xl" style="background:rgba(39,174,96,.1);color:var(--success)">
       <i class="fas fa-tag"></i>
       <span class="flex-1">Promo <b>${activePromo.title}</b> aktif</span>
       <button onclick="State.activePromoId=null;render()" class="text-xs underline" style="color:var(--muted)">Batalkan</button>
-    </div>` : ''}
+    </div>`
+        : ""
+    }
     <div class="card mb-4">
       <div class="flex justify-between mb-2 text-sm"><span style="color:var(--muted)">Subtotal</span><span>${formatCurrency(total)}</span></div>
-      ${discount > 0 ? `<div class="flex justify-between mb-2 text-sm"><span style="color:var(--success)"><i class="fas fa-tag mr-1"></i>Diskon ${activePromo ? activePromo.title : ''}</span><span style="color:var(--success)">-${formatCurrency(discount)}</span></div>` : ''}
+      ${discount > 0 ? `<div class="flex justify-between mb-2 text-sm"><span style="color:var(--success)"><i class="fas fa-tag mr-1"></i>Diskon ${activePromo ? activePromo.title : ""}</span><span style="color:var(--success)">-${formatCurrency(discount)}</span></div>` : ""}
       <div class="flex justify-between mb-2 text-sm"><span style="color:var(--muted)">Pajak (10%)</span><span>${formatCurrency(Math.round(afterDiscount * 0.1))}</span></div>
       <div class="border-t pt-2 mt-2" style="border-color:var(--border)">
         <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(Math.round(afterDiscount * 1.1))}</span></div>
