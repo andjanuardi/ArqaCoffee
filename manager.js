@@ -10,6 +10,7 @@
             if (tab === 'promos') return renderAdminPromos(); // Reuse admin promo view
             if (tab === 'tables-mgmt') return renderAdminTablesMgmt();
             if (tab === 'menu-mgmt') return renderAdminMenuMgmt();
+            if (tab === 'users') return renderManagerUsers();
             if (tab === 'profile') return renderGenericProfile();
             return renderManagerDashboard();
         }
@@ -167,6 +168,81 @@
             if (!name) { showToast('Nama bahan wajib diisi', 'warning'); return }
             DB.stockItems.push({ id: 's' + Date.now(), name, unit: document.getElementById('new-stock-unit')?.value || 'kg', current_quantity: parseInt(document.getElementById('new-stock-qty')?.value || '10'), min_quantity: parseInt(document.getElementById('new-stock-min')?.value || '3'), updated_at: new Date().toISOString() });
             closeModal(); showToast('Bahan baku ditambahkan', 'success'); render();
+        }
+
+        function renderManagerUsers() {
+            const users = DB.users.filter(u => u.role !== 'admin');
+            return `
+  <div class="animate-fade-up">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="font-display text-xl font-bold">Kelola Pengguna</h2>
+      <button onclick="showAddUserModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
+    </div>
+    <div class="space-y-3">
+      ${users.map(u => `
+      <div class="card flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold" style="background:var(--accent);color:#fff">${u.avatar}</div>
+        <div class="flex-1">
+          <div class="font-semibold text-sm">${u.name}</div>
+          <div class="text-xs" style="color:var(--muted)">${u.email} — ${u.phone || '-'}</div>
+        </div>
+        <span class="badge ${u.role === 'manager' ? 'badge-delivering' : u.role === 'cashier' ? 'badge-ready' : u.role === 'kitchen' ? 'badge-cooking' : 'badge-pending'}">${getRoleLabel(u.role)}</span>
+        <div class="flex gap-1">
+          <button onclick="showEditUserManagerModal('${u.id}')" class="btn-sm" style="background:rgba(224,122,58,.12);color:var(--accent);border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-pen"></i></button>
+          <button onclick="deleteUserManager('${u.id}')" class="btn-sm" style="background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+        }
+
+        function showEditUserManagerModal(id) {
+            const u = DB.users.find(x => x.id === id);
+            if (!u || u.role === 'admin') { showToast('Tidak dapat mengedit admin', 'warning'); return; }
+            showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-4">Edit Pengguna</h3>
+      <div class="space-y-3">
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama</label><input id="edit-user-name" class="input-field text-sm" value="${u.name}"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Email</label><input id="edit-user-email" class="input-field text-sm" value="${u.email}"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Telepon</label><input id="edit-user-phone" class="input-field text-sm" value="${u.phone || ''}"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Peran</label>
+          <select id="edit-user-role" class="input-field text-sm">
+            <option value="manager" ${u.role === 'manager' ? 'selected' : ''}>Manager</option>
+            <option value="cashier" ${u.role === 'cashier' ? 'selected' : ''}>Kasir</option>
+            <option value="kitchen" ${u.role === 'kitchen' ? 'selected' : ''}>Juru Masak</option>
+            <option value="courier" ${u.role === 'courier' ? 'selected' : ''}>Kurir</option>
+            <option value="customer" ${u.role === 'customer' ? 'selected' : ''}>Pelanggan</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button onclick="deleteUserManager('${u.id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.15);color:var(--danger);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:10px"><i class="fas fa-trash mr-1"></i>Hapus</button>
+        <button onclick="saveEditUserManager('${u.id}')" class="btn-primary flex-1 text-center">Simpan</button>
+      </div>
+    </div>
+  `);
+        }
+
+        function saveEditUserManager(id) {
+            const u = DB.users.find(x => x.id === id);
+            if (!u || u.role === 'admin') { showToast('Tidak dapat mengedit admin', 'warning'); return; }
+            const name = document.getElementById('edit-user-name')?.value;
+            const email = document.getElementById('edit-user-email')?.value;
+            const phone = document.getElementById('edit-user-phone')?.value;
+            const role = document.getElementById('edit-user-role')?.value;
+            if (!name || !email) { showToast('Nama dan email wajib diisi', 'warning'); return; }
+            u.name = name; u.email = email; u.phone = phone; u.role = role; u.avatar = name[0].toUpperCase();
+            closeModal(); showToast('Pengguna berhasil diperbarui', 'success'); render();
+        }
+
+        function deleteUserManager(id) {
+            const u = DB.users.find(x => x.id === id);
+            if (!u) return;
+            if (u.role === 'admin') { showToast('Tidak dapat menghapus admin', 'warning'); return; }
+            if (!confirm('Hapus pengguna "' + u.name + '"? Tindakan ini tidak dapat dibatalkan.')) return;
+            DB.users = DB.users.filter(x => x.id !== id);
+            closeModal(); showToast('Pengguna dihapus', 'info'); render();
         }
 
         function renderAttendance() {

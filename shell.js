@@ -82,6 +82,7 @@
                 { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
             ] : [
                 { id: 'dashboard', icon: 'fa-gauge-high', label: 'Dashboard' },
+                { id: 'users', icon: 'fa-users-gear', label: 'Kelola Pengguna' },
                 { id: 'menu-mgmt', icon: 'fa-utensils', label: 'Kelola Menu' },
                 { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Kelola Meja' },
                 { id: 'promos', icon: 'fa-tags', label: 'Kelola Promo' },

@@ -80,13 +80,17 @@
     </div>
     <div class="space-y-3">
       ${DB.users.map(u => `
-      <div class="card flex items-center gap-4 cursor-pointer hover:scale-[1.01] transition-transform" onclick="showEditUserModal('${u.id}')">
+      <div class="card flex items-center gap-4">
         <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold" style="background:var(--accent);color:#fff">${u.avatar}</div>
         <div class="flex-1">
           <div class="font-semibold text-sm">${u.name}</div>
           <div class="text-xs" style="color:var(--muted)">${u.email} — ${u.phone}</div>
         </div>
         <span class="badge ${u.role === 'admin' ? 'badge-cooking' : u.role === 'manager' ? 'badge-delivering' : u.role === 'cashier' ? 'badge-ready' : 'badge-pending'}">${getRoleLabel(u.role)}</span>
+        <div class="flex gap-1">
+          <button onclick="showEditUserModal('${u.id}')" class="btn-sm" style="background:rgba(224,122,58,.12);color:var(--accent);border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-pen"></i></button>
+          <button onclick="deleteUser('${u.id}')" class="btn-sm" style="background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-trash"></i></button>
+        </div>
       </div>`).join('')}
     </div>
   </div>`;
