@@ -26,7 +26,7 @@
           ${useDrawer ? `<button onclick="toggleDrawer()" class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:var(--card)"><i class="fas fa-bars" style="color:var(--muted)"></i></button>` : ''}
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style="background:linear-gradient(135deg,var(--accent),var(--accent3))"><i class="fas fa-mug-hot text-white"></i></div>
-            <span class="font-bold text-sm hidden sm:inline">ARQA Coffee</span>
+            <span class="font-bold text-sm">ARQA Coffee</span>
           </div>
         </div>
         <div class="flex items-center gap-3">
