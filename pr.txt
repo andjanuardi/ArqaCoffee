@@ -5,10 +5,10 @@
 Admin
 #. Indikator Pengeluaran tidak ada di dashboard (selesai)
 #. indicator jumalh pegawai aktif (selesai)
-#. Buat judul indicator grafik
+#. Buat judul indicator grafik 
 #. tambahkan buttom navbar di admin (selesai)
 #. tambahkan tombol selengkapnya di indicator stock barang (selesai)
-#. fungsikan tombol card indicator
+#. fungsikan tombol card indicator (selesai)
 #. indicator pesanan terkini, tambahkan informasi nomor meja jika dine-in. jika delivery, tambahkan informasi alamat. tambahkan tombol selengkapnya.
 #. pada indicator meja, jika tombol meja di tekan, maka akan menampilkan detail informasi.
 #. hilangkan fitur setup wizard.(selesai)
