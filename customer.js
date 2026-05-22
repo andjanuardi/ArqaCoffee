@@ -45,12 +45,25 @@ function renderCustomerMenu() {
         </div>
       </div>
       ${
-        DB.promos && DB.promos.filter((p) => p.is_active).length > 0
+        State.activePromoId
+          ? (() => {
+              const activeP = DB.promos.find(x => x.id === State.activePromoId);
+              return activeP ? `
+    <div class="flex items-center gap-2 mb-4 text-xs p-3 rounded-xl" style="background:rgba(39,174,96,.1);color:var(--success)">
+      <i class="fas fa-tag"></i>
+      <span class="flex-1">Promo <b>${activeP.title}</b> aktif — diskon otomatis di keranjang</span>
+      <button onclick="State.activePromoId=null;showToast('Promo dibatalkan','info');render()" class="text-xs font-bold underline shrink-0" style="color:var(--danger)">Batalkan</button>
+    </div>` : '';
+            })()
+          : ""
+      }
+      ${
+        DB.promos && DB.promos.filter((p) => p.is_active && p.id !== State.activePromoId).length > 0
           ? `
     <div class="promo-carousel" id="promo-carousel">
       <div class="promo-track" id="promo-track">
         ${DB.promos
-          .filter((p) => p.is_active)
+          .filter((p) => p.is_active && p.id !== State.activePromoId)
           .map(
             (p) => {
               const discLabel = p.discount_type === 'fixed' ? formatCurrency(p.discount_value) : p.discount_value + '%';
@@ -68,7 +81,7 @@ function renderCustomerMenu() {
           )
           .join("")}
       </div>
-      ${DB.promos.filter((p) => p.is_active).length > 1 ? '<div class="promo-dots" id="promo-dots"></div>' : ''}
+      ${DB.promos.filter((p) => p.is_active && p.id !== State.activePromoId).length > 1 ? '<div class="promo-dots" id="promo-dots"></div>' : ''}
     </div>`
           : ""
       }

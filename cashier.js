@@ -55,6 +55,7 @@ function renderCashierOrders() {
               return mi ? mi.name + " x" + i.quantity : "";
             })
             .join(", ")}</div>
+          ${o.promo_discount ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon promo: <b>-${formatCurrency(o.promo_discount)}</b></div>` : ''}
           <div class="flex justify-between items-center">
             <span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
             <div class="flex gap-2">
@@ -127,6 +128,7 @@ function showCashierOrderDetail(id) {
       .join("")}
   </div>
   <div class="border-t pt-3" style="border-color:var(--border)">
+    ${o.promo_discount ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ''}
     <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
     <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "digital" ? "Digital" : "Tunai/COD"}</span></div>
     <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Waktu Selesai</span><span>${formatTime(o.created_at)}</span></div>
@@ -163,6 +165,7 @@ function renderCashierPayment() {
             return mi ? mi.name + " x" + i.quantity : "";
           })
           .join(", ")}</div>
+        ${o.promo_discount ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon promo: <b>-${formatCurrency(o.promo_discount)}</b></div>` : ''}
         <div class="flex gap-2">
           <button onclick="processPayment('${o.id}')" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-wallet mr-1"></i>Digital</button>
           <button onclick="processCashPayment('${o.id}')" class="btn-secondary btn-sm flex-1 text-center"><i class="fas fa-money-bill mr-1"></i>Tunai</button>
@@ -261,7 +264,7 @@ function renderCashierReport() {
       <div class="space-y-2 max-h-64 overflow-y-auto">
         ${DB.orders.slice(0, 6).map(o => `
         <div class="flex justify-between items-center text-sm py-2 border-b" style="border-color:var(--border)">
-          <div><span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span><span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span></div>
+          <div><span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span><span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>${o.promo_discount ? '<span class="text-[10px] ml-1" style="color:var(--success)"><i class="fas fa-tag"></i></span>' : ''}</div>
           <span>${formatCurrency(o.total_amount)}</span>
         </div>`).join('')}
       </div>
