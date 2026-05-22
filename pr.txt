@@ -1,5 +1,5 @@
-#. logo profil hilangkan atau fungsikan
-#. pencarian menu pada pelanggan jangan render ulang
+#. logo profil hilangkan atau fungsikan (selesai)
+#. pencarian menu pada pelanggan jangan render ulang (selesai)
 #. jadikan card promo auto slide (selesai)
 
 Admin
@@ -11,7 +11,7 @@ Admin
 #. fungsikan tombol card indicator
 #. indicator pesanan terkini, tambahkan informasi nomor meja jika dine-in. jika delivery, tambahkan informasi alamat. tambahkan tombol selengkapnya.
 #. pada indicator meja, jika tombol meja di tekan, maka akan menampilkan detail informasi.
-#. hilangkan fitur setup wizard.
+#. hilangkan fitur setup wizard.(selesai)
 #.tambahkan fitur menambah katagori pada saat menambah menu.
 #. hilangkan fitur resep bahan saat menambah menu.
 #. tambahkan pilihan upload gambar atau url gambar pada tambah menu dan edit menu

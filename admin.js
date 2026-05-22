@@ -4,7 +4,6 @@
         function renderAdminView() {
             const tab = State.currentTab.admin || 'overview';
             if (tab === 'overview') return renderAdminOverview();
-            if (tab === 'wizard') return renderAdminWizard();
             if (tab === 'users') return renderAdminUsers();
             if (tab === 'menu-mgmt') return renderAdminMenuMgmt();
             if (tab === 'tables-mgmt') return renderAdminTablesMgmt();
@@ -66,81 +65,6 @@
   </div>`;
         }
 
-        function renderAdminWizard() {
-            const steps = ['Menu', 'Meja', 'Akun Kasir', 'Selesai'];
-            return `
-  <div class="animate-fade-up">
-    <h2 class="font-display text-xl font-bold mb-4">Setup Wizard</h2>
-    <p class="text-sm mb-6" style="color:var(--muted)">Konfigurasi awal kafe Anda dalam hitungan menit</p>
-    <div class="flex items-center gap-2 mb-8">
-      ${steps.map((s, i) => `
-        <div class="flex items-center ${i > 0 ? 'flex-1' : ''}">
-          ${i > 0 ? `<div class="flex-1 h-1 rounded" style="background:${i <= State.wizardStep ? 'var(--accent)' : 'var(--border)'}"></div>` : ''}
-          <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${i <= State.wizardStep ? '' : 'opacity-40'}" style="background:${i <= State.wizardStep ? 'var(--accent)' : 'var(--card)'};color:${i <= State.wizardStep ? '#fff' : 'var(--muted)'}">${i + 1}</div>
-        </div>`).join('')}
-    </div>
-    ${State.wizardStep === 0 ? renderWizardMenu() : ''}
-    ${State.wizardStep === 1 ? renderWizardTables() : ''}
-    ${State.wizardStep === 2 ? renderWizardAccount() : ''}
-    ${State.wizardStep === 3 ? renderWizardDone() : ''}
-  </div>`;
-        }
-
-        function renderWizardMenu() {
-            return `
-  <div class="card mb-4">
-    <h3 class="font-semibold mb-3">Menu Saat Ini</h3>
-    <div class="space-y-2 max-h-48 overflow-y-auto mb-4">
-      ${DB.menuItems.slice(0, 5).map(m => `<div class="flex justify-between text-sm py-2 border-b" style="border-color:var(--border)"><span>${m.name}</span><span style="color:var(--accent)">${formatCurrency(m.price)}</span></div>`).join('')}
-      ${DB.menuItems.length > 5 ? `<div class="text-xs text-center" style="color:var(--muted)">+${DB.menuItems.length - 5} menu lainnya</div>` : ''}
-    </div>
-    <button onclick="nextWizardStep()" class="btn-primary w-full text-center">Menu Sudah Siap — Lanjut</button>
-  </div>`;
-        }
-
-        function renderWizardTables() {
-            return `
-  <div class="card mb-4">
-    <h3 class="font-semibold mb-3">Meja Kafe</h3>
-    <div class="grid grid-cols-4 gap-3 mb-4">
-      ${DB.tables.map(t => `
-      <div class="text-center py-4 rounded-xl" style="background:var(--bg2);border:1px solid var(--border)">
-        <i class="fas fa-chair text-lg mb-1" style="color:var(--accent)"></i>
-        <div class="font-bold text-sm">${t.number}</div>
-        <div class="text-[10px]" style="color:var(--muted)">${t.qr_code}</div>
-      </div>`).join('')}
-    </div>
-    <button onclick="addTable()" class="btn-secondary w-full text-center mb-3"><i class="fas fa-plus mr-1"></i>Tambah Meja</button>
-    <button onclick="nextWizardStep()" class="btn-primary w-full text-center">Meja Siap — Lanjut</button>
-  </div>`;
-        }
-
-        function renderWizardAccount() {
-            return `
-  <div class="card mb-4">
-    <h3 class="font-semibold mb-3">Akun Kasir</h3>
-    <div class="space-y-3 mb-4">
-      ${DB.users.filter(u => u.role === 'cashier').map(u => `
-      <div class="flex items-center gap-3 p-3 rounded-xl" style="background:var(--bg2)">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold" style="background:var(--success);color:#fff">${u.avatar}</div>
-        <div><div class="font-semibold text-sm">${u.name}</div><div class="text-xs" style="color:var(--muted)">${u.email}</div></div>
-      </div>`).join('')}
-    </div>
-    <button onclick="nextWizardStep()" class="btn-primary w-full text-center">Akun Siap — Selesai</button>
-  </div>`;
-        }
-
-        function renderWizardDone() {
-            return `
-  <div class="card text-center py-8">
-    <div class="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl" style="background:rgba(39,174,96,.15);color:var(--success)"><i class="fas fa-check"></i></div>
-    <h3 class="font-display text-2xl font-bold mb-2">Siap Operasional!</h3>
-    <p class="text-sm mb-6" style="color:var(--muted)">Kafe Anda sudah dikonfigurasi dan siap melayani pelanggan.</p>
-    <button onclick="State.wizardStep=0;switchTab('overview')" class="btn-primary">Ke Dashboard</button>
-  </div>`;
-        }
-
-        function nextWizardStep() { State.wizardStep = Math.min(3, State.wizardStep + 1); render() }
         function addTable() {
             const num = (DB.tables.length + 1).toString();
             DB.tables.push({ id: 't' + Date.now(), number: num, qr_code: 'ARQA-T' + num, status: 'available' });

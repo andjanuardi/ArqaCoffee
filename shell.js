@@ -73,7 +73,6 @@
         function renderSideDrawer(role) {
             const items = role === 'admin' ? [
                 { id: 'overview', icon: 'fa-gauge-high', label: 'Overview' },
-                { id: 'wizard', icon: 'fa-wand-magic-sparkles', label: 'Setup Wizard' },
                 { id: 'users', icon: 'fa-users-gear', label: 'Kelola Pengguna' },
                 { id: 'menu-mgmt', icon: 'fa-utensils', label: 'Kelola Menu' },
                 { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Kelola Meja' },
