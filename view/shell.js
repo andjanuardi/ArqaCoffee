@@ -35,10 +35,10 @@ function renderMainApp() {
         </div>
       </div>
     </header>
-    <main class="max-w-5xl mx-auto px-4 py-4 ${role !== 'admin' && role !== 'manager' ? 'pb-24' : ''}">
+    <main class="max-w-5xl mx-auto px-4 py-4 pb-24">
       ${content}
     </main>
-    ${role !== 'admin' && role !== 'manager' ? renderBottomNav(role) : ''}
+    ${renderBottomNav(role)}
   </div>`;
 }
 
