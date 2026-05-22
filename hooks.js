@@ -125,7 +125,59 @@
                         }]
                     },
                     options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#f0ebe3', padding: 20 } } } }
-                }
+                },
+                'chart-expense-category': (() => {
+                    const cats = {};
+                    (DB.expenses || []).forEach(e => { cats[e.category] = (cats[e.category] || 0) + e.amount; });
+                    const labels = Object.keys(cats);
+                    const data = Object.values(cats);
+                    const colors = ['#e07a3a', '#1abc9c', '#e74c3c', '#f39c12', '#9b59b6'];
+                    return {
+                        type: 'bar',
+                        data: {
+                            labels,
+                            datasets: [{
+                                label: 'Biaya (Rp)',
+                                data,
+                                backgroundColor: labels.map((_, i) => colors[i % colors.length]),
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            indexAxis: 'y',
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: { ticks: { color: '#7a9ba5', callback: v => 'Rp ' + v.toLocaleString('id-ID') }, grid: { color: 'rgba(31, 61, 74, 0.5)' } },
+                                y: { ticks: { color: '#f0ebe3' }, grid: { display: false } }
+                            }
+                        }
+                    };
+                })(),
+                'chart-cashflow': (() => {
+                    const revData = DB.dailySales.map(d => d.revenue);
+                    const expData = DB.dailySales.map(d => {
+                        return (DB.expenses || []).filter(e => e.date === d.date).reduce((s, e) => s + e.amount, 0);
+                    });
+                    return {
+                        type: 'bar',
+                        data: {
+                            labels: DB.dailySales.map(d => formatDate(d.date).replace(' 2025', '')),
+                            datasets: [
+                                { label: 'Pemasukan', data: revData, backgroundColor: 'rgba(39,174,96,.7)', borderRadius: 6 },
+                                { label: 'Pengeluaran', data: expData, backgroundColor: 'rgba(231,76,60,.7)', borderRadius: 6 }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: { legend: { labels: { color: '#f0ebe3' } } },
+                            scales: {
+                                y: { ticks: { color: '#7a9ba5' }, grid: { color: 'rgba(31, 61, 74, 0.5)' } },
+                                x: { ticks: { color: '#7a9ba5' }, grid: { display: false } }
+                            }
+                        }
+                    };
+                })()
             };
 
             // Inisialisasi semua chart yang ada di DOM saat ini

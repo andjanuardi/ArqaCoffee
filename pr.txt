@@ -23,7 +23,7 @@ Admin
 #. tambahkan form input ubah password pengguna edit pengguna. (selesai)
 #. tambahkan tombol hapus meja di atas kiri card (selesai)
 #. tambahkan input menu pada edit dan tambah promo. tambahkan form input nilai diskon. tambahkan tanggal mulai s/d berakhir promo. ganti ikon menjadi upload gambar atau url gambar (selesai )
-#. tambahkan laporan keuangan berdasarkan dari internet
+#. tambahkan laporan keuangan berdasarkan dari internet (selesai)
 
 Komponen	Visualisasi
 Pendapatan Harian	Grafik garis/tren
