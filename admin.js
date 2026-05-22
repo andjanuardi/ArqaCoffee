@@ -11,6 +11,7 @@
             if (tab === 'finance') return renderFinanceReport();
             if (tab === 'stock') return renderStockManagement();
             if (tab === 'attendance') return renderAttendance();
+            if (tab === 'profile') return renderGenericProfile();
             return renderAdminOverview();
         }
 
