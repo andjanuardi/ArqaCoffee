@@ -37,6 +37,7 @@
       <div class="space-y-2">
         ${lowStock.map(s => `<div class="flex justify-between text-sm"><span>${s.name}</span><span style="color:var(--danger)">${s.current_quantity} / ${s.min_quantity} ${s.unit}</span></div>`).join('')}
       </div>
+      <button onclick="State.currentTab.manager='stock';render()" class="text-xs font-bold mt-2 flex items-center gap-1" style="color:var(--accent)">Selengkapnya <i class="fas fa-arrow-right" style="font-size:10px"></i></button>
     </div>`: ''}
     <div class="card mb-4">
       <h3 class="font-semibold text-sm mb-3">Pesanan Terkini</h3>
