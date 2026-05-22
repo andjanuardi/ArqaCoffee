@@ -6,8 +6,8 @@ Vanilla JS SPA (no bundler/framework). Café management with 6 roles: admin, man
 ## How to run
 Open `index.html` in a browser. No build step, no dev server, no npm install.
 
-## Script load order (23 scripts via `<script src="">`)
-data/db.js → state/store.js → helpers.js → components/toast.js → components/notifications.js → view/render.js → view/login.js → view/shell.js → view/customer.js → view/customer-orders.js → view/cashier.js → view/cashier-create.js → view/kitchen.js → view/courier.js → view/shared.js → view/manager.js → view/admin.js → view/profile.js → components/modal.js → components/hooks.js → init.js
+## Script load order (46 scripts via `<script src="">`)
+data/db.js → state/store.js → helpers.js → components/toast.js → components/notifications.js → components/modal.js → view/core/render.js → view/core/login.js → view/core/shell.js → view/shared/finance.js → view/shared/stock.js → view/shared/attendance.js → view/shared/table-detail.js → view/shared/menu-mgmt.js → view/shared/image-helpers.js → view/shared/menu-crud.js → view/shared/tables-mgmt.js → view/shared/promos.js → view/customer/menu.js → view/customer/promo-qr.js → view/customer/cart.js → view/customer/payment.js → view/customer/place.js → view/customer/delivery.js → view/customer/orders-list.js → view/customer/cancel.js → view/customer/tracking.js → view/customer/profile.js → view/customer/chat.js → view/cashier/orders.js → view/cashier/payment.js → view/cashier/edit.js → view/cashier/create-order.js → view/cashier/finalize.js → view/kitchen/queue.js → view/kitchen/status.js → view/kitchen/history.js → view/courier/available.js → view/courier/accept.js → view/courier/active.js → view/courier/history.js → view/manager/index.js → view/admin/overview.js → view/admin/users.js → view/core/profile.js → components/hooks.js → init.js
 
 CDN deps (loaded before app scripts): Tailwind 3, Leaflet 1.9.4, Chart.js, Font Awesome 6, Google Fonts (Poppins + Playfair Display).
 
