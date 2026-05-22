@@ -13,7 +13,7 @@
             else if (role === 'admin') content = renderAdminView();
 
             const useDrawer = ['admin', 'manager'].includes(role);
-            const useNav = !useDrawer || role === 'admin';
+            const useNav = !useDrawer || role === 'admin' || role === 'manager';
 
             return `
   <div class="min-h-screen" style="background:var(--bg)">
@@ -59,6 +59,7 @@
                 kitchen: [{ id: 'queue', icon: 'fa-fire-burner', label: 'Antrian' }, { id: 'history', icon: 'fa-clock-rotate-left', label: 'Riwayat' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
                 courier: [{ id: 'available', icon: 'fa-box', label: 'Tersedia' }, { id: 'active', icon: 'fa-route', label: 'Aktif' }, { id: 'history', icon: 'fa-clock-rotate-left', label: 'Riwayat' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
                 admin: [{ id: 'overview', icon: 'fa-gauge-high', label: 'Overview' }, { id: 'promos', icon: 'fa-tags', label: 'Promo' }, { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
+                manager: [{ id: 'dashboard', icon: 'fa-gauge-high', label: 'Dashboard' }, { id: 'promos', icon: 'fa-tags', label: 'Promo' }, { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
             };
             const items = tabs[role] || [];
             const active = State.currentTab[role] || items[0]?.id;
