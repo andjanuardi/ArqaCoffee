@@ -169,7 +169,19 @@
         function deleteUser(id) {
             const u = DB.users.find(x => x.id === id);
             if (!u) return;
-            if (!confirm('Hapus pengguna "' + u.name + '"? Tindakan ini tidak dapat dibatalkan.')) return;
+            showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-4">Konfirmasi Hapus</h3>
+      <p class="text-sm mb-4">Hapus pengguna "${u.name}"? Tindakan ini tidak dapat dibatalkan.</p>
+      <div class="flex gap-2">
+        <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+        <button onclick="confirmDeleteUser('${id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.15);color:var(--danger);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:10px;cursor:pointer"><i class="fas fa-trash mr-1"></i>Hapus</button>
+      </div>
+    </div>
+  `);
+        }
+
+        function confirmDeleteUser(id) {
             DB.users = DB.users.filter(x => x.id !== id);
             closeModal(); showToast('Pengguna dihapus', 'info'); render();
         }
