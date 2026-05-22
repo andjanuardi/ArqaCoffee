@@ -52,14 +52,17 @@ function renderCustomerMenu() {
         ${DB.promos
           .filter((p) => p.is_active)
           .map(
-            (p) => `
-        <div class="rounded-2xl p-4 relative overflow-hidden cursor-pointer promo-card" onclick="showPromoDetail('${p.id}')" style="background:linear-gradient(135deg,${p.color},${p.color}dd);color:#fff">
-          <div style="position:absolute;right:-10px;top:-10px;font-size:80px;opacity:.12"><i class="fas ${p.icon}"></i></div>
-          <div class="text-xs font-semibold mb-1 uppercase" style="opacity:.85;letter-spacing:1px">Promo Spesial</div>
+            (p) => {
+              const discLabel = p.discount_type === 'fixed' ? formatCurrency(p.discount_value) : p.discount_value + '%';
+              const bgStyle = p.image ? `background:linear-gradient(135deg,rgba(0,0,0,.6),rgba(0,0,0,.3)),url('${p.image}') center/cover` : `background:linear-gradient(135deg,${p.color || '#E07A3A'},${(p.color || '#E07A3A')}dd)`;
+              return `
+        <div class="rounded-2xl p-4 relative overflow-hidden cursor-pointer promo-card" onclick="showPromoDetail('${p.id}')" style="${bgStyle};color:#fff">
+          <div class="text-xs font-semibold mb-1 uppercase" style="opacity:.85;letter-spacing:1px">Diskon ${discLabel}</div>
           <div class="font-display text-lg font-black mb-1 promo-title">${p.title}</div>
           <div class="text-xs mb-3 promo-desc" style="opacity:.8">${p.desc}</div>
           <div class="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-lg" style="background:rgba(255,255,255,.25)">Klaim <i class="fas fa-arrow-right" style="font-size:10px"></i></div>
-        </div>`,
+        </div>`;
+            }
           )
           .join("")}
       </div>
@@ -184,15 +187,28 @@ function initPromoCarousel() {
 function showPromoDetail(promoId) {
   const p = DB.promos.find((x) => x.id === promoId);
   if (!p) return;
+  const discLabel = p.discount_type === 'fixed' ? formatCurrency(p.discount_value) : p.discount_value + '%';
+  const imgHtml = p.image ? `<img src="${p.image}" class="w-full h-40 object-cover rounded-xl mb-4" onerror="this.src='https://picsum.photos/seed/${p.id}/400/200'">` : `<div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl" style="background:${p.color || '#E07A3A'};color:#fff"><i class="fas ${p.icon || 'fa-tag'}"></i></div>`;
   showModal(`
     <div class="text-center">
-      <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl" style="background:${p.color};color:#fff"><i class="fas ${p.icon}"></i></div>
+      ${imgHtml}
       <h3 class="font-display text-xl font-bold mb-2">${p.title}</h3>
       <p class="text-sm mb-4" style="color:var(--muted)">${p.desc}</p>
+      <div class="flex justify-center gap-4 mb-4">
+        <div class="stat-card text-center">
+          <div class="text-xs" style="color:var(--muted)">Diskon</div>
+          <div class="text-lg font-bold mt-1" style="color:var(--accent)">${discLabel}</div>
+        </div>
+        ${p.start_date ? `<div class="stat-card text-center">
+          <div class="text-xs" style="color:var(--muted)">Periode</div>
+          <div class="text-sm font-bold mt-1">${formatDate(p.start_date)}</div>
+          <div class="text-xs" style="color:var(--muted)">- ${p.end_date ? formatDate(p.end_date) : '...'}</div>
+        </div>` : ''}
+      </div>
       <div class="text-left mb-4 p-3 rounded-xl" style="background:var(--bg2)">
         <div class="text-xs font-semibold mb-2" style="color:var(--muted)">Syarat & Ketentuan:</div>
         <ul class="text-xs space-y-1" style="color:var(--muted)">
-          ${p.terms.map((t) => `<li class="flex items-start gap-2"><i class="fas fa-check-circle mt-0.5" style="color:var(--success);font-size:10px"></i><span>${t}</span></li>`).join("")}
+          ${(p.terms||[]).map((t) => `<li class="flex items-start gap-2"><i class="fas fa-check-circle mt-0.5" style="color:var(--success);font-size:10px"></i><span>${t}</span></li>`).join("")}
         </ul>
       </div>
       <button onclick="closeModal(); showToast('Promo akan otomatis diterapkan saat checkout','success')" class="btn-primary w-full text-center">Gunakan Promo</button>

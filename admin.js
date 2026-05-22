@@ -337,7 +337,19 @@
         function deleteMenuItem(id) {
             const m = DB.menuItems.find(x => x.id === id);
             if (!m) return;
-            if (!confirm('Hapus menu "' + m.name + '"? Tindakan ini tidak dapat dibatalkan.')) return;
+            showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-4">Konfirmasi Hapus</h3>
+      <p class="text-sm mb-4">Hapus menu "${m.name}"? Tindakan ini tidak dapat dibatalkan.</p>
+      <div class="flex gap-2">
+        <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+        <button onclick="confirmDeleteMenuItem('${id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.15);color:var(--danger);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:10px;cursor:pointer"><i class="fas fa-trash mr-1"></i>Hapus</button>
+      </div>
+    </div>
+  `);
+        }
+
+        function confirmDeleteMenuItem(id) {
             DB.menuItems = DB.menuItems.filter(x => x.id !== id);
             closeModal(); showToast('Menu dihapus', 'info'); render();
         }
@@ -434,7 +446,7 @@
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       ${DB.tables.map(t => `
       <div class="card text-center" style="position:relative">
-        <button onclick="event.stopPropagation(); if(confirm('Hapus Meja ${t.number}?')) deleteTable('${t.id}')" class="btn-sm" style="position:absolute;top:6px;left:6px;background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px;line-height:1"><i class="fas fa-trash"></i></button>
+        <button onclick="event.stopPropagation(); confirmDeleteTable('${t.id}')" class="btn-sm" style="position:absolute;top:6px;left:6px;background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px;line-height:1"><i class="fas fa-trash"></i></button>
         <div class="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center text-2xl" style="background:${t.status === 'available' ? 'rgba(39,174,96,.1)' : 'rgba(231,76,60,.1)'}">
           <i class="fas fa-chair" style="color:${t.status === 'available' ? 'var(--success)' : 'var(--danger)'}"></i>
         </div>
@@ -453,6 +465,26 @@
             const t = DB.tables.find(x => x.id === id); if (t) { t.status = t.status === 'available' ? 'occupied' : 'available'; render() }
         }
 
+        function confirmDeleteTable(id) {
+            const t = DB.tables.find(x => x.id === id);
+            if (!t) return;
+            showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-4">Konfirmasi Hapus</h3>
+      <p class="text-sm mb-4">Hapus Meja ${t.number}? Tindakan ini tidak dapat dibatalkan.</p>
+      <div class="flex gap-2">
+        <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+        <button onclick="confirmDeleteTableAction('${id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.15);color:var(--danger);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:10px;cursor:pointer"><i class="fas fa-trash mr-1"></i>Hapus</button>
+      </div>
+    </div>
+  `);
+        }
+
+        function confirmDeleteTableAction(id) {
+            DB.tables = DB.tables.filter(x => x.id !== id);
+            closeModal(); showToast('Meja dihapus', 'info'); render();
+        }
+
         function deleteTable(id) {
             const t = DB.tables.find(x => x.id === id);
             if (!t) return;
@@ -469,18 +501,25 @@
       <button onclick="showAddPromoModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
     </div>
     <div class="space-y-3">
-      ${(DB.promos || []).map(p => `
+      ${(DB.promos || []).map(p => {
+                const now = new Date();
+                const active = p.is_active && (!p.end_date || new Date(p.end_date) >= now);
+                const discLabel = p.discount_type === 'fixed' ? formatCurrency(p.discount_value) : p.discount_value + '%';
+                return `
       <div class="card flex flex-col gap-3">
         <div class="flex items-start gap-4 cursor-pointer hover:scale-[1.01] transition-transform" onclick="showEditPromoModal('${p.id}')">
-          <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl text-white" style="background:${p.color}"><i class="fas ${p.icon}"></i></div>
-          <div class="flex-1">
+          <img src="${p.image || 'https://picsum.photos/seed/${p.id}/100/100'}" class="w-14 h-14 rounded-xl object-cover" onerror="this.src='https://picsum.photos/seed/${p.id}/100/100'">
+          <div class="flex-1 min-w-0">
             <div class="font-bold text-sm">${p.title}</div>
             <div class="text-xs mb-1" style="color:var(--muted)">${p.desc}</div>
-            <div class="text-[10px] text-gray-500 font-mono">${p.code}</div>
+            <div class="text-[10px] font-mono" style="color:var(--accent)">${p.code}</div>
+            <div class="text-[10px] mt-1" style="color:var(--muted)">Diskon ${discLabel}</div>
+            ${p.start_date ? `<div class="text-[10px]" style="color:var(--muted)">${formatDate(p.start_date)} - ${p.end_date ? formatDate(p.end_date) : '...'}</div>` : ''}
           </div>
-          <button onclick="event.stopPropagation(); togglePromoStatus('${p.id}')" class="text-xs px-3 py-1 rounded-lg" style="background:${p.is_active ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)'};color:${p.is_active ? 'var(--success)' : 'var(--danger)'}">${p.is_active ? 'Aktif' : 'Nonaktif'}</button>
+          <button onclick="event.stopPropagation(); togglePromoStatus('${p.id}')" class="text-xs px-3 py-1 rounded-lg" style="background:${active ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)'};color:${active ? 'var(--success)' : 'var(--danger)'}">${active ? 'Aktif' : 'Nonaktif'}</button>
         </div>
-      </div>`).join('')}
+      </div>`;
+            }).join('')}
       ${!(DB.promos || []).length ? '<div class="text-center py-6 text-sm" style="color:var(--muted)">Belum ada promo</div>' : ''}
     </div>
   </div>`;
@@ -504,9 +543,20 @@
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kode Promo</label><input id="new-promo-code" class="input-field text-sm" placeholder="Misal: diskon50"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Deskripsi</label><input id="new-promo-desc" class="input-field text-sm" placeholder="Penjelasan singkat promo"></div>
         <div class="grid grid-cols-2 gap-3">
-          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Ikon (FontAwesome)</label><input id="new-promo-icon" class="input-field text-sm" placeholder="fa-percent"></div>
-          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Warna Tema</label><input id="new-promo-color" type="color" class="input-field text-sm h-10 p-1" value="#E07A3A"></div>
+          <div>
+            <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Tipe Diskon</label>
+            <select id="new-promo-disc-type" class="input-field text-sm">
+              <option value="percent">Persentase (%)</option>
+              <option value="fixed">Nominal (Rp)</option>
+            </select>
+          </div>
+          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nilai Diskon</label><input id="new-promo-disc-value" type="number" class="input-field text-sm" placeholder="50" min="0"></div>
         </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Tanggal Mulai</label><input id="new-promo-start" type="date" class="input-field text-sm"></div>
+          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Tanggal Berakhir</label><input id="new-promo-end" type="date" class="input-field text-sm"></div>
+        </div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Gambar Promo</label>${renderImageInput('new-promo', '')}</div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Syarat & Ketentuan (pisahkan dgn koma)</label><textarea id="new-promo-terms" class="input-field text-sm min-h-[60px]" placeholder="Berlaku hari Senin, Minimal order 50rb..."></textarea></div>
       </div>
       <button onclick="addPromo()" class="btn-primary w-full mt-4 text-center">Simpan Promo</button>
@@ -518,11 +568,23 @@
             const title = document.getElementById('new-promo-title')?.value;
             const code = document.getElementById('new-promo-code')?.value;
             const desc = document.getElementById('new-promo-desc')?.value;
-            const icon = document.getElementById('new-promo-icon')?.value || 'fa-tag';
-            const color = document.getElementById('new-promo-color')?.value || '#E07A3A';
+            const discount_type = document.getElementById('new-promo-disc-type')?.value || 'percent';
+            const discount_value = parseInt(document.getElementById('new-promo-disc-value')?.value || '0');
+            const start_date = document.getElementById('new-promo-start')?.value || '';
+            const end_date = document.getElementById('new-promo-end')?.value || '';
             const termsStr = document.getElementById('new-promo-terms')?.value || '';
             
             if (!title || !code) { showToast('Judul dan kode promo wajib diisi', 'warning'); return; }
+            if (!discount_value) { showToast('Nilai diskon wajib diisi', 'warning'); return; }
+            
+            const mode = document.getElementById('new-promo-img-mode')?.value;
+            let image = document.getElementById('new-promo-img-url')?.value;
+            if (mode === 'upload') {
+                const preview = document.getElementById('new-promo-img-preview');
+                const img = preview && preview.querySelector('img');
+                if (img) image = img.src;
+            }
+            if (!image) image = `https://picsum.photos/seed/${Date.now()}/400/300`;
             
             if (!DB.promos) DB.promos = [];
             DB.promos.push({
@@ -530,8 +592,11 @@
                 code,
                 title,
                 desc,
-                icon,
-                color,
+                discount_type,
+                discount_value,
+                start_date,
+                end_date,
+                image,
                 terms: termsStr.split(',').map(t => t.trim()).filter(Boolean),
                 is_active: true
             });
@@ -548,13 +613,24 @@
     <div>
       <h3 class="font-display text-lg font-bold mb-4">Edit Promo</h3>
       <div class="space-y-3">
-        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Judul Promo</label><input id="edit-promo-title" class="input-field text-sm" value="${p.title}"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Judul Promo</label><input id="edit-promo-title" class="input-field text-sm" value="${p.title.replace(/"/g, '&quot;')}"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kode Promo</label><input id="edit-promo-code" class="input-field text-sm" value="${p.code}"></div>
-        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Deskripsi</label><input id="edit-promo-desc" class="input-field text-sm" value="${p.desc}"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Deskripsi</label><input id="edit-promo-desc" class="input-field text-sm" value="${(p.desc||'').replace(/"/g, '&quot;')}"></div>
         <div class="grid grid-cols-2 gap-3">
-          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Ikon (FontAwesome)</label><input id="edit-promo-icon" class="input-field text-sm" value="${p.icon}"></div>
-          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Warna Tema</label><input id="edit-promo-color" type="color" class="input-field text-sm h-10 p-1" value="${p.color}"></div>
+          <div>
+            <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Tipe Diskon</label>
+            <select id="edit-promo-disc-type" class="input-field text-sm">
+              <option value="percent" ${p.discount_type === 'percent' ? 'selected' : ''}>Persentase (%)</option>
+              <option value="fixed" ${p.discount_type === 'fixed' ? 'selected' : ''}>Nominal (Rp)</option>
+            </select>
+          </div>
+          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nilai Diskon</label><input id="edit-promo-disc-value" type="number" class="input-field text-sm" value="${p.discount_value || 0}" min="0"></div>
         </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Tanggal Mulai</label><input id="edit-promo-start" type="date" class="input-field text-sm" value="${p.start_date || ''}"></div>
+          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Tanggal Berakhir</label><input id="edit-promo-end" type="date" class="input-field text-sm" value="${p.end_date || ''}"></div>
+        </div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Gambar Promo</label>${renderImageInput('edit-promo', p.image || '')}</div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Syarat & Ketentuan (pisahkan dgn koma)</label><textarea id="edit-promo-terms" class="input-field text-sm min-h-[60px]">${(p.terms||[]).join(', ')}</textarea></div>
       </div>
       <div class="flex gap-2 mt-4">
@@ -571,13 +647,26 @@
             
             const title = document.getElementById('edit-promo-title')?.value;
             const code = document.getElementById('edit-promo-code')?.value;
+            const discount_value = parseInt(document.getElementById('edit-promo-disc-value')?.value || '0');
             if (!title || !code) { showToast('Judul dan kode promo wajib diisi', 'warning'); return; }
+            if (!discount_value) { showToast('Nilai diskon wajib diisi', 'warning'); return; }
             
             p.title = title;
             p.code = code;
             p.desc = document.getElementById('edit-promo-desc')?.value;
-            p.icon = document.getElementById('edit-promo-icon')?.value;
-            p.color = document.getElementById('edit-promo-color')?.value;
+            p.discount_type = document.getElementById('edit-promo-disc-type')?.value || 'percent';
+            p.discount_value = discount_value;
+            p.start_date = document.getElementById('edit-promo-start')?.value || '';
+            p.end_date = document.getElementById('edit-promo-end')?.value || '';
+            
+            const mode = document.getElementById('edit-promo-img-mode')?.value;
+            let image = document.getElementById('edit-promo-img-url')?.value;
+            if (mode === 'upload') {
+                const preview = document.getElementById('edit-promo-img-preview');
+                const img = preview && preview.querySelector('img');
+                if (img) image = img.src;
+            }
+            if (image) p.image = image;
             
             const termsStr = document.getElementById('edit-promo-terms')?.value || '';
             p.terms = termsStr.split(',').map(t => t.trim()).filter(Boolean);
@@ -590,8 +679,19 @@
         function deletePromo(id) {
             const p = DB.promos.find(x => x.id === id);
             if (!p) return;
-            if (!confirm(`Hapus promo "${p.title}"? Tindakan ini tidak dapat dibatalkan.`)) return;
-            
+            showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-4">Konfirmasi Hapus</h3>
+      <p class="text-sm mb-4">Hapus promo "${p.title}"? Tindakan ini tidak dapat dibatalkan.</p>
+      <div class="flex gap-2">
+        <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+        <button onclick="confirmDeletePromo('${id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.15);color:var(--danger);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:10px;cursor:pointer"><i class="fas fa-trash mr-1"></i>Hapus</button>
+      </div>
+    </div>
+  `);
+        }
+
+        function confirmDeletePromo(id) {
             DB.promos = DB.promos.filter(x => x.id !== id);
             closeModal();
             showToast('Promo dihapus', 'info');
