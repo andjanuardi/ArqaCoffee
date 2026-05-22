@@ -683,6 +683,15 @@ const DB = {
     { date: "2025-01-14", revenue: 1390000, orders: 35 },
     { date: "2025-01-15", revenue: 890000, orders: 22 },
   ],
+  expenses: [
+    { date: "2025-01-09", category: "Bahan Baku", amount: 450000, note: "Beli kopi dan susu" },
+    { date: "2025-01-10", category: "Operasional", amount: 200000, note: "Listrik dan air" },
+    { date: "2025-01-11", category: "Bahan Baku", amount: 380000, note: "Beli gula dan sirup" },
+    { date: "2025-01-12", category: "Gaji", amount: 1200000, note: "Gaji karyawan" },
+    { date: "2025-01-13", category: "Operasional", amount: 150000, note: "Sewa tempat" },
+    { date: "2025-01-14", category: "Bahan Baku", amount: 520000, note: "Beli snack dan roti" },
+    { date: "2025-01-15", category: "Lainnya", amount: 100000, note: "Biaya kebersihan" },
+  ],
 };
 
 // ============================================================

@@ -3,7 +3,7 @@
 #. jadikan card promo auto slide (selesai)
 
 Admin
-#. Indikator Pengeluaran tidak ada di dashboard
+#. Indikator Pengeluaran tidak ada di dashboard (selesai)
 #. indicator jumalh pegawai aktif
 #. Buat judul indicator grafik
 #. tambahkan buttom navbar di admin

@@ -16,6 +16,7 @@
 
         function renderAdminOverview() {
             const totalRev = DB.dailySales.reduce((s, d) => s + d.revenue, 0);
+            const totalExp = (DB.expenses || []).reduce((s, e) => s + e.amount, 0);
             const activeOrders = DB.orders.filter(o => !['completed', 'cancelled'].includes(o.status)).length;
             return `
   <div class="animate-fade-up">
@@ -23,8 +24,9 @@
       <h2 class="font-display text-2xl font-bold mb-1">Admin Overview</h2>
       <p class="text-sm" style="color:var(--muted)">Kontrol penuh seluruh operasional ARQA Coffee</p>
     </div>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
+      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pesanan Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--warning)">${activeOrders}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Menu</div><div class="text-lg font-bold mt-1">${DB.menuItems.length}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pengguna</div><div class="text-lg font-bold mt-1">${DB.users.length}</div></div>
