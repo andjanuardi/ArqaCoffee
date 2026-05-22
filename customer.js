@@ -38,15 +38,15 @@ function renderCustomerMenu() {
     </div>`
     }
 
-    <div class="flex items-center gap-3 mb-4">
-      <div class="flex-1 relative">
-        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2" style="color:var(--muted);font-size:13px"></i>
-        <input type="text" placeholder="Cari menu..." class="input-field pl-9 text-sm" value="${State.searchQuery}" oninput="State.searchQuery=this.value" onchange="render()" onkeypress="if(event.key==='Enter')render()">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="flex-1 relative">
+          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2" style="color:var(--muted);font-size:13px"></i>
+          <input type="text" placeholder="Cari menu..." class="input-field pl-9 text-sm" value="${State.searchQuery}" oninput="State.searchQuery=this.value" onchange="render()" onkeypress="if(event.key==='Enter')render()">
+        </div>
       </div>
-    </div>
-    ${
-      DB.promos && DB.promos.filter((p) => p.is_active).length > 0
-        ? `
+      ${
+        DB.promos && DB.promos.filter((p) => p.is_active).length > 0
+          ? `
     <div class="promo-carousel" id="promo-carousel">
       <div class="promo-track" id="promo-track">
         ${DB.promos
@@ -54,15 +54,24 @@ function renderCustomerMenu() {
           .map(
             (p) => {
               const discLabel = p.discount_type === 'fixed' ? formatCurrency(p.discount_value) : p.discount_value + '%';
-              const bgStyle = p.image ? `background:linear-gradient(135deg,rgba(0,0,0,.6),rgba(0,0,0,.3)),url('${p.image}') center/cover` : `background:linear-gradient(135deg,${p.color || '#E07A3A'},${(p.color || '#E07A3A')}dd)`;
+              const bgStyle = p.image ? `background:linear-gradient(135deg,rgba(0,0,0,.6),rgba(0,0,0,.3)),url('${p.image}') center/cover` : `background:linear-gradient(135deg,${p.color || '#E07A3A'},${(p.color || '#E07A3A'}dd)`;
+              const isActivePromo = State.activePromoId === p.id;
               return `
-        <div class="rounded-2xl p-4 relative overflow-hidden cursor-pointer promo-card" onclick="showPromoDetail('${p.id}')" style="${bgStyle};color:#fff">
+        <div class="rounded-2xl p-4 relative overflow-hidden cursor-pointer promo-card ${isActivePromo ? 'ring-2 ring-offset-2' : ''}" onclick="showPromoDetail('${p.id}')" style="${bgStyle};color:#fff;${isActivePromo ? '--tw-ring-color:var(--accent)' : ''}">
+          ${isActivePromo ? '<div class="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:rgba(39,174,96,.9);color:#fff">Aktif</div>' : ''}
           <div class="text-xs font-semibold mb-1 uppercase" style="opacity:.85;letter-spacing:1px">Diskon ${discLabel}</div>
           <div class="font-display text-lg font-black mb-1 promo-title">${p.title}</div>
           <div class="text-xs mb-3 promo-desc" style="opacity:.8">${p.desc}</div>
-          <div class="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-lg" style="background:rgba(255,255,255,.25)">Klaim <i class="fas fa-arrow-right" style="font-size:10px"></i></div>
+          <div class="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-lg" style="background:rgba(255,255,255,.25)">${isActivePromo ? 'Aktif' : 'Klaim'} <i class="fas fa-arrow-right" style="font-size:10px"></i></div>
         </div>`;
             }
+          )
+          .join("")}
+      </div>
+      ${DB.promos.filter((p) => p.is_active).length > 1 ? '<div class="promo-dots" id="promo-dots"></div>' : ''}
+    </div>`
+          : ""
+      }
           )
           .join("")}
       </div>
@@ -76,14 +85,23 @@ function renderCustomerMenu() {
     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
       ${items
         .map(
-          (m) => `
-      <div class="menu-card" onclick="showMenuItem('${m.id}')">
-        <img src="${m.image}" alt="${m.name}" loading="lazy" onerror="this.src='https://picsum.photos/seed/${m.id}/400/300'">
+          (m) => {
+            const hasPromo = State.activePromoId && (() => {
+              const p = DB.promos.find(x => x.id === State.activePromoId);
+              if (!p || !p.is_active) return false;
+              return !p.menu_ids || !p.menu_ids.length || p.menu_ids.includes(m.id);
+            })();
+            return `
+      <div class="menu-card ${hasPromo ? 'ring-2' : ''}" onclick="showMenuItem('${m.id}')" ${hasPromo ? 'style="--tw-ring-color:var(--success)"' : ''}>
+        <div class="relative">
+          <img src="${m.image}" alt="${m.name}" loading="lazy" onerror="this.src='https://picsum.photos/seed/${m.id}/400/300'">
+          ${hasPromo ? '<div class="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:var(--success);color:#fff"><i class="fas fa-tag mr-1" style="font-size:8px"></i>Diskon</div>' : ''}
+        </div>
         <div class="p-3">
           <div class="font-semibold text-sm mb-1 truncate">${m.name}</div>
           <div class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(m.price)}</div>
         </div>
-      </div>`,
+      </div>`;}
         )
         .join("")}
     </div>
@@ -189,6 +207,8 @@ function showPromoDetail(promoId) {
   if (!p) return;
   const discLabel = p.discount_type === 'fixed' ? formatCurrency(p.discount_value) : p.discount_value + '%';
   const imgHtml = p.image ? `<img src="${p.image}" class="w-full h-40 object-cover rounded-xl mb-4" onerror="this.src='https://picsum.photos/seed/${p.id}/400/200'">` : `<div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl" style="background:${p.color || '#E07A3A'};color:#fff"><i class="fas ${p.icon || 'fa-tag'}"></i></div>`;
+  const includedMenus = (p.menu_ids || []).map(id => DB.menuItems.find(m => m.id === id)).filter(Boolean);
+  const isActive = State.activePromoId === p.id;
   showModal(`
     <div class="text-center">
       ${imgHtml}
@@ -205,15 +225,35 @@ function showPromoDetail(promoId) {
           <div class="text-xs" style="color:var(--muted)">- ${p.end_date ? formatDate(p.end_date) : '...'}</div>
         </div>` : ''}
       </div>
+      ${includedMenus.length ? `<div class="text-left mb-4 p-3 rounded-xl" style="background:var(--bg2)">
+        <div class="text-xs font-semibold mb-2" style="color:var(--muted)">Menu yang Mendapat Diskon:</div>
+        <div class="space-y-2">
+          ${includedMenus.map(m => `
+            <div class="flex items-center gap-2 text-sm">
+              <img src="${m.image}" class="w-8 h-8 rounded-lg object-cover" onerror="this.src='https://picsum.photos/seed/${m.id}/60/60'">
+              <span class="flex-1 text-left">${m.name}</span>
+              <span style="color:var(--accent);font-weight:600">${discLabel}</span>
+            </div>`).join('')}
+        </div>
+      </div>` : '<div class="text-left mb-4 p-3 rounded-xl" style="background:var(--bg2);font-size:12px;color:var(--muted)">Berlaku untuk semua menu</div>'}
       <div class="text-left mb-4 p-3 rounded-xl" style="background:var(--bg2)">
         <div class="text-xs font-semibold mb-2" style="color:var(--muted)">Syarat & Ketentuan:</div>
         <ul class="text-xs space-y-1" style="color:var(--muted)">
           ${(p.terms||[]).map((t) => `<li class="flex items-start gap-2"><i class="fas fa-check-circle mt-0.5" style="color:var(--success);font-size:10px"></i><span>${t}</span></li>`).join("")}
         </ul>
       </div>
-      <button onclick="closeModal(); showToast('Promo akan otomatis diterapkan saat checkout','success')" class="btn-primary w-full text-center">Gunakan Promo</button>
+      ${isActive ? `<button onclick="closeModal(); State.activePromoId=null; showToast('Promo dibatalkan','info'); render()" class="btn-sm w-full text-center" style="background:rgba(231,76,60,.15);color:var(--danger);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:10px;cursor:pointer">Batalkan Promo</button>` : `<button onclick="applyPromo('${p.id}')" class="btn-primary w-full text-center">Gunakan Promo</button>`}
     </div>
   `);
+}
+
+function applyPromo(promoId) {
+  const p = DB.promos.find(x => x.id === promoId);
+  if (!p) return;
+  State.activePromoId = p.id;
+  closeModal();
+  showToast(`Promo ${p.title} diterapkan!`, 'success');
+  render();
 }
 
 function startQRScan() {
@@ -264,12 +304,24 @@ function showMenuItem(id) {
   const m = getMenuItem(id);
   if (!m) return;
   let qty = 1;
+  const activePromo = State.activePromoId ? DB.promos.find(x => x.id === State.activePromoId) : null;
+  const hasPromo = activePromo && activePromo.is_active && (!activePromo.menu_ids || !activePromo.menu_ids.length || activePromo.menu_ids.includes(m.id));
+  const discPrice = hasPromo && activePromo.discount_type === 'fixed'
+    ? Math.max(0, m.price - activePromo.discount_value)
+    : hasPromo
+      ? Math.round(m.price * (1 - activePromo.discount_value / 100))
+      : m.price;
   showModal(`
     <div>
-      <img src="${m.image}" alt="${m.name}" class="w-full h-48 object-cover rounded-xl mb-4" onerror="this.src='https://picsum.photos/seed/${m.id}/400/300'">
+      <div class="relative">
+        <img src="${m.image}" alt="${m.name}" class="w-full h-48 object-cover rounded-xl mb-4" onerror="this.src='https://picsum.photos/seed/${m.id}/400/300'">
+        ${hasPromo ? '<div class="absolute top-2 left-2 text-[10px] font-bold px-3 py-1 rounded-full" style="background:var(--success);color:#fff"><i class="fas fa-tag mr-1"></i>Diskon Promo</div>' : ''}
+      </div>
       <div class="flex justify-between items-start mb-2">
         <h3 class="font-display text-xl font-bold">${m.name}</h3>
-        <span class="font-bold text-lg" style="color:var(--accent)">${formatCurrency(m.price)}</span>
+        <div class="text-right">
+          ${hasPromo ? `<div class="text-xs line-through" style="color:var(--muted)">${formatCurrency(m.price)}</div><div class="font-bold text-lg" style="color:var(--success)">${formatCurrency(discPrice)}</div>` : `<span class="font-bold text-lg" style="color:var(--accent)">${formatCurrency(m.price)}</span>`}
+        </div>
       </div>
       <p class="text-sm mb-4" style="color:var(--muted)">${m.description}</p>
       <div class="mb-4">
@@ -329,6 +381,9 @@ function addToCart(id) {
 
 function renderCustomerCart() {
   const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
+  const discount = calcPromoDiscount();
+  const afterDiscount = total - discount;
+  const activePromo = State.activePromoId ? DB.promos.find(x => x.id === State.activePromoId) : null;
   if (State.cart.length === 0) {
     return `<div class="text-center py-16 animate-fade-up">
       <i class="fas fa-shopping-bag text-5xl mb-4" style="color:var(--border)"></i>
@@ -343,11 +398,16 @@ function renderCustomerCart() {
     <div class="space-y-3 mb-6">
       ${State.cart
         .map(
-          (c, i) => `
+          (c, i) => {
+            const eligible = activePromo && activePromo.is_active && (!activePromo.menu_ids || !activePromo.menu_ids.length || activePromo.menu_ids.includes(c.menu_item_id));
+            return `
       <div class="card flex items-center gap-4">
         <img src="${c.menu_item.image}" class="w-16 h-16 rounded-xl object-cover" onerror="this.src='https://picsum.photos/seed/${c.menu_item.id}/100/100'">
         <div class="flex-1 min-w-0">
-          <div class="font-semibold text-sm truncate">${c.menu_item.name}</div>
+          <div class="flex items-center gap-2">
+            <div class="font-semibold text-sm truncate">${c.menu_item.name}</div>
+            ${eligible ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style="background:rgba(39,174,96,.15);color:var(--success)">Diskon</span>' : ''}
+          </div>
           <div class="text-xs" style="color:var(--muted)">${c.notes || "Tanpa catatan"}</div>
           <div class="flex items-center gap-2 mt-1">
             <div class="qty-btn" style="width:26px;height:26px;font-size:12px" onclick="updateCartQty(${i},-1)">-</div>
@@ -359,15 +419,21 @@ function renderCustomerCart() {
           <div class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(c.unit_price * c.quantity)}</div>
           <button onclick="removeCartItem(${i})" class="text-xs mt-1" style="color:var(--danger)"><i class="fas fa-trash"></i></button>
         </div>
-      </div>`,
+      </div>`;}
         )
         .join("")}
     </div>
+    ${activePromo ? `<div class="flex items-center gap-2 mb-3 text-xs p-3 rounded-xl" style="background:rgba(39,174,96,.1);color:var(--success)">
+      <i class="fas fa-tag"></i>
+      <span class="flex-1">Promo <b>${activePromo.title}</b> aktif</span>
+      <button onclick="State.activePromoId=null;render()" class="text-xs underline" style="color:var(--muted)">Batalkan</button>
+    </div>` : ''}
     <div class="card mb-4">
       <div class="flex justify-between mb-2 text-sm"><span style="color:var(--muted)">Subtotal</span><span>${formatCurrency(total)}</span></div>
-      <div class="flex justify-between mb-2 text-sm"><span style="color:var(--muted)">Pajak (10%)</span><span>${formatCurrency(Math.round(total * 0.1))}</span></div>
+      ${discount > 0 ? `<div class="flex justify-between mb-2 text-sm"><span style="color:var(--success)"><i class="fas fa-tag mr-1"></i>Diskon ${activePromo ? activePromo.title : ''}</span><span style="color:var(--success)">-${formatCurrency(discount)}</span></div>` : ''}
+      <div class="flex justify-between mb-2 text-sm"><span style="color:var(--muted)">Pajak (10%)</span><span>${formatCurrency(Math.round(afterDiscount * 0.1))}</span></div>
       <div class="border-t pt-2 mt-2" style="border-color:var(--border)">
-        <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(Math.round(total * 1.1))}</span></div>
+        <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(Math.round(afterDiscount * 1.1))}</span></div>
       </div>
     </div>
     <div class="card mb-4">
@@ -485,12 +551,31 @@ function removeCartItem(i) {
   render();
 }
 
+function calcPromoDiscount() {
+  if (!State.activePromoId) return 0;
+  const p = DB.promos.find(x => x.id === State.activePromoId);
+  const now = new Date();
+  if (!p || !p.is_active) return 0;
+  if (p.end_date && new Date(p.end_date) < now) { State.activePromoId = null; return 0; }
+  if (p.start_date && new Date(p.start_date) > now) { State.activePromoId = null; return 0; }
+  const eligible = p.menu_ids && p.menu_ids.length
+    ? State.cart.filter(c => p.menu_ids.includes(c.menu_item_id))
+    : State.cart;
+  const eligibleTotal = eligible.reduce((s, c) => s + c.unit_price * c.quantity, 0);
+  if (p.discount_type === 'fixed') return Math.min(p.discount_value, eligibleTotal);
+  return Math.round(eligibleTotal * p.discount_value / 100);
+}
+
 function confirmPlaceOrder() {
   const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
-  const grandTotal = Math.round(total * 1.1);
+  const discount = calcPromoDiscount();
+  const afterDiscount = total - discount;
+  const tax = Math.round(afterDiscount * 0.1);
+  const grandTotal = Math.round(afterDiscount * 1.1);
   const itemsList = State.cart.map(c =>
     `${c.menu_item.name} x${c.quantity} = ${formatCurrency(c.unit_price * c.quantity)}`
   ).join('</div><div class="text-sm" style="color:var(--muted)">');
+  const activePromo = State.activePromoId ? DB.promos.find(x => x.id === State.activePromoId) : null;
 
   showModal(`
     <div>
@@ -505,7 +590,8 @@ function confirmPlaceOrder() {
         <div>${itemsList}</div>
         <div class="border-t pt-2 mt-2" style="border-color:var(--border)">
           <div class="flex justify-between text-sm"><span style="color:var(--muted)">Subtotal</span><span>${formatCurrency(total)}</span></div>
-          <div class="flex justify-between text-sm"><span style="color:var(--muted)">Pajak (10%)</span><span>${formatCurrency(Math.round(total * 0.1))}</span></div>
+          ${discount > 0 ? `<div class="flex justify-between text-sm"><span style="color:var(--success)"><i class="fas fa-tag mr-1"></i>Diskon ${activePromo ? activePromo.title : ''}</span><span style="color:var(--success)">-${formatCurrency(discount)}</span></div>` : ''}
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">Pajak (10%)</span><span>${formatCurrency(tax)}</span></div>
           <div class="flex justify-between font-bold mt-1"><span>Total</span><span style="color:var(--accent)">${formatCurrency(grandTotal)}</span></div>
         </div>
       </div>
@@ -544,7 +630,9 @@ function placeOrder() {
     }
   }
   const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
-  const grandTotal = Math.round(total * 1.1);
+  const discount = calcPromoDiscount();
+  const afterDiscount = total - discount;
+  const grandTotal = Math.round(afterDiscount * 1.1);
 
   if (State.orderType === "dine-in" && State.payTiming === "later") {
     const existingOrder = DB.orders.find(
@@ -616,6 +704,8 @@ function placeOrder() {
       State.orderType === "delivery" && State.deliveryLocation
         ? State.deliveryLocation
         : null,
+    promo_id: State.activePromoId || null,
+    promo_discount: discount || 0,
     created_at: new Date().toISOString(),
     items: State.cart.map((c) => ({
       menu_item_id: c.menu_item_id,
@@ -628,6 +718,7 @@ function placeOrder() {
   if (State.orderType === "delivery") order.courier_id = null;
   DB.orders.unshift(order);
   State.cart = [];
+  State.activePromoId = null;
   State.deliveryLocation = null;
   State.deliveryAddress = "";
   State.deliveryDetail = "";

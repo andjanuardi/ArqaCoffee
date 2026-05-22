@@ -544,10 +544,11 @@
       <button onclick="showAddPromoModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
     </div>
     <div class="space-y-3">
-      ${(DB.promos || []).map(p => {
+            ${(DB.promos || []).map(p => {
                 const now = new Date();
                 const active = p.is_active && (!p.end_date || new Date(p.end_date) >= now);
                 const discLabel = p.discount_type === 'fixed' ? formatCurrency(p.discount_value) : p.discount_value + '%';
+                const menuNames = (p.menu_ids || []).map(id => { const m = DB.menuItems.find(x => x.id === id); return m ? m.name : ''; }).filter(Boolean).join(', ');
                 return `
       <div class="card flex flex-col gap-3">
         <div class="flex items-start gap-4 cursor-pointer hover:scale-[1.01] transition-transform" onclick="showEditPromoModal('${p.id}')">
@@ -558,6 +559,7 @@
             <div class="text-[10px] font-mono" style="color:var(--accent)">${p.code}</div>
             <div class="text-[10px] mt-1" style="color:var(--muted)">Diskon ${discLabel}</div>
             ${p.start_date ? `<div class="text-[10px]" style="color:var(--muted)">${formatDate(p.start_date)} - ${p.end_date ? formatDate(p.end_date) : '...'}</div>` : ''}
+            ${menuNames ? `<div class="text-[10px] mt-1" style="color:var(--accent)">Menu: ${menuNames}</div>` : '<div class="text-[10px] mt-1" style="color:var(--muted)">Semua menu</div>'}
           </div>
           <button onclick="event.stopPropagation(); togglePromoStatus('${p.id}')" class="text-xs px-3 py-1 rounded-lg" style="background:${active ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)'};color:${active ? 'var(--success)' : 'var(--danger)'}">${active ? 'Aktif' : 'Nonaktif'}</button>
         </div>
@@ -575,6 +577,21 @@
                 showToast(`Promo ${p.title} ${p.is_active ? 'diaktifkan' : 'dinonaktifkan'}`, 'info');
                 render();
             }
+        }
+
+        function renderPromoMenuCheckboxes(prefix, selected) {
+            selected = selected || [];
+            return DB.menuItems.map(m => `
+            <label class="flex items-center gap-2 text-sm py-1 cursor-pointer">
+              <input type="checkbox" id="${prefix}-menu-${m.id}" value="${m.id}" ${selected.includes(m.id) ? 'checked' : ''} style="accent-color:var(--accent)">
+              <img src="${m.image}" class="w-6 h-6 rounded object-cover" onerror="this.src='https://picsum.photos/seed/${m.id}/40/40'">
+              <span class="flex-1">${m.name}</span>
+              <span style="color:var(--muted);font-size:11px">${formatCurrency(m.price)}</span>
+            </label>`).join('');
+        }
+
+        function getSelectedMenuIds(prefix) {
+            return DB.menuItems.filter(m => document.getElementById(prefix + '-menu-' + m.id)?.checked).map(m => m.id);
         }
 
         function showAddPromoModal() {
@@ -600,6 +617,10 @@
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Tanggal Berakhir</label><input id="new-promo-end" type="date" class="input-field text-sm"></div>
         </div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Gambar Promo</label>${renderImageInput('new-promo', '')}</div>
+        <div>
+          <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Pilih Menu yang Mendapat Diskon</label>
+          <div class="max-h-40 overflow-y-auto space-y-1 p-2 rounded-xl" style="background:var(--bg2)">${renderPromoMenuCheckboxes('new-promo', [])}</div>
+        </div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Syarat & Ketentuan (pisahkan dgn koma)</label><textarea id="new-promo-terms" class="input-field text-sm min-h-[60px]" placeholder="Berlaku hari Senin, Minimal order 50rb..."></textarea></div>
       </div>
       <button onclick="addPromo()" class="btn-primary w-full mt-4 text-center">Simpan Promo</button>
@@ -640,6 +661,7 @@
                 start_date,
                 end_date,
                 image,
+                menu_ids: getSelectedMenuIds('new-promo'),
                 terms: termsStr.split(',').map(t => t.trim()).filter(Boolean),
                 is_active: true
             });
@@ -674,6 +696,10 @@
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Tanggal Berakhir</label><input id="edit-promo-end" type="date" class="input-field text-sm" value="${p.end_date || ''}"></div>
         </div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Gambar Promo</label>${renderImageInput('edit-promo', p.image || '')}</div>
+        <div>
+          <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Pilih Menu yang Mendapat Diskon</label>
+          <div class="max-h-40 overflow-y-auto space-y-1 p-2 rounded-xl" style="background:var(--bg2)">${renderPromoMenuCheckboxes('edit-promo', p.menu_ids || [])}</div>
+        </div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Syarat & Ketentuan (pisahkan dgn koma)</label><textarea id="edit-promo-terms" class="input-field text-sm min-h-[60px]">${(p.terms||[]).join(', ')}</textarea></div>
       </div>
       <div class="flex gap-2 mt-4">
@@ -711,6 +737,8 @@
             }
             if (image) p.image = image;
             
+            p.menu_ids = getSelectedMenuIds('edit-promo');
+
             const termsStr = document.getElementById('edit-promo-terms')?.value || '';
             p.terms = termsStr.split(',').map(t => t.trim()).filter(Boolean);
             
