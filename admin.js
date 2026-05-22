@@ -241,19 +241,6 @@
         function showEditMenuItemModal(id) {
             const m = DB.menuItems.find(x => x.id === id);
             if (!m) return;
-            const existingRecipe = DB.menuStockMapping && DB.menuStockMapping[id] ? DB.menuStockMapping[id] : [];
-            const stockOpts = DB.stockItems.map(s => {
-              const checked = existingRecipe.some(r => (typeof r === 'string' ? r : r.id) === s.id);
-              const qty = existingRecipe.find(r => (typeof r === 'string' ? r : r.id) === s.id);
-              const qtyVal = qty ? (typeof qty === 'string' ? 1 : qty.qty) : 1;
-              return `
-              <div class="flex items-center gap-2 py-1.5">
-                <input type="checkbox" id="edit-recipe-${s.id}" class="recipe-cb" style="accent-color:var(--accent);width:16px;height:16px" ${checked ? 'checked' : ''} onchange="document.getElementById('edit-recipe-qty-${s.id}').disabled = !this.checked">
-                <label for="edit-recipe-${s.id}" class="text-xs flex-1">${s.name}</label>
-                <input type="number" id="edit-recipe-qty-${s.id}" class="input-field text-xs" style="width:60px;padding:4px 6px" value="${qtyVal}" min="0.1" step="0.1" ${checked ? '' : 'disabled'}>
-              </div>
-            `;
-            }).join('');
             showModal(`
     <div>
       <h3 class="font-display text-lg font-bold mb-4">Edit Menu</h3>
@@ -266,10 +253,6 @@
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kategori</label>
             ${getCategoryOptions(m.category, 'edit')}
           </div>
-        </div>
-        <div>
-          <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Resep Bahan</label>
-          <div class="card" style="padding:10px;max-height:180px;overflow-y:auto">${stockOpts}</div>
         </div>
       </div>
       <button onclick="saveEditMenuItem('${m.id}')" class="btn-primary w-full mt-4 text-center">Simpan Perubahan</button>
@@ -293,18 +276,6 @@
             if (image) m.image = image;
             if (cat) m.category = cat;
             m.description = document.getElementById('edit-menu-desc')?.value || '';
-            // Simpan resep
-            if (!DB.menuStockMapping) DB.menuStockMapping = {};
-            const recipe = [];
-            DB.stockItems.forEach(s => {
-              const cb = document.getElementById('edit-recipe-' + s.id);
-              if (cb && cb.checked) {
-                const qty = parseFloat(document.getElementById('edit-recipe-qty-' + s.id)?.value) || 1;
-                recipe.push({ id: s.id, qty });
-              }
-            });
-            if (recipe.length) DB.menuStockMapping[id] = recipe;
-            else delete DB.menuStockMapping[id];
             closeModal(); showToast('Menu berhasil diperbarui', 'success'); render();
         }
 
@@ -323,13 +294,6 @@
         }
 
         function showAddMenuItemModal() {
-            const stockOpts = DB.stockItems.map(s => `
-              <div class="flex items-center gap-2 py-1.5">
-                <input type="checkbox" id="new-recipe-${s.id}" class="recipe-cb" style="accent-color:var(--accent);width:16px;height:16px" onchange="document.getElementById('new-recipe-qty-${s.id}').disabled = !this.checked">
-                <label for="new-recipe-${s.id}" class="text-xs flex-1">${s.name}</label>
-                <input type="number" id="new-recipe-qty-${s.id}" class="input-field text-xs" style="width:60px;padding:4px 6px" value="1" min="0.1" step="0.1" disabled>
-              </div>
-            `).join('');
             showModal(`
     <div>
       <h3 class="font-display text-lg font-bold mb-4">Tambah Menu</h3>
@@ -343,10 +307,6 @@
           </div>
         </div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">URL Gambar</label><input id="new-menu-image" class="input-field text-sm" placeholder="https://... (kosongi untuk gambar otomatis)"></div>
-        <div>
-          <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Resep Bahan</label>
-          <div class="card" style="padding:10px;max-height:180px;overflow-y:auto">${stockOpts}</div>
-        </div>
       </div>
       <button onclick="addMenuItem()" class="btn-primary w-full mt-4 text-center">Simpan</button>
     </div>
@@ -364,17 +324,6 @@
               cat = document.getElementById('new-menu-cat-custom')?.value.trim() || 'coffee';
             }
             DB.menuItems.push({ id, name, description: document.getElementById('new-menu-desc')?.value || '', price, category: cat, image: img, is_available: true });
-            // Simpan resep
-            if (!DB.menuStockMapping) DB.menuStockMapping = {};
-            const recipe = [];
-            DB.stockItems.forEach(s => {
-              const cb = document.getElementById('new-recipe-' + s.id);
-              if (cb && cb.checked) {
-                const qty = parseFloat(document.getElementById('new-recipe-qty-' + s.id)?.value) || 1;
-                recipe.push({ id: s.id, qty });
-              }
-            });
-            if (recipe.length) DB.menuStockMapping[id] = recipe;
             closeModal(); showToast('Menu ditambahkan', 'success'); render();
         }
 
