@@ -3,13 +3,37 @@
 // ============================================================
 
 // ------------------------------------------------------------------
+// FINANCE HELPERS
+// ------------------------------------------------------------------
+function getComputedDailySales() {
+  const daily = {};
+  DB.orders.filter(o => o.payment_status === 'paid').forEach(o => {
+    const dateKey = o.created_at?.split('T')[0];
+    if (!dateKey) return;
+    if (!daily[dateKey]) daily[dateKey] = { date: dateKey, revenue: 0, orders: 0 };
+    daily[dateKey].revenue += o.total_amount || 0;
+    daily[dateKey].orders += 1;
+  });
+  const entries = Object.values(daily).sort((a, b) => a.date.localeCompare(b.date));
+  const last7 = entries.slice(-7);
+  while (last7.length < 7) {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - last7.length));
+    const key = d.toISOString().split('T')[0];
+    last7.unshift({ date: key, revenue: 0, orders: 0 });
+  }
+  return last7;
+}
+
+// ------------------------------------------------------------------
 // FINANCE REPORT
 // ------------------------------------------------------------------
 function renderFinanceReport() {
-  const totalRev = DB.dailySales.reduce((s, d) => s + d.revenue, 0);
+  const computedSales = getComputedDailySales();
+  const totalRev = computedSales.reduce((s, d) => s + d.revenue, 0);
   const totalExp = (DB.expenses || []).reduce((s, e) => s + e.amount, 0);
   const netProfit = totalRev - totalExp;
-  const today = DB.dailySales[DB.dailySales.length - 1];
+  const today = computedSales[computedSales.length - 1];
 
   const prodCount = {};
   DB.orders.filter(o => o.payment_status === 'paid').forEach(o => {

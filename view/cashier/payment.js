@@ -60,16 +60,16 @@ function settleDelivery(id) {
 }
 
 function renderCashierReport() {
-  const today = DB.dailySales[DB.dailySales.length - 1];
-  const completedToday = DB.orders.filter((o) => o.status === "completed");
-  const todayRev =
-    completedToday.reduce((s, o) => s + o.total_amount, 0) + today.revenue;
+  const todayKey = new Date().toISOString().split('T')[0];
+  const todayPaid = DB.orders.filter(o => o.payment_status === 'paid' && o.created_at?.startsWith(todayKey));
+  const todayRev = todayPaid.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const todayOrders = todayPaid.length;
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Harian</h2>
     <div class="grid grid-cols-2 gap-3 mb-5">
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pendapatan Hari Ini</div><div class="text-xl font-bold mt-1" style="color:var(--accent)">${formatCurrency(todayRev)}</div></div>
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pesanan</div><div class="text-xl font-bold mt-1">${today.orders + completedToday.length}</div></div>
+      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pesanan</div><div class="text-xl font-bold mt-1">${todayOrders}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Lunas</div><div class="text-xl font-bold mt-1" style="color:var(--success)">${DB.orders.filter((o) => o.payment_status === "paid").length}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Belum Bayar</div><div class="text-xl font-bold mt-1" style="color:var(--danger)">${DB.orders.filter((o) => o.payment_status === "unpaid").length}</div></div>
     </div>

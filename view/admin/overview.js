@@ -16,7 +16,7 @@ function renderAdminView() {
 }
 
 function renderAdminOverview() {
-  const totalRev = DB.dailySales.reduce((s, d) => s + d.revenue, 0);
+  const totalRev = getComputedDailySales().reduce((s, d) => s + d.revenue, 0);
   const totalExp = (DB.expenses || []).reduce((s, e) => s + e.amount, 0);
   const activeOrders = DB.orders.filter(o => !['completed', 'cancelled'].includes(o.status)).length;
   const pegawai = DB.users.filter(u => u.role !== 'customer').length;

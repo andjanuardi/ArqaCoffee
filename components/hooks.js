@@ -13,6 +13,8 @@ function initCharts() {
   });
   State.chartInstances = {};
 
+  const ds = typeof getComputedDailySales === 'function' ? getComputedDailySales() : [];
+
   const chartOptions = (yLabel) => ({
     responsive: true,
     plugins: { legend: { display: false } },
@@ -33,10 +35,10 @@ function initCharts() {
     'chart-cashier': {
       type: 'bar',
       data: {
-        labels: DB.dailySales.map(d => formatDate(d.date).replace(' 2025', '')),
+        labels: ds.map(d => formatDate(d.date).replace(' 2025', '')),
         datasets: [{
           label: 'Pendapatan',
-          data: DB.dailySales.map(d => d.revenue / 1000),
+          data: ds.map(d => d.revenue / 1000),
           backgroundColor: 'rgba(224, 122, 58, 0.6)',
           borderColor: '#e07a3a',
           borderWidth: 1,
@@ -48,10 +50,10 @@ function initCharts() {
     'chart-revenue': {
       type: 'line',
       data: {
-        labels: DB.dailySales.map(d => formatDate(d.date).replace(' 2025', '')),
+        labels: ds.map(d => formatDate(d.date).replace(' 2025', '')),
         datasets: [{
           label: 'Pendapatan',
-          data: DB.dailySales.map(d => d.revenue / 1000),
+          data: ds.map(d => d.revenue / 1000),
           borderColor: '#e07a3a',
           backgroundColor: 'rgba(224, 122, 58, 0.1)',
           fill: true,
@@ -64,10 +66,10 @@ function initCharts() {
     'chart-admin-revenue': {
       type: 'line',
       data: {
-        labels: DB.dailySales.map(d => formatDate(d.date).replace(' 2025', '')),
+        labels: ds.map(d => formatDate(d.date).replace(' 2025', '')),
         datasets: [{
           label: 'Pendapatan',
-          data: DB.dailySales.map(d => d.revenue / 1000),
+          data: ds.map(d => d.revenue / 1000),
           borderColor: '#e07a3a',
           backgroundColor: 'rgba(224, 122, 58, 0.1)',
           fill: true,
@@ -80,11 +82,11 @@ function initCharts() {
     'chart-finance-detail': {
       type: 'bar',
       data: {
-        labels: DB.dailySales.map(d => formatDate(d.date).replace(' 2025', '')),
+        labels: ds.map(d => formatDate(d.date).replace(' 2025', '')),
         datasets: [
           {
             label: 'Pendapatan (Ribu Rp)',
-            data: DB.dailySales.map(d => d.revenue / 1000),
+            data: ds.map(d => d.revenue / 1000),
             backgroundColor: 'rgba(224, 122, 58, 0.6)',
             borderColor: '#e07a3a',
             borderWidth: 1,
@@ -92,7 +94,7 @@ function initCharts() {
           },
           {
             label: 'Jumlah Pesanan',
-            data: DB.dailySales.map(d => d.orders),
+            data: ds.map(d => d.orders),
             backgroundColor: 'rgba(26, 188, 156, 0.6)',
             borderColor: '#1abc9c',
             borderWidth: 1,
@@ -154,14 +156,14 @@ function initCharts() {
       };
     })(),
     'chart-cashflow': (() => {
-      const revData = DB.dailySales.map(d => d.revenue);
-      const expData = DB.dailySales.map(d => {
+      const revData = ds.map(d => d.revenue);
+      const expData = ds.map(d => {
         return (DB.expenses || []).filter(e => e.date === d.date).reduce((s, e) => s + e.amount, 0);
       });
       return {
         type: 'bar',
         data: {
-          labels: DB.dailySales.map(d => formatDate(d.date).replace(' 2025', '')),
+          labels: ds.map(d => formatDate(d.date).replace(' 2025', '')),
           datasets: [
             { label: 'Pemasukan', data: revData, backgroundColor: 'rgba(39,174,96,.7)', borderRadius: 6 },
             { label: 'Pengeluaran', data: expData, backgroundColor: 'rgba(231,76,60,.7)', borderRadius: 6 },

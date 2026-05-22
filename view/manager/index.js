@@ -16,9 +16,10 @@ function renderManagerView() {
 }
 
 function renderManagerDashboard() {
-  const totalRev = DB.dailySales.reduce((s, d) => s + d.revenue, 0);
+  const computedSales = getComputedDailySales();
+  const totalRev = computedSales.reduce((s, d) => s + d.revenue, 0);
   const totalExp = (DB.expenses || []).reduce((s, e) => s + e.amount, 0);
-  const totalOrders = DB.dailySales.reduce((s, d) => s + d.orders, 0);
+  const totalOrders = computedSales.reduce((s, d) => s + d.orders, 0);
   const lowStock = DB.stockItems.filter(s => s.current_quantity <= s.min_quantity);
   const activeEmployees = DB.attendances.filter(a => !a.check_out).length;
   return `
