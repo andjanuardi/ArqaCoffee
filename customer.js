@@ -704,10 +704,60 @@ function showOrderDetail(id) {
         <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "qris" ? "QRIS" : o.payment_method === "bank_transfer" ? "Transfer Bank" : o.payment_method === "cod" ? "COD" : o.payment_method === "" ? "Bayar Nanti" : "Tunai"}</span></div>
         ${!(o.order_type === "delivery" && o.payment_method === "cod") ? `<div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}">${o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>` : ""}
       </div>
+      <button onclick="closeModal();printInvoice('${o.id}')" class="btn-primary w-full mt-4 text-center flex items-center justify-center gap-2"><i class="fas fa-print"></i> Cetak Invoice</button>
       ${o.payment_status === "unpaid" && o.status !== "completed" && !(o.order_type === "delivery" && o.payment_method === "cod") ? `<button onclick="payOrder('${o.id}')" class="btn-primary w-full mt-4 text-center">Bayar Sekarang</button>` : ""}
       ${o.status === "pending" ? `<button onclick="cancelOrder('${o.id}')" class="w-full mt-3 text-center text-sm font-bold" style="color:var(--danger); background:rgba(231,76,60,.1); padding:10px; border-radius:12px;">Batal Pesanan</button>` : ""}
     </div>
   `);
+}
+
+function printInvoice(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  const win = window.open('', '_blank');
+  const statusLabel = o.payment_status === 'paid' ? 'Lunas' : 'Belum Bayar';
+  win.document.write(`
+    <html><head>
+      <title>Invoice #${o.id.slice(-5).toUpperCase()}</title>
+      <style>
+        body { font-family: 'Segoe UI',sans-serif; padding:40px; max-width:400px; margin:0 auto; }
+        .header { text-align:center; margin-bottom:24px; }
+        .header h1 { font-size:22px; margin:0; }
+        .header p { font-size:12px; color:#666; margin:2px 0; }
+        .divider { border-top:2px dashed #333; margin:16px 0; }
+        .item { display:flex; justify-content:space-between; font-size:13px; padding:4px 0; }
+        .totals { margin-top:12px; font-size:13px; }
+        .totals > div { display:flex; justify-content:space-between; padding:2px 0; }
+        .footer { text-align:center; font-size:11px; color:#888; margin-top:24px; }
+        @media print { body { padding:20px; } }
+      </style>
+    </head><body>
+      <div class="header">
+        <h1>ARQA Coffee</h1>
+        <p>${o.order_type === 'dine-in' ? 'Makan di Tempat' : 'Pesan Antar'}</p>
+        ${o.table_id ? '<p>Meja ' + (getTable(o.table_id)?.number || '') + '</p>' : ''}
+        <p>#${o.id.slice(-5).toUpperCase()}</p>
+        <p>${new Date(o.created_at).toLocaleString('id-ID')}</p>
+      </div>
+      <div class="divider"></div>
+      ${o.items.map(i => {
+        const mi = getMenuItem(i.menu_item_id);
+        return `<div class="item"><span>${mi ? mi.name : 'Item'} x${i.quantity}</span><span>${formatCurrency(i.unit_price * i.quantity)}</span></div>`;
+      }).join('')}
+      <div class="divider"></div>
+      <div class="totals">
+        <div><span>Subtotal</span><span>${formatCurrency(o.total_amount)}</span></div>
+        <div><span>Pajak (10%)</span><span>${formatCurrency(Math.round(o.total_amount * 0.1 / 1.1))}</span></div>
+        <div style="font-weight:bold;font-size:15px"><span>Total</span><span>${formatCurrency(o.total_amount)}</span></div>
+        <div style="margin-top:8px"><span>Pembayaran</span><span>${o.payment_method === 'qris' ? 'QRIS' : o.payment_method === 'bank_transfer' ? 'Transfer Bank' : o.payment_method === 'cod' ? 'COD' : o.payment_method === '' ? 'Bayar Nanti' : 'Tunai'}</span></div>
+        <div><span>Status</span><span>${statusLabel}</span></div>
+      </div>
+      ${o.delivery_address ? `<div class="divider"></div><p style="font-size:12px"><strong>Alamat:</strong> ${o.delivery_address}</p>` : ''}
+      <div class="footer">Terima kasih telah berbelanja di ARQA Coffee</div>
+      <script>window.print()</script>
+    </body></html>
+  `);
+  win.document.close();
 }
 
 function payOrder(id) {
