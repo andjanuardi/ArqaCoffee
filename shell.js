@@ -89,7 +89,6 @@
                 { id: 'finance', icon: 'fa-chart-pie', label: 'Keuangan' },
                 { id: 'stock', icon: 'fa-warehouse', label: 'Stok Bahan' },
                 { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
-                { id: 'staff', icon: 'fa-users', label: 'Staff' },
                 { id: 'profile', icon: 'fa-user', label: 'Profil' },
             ];
             const active = State.currentTab[role] || items[0]?.id;

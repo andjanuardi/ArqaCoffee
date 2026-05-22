@@ -40,7 +40,7 @@ Produk Terlaris	Pie chart menu favorit
 
 Manager
 #. tambahkan Kelola pengguna, hanya saja menejer tidak dapat meng edit dan hapus admin.
-#. hapus halaman staff pada menejer
+#. hapus halaman staff pada menejer (selsai)
 
 
 

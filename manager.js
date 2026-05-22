@@ -7,7 +7,6 @@
             if (tab === 'finance') return renderFinanceReport();
             if (tab === 'stock') return renderStockManagement();
             if (tab === 'attendance') return renderAttendance();
-            if (tab === 'staff') return renderStaffManagement();
             if (tab === 'promos') return renderAdminPromos(); // Reuse admin promo view
             if (tab === 'tables-mgmt') return renderAdminTablesMgmt();
             if (tab === 'menu-mgmt') return renderAdminMenuMgmt();
@@ -202,23 +201,5 @@
   </div>`;
         }
 
-        function renderStaffManagement() {
 
-            const staff = DB.users.filter(u => u.role !== 'admin');
-            return `
-  <div class="animate-fade-up">
-    <h2 class="font-display text-xl font-bold mb-4">Manajemen Staff</h2>
-    <div class="space-y-3">
-      ${staff.map(s => `
-      <div class="card flex items-center gap-4">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold" style="background:var(--accent);color:#fff">${s.avatar}</div>
-        <div class="flex-1">
-          <div class="font-semibold text-sm">${s.name}</div>
-          <div class="text-xs" style="color:var(--muted)">${s.email} — ${getRoleLabel(s.role)}</div>
-        </div>
-        <span class="badge ${s.role === 'cashier' ? 'badge-ready' : s.role === 'kitchen' ? 'badge-cooking' : 'badge-delivering'}">${getRoleLabel(s.role)}</span>
-      </div>`).join('')}
-    </div>
-  </div>`;
-        }
 
