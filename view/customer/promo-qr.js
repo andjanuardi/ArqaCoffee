@@ -41,7 +41,7 @@ function showPromoDetail(promoId) {
           ${(p.terms||[]).map((t) => `<li class="flex items-start gap-2"><i class="fas fa-check-circle mt-0.5" style="color:var(--success);font-size:10px"></i><span>${t}</span></li>`).join("")}
         </ul>
       </div>
-      ${isActive ? `<button onclick="closeModal(); State.activePromoId=null; showToast('Promo dibatalkan','info'); render()" class="btn-sm w-full text-center" style="background:rgba(231,76,60,.15);color:var(--danger);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:10px;cursor:pointer">Batalkan Promo</button>` : `<button onclick="applyPromo('${p.id}')" class="btn-primary w-full text-center">Gunakan Promo</button>`}
+      ${isActive ? `<button onclick="closeModal(); State.activePromoId=null; showToast('Promo dibatalkan','info'); render()" class="btn-sm w-full text-center" style="background:rgba(231,76,60,.15);color:var(--danger);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:10px;cursor:pointer">Batalkan Promo</button>` : isPromoUsedByUser(p.id) ? `<button disabled class="btn-sm w-full text-center" style="background:rgba(100,100,100,.15);color:var(--muted);border:1px solid rgba(100,100,100,.3);border-radius:10px;padding:10px;cursor:not-allowed"><i class="fas fa-check-circle mr-1"></i>Sudah Digunakan</button>` : `<button onclick="applyPromo('${p.id}')" class="btn-primary w-full text-center">Gunakan Promo</button>`}
     </div>
   `);
 }
@@ -49,6 +49,7 @@ function showPromoDetail(promoId) {
 function applyPromo(promoId) {
   const p = DB.promos.find(x => x.id === promoId);
   if (!p) return;
+  if (isPromoUsedByUser(promoId)) { showToast('Promo sudah pernah digunakan', 'warning'); return; }
   State.activePromoId = p.id;
   closeModal();
   showToast(`Promo ${p.title} diterapkan!`, 'success');

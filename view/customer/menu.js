@@ -58,12 +58,12 @@ function renderCustomerMenu() {
           : ""
       }
       ${
-        DB.promos && DB.promos.filter((p) => p.is_active && isPromoActiveByDate(p) && p.id !== State.activePromoId).length > 0
+        DB.promos && DB.promos.filter((p) => p.is_active && isPromoActiveByDate(p) && !isPromoUsedByUser(p.id) && p.id !== State.activePromoId).length > 0
           ? `
     <div class="promo-carousel" id="promo-carousel">
       <div class="promo-track" id="promo-track">
         ${DB.promos
-          .filter((p) => p.is_active && isPromoActiveByDate(p) && p.id !== State.activePromoId)
+          .filter((p) => p.is_active && isPromoActiveByDate(p) && !isPromoUsedByUser(p.id) && p.id !== State.activePromoId)
           .map(
             (p) => {
               const discLabel = p.discount_type === 'fixed' ? formatCurrency(p.discount_value) : p.discount_value + '%';
@@ -81,7 +81,7 @@ function renderCustomerMenu() {
           )
           .join("")}
       </div>
-      ${DB.promos.filter((p) => p.is_active && isPromoActiveByDate(p) && p.id !== State.activePromoId).length > 1 ? '<div class="promo-dots" id="promo-dots"></div>' : ''}
+      ${DB.promos.filter((p) => p.is_active && isPromoActiveByDate(p) && !isPromoUsedByUser(p.id) && p.id !== State.activePromoId).length > 1 ? '<div class="promo-dots" id="promo-dots"></div>' : ''}
     </div>`
           : ""
       }
@@ -113,6 +113,10 @@ function renderCustomerMenu() {
     </div>
     ${items.length === 0 ? '<div class="text-center py-12"><i class="fas fa-mug-saucer text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Menu tidak ditemukan</p></div>' : ""}
   </div>`;
+}
+
+function isPromoUsedByUser(promoId) {
+  return DB.orders.some(o => o.user_id === State.currentUser.id && o.promo_id === promoId);
 }
 
 function isPromoActiveByDate(p) {
