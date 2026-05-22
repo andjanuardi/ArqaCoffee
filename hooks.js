@@ -4,6 +4,7 @@
         function afterRender() {
             initCharts();
             initMaps();
+            initPromoCarousel();
         }
 
         function initCharts() {

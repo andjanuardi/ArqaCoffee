@@ -47,20 +47,23 @@ function renderCustomerMenu() {
     ${
       DB.promos && DB.promos.filter((p) => p.is_active).length > 0
         ? `
-    <div class="flex gap-3 mb-5 overflow-x-auto pb-2" style="-webkit-overflow-scrolling:touch;scrollbar-width:none">
-      ${DB.promos
-        .filter((p) => p.is_active)
-        .map(
-          (p) => `
-      <div class="flex-shrink-0 rounded-2xl p-4 relative overflow-hidden cursor-pointer" onclick="showPromoDetail('${p.id}')" style="background:linear-gradient(135deg,${p.color},${p.color}dd);min-width:260px;color:#fff">
-        <div style="position:absolute;right:-10px;top:-10px;font-size:80px;opacity:.12"><i class="fas ${p.icon}"></i></div>
-        <div class="text-xs font-semibold mb-1 uppercase" style="opacity:.85;letter-spacing:1px">Promo Spesial</div>
-        <div class="font-display text-lg font-black mb-1">${p.title}</div>
-        <div class="text-xs mb-3" style="opacity:.8">${p.desc}</div>
-        <div class="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-lg" style="background:rgba(255,255,255,.25)">Klaim <i class="fas fa-arrow-right" style="font-size:10px"></i></div>
-      </div>`,
-        )
-        .join("")}
+    <div class="promo-carousel" id="promo-carousel">
+      <div class="promo-track" id="promo-track">
+        ${DB.promos
+          .filter((p) => p.is_active)
+          .map(
+            (p) => `
+        <div class="rounded-2xl p-4 relative overflow-hidden cursor-pointer promo-card" onclick="showPromoDetail('${p.id}')" style="background:linear-gradient(135deg,${p.color},${p.color}dd);color:#fff">
+          <div style="position:absolute;right:-10px;top:-10px;font-size:80px;opacity:.12"><i class="fas ${p.icon}"></i></div>
+          <div class="text-xs font-semibold mb-1 uppercase" style="opacity:.85;letter-spacing:1px">Promo Spesial</div>
+          <div class="font-display text-lg font-black mb-1 promo-title">${p.title}</div>
+          <div class="text-xs mb-3 promo-desc" style="opacity:.8">${p.desc}</div>
+          <div class="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-lg" style="background:rgba(255,255,255,.25)">Klaim <i class="fas fa-arrow-right" style="font-size:10px"></i></div>
+        </div>`,
+          )
+          .join("")}
+      </div>
+      ${DB.promos.filter((p) => p.is_active).length > 1 ? '<div class="promo-dots" id="promo-dots"></div>' : ''}
     </div>`
         : ""
     }
@@ -88,6 +91,94 @@ function renderCustomerMenu() {
 function getGreeting() {
   const h = new Date().getHours();
   return h < 12 ? "Pagi" : h < 17 ? "Siang" : "Malam";
+}
+
+let _promoInterval = null;
+
+function initPromoCarousel() {
+  var track = document.getElementById('promo-track');
+  var dots = document.getElementById('promo-dots');
+  if (!track) return;
+
+  if (_promoInterval) { clearInterval(_promoInterval); _promoInterval = null; }
+
+  var cards = track.querySelectorAll('.promo-card');
+  if (cards.length < 2) return;
+
+  var cardWidth = cards[0].offsetWidth + 12;
+  var idx = 0;
+
+  var carousel = track.closest('.promo-carousel');
+  if (!carousel) return;
+
+  function goTo(i) {
+    idx = Math.max(0, Math.min(i, cards.length - 1));
+    track.style.transform = 'translateX(-' + (idx * cardWidth) + 'px)';
+    track.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    if (dots) dots.querySelectorAll('.promo-dot').forEach(function (d, j) { d.classList.toggle('active', j === idx); });
+  }
+
+  if (dots) {
+    dots.innerHTML = '';
+    cards.forEach(function (_, i) {
+      var dot = document.createElement('button');
+      dot.className = 'promo-dot' + (i === 0 ? ' active' : '');
+      dot.addEventListener('click', function () { goTo(i); });
+      dots.appendChild(dot);
+    });
+  }
+
+  _promoInterval = setInterval(function () {
+    goTo(idx + 1 >= cards.length ? 0 : idx + 1);
+  }, 5000);
+
+  carousel.addEventListener('mouseenter', function () {
+    if (_promoInterval) { clearInterval(_promoInterval); _promoInterval = null; }
+  });
+  carousel.addEventListener('mouseleave', function () {
+    if (!_promoInterval) {
+      _promoInterval = setInterval(function () {
+        goTo(idx + 1 >= cards.length ? 0 : idx + 1);
+      }, 5000);
+    }
+  });
+
+  /* ----- manual swipe / drag ----- */
+  var startX = 0, currentX = 0, isDragging = false;
+
+  function onStart(px) {
+    if (_promoInterval) { clearInterval(_promoInterval); _promoInterval = null; }
+    isDragging = true;
+    startX = px; currentX = px;
+    track.style.transition = 'none';
+    track.style.cursor = 'grabbing';
+  }
+
+  function onMove(px) {
+    if (!isDragging) return;
+    currentX = px;
+    track.style.transform = 'translateX(' + (-(idx * cardWidth) + (currentX - startX)) + 'px)';
+  }
+
+  function onEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+    track.style.cursor = '';
+    var diff = currentX - startX;
+    if (Math.abs(diff) > cardWidth * 0.25) {
+      if (diff < 0) goTo(idx + 1); else goTo(idx - 1);
+    } else {
+      goTo(idx);
+    }
+  }
+
+  track.addEventListener('touchstart', function (e) { onStart(e.touches[0].clientX); }, { passive: true });
+  track.addEventListener('touchmove', function (e) { onMove(e.touches[0].clientX); }, { passive: true });
+  track.addEventListener('touchend', onEnd, { passive: true });
+
+  track.addEventListener('mousedown', function (e) { onStart(e.clientX); e.preventDefault(); });
+  document.addEventListener('mousemove', function (e) { onMove(e.clientX); });
+  document.addEventListener('mouseup', onEnd);
 }
 
 function showPromoDetail(promoId) {

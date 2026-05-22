@@ -680,7 +680,56 @@
             border-color: var(--accent)
         }
 
-        @media(max-width:768px) {
+        .promo-carousel {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+.promo-track {
+  display: flex;
+  gap: 0.75rem;
+  transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+.promo-card {
+  width: 260px;
+  flex-shrink: 0;
+}
+.promo-card .promo-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.promo-card .promo-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.promo-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+.promo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  cursor: pointer;
+  transition: all 0.4s ease;
+  border: none;
+  padding: 0;
+}
+.promo-dot.active {
+  width: 24px;
+  border-radius: 4px;
+  background: var(--accent);
+}
+
+@media(max-width:768px) {
             .side-drawer {
                 width: 240px
             }
