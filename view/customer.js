@@ -349,18 +349,6 @@ function showMenuItem(id) {
   `);
 }
 
-let modalQty = 1;
-function updateModalQty(d) {
-  modalQty = Math.max(1, modalQty + d);
-  const el = document.getElementById("modal-qty");
-  if (el) el.textContent = modalQty;
-  // update total
-  const activeItem = State._activeMenuItem;
-  if (activeItem) {
-    const t = document.getElementById("modal-total");
-    if (t) t.textContent = formatCurrency(activeItem.price * modalQty);
-  }
-}
 function addToCart(id) {
   const m = getMenuItem(id);
   if (!m) return;
