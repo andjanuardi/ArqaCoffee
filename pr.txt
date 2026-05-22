@@ -9,7 +9,7 @@ Admin
 #. tambahkan buttom navbar di admin (selesai)
 #. tambahkan tombol selengkapnya di indicator stock barang (selesai)
 #. fungsikan tombol card indicator (selesai)
-#. indicator pesanan terkini, tambahkan informasi nomor meja jika dine-in. jika delivery, tambahkan informasi alamat. tambahkan tombol selengkapnya.
+#. indicator pesanan terkini, tambahkan informasi nomor meja jika dine-in. jika delivery, tambahkan informasi alamat. tambahkan tombol selengkapnya. (selesai)
 #. pada indicator meja, jika tombol meja di tekan, maka akan menampilkan detail informasi.
 #. hilangkan fitur setup wizard.(selesai)
 #.tambahkan fitur menambah katagori pada saat menambah menu.(selesai)

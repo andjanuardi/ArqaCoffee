@@ -50,12 +50,21 @@
       <div class="card">
         <h3 class="font-semibold text-sm mb-3">Pesanan Terkini</h3>
         <div class="space-y-2 max-h-64 overflow-y-auto">
-          ${DB.orders.slice(0, 6).map(o => `
+          ${DB.orders.slice(0, 6).map(o => {
+            const tableInfo = o.order_type === 'dine-in' && o.table_id ? `Meja ${getTable(o.table_id)?.number || '-'}` : '';
+            const addrInfo = o.order_type === 'delivery' ? (o.delivery_address || '').slice(0, 30) + '...' : '';
+            return `
           <div class="flex justify-between items-center text-sm py-2 border-b" style="border-color:var(--border)">
-            <div><span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span><span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span></div>
+            <div>
+              <span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span>
+              <span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>
+              <div class="text-[10px] mt-0.5" style="color:var(--muted)">${tableInfo || addrInfo}</div>
+            </div>
             <span>${formatCurrency(o.total_amount)}</span>
-          </div>`).join('')}
+          </div>`;
+          }).join('')}
         </div>
+        <button onclick="State.currentTab.admin='finance';render()" class="text-xs font-bold mt-2 flex items-center gap-1" style="color:var(--accent)">Selengkapnya <i class="fas fa-arrow-right" style="font-size:10px"></i></button>
       </div>
     </div>
     <div class="card">
