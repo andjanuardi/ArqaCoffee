@@ -71,13 +71,45 @@
       <h3 class="font-semibold text-sm mb-3">Status Meja</h3>
       <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
         ${DB.tables.map(t => `
-        <div class="text-center py-3 rounded-xl" style="background:${t.status === 'available' ? 'rgba(39,174,96,.1)' : 'rgba(231,76,60,.1)'}">
+        <div class="text-center py-3 rounded-xl cursor-pointer hover:scale-[1.05] transition-transform" style="background:${t.status === 'available' ? 'rgba(39,174,96,.1)' : 'rgba(231,76,60,.1)'}" onclick="showTableDetail('${t.id}')">
           <i class="fas fa-chair mb-1" style="color:${t.status === 'available' ? 'var(--success)' : 'var(--danger)'}"></i>
           <div class="text-xs font-semibold">${t.number}</div>
         </div>`).join('')}
       </div>
     </div>
   </div>`;
+        }
+
+        function showTableDetail(id) {
+            const t = DB.tables.find(x => x.id === id);
+            if (!t) return;
+            const orders = DB.orders.filter(o => o.table_id === id && !['completed', 'cancelled', 'rejected'].includes(o.status));
+            showModal(`
+    <div>
+      <div class="flex items-center gap-4 mb-5">
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl" style="background:${t.status === 'available' ? 'rgba(39,174,96,.1)' : 'rgba(231,76,60,.1)'};color:${t.status === 'available' ? 'var(--success)' : 'var(--danger)'}"><i class="fas fa-chair"></i></div>
+        <div>
+          <h3 class="font-display text-xl font-bold">Meja ${t.number}</h3>
+          <span class="badge ${t.status === 'available' ? 'badge-ready' : 'badge-cooking'}" style="background:${t.status === 'available' ? 'rgba(39,174,96,.1)' : 'rgba(231,76,60,.1)'};color:${t.status === 'available' ? 'var(--success)' : 'var(--danger)'}">${t.status === 'available' ? 'Tersedia' : 'Terisi'}</span>
+        </div>
+      </div>
+      <div class="text-xs mb-4" style="color:var(--muted)"><i class="fas fa-qrcode mr-1"></i>QR: ${t.qr_code}</div>
+      ${orders.length ? `
+      <h4 class="font-semibold text-sm mb-3">Pesanan Aktif</h4>
+      <div class="space-y-2 mb-4">
+        ${orders.map(o => `
+        <div class="card flex justify-between items-center py-2 px-3">
+          <div>
+            <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
+            <span class="badge ${getStatusBadge(o.status)} ml-1">${getStatusLabel(o.status)}</span>
+            <div class="text-[10px]" style="color:var(--muted)">${formatTime(o.created_at)}${o.customer_name ? ' — ' + o.customer_name : ''}</div>
+          </div>
+          <span class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
+        </div>`).join('')}
+      </div>` : '<p class="text-sm py-3" style="color:var(--muted)">Tidak ada pesanan aktif di meja ini</p>'}
+      <button onclick="closeModal()" class="btn-secondary w-full text-center">Tutup</button>
+    </div>
+  `);
         }
 
         function addTable() {

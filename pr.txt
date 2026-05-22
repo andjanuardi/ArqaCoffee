@@ -10,7 +10,7 @@ Admin
 #. tambahkan tombol selengkapnya di indicator stock barang (selesai)
 #. fungsikan tombol card indicator (selesai)
 #. indicator pesanan terkini, tambahkan informasi nomor meja jika dine-in. jika delivery, tambahkan informasi alamat. tambahkan tombol selengkapnya. (selesai)
-#. pada indicator meja, jika tombol meja di tekan, maka akan menampilkan detail informasi.
+#. pada indicator meja, jika tombol meja di tekan, maka akan menampilkan detail informasi.(selesai)
 #. hilangkan fitur setup wizard.(selesai)
 #.tambahkan fitur menambah katagori pada saat menambah menu.(selesai)
 #. hilangkan fitur resep bahan saat menambah menu. (selesai)
