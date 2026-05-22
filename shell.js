@@ -34,13 +34,7 @@
             <i class="fas fa-bell" style="color:var(--muted)"></i>
             <span class="absolute -top-1 -right-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center" style="background:var(--danger);color:#fff">${getUnreadCount()}</span>
           </button>
-          <div class="flex items-center gap-2 cursor-pointer" onclick="handleLogout()">
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold" style="background:var(--accent);color:#fff">${u.avatar}</div>
-            <div class="hidden sm:block">
-              <div class="text-xs font-semibold">${u.name}</div>
-              <div class="text-[10px]" style="color:var(--muted)">${getRoleLabel(u.role)}</div>
-            </div>
-          </div>
+          
         </div>
       </div>
     </header>
