@@ -125,7 +125,6 @@ function showKitchenOrderDetail(id) {
     <div class="flex justify-between text-sm">
       <div>
         <span>${mi.name} x${i.quantity} ${i.notes ? '<span style="color:var(--muted)">(' + i.notes + ')</span>' : ''}</span>
-        ${renderRecipeInfo(i.menu_item_id, i.quantity)}
       </div>
       <span style="color:var(--muted)">${formatCurrency(i.unit_price * i.quantity)}</span>
     </div>`: ''

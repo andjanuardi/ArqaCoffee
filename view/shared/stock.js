@@ -3,14 +3,7 @@
 // ------------------------------------------------------------------
 function renderStockManagement() {
   if (!State.stockSearch) State.stockSearch = '';
-  const filterMenuId = State.stockMenuFilter || '';
-  const menuOpts = DB.menuItems.filter(m => DB.menuStockMapping && DB.menuStockMapping[m.id]).map(m =>
-    `<option value="${m.id}" ${filterMenuId === m.id ? 'selected' : ''}>${m.name}</option>`
-  ).join('');
-  const byMenu = filterMenuId && DB.menuStockMapping && DB.menuStockMapping[filterMenuId]
-    ? DB.stockItems.filter(s => DB.menuStockMapping[filterMenuId].some(r => (typeof r === 'string' ? r : r.id) === s.id))
-    : DB.stockItems;
-  const bySearch = byMenu.filter(s => !State.stockSearch || s.name.toLowerCase().includes(State.stockSearch.toLowerCase()));
+  const bySearch = DB.stockItems.filter(s => !State.stockSearch || s.name.toLowerCase().includes(State.stockSearch.toLowerCase()));
   const sorted = [...bySearch].sort((a, b) => {
     const aPct = a.min_quantity > 0 ? a.current_quantity / a.min_quantity : a.current_quantity;
     const bPct = b.min_quantity > 0 ? b.current_quantity / b.min_quantity : b.current_quantity;
@@ -23,19 +16,12 @@ function renderStockManagement() {
       <button onclick="showAddStockModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
     </div>
     <div class="card mb-4" style="padding:10px">
-      <div class="flex gap-2 mb-2">
-        <input type="text" class="input-field text-sm flex-1" placeholder="Cari bahan..." value="${State.stockSearch}" oninput="State.stockSearch=this.value;render()">
-        <select onchange="State.stockMenuFilter=this.value;render()" class="input-field text-sm" style="width:auto">
-          <option value="">Semua Menu</option>
-          ${menuOpts}
-        </select>
-      </div>
+      <input type="text" class="input-field text-sm w-full" placeholder="Cari bahan..." value="${State.stockSearch}" oninput="State.stockSearch=this.value;render()">
     </div>
     <div class="space-y-3">
       ${sorted.map(s => {
         const pct = Math.min(100, Math.round(s.current_quantity / (s.min_quantity * 3) * 100));
         const isLow = s.current_quantity <= s.min_quantity;
-        const usedIn = DB.menuItems.filter(m => DB.menuStockMapping && DB.menuStockMapping[m.id] && DB.menuStockMapping[m.id].some(r => (typeof r === 'string' ? r : r.id) === s.id));
         return `
         <div class="card ${isLow ? 'animate-breathe' : ''}">
           <div class="flex justify-between items-center mb-2">
@@ -54,7 +40,6 @@ function renderStockManagement() {
               <button onclick="adjustStock('${s.id}','out')" class="btn-sm" style="background:rgba(231,76,60,.15);color:var(--danger);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-minus"></i></button>
             </div>
           </div>
-          ${usedIn.length ? `<div class="flex flex-wrap gap-1 mt-2 pt-2 border-t" style="border-color:var(--border)">${usedIn.map(m => `<span class="text-[10px] px-2 py-0.5 rounded" style="background:rgba(224,122,58,.12);color:var(--accent)"><i class="fas fa-utensils mr-0.5"></i>${m.name}</span>`).join('')}</div>` : ''}
         </div>`;
       }).join('')}
       ${sorted.length === 0 ? '<div class="text-center py-6 text-sm" style="color:var(--muted)">Tidak ada bahan baku ditemukan</div>' : ''}
@@ -121,7 +106,6 @@ function adjustStock(id, type) {
   s.current_quantity = type === 'in' ? s.current_quantity + qty : Math.max(0, s.current_quantity - qty);
   DB.stockMovements.push({ id: 'sm' + Date.now(), stock_item_id: id, user_id: State.currentUser.id, type, quantity: qty, notes: type === 'in' ? 'Restok' : 'Pemakaian', created_at: new Date().toISOString() });
   if (s.current_quantity <= s.min_quantity) notifyLowStock(s);
-  autoUpdateMenuAvailability();
   showToast(`${s.name}: ${type === 'in' ? '+' + qty : '-' + qty} ${s.unit}`, 'success');
   render();
 }

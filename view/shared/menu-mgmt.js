@@ -2,7 +2,6 @@
 // MENU MANAGEMENT
 // ------------------------------------------------------------------
 function renderAdminMenuMgmt() {
-  autoUpdateMenuAvailability();
   if (!State.adminMenuFilter) State.adminMenuFilter = '';
   const cats = [...new Set(DB.menuItems.map(m => m.category).filter(Boolean))];
   const labelMap = { coffee: 'Kopi', 'non-coffee': 'Non-Kopi', food: 'Makanan', snack: 'Snack' };
@@ -34,36 +33,6 @@ function renderAdminMenuMgmt() {
       ${filtered.length === 0 ? '<div class="text-center py-6 text-sm" style="color:var(--muted)">Tidak ada menu di kategori ini</div>' : ''}
     </div>
   </div>`;
-}
-
-function autoUpdateMenuAvailability() {
-  if (!DB.menuStockMapping) return;
-  let changed = [];
-  DB.menuItems.forEach(m => {
-    const deps = DB.menuStockMapping[m.id];
-    if (!deps || deps.length === 0) return;
-    const insufficient = deps.some(r => {
-      const sid = typeof r === 'string' ? r : r.id;
-      const needQty = typeof r === 'string' ? 1 : (r.qty || 1);
-      const s = DB.stockItems.find(x => x.id === sid);
-      return !s || s.current_quantity < needQty;
-    });
-    const newAvail = !insufficient;
-    if (m.is_available !== newAvail) {
-      m.is_available = newAvail;
-      changed.push(m.name + ': ' + (newAvail ? 'Tersedia' : 'Tidak Tersedia'));
-      if (!newAvail) {
-        addNotification({
-          title: 'Menu Otomatis Tidak Tersedia',
-          message: m.name + ' — bahan baku tidak mencukupi',
-          type: 'warning',
-          icon: 'fa-circle-exclamation',
-          targetRoles: ['cashier', 'kitchen'],
-        });
-      }
-    }
-  });
-  if (changed.length) showToast('Status menu diperbarui: ' + changed.join(', '), 'info');
 }
 
 function toggleMenuAvail(id) {

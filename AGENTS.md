@@ -52,7 +52,6 @@ const State = {
 | `DB.menuItems` | `[{id, name, description, price, category, image, is_available}]` | categories: coffee/non-coffee/food/snack. IDs `m1..mN` |
 | `DB.orders` | `[{id, user_id, table_id, order_type, status, total_amount, payment_method, payment_status, delivery_address, delivery_detail, delivery_location, customer_name, accepted, promo_id, promo_discount, items, courier_id?, reject_reason?, messages?, lastReadAt?}]` | status: pending→cooking→ready→delivering→delivered→completed\|cancelled\|rejected. Items `[{menu_item_id, quantity, unit_price, notes, status}]` |
 | `DB.stockItems` | `[{id, name, unit, current_quantity, min_quantity, updated_at}]` | IDs `s1..sN` |
-| `DB.menuStockMapping` | `{menuId: [stockId, ...]}` | Used by autoUpdateMenuAvailability() |
 | `DB.stockMovements` | `[{id, stock_item_id, user_id, type, quantity, notes, created_at}]` | type: "in"\|"out" |
 | `DB.attendances` | `[{id, user_id, check_in, check_out?, lat, lng, status}]` | check_out null = still working |
 | `DB.courierTracking` | `[{id, order_id, courier_id, latitude, longitude, recorded_at}]` | |
@@ -121,12 +120,11 @@ const State = {
 1. **Customer** places order → status: "pending", notification sent to cashier+kitchen
 2. **Cashier** can accept (`acceptCashierOrder`) or cancel; accepting sets `o.accepted=true`, notifies kitchen
 3. **Kitchen** sees items. Can reject with reason (sets `o.status="rejected"`, frees table) or cook each item
-4. When cooking starts (`updateItemStatus` with `'cooking'`): stock is deducted per `DB.menuStockMapping`, `autoUpdateMenuAvailability()` runs, low-stock notifications fire
-5. When all items are "ready" → `o.status = "ready"`, notifies customer+cashier
-6. **Cashier** processes payment → `o.payment_status="paid"`, or marks as completed for paid orders
-7. **Delivery** orders: after ready, **courier** picks up (`acceptDelivery` → status "delivering"), adds tracking
-8. Courier completes → if unpaid+COD → status "delivered" (waits for cashier settlement). If already paid → "completed"
-9. **Cashier** settles delivery (`settleDelivery` → status "completed", payment confirmed)
+4. When all items are "ready" → `o.status = "ready"`, notifies customer+cashier
+5. **Cashier** processes payment → `o.payment_status="paid"`, or marks as completed for paid orders
+6. **Delivery** orders: after ready, **courier** picks up (`acceptDelivery` → status "delivering"), adds tracking
+7. Courier completes → if unpaid+COD → status "delivered" (waits for cashier settlement). If already paid → "completed"
+8. **Cashier** settles delivery (`settleDelivery` → status "completed", payment confirmed)
 
 ## Payment flow
 - `processPayment(id)`: sets `payment_status="paid"`, `payment_method="digital"`, calls `notifyPayment(o, 'Digital')`
@@ -161,21 +159,6 @@ Promo objects can have fields beyond the base `id, code, title, icon, color, des
 - `start_date` / `end_date`
 - `menu_ids`: array of menu item IDs this promo applies to (empty = all menus)
 - `image`: promo banner image URL
-
-## Kitchen stock deduction (kitchen.js:95-133)
-When an item status is set to "cooking":
-1. Look up `DB.menuStockMapping[menuItemId]`
-2. For each ingredient: `recipeQty × orderQty`, deduct from `stockItem.current_quantity`
-3. Push a `stockMovement` record
-4. If stock drops to or below `min_quantity`, call `notifyLowStock(s)` — notifies manager+admin
-5. Call `autoUpdateMenuAvailability()` — checks each menu item's stock dependencies and marks as unavailable if any ingredient is insufficient
-
-## Auto availability (admin.js:275-303)
-`autoUpdateMenuAvailability()` is called:
-- After stock adjustments (`adjustStock()`)
-- After stock deduction from cooking
-- At the start of `renderAdminMenuMgmt()`
-- It iterates `DB.menuItems`, checks `DB.menuStockMapping[m.id]`, verifies stock sufficiency, toggles `is_available`, and notifies cashier+kitchen if auto-marked unavailable
 
 ## Notification types & routing (notifications.js)
 | Function | targetRoles |
