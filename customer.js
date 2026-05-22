@@ -54,7 +54,7 @@ function renderCustomerMenu() {
           .map(
             (p) => {
               const discLabel = p.discount_type === 'fixed' ? formatCurrency(p.discount_value) : p.discount_value + '%';
-              const bgStyle = p.image ? `background:linear-gradient(135deg,rgba(0,0,0,.6),rgba(0,0,0,.3)),url('${p.image}') center/cover` : `background:linear-gradient(135deg,${p.color || '#E07A3A'},${(p.color || '#E07A3A'}dd)`;
+              const bgStyle = p.image ? `background:linear-gradient(135deg,rgba(0,0,0,.6),rgba(0,0,0,.3)),url('${p.image}') center/cover` : `background:linear-gradient(135deg,${p.color || '#E07A3A'},${p.color || '#E07A3A'}dd)`;
               const isActivePromo = State.activePromoId === p.id;
               return `
         <div class="rounded-2xl p-4 relative overflow-hidden cursor-pointer promo-card ${isActivePromo ? 'ring-2 ring-offset-2' : ''}" onclick="showPromoDetail('${p.id}')" style="${bgStyle};color:#fff;${isActivePromo ? '--tw-ring-color:var(--accent)' : ''}">
@@ -72,13 +72,6 @@ function renderCustomerMenu() {
     </div>`
           : ""
       }
-          )
-          .join("")}
-      </div>
-      ${DB.promos.filter((p) => p.is_active).length > 1 ? '<div class="promo-dots" id="promo-dots"></div>' : ''}
-    </div>`
-        : ""
-    }
     <div class="flex gap-2 mb-5 overflow-x-auto pb-2" style="-webkit-overflow-scrolling:touch;     scrollbar-width: none;">
       ${cats.map((c) => `<div class="category-chip ${State.selectedCategory === c.id ? "active" : ""}" onclick="State.selectedCategory='${c.id}';render()">${c.label}</div>`).join("")}
     </div>
