@@ -20,17 +20,19 @@
             const totalExp = (DB.expenses || []).reduce((s, e) => s + e.amount, 0);
             const totalOrders = DB.dailySales.reduce((s, d) => s + d.orders, 0);
             const lowStock = DB.stockItems.filter(s => s.current_quantity <= s.min_quantity);
+            const activeEmployees = DB.attendances.filter(a => !a.check_out).length;
             return `
   <div class="animate-fade-up">
     <div class="mb-6">
       <h2 class="font-display text-2xl font-bold mb-1">Dashboard</h2>
       <p class="text-sm" style="color:var(--muted)">Ringkasan operasional hari ini</p>
     </div>
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pendapatan 7 Hari</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pesanan</div><div class="text-lg font-bold mt-1">${totalOrders}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pesanan Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--warning)">${DB.orders.filter(o => !['completed', 'cancelled'].includes(o.status)).length}</div></div>
+      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pegawai Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--success)">${activeEmployees}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Stok Rendah</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${lowStock.length}</div></div>
     </div>
     ${lowStock.length > 0 ? `
