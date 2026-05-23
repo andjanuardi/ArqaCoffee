@@ -9,7 +9,6 @@ function renderAdminView() {
   if (tab === 'tables-mgmt') return renderAdminTablesMgmt();
   if (tab === 'promos') return renderAdminPromos();
   if (tab === 'finance') return renderFinanceReport();
-  if (tab === 'net-profit') return renderNetProfitPage();
   if (tab === 'stock') return renderStockManagement();
   if (tab === 'attendance') return renderAttendance();
   if (tab === 'profile') return renderGenericProfile();

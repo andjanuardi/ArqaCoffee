@@ -75,7 +75,6 @@ function renderSideDrawer(role) {
     { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Kelola Meja' },
     { id: 'promos', icon: 'fa-tags', label: 'Kelola Promo' },
     { id: 'finance', icon: 'fa-chart-pie', label: 'Keuangan' },
-    { id: 'net-profit', icon: 'fa-chart-line', label: 'Laba Bersih' },
     { id: 'stock', icon: 'fa-warehouse', label: 'Stok Bahan' },
     { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
   ] : [
@@ -85,7 +84,6 @@ function renderSideDrawer(role) {
     { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Kelola Meja' },
     { id: 'promos', icon: 'fa-tags', label: 'Kelola Promo' },
     { id: 'finance', icon: 'fa-chart-pie', label: 'Keuangan' },
-    { id: 'net-profit', icon: 'fa-chart-line', label: 'Laba Bersih' },
     { id: 'stock', icon: 'fa-warehouse', label: 'Stok Bahan' },
     { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
     { id: 'profile', icon: 'fa-user', label: 'Profil' },
