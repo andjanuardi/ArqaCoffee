@@ -76,6 +76,7 @@ function renderSideDrawer(role) {
     { id: 'promos', icon: 'fa-tags', label: 'Kelola Promo' },
     { id: 'finance', icon: 'fa-chart-pie', label: 'Keuangan' },
     { id: 'stock', icon: 'fa-warehouse', label: 'Stok Bahan' },
+    { id: 'expenses', icon: 'fa-money-bill-wave', label: 'Pengeluaran' },
     { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
   ] : [
     { id: 'dashboard', icon: 'fa-gauge-high', label: 'Dashboard' },
@@ -85,6 +86,7 @@ function renderSideDrawer(role) {
     { id: 'promos', icon: 'fa-tags', label: 'Kelola Promo' },
     { id: 'finance', icon: 'fa-chart-pie', label: 'Keuangan' },
     { id: 'stock', icon: 'fa-warehouse', label: 'Stok Bahan' },
+    { id: 'expenses', icon: 'fa-money-bill-wave', label: 'Pengeluaran' },
     { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
     { id: 'profile', icon: 'fa-user', label: 'Profil' },
   ];

@@ -6,6 +6,7 @@ function renderManagerView() {
   if (tab === 'dashboard') return renderManagerDashboard();
   if (tab === 'finance') return renderFinanceReport();
   if (tab === 'stock') return renderStockManagement();
+  if (tab === 'expenses') return renderExpenseManagement();
   if (tab === 'attendance') return renderAttendance();
   if (tab === 'promos') return renderAdminPromos();
   if (tab === 'tables-mgmt') return renderAdminTablesMgmt();
