@@ -293,3 +293,70 @@ function confirmDeleteExpense(id) {
   showToast("Pengeluaran dihapus", "info");
   render();
 }
+
+// ------------------------------------------------------------------
+// ACTIVE ORDERS (shared: admin + manager)
+// ------------------------------------------------------------------
+function renderActiveOrders() {
+  const activeOrders = DB.orders.filter(o => !['completed', 'cancelled', 'rejected'].includes(o.status));
+  const countByStatus = {
+    pending: activeOrders.filter(o => o.status === 'pending').length,
+    cooking: activeOrders.filter(o => o.status === 'cooking').length,
+    ready: activeOrders.filter(o => o.status === 'ready').length,
+    delivering: activeOrders.filter(o => o.status === 'delivering').length,
+    delivered: activeOrders.filter(o => o.status === 'delivered').length,
+  };
+  const q = (State.activeOrderSearch || '').toLowerCase();
+  const filtered = activeOrders.filter(o => {
+    if (!q) return true;
+    const idMatch = o.id.toLowerCase().includes(q);
+    const nameMatch = (o.customer_name || '').toLowerCase().includes(q);
+    const statusMatch = getStatusLabel(o.status).toLowerCase().includes(q);
+    return idMatch || nameMatch || statusMatch;
+  });
+  return `
+  <div class="animate-fade-up">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="font-display text-xl font-bold">Pesanan Aktif</h2>
+      <span class="text-xs" style="color:var(--muted)">${activeOrders.length} pesanan</span>
+    </div>
+    <div class="grid grid-cols-5 gap-2 mb-5">
+      <div class="stat-card text-center"><div class="text-lg font-bold" style="color:var(--warning)">${countByStatus.pending}</div><div class="text-[10px]" style="color:var(--muted)">Menunggu</div></div>
+      <div class="stat-card text-center"><div class="text-lg font-bold" style="color:var(--accent)">${countByStatus.cooking}</div><div class="text-[10px]" style="color:var(--muted)">Dimasak</div></div>
+      <div class="stat-card text-center"><div class="text-lg font-bold" style="color:var(--success)">${countByStatus.ready}</div><div class="text-[10px]" style="color:var(--muted)">Siap Saji</div></div>
+      <div class="stat-card text-center" style="border-color:rgba(52,152,219,.3)"><div class="text-lg font-bold" style="color:#3498db">${countByStatus.delivering}</div><div class="text-[10px]" style="color:var(--muted)">Diantar</div></div>
+      <div class="stat-card text-center" style="border-color:rgba(155,89,182,.3)"><div class="text-lg font-bold" style="color:#9b59b6">${countByStatus.delivered}</div><div class="text-[10px]" style="color:var(--muted)">Diterima</div></div>
+    </div>
+    <div class="card mb-4" style="padding:10px">
+      <input type="text" class="input-field text-sm w-full" placeholder="Cari ID, nama pelanggan, atau status..." value="${State.activeOrderSearch || ''}" oninput="State.activeOrderSearch=this.value;render()">
+    </div>
+    <div class="space-y-3">
+      ${filtered.length === 0 ? '<p class="text-sm text-center py-10" style="color:var(--muted)"><i class="fas fa-inbox mr-2"></i>Tidak ada pesanan aktif</p>' : ''}
+      ${filtered.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')).map(o => {
+        const t = o.table_id ? getTable(o.table_id) : null;
+        return `
+      <div class="order-card" onclick="showOrderDetail('${o.id}')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
+            <span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>
+            <span class="badge ${o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid'} ml-1">${o.payment_status === 'paid' ? 'Lunas' : 'Belum Bayar'}</span>
+          </div>
+          <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
+        </div>
+        <div class="text-xs mb-2" style="color:var(--muted)">
+          <i class="fas ${o.order_type === 'dine-in' ? 'fa-chair' : 'fa-motorcycle'} mr-1"></i>${getOrderTypeName(o.order_type)}${t ? ' — Meja ' + t.number : ''}${o.customer_name ? ' — ' + o.customer_name : ''}
+        </div>
+        <div class="text-xs mb-3">${(o.items || []).map(i => {
+          const mi = getMenuItem(i.menu_item_id);
+          return mi ? mi.name + ' x' + i.quantity : '';
+        }).filter(Boolean).join(', ') || '-'}</div>
+        ${o.promo_discount ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon: -${formatCurrency(o.promo_discount)}</div>` : ''}
+        <div class="flex justify-between items-center">
+          <span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
+        </div>
+      </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}

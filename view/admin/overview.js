@@ -11,6 +11,7 @@ function renderAdminView() {
   if (tab === 'finance') return renderFinanceReport();
   if (tab === 'stock') return renderStockManagement();
   if (tab === 'expenses') return renderExpenseManagement();
+  if (tab === 'active-orders') return renderActiveOrders();
   if (tab === 'attendance') return renderAttendance();
   if (tab === 'profile') return renderGenericProfile();
   return renderAdminOverview();
