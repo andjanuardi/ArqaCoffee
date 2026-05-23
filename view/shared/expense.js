@@ -298,16 +298,26 @@ function confirmDeleteExpense(id) {
 // ACTIVE ORDERS (shared: admin + manager)
 // ------------------------------------------------------------------
 function renderActiveOrders() {
-  const activeOrders = DB.orders.filter(o => !['completed', 'cancelled', 'rejected'].includes(o.status));
+  if (!State.activeOrderStart) {
+    const d = new Date(); d.setDate(d.getDate() - 30);
+    State.activeOrderStart = d.toISOString().split('T')[0];
+  }
+  if (!State.activeOrderEnd) State.activeOrderEnd = new Date().toISOString().split('T')[0];
+  const raw = DB.orders.filter(o => !['completed', 'cancelled', 'rejected'].includes(o.status));
+  const dateFiltered = raw.filter(o => {
+    if (!o.created_at) return false;
+    const d = o.created_at.split('T')[0];
+    return d >= State.activeOrderStart && d <= State.activeOrderEnd;
+  });
   const countByStatus = {
-    pending: activeOrders.filter(o => o.status === 'pending').length,
-    cooking: activeOrders.filter(o => o.status === 'cooking').length,
-    ready: activeOrders.filter(o => o.status === 'ready').length,
-    delivering: activeOrders.filter(o => o.status === 'delivering').length,
-    delivered: activeOrders.filter(o => o.status === 'delivered').length,
+    pending: dateFiltered.filter(o => o.status === 'pending').length,
+    cooking: dateFiltered.filter(o => o.status === 'cooking').length,
+    ready: dateFiltered.filter(o => o.status === 'ready').length,
+    delivering: dateFiltered.filter(o => o.status === 'delivering').length,
+    delivered: dateFiltered.filter(o => o.status === 'delivered').length,
   };
   const q = (State.activeOrderSearch || '').toLowerCase();
-  const filtered = activeOrders.filter(o => {
+  const filtered = dateFiltered.filter(o => {
     if (!q) return true;
     const idMatch = o.id.toLowerCase().includes(q);
     const nameMatch = (o.customer_name || '').toLowerCase().includes(q);
@@ -318,7 +328,7 @@ function renderActiveOrders() {
   <div class="animate-fade-up">
     <div class="flex justify-between items-center mb-4">
       <h2 class="font-display text-xl font-bold">Pesanan Aktif</h2>
-      <span class="text-xs" style="color:var(--muted)">${activeOrders.length} pesanan</span>
+      <span class="text-xs" style="color:var(--muted)">${dateFiltered.length} pesanan</span>
     </div>
     <div class="grid grid-cols-5 gap-2 mb-5">
       <div class="stat-card text-center"><div class="text-lg font-bold" style="color:var(--warning)">${countByStatus.pending}</div><div class="text-[10px]" style="color:var(--muted)">Menunggu</div></div>
@@ -326,6 +336,11 @@ function renderActiveOrders() {
       <div class="stat-card text-center"><div class="text-lg font-bold" style="color:var(--success)">${countByStatus.ready}</div><div class="text-[10px]" style="color:var(--muted)">Siap Saji</div></div>
       <div class="stat-card text-center" style="border-color:rgba(52,152,219,.3)"><div class="text-lg font-bold" style="color:#3498db">${countByStatus.delivering}</div><div class="text-[10px]" style="color:var(--muted)">Diantar</div></div>
       <div class="stat-card text-center" style="border-color:rgba(155,89,182,.3)"><div class="text-lg font-bold" style="color:#9b59b6">${countByStatus.delivered}</div><div class="text-[10px]" style="color:var(--muted)">Diterima</div></div>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <input type="date" id="active-order-start" value="${State.activeOrderStart}" class="input-field text-sm" style="flex:1;min-width:130px" onchange="State.activeOrderStart=this.value;render()">
+      <span class="text-xs" style="color:var(--muted)">s/d</span>
+      <input type="date" id="active-order-end" value="${State.activeOrderEnd}" class="input-field text-sm" style="flex:1;min-width:130px" onchange="State.activeOrderEnd=this.value;render()">
     </div>
     <div class="card mb-4" style="padding:10px">
       <input type="text" class="input-field text-sm w-full" placeholder="Cari ID, nama pelanggan, atau status..." value="${State.activeOrderSearch || ''}" oninput="State.activeOrderSearch=this.value;render()">
