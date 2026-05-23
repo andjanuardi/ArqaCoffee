@@ -31,6 +31,33 @@ function getUnreadCount() {
   return getRoleNotifications().filter(function(n) { return !n.read[role]; }).length;
 }
 
+function getChatUnreadCount() {
+  const me = State.currentUser;
+  if (!me) return 0;
+  let total = 0;
+  DB.orders.forEach(function(o) {
+    if (!o.messages || !o.messages.length) return;
+    if (me.role === 'customer' && o.user_id !== me.id) return;
+    if (me.role === 'courier' && o.courier_id !== me.id) return;
+    var lastRead = o.lastReadAt?.[me.id] || 0;
+    o.messages.forEach(function(m) {
+      if (m.sender_id !== me.id && new Date(m.timestamp).getTime() > lastRead) total++;
+    });
+  });
+  return total;
+}
+
+function markAllChatAsRead() {
+  const me = State.currentUser;
+  if (!me) return;
+  DB.orders.forEach(function(o) {
+    if (me.role === 'customer' && o.user_id !== me.id) return;
+    if (me.role === 'courier' && o.courier_id !== me.id) return;
+    if (!o.lastReadAt) o.lastReadAt = {};
+    o.lastReadAt[me.id] = Date.now();
+  });
+}
+
 function markAsRead(notifId) {
   const role = State.currentUser?.role;
   if (!role) return;

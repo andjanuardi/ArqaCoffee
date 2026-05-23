@@ -29,8 +29,8 @@ function renderMainApp() {
         </div>
         <div class="flex items-center gap-3">
           <button onclick="showNotifPanel()" class="w-10 h-10 rounded-xl flex items-center justify-center relative" style="background:var(--card)">
-            <i class="fas fa-bell" style="color:${getUnreadCount() > 0 ? 'var(--accent)' : 'var(--muted)'}"></i>
-            ${getUnreadCount() > 0 ? `<span class="absolute -top-1 -right-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center" style="background:var(--danger);color:#fff">${getUnreadCount()}</span>` : ''}
+            <i class="fas fa-bell" style="color:${getUnreadCount() + getChatUnreadCount() > 0 ? 'var(--accent)' : 'var(--muted)'}"></i>
+            ${getUnreadCount() + getChatUnreadCount() > 0 ? `<span class="absolute -top-1 -right-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center" style="background:var(--danger);color:#fff">${getUnreadCount() + getChatUnreadCount()}</span>` : ''}
           </button>
         </div>
       </div>
@@ -125,4 +125,4 @@ function handleLogout() {
   State.chartInstances = {};
   render();
 }
-function showNotifPanel() { renderNotifPanel(); }
+function showNotifPanel() { markAllChatAsRead(); render(); renderNotifPanel(); }
