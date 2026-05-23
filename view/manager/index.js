@@ -18,65 +18,67 @@ function renderManagerView() {
 }
 
 function renderManagerDashboard() {
-  const computedSales = getFinanceData();
-  const totalRev = computedSales.reduce((s, d) => s + d.revenue, 0);
+  const totalRev = getFinanceData().reduce((s, d) => s + d.revenue, 0);
   const totalExp = (DB.expenses || []).reduce((s, e) => s + e.amount, 0);
-  const totalOrders = computedSales.reduce((s, d) => s + d.orders, 0);
-  const lowStock = DB.stockItems.filter(s => s.current_quantity <= s.min_quantity);
+  const activeOrders = DB.orders.filter(o => !['completed', 'cancelled'].includes(o.status)).length;
   const activeEmployees = DB.attendances.filter(a => !a.check_out).length;
+  const lowStock = DB.stockItems.filter(s => s.current_quantity <= s.min_quantity);
   return `
   <div class="animate-fade-up">
     <div class="mb-6">
       <h2 class="font-display text-2xl font-bold mb-1">Dashboard</h2>
-      <p class="text-sm" style="color:var(--muted)">Ringkasan operasional hari ini</p>
+      <p class="text-sm" style="color:var(--muted)">Ringkasan operasional ARQA Coffee</p>
     </div>
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-      <div class="stat-card" style="cursor:pointer" onclick="State.showRevenueTable=true;State.currentTab.manager='finance';render()"><div class="text-xs" style="color:var(--muted)">Pendapatan 7 Hari</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
-      <div class="stat-card" style="cursor:pointer" onclick="State.showExpenseTable=true;State.currentTab.manager='finance';render()"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
-      <div class="stat-card" style="cursor:pointer" onclick="State.currentTab.manager='finance';render()"><div class="text-xs" style="color:var(--muted)">Total Pesanan</div><div class="text-lg font-bold mt-1">${totalOrders}</div></div>
-      <div class="stat-card" style="cursor:pointer" onclick="State.currentTab.manager='finance';render()"><div class="text-xs" style="color:var(--muted)">Pesanan Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--warning)">${DB.orders.filter(o => !['completed', 'cancelled'].includes(o.status)).length}</div></div>
-      <div class="stat-card" style="cursor:pointer" onclick="State.currentTab.manager='attendance';render()"><div class="text-xs" style="color:var(--muted)">Pegawai Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--success)">${activeEmployees}</div></div>
-      <div class="stat-card" style="cursor:pointer" onclick="State.currentTab.manager='stock';render()"><div class="text-xs" style="color:var(--muted)">Stok Rendah</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${lowStock.length}</div></div>
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
+      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showRevenueTable=true;State.currentTab.manager='finance';render()"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
+      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showExpenseTable=true;State.currentTab.manager='finance';render()"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
+      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.currentTab.manager='dashboard';render()"><div class="text-xs" style="color:var(--muted)">Pesanan Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--warning)">${activeOrders}</div></div>
+      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.currentTab.manager='attendance';render()"><div class="text-xs" style="color:var(--muted)">Pegawai Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--success)">${activeEmployees}</div></div>
+      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="switchTab('menu-mgmt')"><div class="text-xs" style="color:var(--muted)">Total Menu</div><div class="text-lg font-bold mt-1">${DB.menuItems.length}</div></div>
+      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="switchTab('users')"><div class="text-xs" style="color:var(--muted)">Pengguna</div><div class="text-lg font-bold mt-1">${DB.users.length}</div></div>
     </div>
-    ${lowStock.length > 0 ? `
+    ${(() => {
+      if (!lowStock.length) return '';
+      return `
     <div class="card mb-4" style="border-color:rgba(231,76,60,.3)">
       <h3 class="font-semibold text-sm mb-2" style="color:var(--danger)"><i class="fas fa-exclamation-triangle mr-1"></i>Peringatan Stok Rendah</h3>
       <div class="space-y-2">
         ${lowStock.map(s => `<div class="flex justify-between text-sm"><span>${s.name}</span><span style="color:var(--danger)">${s.current_quantity} / ${s.min_quantity} ${s.unit}</span></div>`).join('')}
       </div>
       <button onclick="State.currentTab.manager='stock';render()" class="text-xs font-bold mt-2 flex items-center gap-1" style="color:var(--accent)">Selengkapnya <i class="fas fa-arrow-right" style="font-size:10px"></i></button>
-    </div>`: ''}
-    <div class="card mb-4">
-      <h3 class="font-semibold text-sm mb-3">Pesanan Terkini</h3>
-      <div class="space-y-2 max-h-64 overflow-y-auto">
-        ${DB.orders.slice(0, 6).map(o => {
-          const tableInfo = o.order_type === 'dine-in' && o.table_id ? 'Meja ' + (getTable(o.table_id)?.number || '-') : '';
-          const addrInfo = o.order_type === 'delivery' ? (o.delivery_address || '').slice(0, 30) + '...' : '';
-          return `
-        <div class="flex justify-between items-center text-sm py-2 border-b" style="border-color:var(--border)">
-          <div>
-            <span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span>
-            <span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>
-            <div class="text-[10px] mt-0.5" style="color:var(--muted)">${tableInfo || addrInfo}</div>
-          </div>
-          <span>${formatCurrency(o.total_amount)}</span>
-        </div>`;
-        }).join('')}
+    </div>`})()}
+    <div class="grid md:grid-cols-2 gap-4 mb-6">
+      <div class="card"><canvas id="chart-admin-revenue" height="200"></canvas></div>
+      <div class="card">
+        <h3 class="font-semibold text-sm mb-3">Pesanan Terkini</h3>
+        <div class="space-y-2 max-h-64 overflow-y-auto">
+          ${DB.orders.slice(0, 6).map(o => {
+            const tableInfo = o.order_type === 'dine-in' && o.table_id ? 'Meja ' + (getTable(o.table_id)?.number || '-') : '';
+            const addrInfo = o.order_type === 'delivery' ? (o.delivery_address || '').slice(0, 30) + '...' : '';
+            return `
+          <div class="flex justify-between items-center text-sm py-2 border-b" style="border-color:var(--border)">
+            <div>
+              <span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span>
+              <span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>
+              <div class="text-[10px] mt-0.5" style="color:var(--muted)">${tableInfo || addrInfo}</div>
+            </div>
+            <span>${formatCurrency(o.total_amount)}</span>
+          </div>`;
+          }).join('')}
+        </div>
+        <button onclick="State.currentTab.manager='finance';render()" class="text-xs font-bold mt-2 flex items-center gap-1" style="color:var(--accent)">Selengkapnya <i class="fas fa-arrow-right" style="font-size:10px"></i></button>
       </div>
-      <button onclick="State.currentTab.manager='finance';render()" class="text-xs font-bold mt-2 flex items-center gap-1" style="color:var(--accent)">Selengkapnya <i class="fas fa-arrow-right" style="font-size:10px"></i></button>
     </div>
-    <div class="card mb-4">
+    <div class="card">
       <h3 class="font-semibold text-sm mb-3">Status Meja</h3>
       <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
         ${DB.tables.map(t => `
-        <div class="text-center py-3 rounded-xl cursor-pointer hover:scale-105 transition-transform" style="background:${t.status === 'available' ? 'rgba(39,174,96,.1)' : 'rgba(231,76,60,.1)'}" onclick="showTableDetail('${t.id}')">
+        <div class="text-center py-3 rounded-xl cursor-pointer hover:scale-[1.05] transition-transform" style="background:${t.status === 'available' ? 'rgba(39,174,96,.1)' : 'rgba(231,76,60,.1)'}" onclick="showTableDetail('${t.id}')">
           <i class="fas fa-chair mb-1" style="color:${t.status === 'available' ? 'var(--success)' : 'var(--danger)'}"></i>
           <div class="text-xs font-semibold">${t.number}</div>
         </div>`).join('')}
       </div>
     </div>
-    <div class="card mb-4"><canvas id="chart-revenue" height="200"></canvas></div>
-    <div class="card"><canvas id="chart-orders" height="160"></canvas></div>
   </div>`;
 }
 
