@@ -125,4 +125,4 @@ function handleLogout() {
   State.chartInstances = {};
   render();
 }
-function showNotifPanel() { markAllChatAsRead(); render(); renderNotifPanel(); }
+function showNotifPanel() { renderNotifPanel(); }

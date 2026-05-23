@@ -22,6 +22,8 @@ function openChatModal(orderId) {
   if (!o.lastReadAt) o.lastReadAt = {};
   o.lastReadAt[State.currentUser.id] = Date.now();
 
+  render();
+
   const currentUserId = State.currentUser.id;
 
   showModal(
