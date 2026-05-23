@@ -136,7 +136,7 @@ function printExpenseDetail() {
   expenses.forEach(e => { catTotals[e.category] = (catTotals[e.category] || 0) + e.amount; });
   const w = window.open('', '_blank');
   w.document.write(`
-    <html><head><title>Detail Biaya</title>
+    <html><head><title>Detail Pengeluaran</title>
     <style>
       body{font-family:sans-serif;padding:40px;color:#222}
       h2{margin-bottom:8px}
@@ -152,10 +152,10 @@ function printExpenseDetail() {
       .box .val{font-size:20px;font-weight:bold;margin-top:4px;color:#e74c3c}
       .box .lbl{font-size:12px;color:#666}
     </style></head><body>
-    <h2>Detail Biaya</h2>
+    <h2>Detail Pengeluaran</h2>
     <div class="meta">Periode: ${startDate} s/d ${endDate}</div>
     <div class="flex">
-      <div class="box"><div class="lbl">Total Biaya</div><div class="val">${formatCurrency(totalExp)}</div></div>
+      <div class="box"><div class="lbl">Total Pengeluaran</div><div class="val">${formatCurrency(totalExp)}</div></div>
       <div class="box"><div class="lbl">Jumlah Transaksi</div><div class="val">${expenses.length}</div></div>
     </div>
     <table>
@@ -253,11 +253,11 @@ function printProfitDetail() {
     <div class="meta">Periode: ${startDate} s/d ${endDate}</div>
     <div class="flex">
       <div class="box"><div class="lbl">Pendapatan</div><div class="val" style="color:#27ae60">${formatCurrency(totalRev)}</div></div>
-      <div class="box"><div class="lbl">Biaya</div><div class="val" style="color:#e74c3c">${formatCurrency(totalExp)}</div></div>
+      <div class="box"><div class="lbl">Pengeluaran</div><div class="val" style="color:#e74c3c">${formatCurrency(totalExp)}</div></div>
       <div class="box"><div class="lbl">Laba Bersih</div><div class="val" style="color:${netProfit >= 0 ? '#27ae60' : '#e74c3c'}">${formatCurrency(netProfit)}</div></div>
     </div>
     <table>
-      <thead><tr><th>Tanggal</th><th class="right">Pendapatan</th><th class="right">Biaya</th><th class="right">Laba</th></tr></thead>
+      <thead><tr><th>Tanggal</th><th class="right">Pendapatan</th><th class="right">Pengeluaran</th><th class="right">Laba</th></tr></thead>
       <tbody>${data.map(d => {
         const exp = expByDate[d.date] || 0;
         const profit = d.revenue - exp;
@@ -377,7 +377,7 @@ function renderFinanceReport() {
     </div>
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showRevenueTable=!State.showRevenueTable;render()"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
-      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showExpenseTable=!State.showExpenseTable;render()"><div class="text-xs" style="color:var(--muted)">Total Biaya</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
+      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showExpenseTable=!State.showExpenseTable;render()"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showAvgTable=!State.showAvgTable;render()"><div class="text-xs" style="color:var(--muted)">Rata-rata/Hari</div><div class="text-lg font-bold mt-1">${formatCurrency(Math.round(totalRev / dayCount))}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showProfitTable=!State.showProfitTable;render()"><div class="text-xs" style="color:var(--muted)">Laba Bersih</div><div class="text-lg font-bold mt-1" style="color:${netProfit >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatCurrency(netProfit)}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showTransactionTable=!State.showTransactionTable;render()"><div class="text-xs" style="color:var(--muted)">Transaksi</div><div class="text-lg font-bold mt-1">${periodOrders.length}</div></div>
@@ -417,11 +417,11 @@ function renderFinanceReport() {
     ${State.showExpenseTable ? `
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-sm">Detail Biaya</h3>
+        <h3 class="font-semibold text-sm">Detail Pengeluaran</h3>
         <button onclick="State.showExpenseTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
       </div>
       <div class="grid grid-cols-2 gap-3 mb-3">
-        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Biaya</div><div class="text-base font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-base font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
         <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Jumlah Transaksi</div><div class="text-base font-bold mt-1">${filteredExpenses.length}</div></div>
       </div>
       <div class="overflow-x-auto">
@@ -469,12 +469,12 @@ function renderFinanceReport() {
       </div>
       <div class="grid grid-cols-3 gap-3 mb-3">
         <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pendapatan</div><div class="text-base font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
-        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Biaya</div><div class="text-base font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pengeluaran</div><div class="text-base font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
         <div class="stat-card" style="border-color:${netProfit >= 0 ? 'rgba(39,174,96,.4)' : 'rgba(231,76,60,.4)'}"><div class="text-xs" style="color:var(--muted)">Laba Bersih</div><div class="text-base font-bold mt-1" style="color:${netProfit >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatCurrency(netProfit)}</div></div>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm" style="border-collapse:collapse">
-          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Pendapatan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Biaya</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Laba</th></tr></thead>
+          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Pendapatan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Pengeluaran</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Laba</th></tr></thead>
           <tbody>${(() => {
             const expByDate = {};
             filteredExpenses.forEach(e => {
@@ -529,7 +529,7 @@ function renderFinanceReport() {
     <div class="grid md:grid-cols-2 gap-4 mb-4">
       <div class="card"><canvas id="chart-finance-detail" height="200"></canvas></div>
       <div class="card">
-        <h3 class="font-semibold text-sm mb-3">Biaya Operasional per Kategori</h3>
+        <h3 class="font-semibold text-sm mb-3">Pengeluaran per Kategori</h3>
         <canvas id="chart-expense-category" height="180"></canvas>
       </div>
     </div>
