@@ -22,6 +22,12 @@ function openChatModal(orderId) {
   if (!o.lastReadAt) o.lastReadAt = {};
   o.lastReadAt[State.currentUser.id] = Date.now();
 
+  State.notifications.forEach(function(n) {
+    if (n.relatedOrderId === orderId && n.icon === 'fa-comment-alt') {
+      n.read[State.currentUser.role] = true;
+    }
+  });
+
   render();
 
   const currentUserId = State.currentUser.id;
