@@ -348,12 +348,6 @@ function renderFinanceReport() {
     return d >= startDate && d <= endDate;
   });
 
-  const periodTransactions = paidOrders.filter(o => {
-    if (!o.created_at) return false;
-    const d = o.created_at.split('T')[0];
-    return d >= startDate && d <= endDate;
-  }).slice(0, 8);
-
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Keuangan</h2>
@@ -521,17 +515,5 @@ function renderFinanceReport() {
       </div>
     </div>
     <div class="card mb-4"><canvas id="chart-cashflow" height="180"></canvas></div>
-    <div class="grid md:grid-cols-2 gap-4 mb-4">
-      <div class="card">
-        <h3 class="font-semibold text-sm mb-3">Rincian Transaksi</h3>
-        <div class="space-y-2 max-h-64 overflow-y-auto">
-          ${periodTransactions.length ? periodTransactions.map(o => `
-          <div class="flex justify-between items-center text-sm py-2 border-b" style="border-color:var(--border)">
-            <div><span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span><span class="text-xs ml-2" style="color:var(--muted)">${getOrderTypeName(o.order_type)}</span></div>
-            <span style="color:var(--success)">${formatCurrency(o.total_amount)}</span>
-          </div>`).join('') : '<div class="text-sm py-4 text-center" style="color:var(--muted)">Belum ada transaksi</div>'}
-        </div>
-      </div>
-    </div>
   </div>`;
 }
