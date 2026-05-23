@@ -1,4 +1,4 @@
-function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : 'Delivery' }
+function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takeaway' ? 'Takeaway' : 'Delivery' }
         function getStatusLabel(s) {
             const m = { pending: 'Menunggu', cooking: 'Dimasak', ready: 'Siap Saji', delivering: 'Diantar', delivered: 'Telah Diantar', completed: 'Selesai', cancelled: 'Dibatalkan' };
             return m[s] || s
