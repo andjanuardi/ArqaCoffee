@@ -97,6 +97,65 @@ function renderCashierOrders() {
   </div>`;
 }
 
+function printCashierInvoice(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  const win = window.open('', '_blank');
+  const paidLabel = o.payment_status === 'paid' ? 'Lunas' : 'Belum Bayar';
+  let paymentMethodLabel = 'Tunai';
+  if (o.payment_method === 'digital') paymentMethodLabel = 'Digital';
+  else if (o.payment_method === 'cod') paymentMethodLabel = 'COD';
+  else if (o.payment_method === 'qris') paymentMethodLabel = 'QRIS';
+  const subtotal = o.items.reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
+  const tax = o.total_amount - (subtotal - (o.promo_discount || 0));
+  win.document.write(`
+    <html><head>
+      <title>Invoice #${o.id.slice(-5).toUpperCase()}</title>
+      <style>
+        body { font-family: 'Segoe UI',sans-serif; padding:40px; max-width:400px; margin:0 auto; }
+        .header { text-align:center; margin-bottom:24px; }
+        .header h1 { font-size:22px; margin:0; }
+        .header p { font-size:12px; color:#666; margin:2px 0; }
+        .divider { border-top:2px dashed #333; margin:16px 0; }
+        .item { display:flex; justify-content:space-between; font-size:13px; padding:4px 0; }
+        .item .name { flex:1; }
+        .item .qty { margin:0 12px; color:#666; }
+        .item .price { text-align:right; }
+        .totals { margin-top:12px; font-size:13px; }
+        .totals > div { display:flex; justify-content:space-between; padding:2px 0; }
+        .footer { text-align:center; font-size:11px; color:#888; margin-top:24px; }
+        @media print { body { padding:20px; } }
+      </style>
+    </head><body>
+      <div class="header">
+        <h1>ARQA Coffee</h1>
+        <p>${getOrderTypeName(o.order_type)}</p>
+        ${o.table_id ? '<p>Meja ' + (getTable(o.table_id)?.number || '') + '</p>' : ''}
+        ${o.customer_name ? '<p>' + o.customer_name + '</p>' : ''}
+        <p>#${o.id.slice(-5).toUpperCase()}</p>
+        <p>${new Date(o.created_at).toLocaleString('id-ID')}</p>
+      </div>
+      <div class="divider"></div>
+      ${o.items.map(i => {
+        const mi = getMenuItem(i.menu_item_id);
+        return `<div class="item"><span class="name">${mi ? mi.name : 'Item'}</span><span class="qty">x${i.quantity}</span><span class="price">${formatCurrency(i.unit_price * i.quantity)}</span></div>`;
+      }).join('')}
+      <div class="divider"></div>
+      <div class="totals">
+        <div><span>Subtotal</span><span>${formatCurrency(subtotal)}</span></div>
+        ${o.promo_discount ? `<div style="color:#27ae60"><span>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ''}
+        <div><span>Pajak (10%)</span><span>${formatCurrency(Math.round(tax))}</span></div>
+        <div style="font-weight:bold;font-size:15px"><span>Total</span><span>${formatCurrency(o.total_amount)}</span></div>
+        <div style="margin-top:8px"><span>Pembayaran</span><span>${paymentMethodLabel}</span></div>
+        <div><span>Status</span><span>${paidLabel}</span></div>
+      </div>
+      <div class="footer">Terima kasih telah berbelanja di ARQA Coffee</div>
+      <script>window.print()</script>
+    </body></html>
+  `);
+  win.document.close();
+}
+
 function showCashierOrderDetail(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
@@ -133,7 +192,10 @@ function showCashierOrderDetail(id) {
     <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "digital" ? "Digital" : "Tunai/COD"}</span></div>
     <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Waktu Selesai</span><span>${formatTime(o.created_at)}</span></div>
   </div>
-  <button onclick="closeModal()" class="btn-secondary w-full mt-4 text-center">Tutup</button>
+  <div class="flex gap-2 mt-4">
+    <button onclick="printCashierInvoice('${o.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak</button>
+    <button onclick="closeModal()" class="btn-secondary flex-1 text-center">Tutup</button>
+  </div>
 </div>
 `);
 }
