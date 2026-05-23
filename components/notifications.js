@@ -131,7 +131,7 @@ function notifyOrderPlaced(order, customerName) {
     message: shortId + ' — ' + customerName + ' memesan ' + order.items.length + ' item',
     type: 'order',
     icon: 'fa-shopping-bag',
-    targetRoles: ['cashier', 'kitchen'],
+    targetRoles: ['cashier', 'kitchen', 'admin', 'manager'],
     relatedOrderId: order.id,
   });
   addNotification({
@@ -148,11 +148,11 @@ function notifyStatusChange(order, newStatus) {
   var shortId = '#' + order.id.slice(-5).toUpperCase();
   var label = getStatusLabel(newStatus);
   var roles = [];
-  if (newStatus === 'cooking') roles = ['customer', 'cashier'];
-  else if (newStatus === 'ready') roles = ['customer', 'cashier'];
-  else if (newStatus === 'delivering') roles = ['customer', 'cashier', 'courier'];
-  else if (newStatus === 'completed') roles = ['customer', 'cashier', 'courier'];
-  else roles = ['customer', 'cashier'];
+  if (newStatus === 'cooking') roles = ['customer', 'cashier', 'admin', 'manager'];
+  else if (newStatus === 'ready') roles = ['customer', 'cashier', 'admin', 'manager'];
+  else if (newStatus === 'delivering') roles = ['customer', 'cashier', 'courier', 'admin', 'manager'];
+  else if (newStatus === 'completed') roles = ['customer', 'cashier', 'courier', 'admin', 'manager'];
+  else roles = ['customer', 'cashier', 'admin', 'manager'];
   addNotification({
     title: 'Status Pesanan',
     message: shortId + ' — ' + label,
@@ -190,7 +190,7 @@ function notifyRejected(order, reason) {
     message: shortId + ' — Alasan: ' + reason,
     type: 'warning',
     icon: 'fa-ban',
-    targetRoles: ['customer', 'cashier'],
+    targetRoles: ['customer', 'cashier', 'admin', 'manager'],
     relatedOrderId: order.id,
   });
 }
@@ -202,7 +202,7 @@ function notifyDeliveryTaken(order, courierName) {
     message: shortId + ' — ' + courierName + ' sedang mengantar',
     type: 'delivery',
     icon: 'fa-motorcycle',
-    targetRoles: ['customer', 'cashier'],
+    targetRoles: ['customer', 'cashier', 'admin', 'manager'],
     relatedOrderId: order.id,
   });
 }
@@ -214,7 +214,7 @@ function notifyDeliveryCompleted(order) {
     message: shortId + ' — Pengantaran selesai',
     type: 'delivery',
     icon: 'fa-circle-check',
-    targetRoles: ['customer', 'cashier', 'courier'],
+    targetRoles: ['customer', 'cashier', 'courier', 'admin', 'manager'],
     relatedOrderId: order.id,
   });
 }
