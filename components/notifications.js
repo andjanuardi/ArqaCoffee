@@ -34,6 +34,7 @@ function getUnreadCount() {
 function getChatUnreadCount() {
   const me = State.currentUser;
   if (!me) return 0;
+  if (me.role !== 'customer' && me.role !== 'courier') return 0;
   let total = 0;
   DB.orders.forEach(function(o) {
     if (!o.messages || !o.messages.length) return;

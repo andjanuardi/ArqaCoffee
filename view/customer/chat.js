@@ -1,7 +1,7 @@
 // ============================================================
 // CUSTOMER VIEW — Chat
 // ============================================================
-function getUnreadCount(orderId) {
+function getOrderChatUnreadCount(orderId) {
   const o = DB.orders.find(x => x.id === orderId);
   if (!o || !o.messages || !o.messages.length) return 0;
   const myId = State.currentUser.id;
