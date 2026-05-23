@@ -351,11 +351,23 @@ function renderFinanceReport() {
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
-          <thead><tr class="text-left" style="color:var(--muted)"><th class="pb-2 pr-4">Tanggal</th><th class="pb-2 pr-4 text-right">Transaksi</th><th class="pb-2 text-right">Pendapatan</th></tr></thead>
-          <tbody>${computedSales.map(d => `
-            <tr class="border-t" style="border-color:var(--border)"><td class="py-2 pr-4">${formatDate(d.date)}</td><td class="py-2 pr-4 text-right">${d.orders}</td><td class="py-2 text-right" style="color:var(--success)">${formatCurrency(d.revenue)}</td></tr>
-          `).join('')}</tbody>
-          <tfoot><tr class="border-t-2 font-bold" style="border-color:var(--accent)"><td class="py-2 pr-4">Total</td><td class="py-2 pr-4 text-right">${periodOrders.length}</td><td class="py-2 text-right" style="color:var(--accent)">${formatCurrency(totalRev)}</td></tr></tfoot>
+          <thead><tr class="text-left" style="color:var(--muted)"><th class="pb-2 pr-3">Tanggal</th><th class="pb-2 pr-3">Jam</th><th class="pb-2 pr-3">Orders</th><th class="pb-2 pr-3">Menu</th><th class="pb-2 text-right">Pendapatan</th></tr></thead>
+          <tbody>${computedSales.map(d => {
+            const dayOrders = periodOrders.filter(o => (o.created_at?.split('T')[0] || '') === d.date);
+            const times = dayOrders.map(o => {
+              const t = o.created_at?.split('T')[1] || '';
+              return t ? t.slice(0, 5) : '-';
+            }).join(', ');
+            const orderIds = dayOrders.map(o => '#' + o.id.slice(-5).toUpperCase() + ' (' + getOrderTypeName(o.order_type) + ')').join(', ');
+            const menuCount = {};
+            dayOrders.forEach(o => (o.items || []).forEach(item => {
+              const mi = DB.menuItems.find(m => m.id === item.menu_item_id);
+              if (mi) menuCount[mi.name] = (menuCount[mi.name] || 0) + item.quantity;
+            }));
+            const menuList = Object.entries(menuCount).map(([name, qty]) => name + ' x' + qty).join(', ');
+            return `<tr class="border-t" style="border-color:var(--border)"><td class="py-2 pr-3">${formatDate(d.date)}</td><td class="py-2 pr-3 text-xs" style="color:var(--muted)">${times || '-'}</td><td class="py-2 pr-3 text-xs" style="color:var(--muted)">${orderIds || '-'}</td><td class="py-2 pr-3 text-xs" style="color:var(--muted)">${menuList || '-'}</td><td class="py-2 text-right" style="color:var(--success)">${formatCurrency(d.revenue)}</td></tr>`;
+          }).join('')}</tbody>
+          <tfoot><tr class="border-t-2 font-bold" style="border-color:var(--accent)"><td class="py-2 pr-3">Total</td><td class="py-2 pr-3"></td><td class="py-2 pr-3"></td><td class="py-2 pr-3"></td><td class="py-2 text-right" style="color:var(--accent)">${formatCurrency(totalRev)}</td></tr></tfoot>
         </table>
       </div>
       <div class="mt-3">
