@@ -22,6 +22,15 @@ function renderAdminOverview() {
   const totalExp = (DB.expenses || []).reduce((s, e) => s + e.amount, 0);
   const activeOrders = DB.orders.filter(o => !['completed', 'cancelled'].includes(o.status)).length;
   const pegawai = DB.users.filter(u => u.role !== 'customer').length;
+  const prodCount = {};
+  DB.orders.filter(o => o.payment_status === 'paid').forEach(o => {
+    (o.items || []).forEach(item => {
+      const mi = DB.menuItems.find(m => m.id === item.menu_item_id);
+      if (mi) prodCount[mi.name] = (prodCount[mi.name] || 0) + item.quantity;
+    });
+  });
+  const topProducts = Object.entries(prodCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const maxQty = topProducts.length ? topProducts[0][1] : 0;
   return `
   <div class="animate-fade-up">
     <div class="mb-6">
@@ -69,8 +78,31 @@ function renderAdminOverview() {
         <button onclick="State.currentTab.admin='finance';render()" class="text-xs font-bold mt-2 flex items-center gap-1" style="color:var(--accent)">Selengkapnya <i class="fas fa-arrow-right" style="font-size:10px"></i></button>
       </div>
     </div>
-    <div class="card">
-      <h3 class="font-semibold text-sm mb-3">Status Meja</h3>
+    <div class="grid md:grid-cols-2 gap-4 mb-6">
+      <div class="card">
+        <h3 class="font-semibold text-sm mb-3">Produk Terlaris</h3>
+        ${topProducts.length ? `
+        <div class="space-y-3">
+          ${topProducts.map(([name, qty], i) => {
+            const pct = maxQty > 0 ? Math.round(qty / maxQty * 100) : 0;
+            return `
+          <div>
+            <div class="flex items-center justify-between text-sm mb-1">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style="background:${i === 0 ? 'var(--accent)' : 'var(--bg2)'};color:${i === 0 ? '#fff' : 'var(--muted)'}">${i + 1}</span>
+                <span class="truncate">${name}</span>
+              </div>
+              <span class="font-semibold shrink-0" style="color:var(--accent)">${qty}</span>
+            </div>
+            <div class="w-full h-1.5 rounded-full" style="background:var(--bg2)">
+              <div class="h-full rounded-full transition-all" style="width:${pct}%;background:${i === 0 ? 'var(--accent)' : 'var(--muted)'}"></div>
+            </div>
+          </div>`;
+          }).join('')}
+        </div>` : '<div class="text-sm py-4 text-center" style="color:var(--muted)">Belum ada data</div>'}
+      </div>
+      <div class="card">
+        <h3 class="font-semibold text-sm mb-3">Status Meja</h3>
       <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
         ${DB.tables.map(t => `
         <div class="text-center py-3 rounded-xl cursor-pointer hover:scale-[1.05] transition-transform" style="background:${t.status === 'available' ? 'rgba(39,174,96,.1)' : 'rgba(231,76,60,.1)'}" onclick="showTableDetail('${t.id}')">
@@ -79,6 +111,7 @@ function renderAdminOverview() {
         </div>`).join('')}
       </div>
     </div>
+  </div>
   </div>`;
 }
 
