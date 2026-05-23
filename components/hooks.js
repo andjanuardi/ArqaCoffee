@@ -13,7 +13,18 @@ function initCharts() {
   });
   State.chartInstances = {};
 
-  const ds = typeof getComputedDailySales === 'function' ? getComputedDailySales() : [];
+  const period = State.financeFilter || 'daily';
+  const ds = typeof getFinanceData === 'function' ? getFinanceData(period) : [];
+
+  const formatPeriodLabel = d => {
+    if (period === 'yearly') return d.date;
+    if (period === 'monthly') {
+      const [y, m] = d.date.split('-');
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      return `${months[parseInt(m) - 1]} ${y}`;
+    }
+    return formatDate(d.date).replace(/ \d{4}$/, '');
+  };
 
   const chartOptions = (yLabel) => ({
     responsive: true,
@@ -35,7 +46,7 @@ function initCharts() {
     'chart-cashier': {
       type: 'bar',
       data: {
-        labels: ds.map(d => formatDate(d.date).replace(' 2025', '')),
+        labels: ds.map(formatPeriodLabel),
         datasets: [{
           label: 'Pendapatan',
           data: ds.map(d => d.revenue / 1000),
@@ -50,7 +61,7 @@ function initCharts() {
     'chart-revenue': {
       type: 'line',
       data: {
-        labels: ds.map(d => formatDate(d.date).replace(' 2025', '')),
+        labels: ds.map(formatPeriodLabel),
         datasets: [{
           label: 'Pendapatan',
           data: ds.map(d => d.revenue / 1000),
@@ -66,7 +77,7 @@ function initCharts() {
     'chart-admin-revenue': {
       type: 'line',
       data: {
-        labels: ds.map(d => formatDate(d.date).replace(' 2025', '')),
+        labels: ds.map(formatPeriodLabel),
         datasets: [{
           label: 'Pendapatan',
           data: ds.map(d => d.revenue / 1000),
@@ -82,7 +93,7 @@ function initCharts() {
     'chart-finance-detail': {
       type: 'bar',
       data: {
-        labels: ds.map(d => formatDate(d.date).replace(' 2025', '')),
+        labels: ds.map(formatPeriodLabel),
         datasets: [
           {
             label: 'Pendapatan (Ribu Rp)',
@@ -128,8 +139,18 @@ function initCharts() {
       options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#f0ebe3', padding: 20 } } } },
     },
     'chart-expense-category': (() => {
+      let periodExpenses = DB.expenses || [];
+      if (period === 'daily') {
+        const today = new Date().toISOString().split('T')[0];
+        periodExpenses = periodExpenses.filter(e => (e.date || '').startsWith(today));
+      } else if (period === 'monthly') {
+        const prefix = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+        periodExpenses = periodExpenses.filter(e => (e.date || '').startsWith(prefix));
+      } else if (period === 'yearly') {
+        periodExpenses = periodExpenses.filter(e => (e.date || '').startsWith(String(new Date().getFullYear())));
+      }
       const cats = {};
-      (DB.expenses || []).forEach(e => { cats[e.category] = (cats[e.category] || 0) + e.amount; });
+      periodExpenses.forEach(e => { cats[e.category] = (cats[e.category] || 0) + e.amount; });
       const labels = Object.keys(cats);
       const data = Object.values(cats);
       const colors = ['#e07a3a', '#1abc9c', '#e74c3c', '#f39c12', '#9b59b6'];
@@ -158,12 +179,12 @@ function initCharts() {
     'chart-cashflow': (() => {
       const revData = ds.map(d => d.revenue);
       const expData = ds.map(d => {
-        return (DB.expenses || []).filter(e => e.date === d.date).reduce((s, e) => s + e.amount, 0);
+        return (DB.expenses || []).filter(e => (e.date || '').startsWith(d.date)).reduce((s, e) => s + e.amount, 0);
       });
       return {
         type: 'bar',
         data: {
-          labels: ds.map(d => formatDate(d.date).replace(' 2025', '')),
+          labels: ds.map(formatPeriodLabel),
           datasets: [
             { label: 'Pemasukan', data: revData, backgroundColor: 'rgba(39,174,96,.7)', borderRadius: 6 },
             { label: 'Pengeluaran', data: expData, backgroundColor: 'rgba(231,76,60,.7)', borderRadius: 6 },
