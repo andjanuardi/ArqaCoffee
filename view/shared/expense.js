@@ -78,7 +78,7 @@ function renderExpenseManagement() {
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="text-xs font-semibold px-2 py-0.5 rounded-full" style="background:${color}22;color:${color}">${e.category}</span>
-                  <span class="text-xs" style="color:var(--muted)">${e.date || "-"}</span>
+                  <span class="text-xs" style="color:var(--muted)">${e.date || "-"}${e.time ? " " + e.time : ""}</span>
                 </div>
                 <div class="text-sm font-semibold mt-1" style="color:var(--success)">${formatCurrency(e.amount)}${e.volume && e.unitPrice ? ` <span class="text-xs font-normal" style="color:var(--muted)">(${e.volume} ${e.unit || "unit"} x ${formatCurrency(e.unitPrice)})</span>` : ""}</div>
                 <div class="text-xs mt-0.5 truncate" style="color:var(--muted)">${e.note || "-"}</div>
@@ -106,6 +106,10 @@ function showAddExpenseModal() {
         <div>
           <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Tanggal</label>
           <input id="new-expense-date" type="date" class="input-field text-sm w-full" value="${new Date().toISOString().split("T")[0]}">
+        </div>
+        <div>
+          <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Jam</label>
+          <input id="new-expense-time" type="time" class="input-field text-sm w-full" value="${new Date().toTimeString().slice(0,5)}">
         </div>
         <div>
           <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kategori</label>
@@ -156,6 +160,7 @@ function addExpense() {
     showToast("Tanggal wajib diisi", "warning");
     return;
   }
+  const time = document.getElementById("new-expense-time")?.value || "";
   const volume = parseFloat(
     document.getElementById("new-expense-volume")?.value || "0",
   );
@@ -174,6 +179,7 @@ function addExpense() {
   DB.expenses.push({
     id: "e" + Date.now(),
     date,
+    time,
     category,
     amount,
     note,
@@ -196,6 +202,10 @@ function showEditExpenseModal(id) {
         <div>
           <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Tanggal</label>
           <input id="edit-expense-date" type="date" class="input-field text-sm w-full" value="${e.date}">
+        </div>
+        <div>
+          <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Jam</label>
+          <input id="edit-expense-time" type="time" class="input-field text-sm w-full" value="${e.time || "08:00"}">
         </div>
         <div>
           <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kategori</label>
@@ -250,6 +260,7 @@ function saveEditExpense(id) {
     return;
   }
   e.date = date;
+  e.time = document.getElementById("edit-expense-time")?.value || "";
   e.category = document.getElementById("edit-expense-cat")?.value || "Lainnya";
   e.amount = amount;
   e.volume = volume;

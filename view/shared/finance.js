@@ -159,14 +159,9 @@ function printExpenseDetail() {
       <div class="box"><div class="lbl">Jumlah Transaksi</div><div class="val">${expenses.length}</div></div>
     </div>
     <table>
-      <thead><tr><th>Tanggal</th><th>Kategori</th><th>Keterangan</th><th class="right">Jumlah</th></tr></thead>
-      <tbody>${expenses.map(e => `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.note || '-'}</td><td class="right red">${formatCurrency(e.amount)}</td></tr>`).join('')}</tbody>
-      <tfoot><tr class="tfoot"><td colspan="3">Total</td><td class="right red">${formatCurrency(totalExp)}</td></tr></tfoot>
-    </table>
-    <h3 style="margin-top:32px;font-size:16px">Ringkasan per Kategori</h3>
-    <table>
-      <thead><tr><th>Kategori</th><th class="right">Total</th></tr></thead>
-      <tbody>${Object.entries(catTotals).map(([cat, tot]) => `<tr><td>${cat}</td><td class="right red">${formatCurrency(tot)}</td></tr>`).join('')}</tbody>
+      <thead><tr><th>Tanggal</th><th>Jam</th><th>Kategori</th><th>Keterangan</th><th class="right">Jumlah</th></tr></thead>
+      <tbody>${expenses.map(e => `<tr><td>${e.date}</td><td class="muted">${e.time || '-'}</td><td>${e.category}</td><td>${e.note || '-'}</td><td class="right red">${formatCurrency(e.amount)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr class="tfoot"><td colspan="4">Total</td><td class="right red">${formatCurrency(totalExp)}</td></tr></tfoot>
     </table>
     <script>window.print()<${'/'}script></body></html>
   `);
@@ -426,11 +421,11 @@ function renderFinanceReport() {
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm" style="border-collapse:collapse">
-          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Kategori</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Keterangan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Jumlah</th></tr></thead>
+          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Kategori</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Keterangan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Jumlah</th></tr></thead>
           <tbody>${filteredExpenses.map(e => `
-            <tr><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${e.date || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px">${e.category}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${e.note || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--danger)">${formatCurrency(e.amount)}</td></tr>
+            <tr><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${e.date || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${e.time || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px">${e.category}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${e.note || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--danger)">${formatCurrency(e.amount)}</td></tr>
           `).join('')}</tbody>
-          <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--danger)" colspan="3">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--danger);text-align:right;color:var(--danger)">${formatCurrency(totalExp)}</td></tr></tfoot>
+          <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--danger)" colspan="4">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--danger);text-align:right;color:var(--danger)">${formatCurrency(totalExp)}</td></tr></tfoot>
         </table>
       </div>
       <div class="mt-3">
