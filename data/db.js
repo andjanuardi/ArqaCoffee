@@ -722,13 +722,13 @@ const DB =
         // { date: "2025-01-15", revenue: 890000, orders: 22 },
       ],
       expenses: [
-        { id: "e1", date: "2025-01-09", category: "Operasional", amount: 450000, note: "Beli kopi dan susu", volume: 3, unit: "kg", unitPrice: 150000 },
-        { id: "e2", date: "2025-01-10", category: "Operasional", amount: 200000, note: "Listrik dan air", volume: 1, unit: "bln", unitPrice: 200000 },
-        { id: "e3", date: "2025-01-11", category: "Operasional", amount: 380000, note: "Beli gula dan sirup", volume: 2, unit: "kg", unitPrice: 190000 },
-        { id: "e4", date: "2025-01-12", category: "Gaji", amount: 1200000, note: "Gaji karyawan", volume: 1, unit: "bln", unitPrice: 1200000 },
-        { id: "e5", date: "2025-01-13", category: "Operasional", amount: 150000, note: "Sewa tempat", volume: 1, unit: "bln", unitPrice: 150000 },
-        { id: "e6", date: "2025-01-14", category: "Operasional", amount: 520000, note: "Beli snack dan roti", volume: 8, unit: "pak", unitPrice: 65000 },
-        { id: "e7", date: "2025-01-15", category: "Lainnya", amount: 100000, note: "Biaya kebersihan", volume: 1, unit: "kali", unitPrice: 100000 },
+        //{ id: "e1", date: "2025-01-09", category: "Operasional", amount: 450000, note: "Beli kopi dan susu", volume: 3, unit: "kg", unitPrice: 150000 },
+        //{ id: "e2", date: "2025-01-10", category: "Operasional", amount: 200000, note: "Listrik dan air", volume: 1, unit: "bln", unitPrice: 200000 },
+        //{ id: "e3", date: "2025-01-11", category: "Operasional", amount: 380000, note: "Beli gula dan sirup", volume: 2, unit: "kg", unitPrice: 190000 },
+        //{ id: "e4", date: "2025-01-12", category: "Gaji", amount: 1200000, note: "Gaji karyawan", volume: 1, unit: "bln", unitPrice: 1200000 },
+        //{ id: "e5", date: "2025-01-13", category: "Operasional", amount: 150000, note: "Sewa tempat", volume: 1, unit: "bln", unitPrice: 150000 },
+        //{ id: "e6", date: "2025-01-14", category: "Operasional", amount: 520000, note: "Beli snack dan roti", volume: 8, unit: "pak", unitPrice: 65000 },
+        //{ id: "e7", date: "2025-01-15", category: "Lainnya", amount: 100000, note: "Biaya kebersihan", volume: 1, unit: "kali", unitPrice: 100000 },
       ],
     };
   })();
