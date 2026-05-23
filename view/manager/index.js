@@ -16,7 +16,7 @@ function renderManagerView() {
 }
 
 function renderManagerDashboard() {
-  const computedSales = getFinanceData('daily');
+  const computedSales = getFinanceData();
   const totalRev = computedSales.reduce((s, d) => s + d.revenue, 0);
   const totalExp = (DB.expenses || []).reduce((s, e) => s + e.amount, 0);
   const totalOrders = computedSales.reduce((s, d) => s + d.orders, 0);

@@ -5,71 +5,37 @@
 // ------------------------------------------------------------------
 // FINANCE HELPERS
 // ------------------------------------------------------------------
-function getFinanceData(period) {
+function getFinanceData(startDate, endDate) {
   const paidOrders = DB.orders.filter(o => o.payment_status === 'paid');
-
-  if (period === 'monthly') {
-    const monthly = {};
-    paidOrders.forEach(o => {
-      if (!o.created_at) return;
-      const d = new Date(o.created_at);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      if (!monthly[key]) monthly[key] = { date: key, revenue: 0, orders: 0 };
-      monthly[key].revenue += o.total_amount || 0;
-      monthly[key].orders += 1;
-    });
-    const entries = Object.values(monthly).sort((a, b) => a.date.localeCompare(b.date));
-    const last6 = entries.slice(-6);
-    while (last6.length < 6) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - (5 - last6.length));
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      last6.unshift({ date: key, revenue: 0, orders: 0 });
-    }
-    return last6;
+  if (!startDate) {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 6);
+    startDate = start.toISOString().split('T')[0];
+    endDate = end.toISOString().split('T')[0];
   }
-
-  if (period === 'yearly') {
-    const yearly = {};
-    paidOrders.forEach(o => {
-      if (!o.created_at) return;
-      const key = o.created_at.split('T')[0].slice(0, 4);
-      if (!yearly[key]) yearly[key] = { date: key, revenue: 0, orders: 0 };
-      yearly[key].revenue += o.total_amount || 0;
-      yearly[key].orders += 1;
-    });
-    const entries = Object.values(yearly).sort((a, b) => a.date.localeCompare(b.date));
-    const last3 = entries.slice(-3);
-    while (last3.length < 3) {
-      const d = new Date();
-      d.setFullYear(d.getFullYear() - (2 - last3.length));
-      const key = String(d.getFullYear());
-      last3.unshift({ date: key, revenue: 0, orders: 0 });
-    }
-    return last3;
-  }
-
-  const daily = {};
-  paidOrders.forEach(o => {
-    const dateKey = o.created_at?.split('T')[0];
-    if (!dateKey) return;
-    if (!daily[dateKey]) daily[dateKey] = { date: dateKey, revenue: 0, orders: 0 };
-    daily[dateKey].revenue += o.total_amount || 0;
-    daily[dateKey].orders += 1;
+  const filtered = paidOrders.filter(o => {
+    if (!o.created_at) return false;
+    const d = o.created_at.split('T')[0];
+    return d >= startDate && d <= endDate;
   });
-  const entries = Object.values(daily).sort((a, b) => a.date.localeCompare(b.date));
-  const last7 = entries.slice(-7);
-  while (last7.length < 7) {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - last7.length));
-    const key = d.toISOString().split('T')[0];
-    last7.unshift({ date: key, revenue: 0, orders: 0 });
+  const grouped = {};
+  filtered.forEach(o => {
+    const dateKey = o.created_at.split('T')[0];
+    if (!grouped[dateKey]) grouped[dateKey] = { date: dateKey, revenue: 0, orders: 0 };
+    grouped[dateKey].revenue += o.total_amount || 0;
+    grouped[dateKey].orders += 1;
+  });
+  const entries = Object.values(grouped).sort((a, b) => a.date.localeCompare(b.date));
+  if (!entries.length) {
+    entries.push({ date: startDate, revenue: 0, orders: 0 });
   }
-  return last7;
+  return entries;
 }
 
-function setFinanceFilter(period) {
-  State.financeFilter = period;
+function setFinanceRange(startDate, endDate) {
+  State.financeStartDate = startDate;
+  State.financeEndDate = endDate;
   render();
 }
 
@@ -77,43 +43,27 @@ function setFinanceFilter(period) {
 // FINANCE REPORT
 // ------------------------------------------------------------------
 function renderFinanceReport() {
-  const period = State.financeFilter || 'daily';
-  const computedSales = getFinanceData(period);
+  const startDate = State.financeStartDate || (() => {
+    const d = new Date(); d.setDate(d.getDate() - 6); return d.toISOString().split('T')[0];
+  })();
+  const endDate = State.financeEndDate || new Date().toISOString().split('T')[0];
+  const computedSales = getFinanceData(startDate, endDate);
   const totalRev = computedSales.reduce((s, d) => s + d.revenue, 0);
 
-  let filteredExpenses = DB.expenses || [];
-  if (period === 'daily') {
-    const today = new Date().toISOString().split('T')[0];
-    filteredExpenses = filteredExpenses.filter(e => (e.date || '').startsWith(today));
-  } else if (period === 'monthly') {
-    const prefix = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-    filteredExpenses = filteredExpenses.filter(e => (e.date || '').startsWith(prefix));
-  } else if (period === 'yearly') {
-    filteredExpenses = filteredExpenses.filter(e => (e.date || '').startsWith(String(new Date().getFullYear())));
-  }
-
+  const filteredExpenses = (DB.expenses || []).filter(e => {
+    if (!e.date) return false;
+    return e.date >= startDate && e.date <= endDate;
+  });
   const totalExp = filteredExpenses.reduce((s, e) => s + e.amount, 0);
   const netProfit = totalRev - totalExp;
-  const current = computedSales[computedSales.length - 1];
-
-  const labels = {
-    daily: { current: 'Hari Ini', range: '7 Hari', avg: 'Rata-rata/Hari', trans: 'Transaksi Hari Ini' },
-    monthly: { current: 'Bulan Ini', range: '6 Bulan', avg: 'Rata-rata/Bulan', trans: 'Transaksi Bulan Ini' },
-    yearly: { current: 'Tahun Ini', range: '3 Tahun', avg: 'Rata-rata/Tahun', trans: 'Transaksi Tahun Ini' }
-  };
-  const lbl = labels[period];
+  const dayCount = Math.max(1, Math.round((new Date(endDate) - new Date(startDate)) / 86400000) + 1);
 
   const prodCount = {};
   const paidOrders = DB.orders.filter(o => o.payment_status === 'paid');
   const periodOrders = paidOrders.filter(o => {
     if (!o.created_at) return false;
-    if (period === 'daily') return o.created_at.split('T')[0] === new Date().toISOString().split('T')[0];
-    if (period === 'monthly') {
-      const d = new Date(o.created_at);
-      return d.getFullYear() === new Date().getFullYear() && d.getMonth() === new Date().getMonth();
-    }
-    if (period === 'yearly') return o.created_at.startsWith(String(new Date().getFullYear()));
-    return true;
+    const d = o.created_at.split('T')[0];
+    return d >= startDate && d <= endDate;
   });
   periodOrders.forEach(o => {
     (o.items || []).forEach(item => {
@@ -125,31 +75,24 @@ function renderFinanceReport() {
 
   const periodTransactions = paidOrders.filter(o => {
     if (!o.created_at) return false;
-    if (period === 'daily') return o.created_at.split('T')[0] === new Date().toISOString().split('T')[0];
-    if (period === 'monthly') {
-      const d = new Date(o.created_at);
-      return d.getFullYear() === new Date().getFullYear() && d.getMonth() === new Date().getMonth();
-    }
-    if (period === 'yearly') return o.created_at.startsWith(String(new Date().getFullYear()));
-    return true;
+    const d = o.created_at.split('T')[0];
+    return d >= startDate && d <= endDate;
   }).slice(0, 8);
-
-  const filterBtns = ['daily', 'monthly', 'yearly'].map(p =>
-    `<button onclick="setFinanceFilter('${p}')" class="btn-sm ${period === p ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 12px">${p === 'daily' ? 'Harian' : p === 'monthly' ? 'Bulanan' : 'Tahunan'}</button>`
-  ).join('');
 
   return `
   <div class="animate-fade-up">
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-      <h2 class="font-display text-xl font-bold">Laporan Keuangan</h2>
-      <div class="flex gap-2">${filterBtns}</div>
+    <h2 class="font-display text-xl font-bold mb-4">Laporan Keuangan</h2>
+    <div class="flex flex-wrap items-center gap-2 mb-4">
+      <input type="date" id="finance-start" value="${startDate}" class="input-field text-sm" style="flex:1;min-width:140px" onchange="setFinanceRange(this.value,document.getElementById('finance-end').value)">
+      <span class="text-xs" style="color:var(--muted)">s/d</span>
+      <input type="date" id="finance-end" value="${endDate}" class="input-field text-sm" style="flex:1;min-width:140px" onchange="setFinanceRange(document.getElementById('finance-start').value,this.value)">
     </div>
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">${lbl.current}</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(current.revenue)}</div></div>
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">${lbl.range}</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">${lbl.avg}</div><div class="text-lg font-bold mt-1">${formatCurrency(Math.round(totalRev / computedSales.length))}</div></div>
+      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
+      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Biaya</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
+      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Rata-rata/Hari</div><div class="text-lg font-bold mt-1">${formatCurrency(Math.round(totalRev / dayCount))}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Laba Bersih</div><div class="text-lg font-bold mt-1" style="color:${netProfit >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatCurrency(netProfit)}</div></div>
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">${lbl.trans}</div><div class="text-lg font-bold mt-1">${current.orders}</div></div>
+      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Transaksi</div><div class="text-lg font-bold mt-1">${periodOrders.length}</div></div>
     </div>
     <div class="grid md:grid-cols-2 gap-4 mb-4">
       <div class="card"><canvas id="chart-finance-detail" height="200"></canvas></div>
@@ -161,7 +104,7 @@ function renderFinanceReport() {
     <div class="card mb-4"><canvas id="chart-cashflow" height="180"></canvas></div>
     <div class="grid md:grid-cols-2 gap-4 mb-4">
       <div class="card">
-        <h3 class="font-semibold text-sm mb-3">Produk Terlaris (${lbl.current})</h3>
+        <h3 class="font-semibold text-sm mb-3">Produk Terlaris</h3>
         ${topProducts.length ? `
         <div class="space-y-2">
           ${topProducts.map(([name, qty], i) => `
@@ -173,7 +116,7 @@ function renderFinanceReport() {
         </div>` : '<div class="text-sm py-4 text-center" style="color:var(--muted)">Belum ada data</div>'}
       </div>
       <div class="card">
-        <h3 class="font-semibold text-sm mb-3">Rincian Transaksi (${lbl.current})</h3>
+        <h3 class="font-semibold text-sm mb-3">Rincian Transaksi</h3>
         <div class="space-y-2 max-h-64 overflow-y-auto">
           ${periodTransactions.length ? periodTransactions.map(o => `
           <div class="flex justify-between items-center text-sm py-2 border-b" style="border-color:var(--border)">
