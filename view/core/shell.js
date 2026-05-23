@@ -90,7 +90,6 @@ function renderSideDrawer(role) {
     { id: 'expenses', icon: 'fa-money-bill-wave', label: 'Pengeluaran' },
     { id: 'active-orders', icon: 'fa-clipboard-list', label: 'Pesanan Aktif' },
     { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
-    { id: 'profile', icon: 'fa-user', label: 'Profil' },
   ];
   const active = State.currentTab[role] || items[0]?.id;
   return `
