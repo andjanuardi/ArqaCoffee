@@ -28,7 +28,7 @@ function renderAdminOverview() {
       <p class="text-sm" style="color:var(--muted)">Kontrol penuh seluruh operasional ARQA Coffee</p>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
-      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="switchTab('finance')"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
+      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showRevenueTable=true;State.currentTab.admin='finance';render()"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="switchTab('finance')"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="switchTab('finance')"><div class="text-xs" style="color:var(--muted)">Pesanan Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--warning)">${activeOrders}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="switchTab('users')"><div class="text-xs" style="color:var(--muted)">Pegawai Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--success)">${pegawai}</div></div>
