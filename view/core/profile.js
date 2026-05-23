@@ -1,7 +1,21 @@
 // ============================================================
 // GENERIC PROFILE
 // ============================================================
+const ARQA_COORDS = { lat: -6.2088, lng: 106.8456 };
+const ARQA_RADIUS = 200;
+
+function calcDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 function renderGenericProfile() {
+  ['checkin-profile', 'checkin-preview'].forEach(k => {
+    if (State.mapInstances[k]) { State.mapInstances[k].remove(); delete State.mapInstances[k]; }
+  });
   const u = State.currentUser;
   const isStaff = ['manager', 'cashier', 'kitchen', 'courier'].includes(u.role);
   const today = new Date().toISOString().split('T')[0];
@@ -47,8 +61,13 @@ function renderGeoAttendanceCard(u, att) {
         <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(52,152,219,.15);color:#3498db"><i class="fas fa-location-dot"></i></div>
         <div class="flex-1">
           <div class="font-semibold text-sm">Absen Geospasial</div>
-          <div class="text-xs" style="color:var(--muted)">Check-in dengan lokasi Anda</div>
+          <div class="text-xs" style="color:var(--muted)">Seret marker untuk menyesuaikan posisi</div>
         </div>
+      </div>
+      <div id="map-checkin-preview" style="height:220px;border-radius:12px;margin-bottom:10px;overflow:hidden"></div>
+      <div class="flex items-center justify-between text-xs mb-2 px-1" style="color:var(--muted)">
+        <span id="checkin-coords-label">Memuat lokasi...</span>
+        <span id="checkin-radius-label"></span>
       </div>
       <button onclick="staffCheckIn()" class="btn-primary w-full text-center">
         <i class="fas fa-sign-in-alt mr-1"></i>Check In
@@ -57,26 +76,28 @@ function renderGeoAttendanceCard(u, att) {
 }
 
 function staffCheckIn() {
-  if (!navigator.geolocation) {
-    showToast('Geolokasi tidak didukung browser', 'error');
+  const coords = State.pendingCheckinCoords;
+  if (!coords) {
+    showToast('Tunggu lokasi dimuat...', 'warning');
     return;
   }
-  showToast('Mendapatkan lokasi...', 'info');
-  navigator.geolocation.getCurrentPosition(function(pos) {
-    DB.attendances.push({
-      id: 'a' + Date.now(),
-      user_id: State.currentUser.id,
-      check_in: new Date().toISOString(),
-      check_out: null,
-      lat: pos.coords.latitude,
-      lng: pos.coords.longitude,
-      status: 'present',
-    });
-    showToast('Check-in berhasil — lokasi tersimpan', 'success');
-    render();
-  }, function(err) {
-    showToast('Gagal mendapat lokasi: ' + err.message, 'error');
-  }, { enableHighAccuracy: true, timeout: 10000 });
+  const dist = calcDistance(coords.lat, coords.lng, ARQA_COORDS.lat, ARQA_COORDS.lng);
+  if (dist > ARQA_RADIUS) {
+    showToast('Anda di luar radius kafe (' + Math.round(dist) + 'm). Check-in hanya dalam ' + ARQA_RADIUS + 'm', 'warning');
+    return;
+  }
+  DB.attendances.push({
+    id: 'a' + Date.now(),
+    user_id: State.currentUser.id,
+    check_in: new Date().toISOString(),
+    check_out: null,
+    lat: coords.lat,
+    lng: coords.lng,
+    status: 'present',
+  });
+  delete State.pendingCheckinCoords;
+  showToast('Check-in berhasil — lokasi tersimpan', 'success');
+  render();
 }
 
 function staffCheckOut() {

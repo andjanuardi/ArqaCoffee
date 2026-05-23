@@ -207,4 +207,62 @@ function initMaps() {
       initCourierMap(o.id);
     }
   });
+  const checkinEl = document.getElementById('map-checkin-profile');
+  if (checkinEl && !State.mapInstances['checkin-profile']) {
+    const att = DB.attendances.find(a => a.user_id === State.currentUser.id && !a.check_out && a.lat);
+    if (att) {
+      const map = L.map(checkinEl, { zoomControl: false, attributionControl: false }).setView([att.lat, att.lng], 15);
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
+      L.marker([att.lat, att.lng]).addTo(map).bindPopup('Check-in: ' + formatTime(att.check_in));
+      State.mapInstances['checkin-profile'] = map;
+      setTimeout(() => map.invalidateSize(), 200);
+    }
+  }
+  const previewEl = document.getElementById('map-checkin-preview');
+  if (previewEl && !State.mapInstances['checkin-preview']) {
+    const doPreview = function(userLat, userLng) {
+      if (State.mapInstances['checkin-preview']) return;
+      State.pendingCheckinCoords = { lat: userLat, lng: userLng };
+      const map = L.map(previewEl, { zoomControl: false, attributionControl: false }).setView([ARQA_COORDS.lat, ARQA_COORDS.lng], 15);
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
+      L.circle([ARQA_COORDS.lat, ARQA_COORDS.lng], { radius: ARQA_RADIUS, color: '#3498db', fillColor: '#3498db', fillOpacity: 0.08 }).addTo(map);
+      L.marker([ARQA_COORDS.lat, ARQA_COORDS.lng], { icon: L.divIcon({ html: '<i class="fas fa-store" style="color:#e07a3a;font-size:22px"></i>', className: '', iconSize: [22, 22], iconAnchor: [11, 11] }) }).addTo(map).bindPopup('ARQA Coffee');
+      const userMarker = L.marker([userLat, userLng], { draggable: true, icon: L.divIcon({ html: '<i class="fas fa-motorcycle" style="color:#27ae60;font-size:24px"></i>', className: '', iconSize: [24, 24], iconAnchor: [12, 12] }) }).addTo(map).bindPopup('Lokasi Anda (seret untuk menyesuaikan)').openPopup();
+      userMarker.on('dragend', function() {
+        const pos = userMarker.getLatLng();
+        State.pendingCheckinCoords = { lat: pos.lat, lng: pos.lng };
+        const dist = calcDistance(pos.lat, pos.lng, ARQA_COORDS.lat, ARQA_COORDS.lng);
+        const cl = document.getElementById('checkin-coords-label');
+        const rl = document.getElementById('checkin-radius-label');
+        if (cl) cl.textContent = pos.lat.toFixed(5) + ', ' + pos.lng.toFixed(5);
+        if (rl) {
+          if (dist <= ARQA_RADIUS) {
+            rl.innerHTML = '<span style="color:var(--success)">&#10003; Dalam radius (' + Math.round(dist) + 'm)</span>';
+          } else {
+            rl.innerHTML = '<span style="color:var(--danger)">&#10007; Di luar radius (' + Math.round(dist) + 'm)</span>';
+          }
+        }
+      });
+      const dist = calcDistance(userLat, userLng, ARQA_COORDS.lat, ARQA_COORDS.lng);
+      const cl = document.getElementById('checkin-coords-label');
+      const rl = document.getElementById('checkin-radius-label');
+      if (cl) cl.textContent = userLat.toFixed(5) + ', ' + userLng.toFixed(5);
+      if (rl) {
+        rl.innerHTML = dist <= ARQA_RADIUS
+          ? '<span style="color:var(--success)">&#10003; Dalam radius (' + Math.round(dist) + 'm)</span>'
+          : '<span style="color:var(--danger)">&#10007; Di luar radius (' + Math.round(dist) + 'm)</span>';
+      }
+      map.fitBounds([[ARQA_COORDS.lat, ARQA_COORDS.lng], [userLat, userLng]], { padding: [40, 40], maxZoom: 16 });
+      if (userLat === ARQA_COORDS.lat && userLng === ARQA_COORDS.lng) {
+        map.setView([ARQA_COORDS.lat, ARQA_COORDS.lng], 16);
+      }
+      State.mapInstances['checkin-preview'] = map;
+      setTimeout(() => map.invalidateSize(), 200);
+    };
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(pos) { doPreview(pos.coords.latitude, pos.coords.longitude); }, function() { doPreview(ARQA_COORDS.lat, ARQA_COORDS.lng); }, { enableHighAccuracy: true, timeout: 5000 });
+    } else {
+      doPreview(ARQA_COORDS.lat, ARQA_COORDS.lng);
+    }
+  }
 }
