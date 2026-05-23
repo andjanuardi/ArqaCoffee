@@ -44,3 +44,8 @@ Manager
 
 
 
+#. tamabhkan halaman pengeluaran labah bersih
+#. tambahkan filter laporan keuangan harian, bulanan, tahunan.
+#. perbaiki promo, Ketika promo di edit pada hari today, tidak muncul di pelangggan.
+#. batasi tombol plus hingga Harga yang ditentukan Ketika menambah barang. tambahkan Harga pada tambah barang. Ketika tambah barang di periode sekarang, kelompokkan di periode sekarang, jika tidak maka periode selanjutnya.
+#. notofikasi buat general
