@@ -125,10 +125,4 @@ function handleLogout() {
   State.chartInstances = {};
   render();
 }
-function showNotifPanel() {
-  var badge = document.getElementById('notif-badge');
-  if (badge) badge.style.display = 'none';
-  markAllAsRead();
-  render();
-  renderNotifPanel();
-}
+function showNotifPanel() { renderNotifPanel(); }

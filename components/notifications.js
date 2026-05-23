@@ -94,7 +94,7 @@ function renderNotifPanel() {
       <div class="flex justify-between items-center mb-4 pb-3 border-b" style="border-color:var(--border)">
         <h3 class="font-display text-lg font-bold">Notifikasi</h3>
         <div class="flex items-center gap-2">
-          ${hasUnread ? '<button onclick="event.stopPropagation();markAllAsRead();renderNotifPanel()" class="text-xs font-semibold px-3 py-1.5 rounded-lg" style="color:var(--accent);background:rgba(224,122,58,.1)">Baca Semua</button>' : ''}
+          ${hasUnread ? '<button onclick="event.stopPropagation();markAllAsRead();closeModal();render();" class="text-xs font-semibold px-3 py-1.5 rounded-lg" style="color:var(--accent);background:rgba(224,122,58,.1)">Baca Semua</button>' : ''}
           <button onclick="closeModal()" class="text-xl" style="color:var(--muted)"><i class="fas fa-times"></i></button>
         </div>
       </div>
@@ -103,7 +103,7 @@ function renderNotifPanel() {
         ${notifs.map(function(n) {
           var unread = !n.read[role];
           var isChat = n.icon === 'fa-comment-alt' && n.relatedOrderId;
-          var clickHandler = isChat ? "markAsRead('" + n.id + "');closeModal();setTimeout(function(){openChatModal('" + n.relatedOrderId + "')},300)" : (unread ? "markAsRead('" + n.id + "');closeModal();" : '');
+          var clickHandler = isChat ? "markAsRead('" + n.id + "');closeModal();setTimeout(function(){openChatModal('" + n.relatedOrderId + "')},300)" : (unread ? "markAsRead('" + n.id + "');closeModal();render();" : '');
           return `
         <div class="card p-3 ${unread ? 'cursor-pointer' : (isChat ? 'cursor-pointer' : 'opacity-60')}" style="${unread ? 'border-left:3px solid var(--accent)' : ''}" onclick="${clickHandler}">
           <div class="flex gap-3">
@@ -121,9 +121,7 @@ function renderNotifPanel() {
         }).join('')}
       </div>
     </div>
-  `, function() {
-    markAllAsRead();
-  });
+  `);
 }
 
 function notifyOrderPlaced(order, customerName) {
