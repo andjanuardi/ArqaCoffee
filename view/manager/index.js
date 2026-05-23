@@ -5,6 +5,7 @@ function renderManagerView() {
   const tab = State.currentTab.manager || 'dashboard';
   if (tab === 'dashboard') return renderManagerDashboard();
   if (tab === 'finance') return renderFinanceReport();
+  if (tab === 'net-profit') return renderNetProfitPage();
   if (tab === 'stock') return renderStockManagement();
   if (tab === 'attendance') return renderAttendance();
   if (tab === 'promos') return renderAdminPromos();
