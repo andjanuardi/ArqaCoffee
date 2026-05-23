@@ -30,7 +30,7 @@ function renderManagerDashboard() {
       <p class="text-sm" style="color:var(--muted)">Ringkasan operasional hari ini</p>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-      <div class="stat-card" style="cursor:pointer" onclick="State.currentTab.manager='finance';render()"><div class="text-xs" style="color:var(--muted)">Pendapatan 7 Hari</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
+      <div class="stat-card" style="cursor:pointer" onclick="State.showRevenueTable=true;State.currentTab.manager='finance';render()"><div class="text-xs" style="color:var(--muted)">Pendapatan 7 Hari</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
       <div class="stat-card" style="cursor:pointer" onclick="State.currentTab.manager='finance';render()"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
       <div class="stat-card" style="cursor:pointer" onclick="State.currentTab.manager='finance';render()"><div class="text-xs" style="color:var(--muted)">Total Pesanan</div><div class="text-lg font-bold mt-1">${totalOrders}</div></div>
       <div class="stat-card" style="cursor:pointer" onclick="State.currentTab.manager='finance';render()"><div class="text-xs" style="color:var(--muted)">Pesanan Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--warning)">${DB.orders.filter(o => !['completed', 'cancelled'].includes(o.status)).length}</div></div>
