@@ -104,6 +104,7 @@ function addPromo() {
   const termsStr = document.getElementById('new-promo-terms')?.value || '';
   if (!title || !code) { showToast('Judul dan kode promo wajib diisi', 'warning'); return; }
   if (!discount_value) { showToast('Nilai diskon wajib diisi', 'warning'); return; }
+  if (start_date && end_date && end_date <= start_date) { showToast('Tanggal berakhir harus setelah tanggal mulai', 'warning'); return; }
   const mode = document.getElementById('new-promo-img-mode')?.value;
   let image = document.getElementById('new-promo-img-url')?.value;
   if (mode === 'upload') {
@@ -170,6 +171,9 @@ function saveEditPromo(id) {
   const discount_value = parseInt(document.getElementById('edit-promo-disc-value')?.value || '0');
   if (!title || !code) { showToast('Judul dan kode promo wajib diisi', 'warning'); return; }
   if (!discount_value) { showToast('Nilai diskon wajib diisi', 'warning'); return; }
+  const start_date = document.getElementById('edit-promo-start')?.value || '';
+  const end_date = document.getElementById('edit-promo-end')?.value || '';
+  if (start_date && end_date && end_date <= start_date) { showToast('Tanggal berakhir harus setelah tanggal mulai', 'warning'); return; }
   p.title = title;
   p.code = code;
   p.desc = document.getElementById('edit-promo-desc')?.value;
