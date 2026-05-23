@@ -74,8 +74,10 @@ function renderNotifPanel() {
         ${notifs.length === 0 ? '<div class="text-center py-12"><i class="fas fa-bell-slash text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Tidak ada notifikasi</p></div>' : ''}
         ${notifs.map(function(n) {
           var unread = !n.read[role];
+          var isChat = n.icon === 'fa-comment-alt' && n.relatedOrderId;
+          var clickHandler = isChat ? "markAsRead('" + n.id + "');closeModal();setTimeout(function(){openChatModal('" + n.relatedOrderId + "')},300)" : (unread ? "markAsRead('" + n.id + "');closeModal();" : '');
           return `
-        <div class="card p-3 ${unread ? 'cursor-pointer' : 'opacity-60'}" style="${unread ? 'border-left:3px solid var(--accent)' : ''}" onclick="${unread ? "markAsRead('" + n.id + "');closeModal();" : ''}">
+        <div class="card p-3 ${unread ? 'cursor-pointer' : (isChat ? 'cursor-pointer' : 'opacity-60')}" style="${unread ? 'border-left:3px solid var(--accent)' : ''}" onclick="${clickHandler}">
           <div class="flex gap-3">
             <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:${getNotifColor(n.type)};color:#fff">
               <i class="fas ${n.icon}" style="font-size:13px"></i>
@@ -188,6 +190,22 @@ function notifyDeliveryCompleted(order) {
     icon: 'fa-circle-check',
     targetRoles: ['customer', 'cashier', 'courier'],
     relatedOrderId: order.id,
+  });
+}
+
+function notifyNewChatMessage(orderId, senderName) {
+  const o = DB.orders.find(x => x.id === orderId);
+  if (!o) return;
+  const shortId = '#' + orderId.slice(-5).toUpperCase();
+  const senderRole = o.user_id === State.currentUser.id ? 'customer' : 'courier';
+  const targetRoles = senderRole === 'customer' ? ['courier'] : ['customer'];
+  addNotification({
+    title: 'Pesan Baru',
+    message: 'Dari ' + senderName + ' — ' + shortId,
+    type: 'info',
+    icon: 'fa-comment-alt',
+    targetRoles: targetRoles,
+    relatedOrderId: orderId,
   });
 }
 

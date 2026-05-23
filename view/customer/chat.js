@@ -77,6 +77,7 @@ function sendChatMessage(orderId) {
     timestamp: new Date().toISOString(),
   });
 
+  notifyNewChatMessage(orderId, State.currentUser.name);
   openChatModal(orderId);
 }
 
@@ -111,6 +112,7 @@ function sendChatImage(orderId) {
         image: dataUrl,
         timestamp: new Date().toISOString(),
       });
+      notifyNewChatMessage(orderId, State.currentUser.name);
       openChatModal(orderId);
     };
     img.src = e.target.result;
