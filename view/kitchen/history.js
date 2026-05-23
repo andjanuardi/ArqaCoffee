@@ -92,11 +92,31 @@ function renderKitchenHistory() {
       ${done.length === 0 ? '<p class="text-center py-8 text-sm" style="color:var(--muted)">Belum ada riwayat</p>' : ''}
       ${done
         .map(
-          (o) => `
-      <div class="card flex justify-between items-center py-3 cursor-pointer hover:scale-[1.02] transition-transform" onclick="showKitchenOrderDetail('${o.id}')">
-        <div><span class="font-semibold text-sm">#${o.id.slice(-5).toUpperCase()}</span><span class="text-xs ml-2" style="color:var(--muted)">${getOrderTypeName(o.order_type)}</span></div>
-        <span class="badge ${o.status === 'rejected' ? 'badge-danger' : 'badge-completed'}">${o.status === 'rejected' ? 'Ditolak' : getStatusLabel(o.status)}</span>
-      </div>`,
+          (o) => {
+            const t = o.table_id ? getTable(o.table_id) : null;
+            const itemsStr = (o.items || []).map(i => {
+              const mi = getMenuItem(i.menu_item_id);
+              return mi ? mi.name + ' x' + i.quantity : '';
+            }).filter(Boolean).join(', ');
+            return `
+      <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showKitchenOrderDetail('${o.id}')">
+        <div class="flex justify-between items-start mb-1">
+          <div class="flex items-center gap-2">
+            <span class="font-semibold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
+            <span class="text-xs" style="color:var(--muted)">${getOrderTypeName(o.order_type)}</span>
+          </div>
+          <span class="badge ${o.status === 'rejected' ? 'badge-danger' : 'badge-completed'}">${o.status === 'rejected' ? 'Ditolak' : getStatusLabel(o.status)}</span>
+        </div>
+        <div class="text-xs mb-1" style="color:var(--muted)">
+          ${o.customer_name ? '<i class="fas fa-user mr-1"></i>' + o.customer_name : '<i class="fas fa-chair mr-1"></i>Walk-in'}${t ? ' — Meja ' + t.number : ''}
+        </div>
+        <div class="text-xs truncate" style="color:var(--muted)">${itemsStr || '-'}</div>
+        <div class="flex justify-between items-center mt-1">
+          <span class="text-xs" style="color:var(--muted)"><i class="far fa-clock mr-1"></i>${formatTime(o.created_at)}</span>
+          <span class="text-sm font-semibold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
+        </div>
+      </div>`;
+          },
         )
         .join("")}
     </div>
