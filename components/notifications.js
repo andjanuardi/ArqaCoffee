@@ -131,7 +131,7 @@ function notifyOrderPlaced(order, customerName) {
     message: shortId + ' — ' + customerName + ' memesan ' + order.items.length + ' item',
     type: 'order',
     icon: 'fa-shopping-bag',
-    targetRoles: ['cashier', 'kitchen', 'admin', 'manager'],
+    targetRoles: ['cashier', 'admin', 'manager'],
     relatedOrderId: order.id,
   });
   addNotification({

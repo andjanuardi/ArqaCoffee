@@ -108,6 +108,7 @@ function finalizeManualOrder() {
       table_id: type === "dine-in" ? tableId : null,
       order_type: type,
       status: "pending",
+      accepted: true,
       total_amount: grandTotal,
       payment_method: payStatus === "paid" ? "cash" : "",
       payment_status: payStatus,

@@ -11,7 +11,7 @@ function renderKitchenView() {
 
 function renderKitchenQueue() {
   const active = DB.orders.filter((o) =>
-    ["pending", "cooking", "ready"].includes(o.status),
+    o.accepted === true && ["pending", "cooking", "ready"].includes(o.status),
   );
   const allItems = [];
   active.forEach((o) => {
