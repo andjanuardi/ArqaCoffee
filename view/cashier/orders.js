@@ -255,12 +255,16 @@ function renderCashierPayment() {
       ${unpaid.length === 0 ? '<div class="text-center py-12"><i class="fas fa-check-circle text-4xl mb-3" style="color:var(--success)"></i><p style="color:var(--muted)">Semua pesanan sudah lunas</p></div>' : ""}
       ${unpaid
         .map(
-          (o) => `
+          (o) => {
+            const oTime = o.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            const oTable = o.table_id ? getTable(o.table_id) : null;
+            return `
       <div class="card">
         <div class="flex justify-between items-start mb-3">
           <div><span class="font-bold">#${o.id.slice(-5).toUpperCase()}</span><span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span></div>
           <span class="font-bold text-lg" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
         </div>
+        <div class="flex items-center gap-3 text-[11px] mb-2" style="color:var(--muted)"><span><i class="far fa-clock mr-1"></i>${oTime}</span>${oTable ? `<span><i class="fas fa-chair mr-1"></i>Meja ${oTable.number}</span>` : ''}${o.order_type === 'delivery' ? '<span><i class="fas fa-truck mr-1"></i>Delivery</span>' : ''}</div>
         <div class="text-xs mb-3" style="color:var(--muted)">${o.items
           .map((i) => {
             const mi = getMenuItem(i.menu_item_id);
@@ -272,8 +276,8 @@ function renderCashierPayment() {
           <button onclick="processPayment('${o.id}')" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-wallet mr-1"></i>Digital</button>
           <button onclick="processCashPayment('${o.id}')" class="btn-secondary btn-sm flex-1 text-center"><i class="fas fa-money-bill mr-1"></i>Tunai</button>
         </div>
-      </div>`,
-        )
+      </div>`;
+        })
         .join("")}
     </div>
     <div class="mt-6">
