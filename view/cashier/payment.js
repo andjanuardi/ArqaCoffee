@@ -107,7 +107,7 @@ function renderDigitalTable() {
   const startDate = startVal || new Date().toISOString().split('T')[0];
   const endDate = endVal || new Date().toISOString().split('T')[0];
   const orders = DB.orders.filter(o => {
-    if (o.payment_status !== 'paid' || o.payment_method !== 'digital' || !o.created_at) return false;
+    if (o.payment_status !== 'paid' || (o.payment_method !== 'digital' && o.payment_method !== 'qris' && o.payment_method !== 'bank_transfer') || !o.created_at) return false;
     const d = o.created_at.split('T')[0];
     return d >= startDate && d <= endDate;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -135,7 +135,8 @@ function renderDigitalTable() {
             });
             const menuList = Object.entries(menuCount).map(([name, qty]) => name + ' x' + qty).join(', ');
             const encoded = encodeURIComponent(o.id);
-            return `<tr class="cursor-pointer hover:bg-white/5" onclick="showOrderDetail('${encoded}')"><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--accent)">${formatCurrency(o.total_amount || 0)}</td></tr>`;
+            const payLabel = o.payment_method === 'qris' ? 'QRIS' : o.payment_method === 'bank_transfer' ? 'Transfer' : 'Digital';
+            return `<tr class="cursor-pointer hover:bg-white/5" onclick="showOrderDetail('${encoded}')"><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})<br><span style="font-size:10px;color:var(--accent)">${payLabel}</span></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--accent)">${formatCurrency(o.total_amount || 0)}</td></tr>`;
           }).join('')}</tbody>
           <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(total)}</td></tr></tfoot>
         </table>
@@ -155,7 +156,7 @@ function renderCashierReport() {
   });
   const cashInRange = paidInRange.filter(o => o.payment_method === 'cash' || o.payment_method === 'cod');
   const cashTotal = cashInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
-  const digitalInRange = paidInRange.filter(o => o.payment_method === 'digital');
+  const digitalInRange = paidInRange.filter(o => o.payment_method === 'digital' || o.payment_method === 'qris' || o.payment_method === 'bank_transfer');
   const digitalTotal = digitalInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
   return `
   <div class="animate-fade-up">
