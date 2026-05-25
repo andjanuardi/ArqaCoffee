@@ -59,13 +59,13 @@ function settleDelivery(id) {
   render();
 }
 
-function renderDailyRevenueTable() {
+function renderCashTable() {
   const startVal = State.cashierDateStart || "";
   const endVal = State.cashierDateEnd || "";
   const startDate = startVal || new Date().toISOString().split('T')[0];
   const endDate = endVal || new Date().toISOString().split('T')[0];
   const orders = DB.orders.filter(o => {
-    if (o.payment_status !== 'paid' || !o.created_at) return false;
+    if (o.payment_status !== 'paid' || o.payment_method !== 'cash' || !o.created_at) return false;
     const d = o.created_at.split('T')[0];
     return d >= startDate && d <= endDate;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -73,17 +73,17 @@ function renderDailyRevenueTable() {
   return `
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-sm">Detail Pendapatan</h3>
-        <button onclick="State.showCashierRevenueTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+        <h3 class="font-semibold text-sm">Detail Bayar Tunai</h3>
+        <button onclick="State.showCashierCashTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
       </div>
       <div class="grid grid-cols-2 gap-3 mb-3">
-        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-base font-bold mt-1" style="color:var(--accent)">${formatCurrency(total)}</div></div>
-        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Transaksi</div><div class="text-base font-bold mt-1">${orders.length}</div></div>
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Tunai</div><div class="text-base font-bold mt-1" style="color:var(--success)">${formatCurrency(total)}</div></div>
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Jumlah Transaksi</div><div class="text-base font-bold mt-1">${orders.length}</div></div>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm" style="border-collapse:collapse">
-          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Orders</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Menu</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Pendapatan</th></tr></thead>
-          <tbody>${orders.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="5">Belum ada transaksi hari ini</td></tr>' : orders.map(o => {
+          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Orders</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Menu</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
+          <tbody>${orders.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="5">Belum ada transaksi tunai</td></tr>' : orders.map(o => {
             const date = o.created_at?.split('T')[0] || '';
             const time = o.created_at?.split('T')[1]?.slice(0, 5) || '-';
             const menuCount = {};
@@ -101,6 +101,48 @@ function renderDailyRevenueTable() {
     </div>`;
 }
 
+function renderDigitalTable() {
+  const startVal = State.cashierDateStart || "";
+  const endVal = State.cashierDateEnd || "";
+  const startDate = startVal || new Date().toISOString().split('T')[0];
+  const endDate = endVal || new Date().toISOString().split('T')[0];
+  const orders = DB.orders.filter(o => {
+    if (o.payment_status !== 'paid' || o.payment_method !== 'digital' || !o.created_at) return false;
+    const d = o.created_at.split('T')[0];
+    return d >= startDate && d <= endDate;
+  }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
+  return `
+    <div class="card mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-sm">Detail Bayar Digital</h3>
+        <button onclick="State.showCashierDigitalTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Digital</div><div class="text-base font-bold mt-1" style="color:var(--accent)">${formatCurrency(total)}</div></div>
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Jumlah Transaksi</div><div class="text-base font-bold mt-1">${orders.length}</div></div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm" style="border-collapse:collapse">
+          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Orders</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Menu</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
+          <tbody>${orders.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="5">Belum ada transaksi digital</td></tr>' : orders.map(o => {
+            const date = o.created_at?.split('T')[0] || '';
+            const time = o.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            const menuCount = {};
+            (o.items || []).forEach(item => {
+              const mi = DB.menuItems.find(m => m.id === item.menu_item_id);
+              if (mi) menuCount[mi.name] = (menuCount[mi.name] || 0) + item.quantity;
+            });
+            const menuList = Object.entries(menuCount).map(([name, qty]) => name + ' x' + qty).join(', ');
+            const encoded = encodeURIComponent(o.id);
+            return `<tr class="cursor-pointer hover:bg-white/5" onclick="showOrderDetail('${encoded}')"><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--accent)">${formatCurrency(o.total_amount || 0)}</td></tr>`;
+          }).join('')}</tbody>
+          <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(total)}</td></tr></tfoot>
+        </table>
+      </div>
+    </div>`;
+}
+
 function renderCashierReport() {
   const startVal = State.cashierDateStart || "";
   const endVal = State.cashierDateEnd || "";
@@ -111,8 +153,10 @@ function renderCashierReport() {
     const d = o.created_at.split('T')[0];
     return d >= startDate && d <= endDate;
   });
-  const todayRev = paidInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
-  const todayOrders = paidInRange.length;
+  const cashInRange = paidInRange.filter(o => o.payment_method === 'cash');
+  const cashTotal = cashInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const digitalInRange = paidInRange.filter(o => o.payment_method === 'digital');
+  const digitalTotal = digitalInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Harian</h2>
@@ -128,8 +172,8 @@ function renderCashierReport() {
       ${startVal || endVal ? '<button onclick="State.cashierDateStart=\'\';State.cashierDateEnd=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
     </div>
     <div class="grid grid-cols-2 gap-3 mb-5">
-      <div class="stat-card cursor-pointer" onclick="State.showCashierRevenueTable=!State.showCashierRevenueTable;render()"><div class="text-xs" style="color:var(--muted)">Pendapatan Hari Ini</div><div class="text-xl font-bold mt-1" style="color:var(--accent)">${formatCurrency(todayRev)}</div></div>
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pesanan</div><div class="text-xl font-bold mt-1">${todayOrders}</div></div>
+      <div class="stat-card cursor-pointer" onclick="State.showCashierCashTable=!State.showCashierCashTable;render()"><div class="text-xs" style="color:var(--muted)">Bayar Tunai</div><div class="text-xl font-bold mt-1" style="color:var(--success)">${formatCurrency(cashTotal)}</div></div>
+      <div class="stat-card cursor-pointer" onclick="State.showCashierDigitalTable=!State.showCashierDigitalTable;render()"><div class="text-xs" style="color:var(--muted)">Bayar Digital</div><div class="text-xl font-bold mt-1" style="color:var(--accent)">${formatCurrency(digitalTotal)}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Lunas</div><div class="text-xl font-bold mt-1" style="color:var(--success)">${paidInRange.length}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Belum Bayar</div><div class="text-xl font-bold mt-1" style="color:var(--danger)">${DB.orders.filter(o => {
         if (o.payment_status !== 'unpaid' || !o.created_at) return false;
@@ -137,7 +181,8 @@ function renderCashierReport() {
         return d >= startDate && d <= endDate;
       }).length}</div></div>
     </div>
-    ${State.showCashierRevenueTable ? renderDailyRevenueTable() : ''}
+    ${State.showCashierCashTable ? renderCashTable() : ''}
+    ${State.showCashierDigitalTable ? renderDigitalTable() : ''}
     ${(() => {
       const lowStock = DB.stockItems.filter(s => s.current_quantity <= s.min_quantity);
       if (!lowStock.length) return '';
