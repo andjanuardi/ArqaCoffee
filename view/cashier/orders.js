@@ -245,6 +245,9 @@ function renderCashierPayment() {
       o.status !== "cancelled" &&
       o.status !== "rejected",
   );
+  const paid = DB.orders.filter(o => o.payment_status === "paid" && o.created_at)
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 20);
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Pembayaran</h2>
@@ -272,6 +275,26 @@ function renderCashierPayment() {
       </div>`,
         )
         .join("")}
+    </div>
+    <div class="mt-6">
+      <button onclick="State.showPaymentHistory=!State.showPaymentHistory;render()" class="flex items-center gap-2 text-sm font-medium" style="color:var(--muted)">
+        <i class="fas ${State.showPaymentHistory ? 'fa-chevron-down' : 'fa-chevron-right'}"></i>
+        Riwayat Lunas (${paid.length})
+      </button>
+      ${State.showPaymentHistory ? `
+      <div class="mt-3 space-y-2">
+        ${paid.length === 0 ? '<div class="text-center py-6"><p style="color:var(--muted)">Belum ada riwayat</p></div>' : paid.map(o => {
+          const time = o.created_at?.split('T')[1]?.slice(0, 5) || '-';
+          const date = o.created_at?.split('T')[0] || '';
+          return `
+        <div class="card cursor-pointer" onclick="showOrderDetail('${encodeURIComponent(o.id)}')">
+          <div class="flex justify-between items-center">
+            <div><span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span><span class="text-[10px] ml-2" style="color:var(--muted)">${formatDate(date)} ${time}</span><span class="text-[10px] ml-1" style="color:${o.payment_method === 'cash' ? 'var(--success)' : 'var(--accent)'}">(${o.payment_method === 'cash' ? 'Tunai' : 'Digital'})</span></div>
+            <span class="font-bold" style="color:var(--success)">${formatCurrency(o.total_amount)}</span>
+          </div>
+        </div>`;
+        }).join('')}
+      </div>` : ''}
     </div>
   </div>`;
 }
