@@ -2,12 +2,34 @@
 // CUSTOMER VIEW — Orders List, Order Detail, Pay Order
 // ============================================================
 function renderCustomerOrders() {
-  const myOrders = DB.orders
-    .filter((o) => o.user_id === State.currentUser.id)
-    .slice(0, 10);
+  let myOrders = DB.orders.filter((o) => o.user_id === State.currentUser.id);
+  const startVal = State.customerOrderDateStart || "";
+  const endVal = State.customerOrderDateEnd || "";
+  if (startVal) {
+    const s = new Date(startVal);
+    s.setHours(0, 0, 0, 0);
+    myOrders = myOrders.filter((o) => new Date(o.created_at) >= s);
+  }
+  if (endVal) {
+    const e = new Date(endVal);
+    e.setHours(23, 59, 59, 999);
+    myOrders = myOrders.filter((o) => new Date(o.created_at) <= e);
+  }
+  myOrders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Pesanan Saya</h2>
+    <div class="flex gap-2 mb-4">
+      <div class="flex-1">
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Dari Tanggal</label>
+        <input type="date" id="customer-order-start" class="input-field w-full" value="${startVal}" onchange="State.customerOrderDateStart=this.value;render()">
+      </div>
+      <div class="flex-1">
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Sampai Tanggal</label>
+        <input type="date" id="customer-order-end" class="input-field w-full" value="${endVal}" onchange="State.customerOrderDateEnd=this.value;render()">
+      </div>
+      ${startVal || endVal ? '<button onclick="State.customerOrderDateStart=\'\';State.customerOrderDateEnd=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
+    </div>
     ${myOrders.length === 0 ? '<div class="text-center py-12"><i class="fas fa-receipt text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Belum ada pesanan</p></div>' : ""}
     <div class="space-y-3">
       ${myOrders
@@ -20,7 +42,7 @@ function renderCustomerOrders() {
               <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
               <span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>
             </div>
-            <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
+            <span class="text-xs" style="color:var(--muted)">${formatDate(o.created_at)} ${formatTime(o.created_at)}</span>
           </div>
           <div class="flex justify-between items-center">
             <div class="text-xs" style="color:var(--muted)">
