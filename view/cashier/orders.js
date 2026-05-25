@@ -1,6 +1,38 @@
 // ============================================================
 // CASHIER VIEW — Orders & Payment
 // ============================================================
+function showPaymentModal(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  const t = o.table_id ? getTable(o.table_id) : null;
+  showModal(`
+    <div>
+      <div class="flex justify-between items-start mb-4">
+        <div><h3 class="font-display text-lg font-bold">Pembayaran</h3><p class="text-xs" style="color:var(--muted)">#${o.id.slice(-5).toUpperCase()} — ${getOrderTypeName(o.order_type)}${t ? " — Meja " + t.number : ""}${o.customer_name ? " — " + o.customer_name : ""}</p></div>
+        <span class="font-bold text-lg" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
+      </div>
+      <div class="card mb-4" style="background:var(--bg2)">
+        <div class="space-y-2">
+          ${o.items
+            .map((i) => {
+              const mi = getMenuItem(i.menu_item_id);
+              return mi
+                ? `<div class="flex justify-between text-sm"><span>${mi.name} x${i.quantity}${i.notes ? ' <span style="color:var(--muted)">(' + i.notes + ")</span>" : ""}</span><span style="color:var(--muted)">${formatCurrency(i.unit_price * i.quantity)}</span></div>`
+                : "";
+            })
+            .join("")}
+        </div>
+        ${o.promo_discount ? `<div class="flex justify-between text-xs mt-2 pt-2" style="border-top:1px solid var(--border);color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
+      </div>
+      <div class="flex gap-2 mb-3">
+        <button onclick="closeModal();processPayment('${o.id}')" class="btn-primary flex-1 text-center py-3"><i class="fas fa-wallet mr-2"></i>Digital</button>
+        <button onclick="closeModal();processCashPayment('${o.id}')" class="btn-secondary flex-1 text-center py-3" style="background:rgba(39,174,96,.1);border-color:rgba(39,174,96,.3);color:var(--success)"><i class="fas fa-money-bill-wave mr-2"></i>Tunai</button>
+      </div>
+      <button onclick="closeModal();printCashierInvoice('${o.id}')" class="btn-sm w-full text-center" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:10px"><i class="fas fa-print mr-1"></i>Cetak Invoice</button>
+    </div>
+  `);
+}
+
 function renderCashierView() {
   const tab = State.currentTab.cashier || "orders";
   if (tab === "orders") return renderCashierOrders();
@@ -14,7 +46,7 @@ function renderCashierView() {
 
 function renderCashierOrders() {
   const pending = DB.orders.filter((o) =>
-    ["pending", "cooking", "ready", "delivered"].includes(o.status)
+    ["pending", "cooking", "ready", "delivered"].includes(o.status),
   );
   const completed = DB.orders
     .filter((o) => o.status === "completed" || o.status === "rejected")
@@ -55,7 +87,7 @@ function renderCashierOrders() {
               return mi ? mi.name + " x" + i.quantity : "";
             })
             .join(", ")}</div>
-          ${o.promo_discount ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon promo: <b>-${formatCurrency(o.promo_discount)}</b></div>` : ''}
+          ${o.promo_discount ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon promo: <b>-${formatCurrency(o.promo_discount)}</b></div>` : ""}
           <div class="flex justify-between items-center">
             <span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
             <div class="flex gap-2">
@@ -69,7 +101,7 @@ function renderCashierOrders() {
                   : ""
               }
               ${o.status === "pending" && o.accepted ? `<span class="badge" style="background:rgba(46,204,113,.15);color:var(--success)">Diterima</span>` : ""}
-              ${o.status === "ready" && o.payment_status === "unpaid" ? `<button onclick="processPayment('${o.id}')" class="btn-primary btn-sm">Bayar</button>` : ""}
+              ${o.status === "ready" && o.payment_status === "unpaid" ? `<button onclick="showPaymentModal('${o.id}')" class="btn-primary btn-sm">Bayar</button>` : ""}
               ${o.status === "ready" && o.payment_status === "paid" ? `<button onclick="updateOrderStatus('${o.id}','completed')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
               ${o.status === "delivered" && o.payment_status === "unpaid" ? `<button onclick="settleDelivery('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#3498db,#2980b9)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran</button>` : ""}
             </div>
@@ -87,7 +119,7 @@ function renderCashierOrders() {
         <div class="text-sm">
           <span class="font-bold">#${o.id.slice(-5).toUpperCase()}</span> 
           <span style="color:var(--muted)">— ${getOrderTypeName(o.order_type)}</span>
-          ${o.status === 'rejected' ? '<span class="badge badge-danger ml-2">Ditolak</span>' : ''}
+          ${o.status === "rejected" ? '<span class="badge badge-danger ml-2">Ditolak</span>' : ""}
         </div>
         <span class="font-semibold text-sm" style="color:var(--success)">${formatCurrency(o.total_amount)}</span>
       </div>`,
@@ -100,13 +132,16 @@ function renderCashierOrders() {
 function printCashierInvoice(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
-  const win = window.open('', '_blank');
-  const paidLabel = o.payment_status === 'paid' ? 'Lunas' : 'Belum Bayar';
-  let paymentMethodLabel = 'Tunai';
-  if (o.payment_method === 'digital') paymentMethodLabel = 'Digital';
-  else if (o.payment_method === 'cod') paymentMethodLabel = 'COD';
-  else if (o.payment_method === 'qris') paymentMethodLabel = 'QRIS';
-  const subtotal = o.items.reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
+  const win = window.open("", "_blank");
+  const paidLabel = o.payment_status === "paid" ? "Lunas" : "Belum Bayar";
+  let paymentMethodLabel = "Tunai";
+  if (o.payment_method === "digital") paymentMethodLabel = "Digital";
+  else if (o.payment_method === "cod") paymentMethodLabel = "COD";
+  else if (o.payment_method === "qris") paymentMethodLabel = "QRIS";
+  const subtotal = o.items.reduce(
+    (sum, i) => sum + i.unit_price * i.quantity,
+    0,
+  );
   const tax = o.total_amount - (subtotal - (o.promo_discount || 0));
   win.document.write(`
     <html><head>
@@ -130,20 +165,22 @@ function printCashierInvoice(id) {
       <div class="header">
         <h1>ARQA Coffee</h1>
         <p>${getOrderTypeName(o.order_type)}</p>
-        ${o.table_id ? '<p>Meja ' + (getTable(o.table_id)?.number || '') + '</p>' : ''}
-        ${o.customer_name ? '<p>' + o.customer_name + '</p>' : ''}
+        ${o.table_id ? "<p>Meja " + (getTable(o.table_id)?.number || "") + "</p>" : ""}
+        ${o.customer_name ? "<p>" + o.customer_name + "</p>" : ""}
         <p>#${o.id.slice(-5).toUpperCase()}</p>
-        <p>${new Date(o.created_at).toLocaleString('id-ID')}</p>
+        <p>${new Date(o.created_at).toLocaleString("id-ID")}</p>
       </div>
       <div class="divider"></div>
-      ${o.items.map(i => {
-        const mi = getMenuItem(i.menu_item_id);
-        return `<div class="item"><span class="name">${mi ? mi.name : 'Item'}</span><span class="qty">x${i.quantity}</span><span class="price">${formatCurrency(i.unit_price * i.quantity)}</span></div>`;
-      }).join('')}
+      ${o.items
+        .map((i) => {
+          const mi = getMenuItem(i.menu_item_id);
+          return `<div class="item"><span class="name">${mi ? mi.name : "Item"}</span><span class="qty">x${i.quantity}</span><span class="price">${formatCurrency(i.unit_price * i.quantity)}</span></div>`;
+        })
+        .join("")}
       <div class="divider"></div>
       <div class="totals">
         <div><span>Subtotal</span><span>${formatCurrency(subtotal)}</span></div>
-        ${o.promo_discount ? `<div style="color:#27ae60"><span>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ''}
+        ${o.promo_discount ? `<div style="color:#27ae60"><span>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
         <div><span>Pajak (10%)</span><span>${formatCurrency(Math.round(tax))}</span></div>
         <div style="font-weight:bold;font-size:15px"><span>Total</span><span>${formatCurrency(o.total_amount)}</span></div>
         <div style="margin-top:8px"><span>Pembayaran</span><span>${paymentMethodLabel}</span></div>
@@ -164,14 +201,14 @@ function showCashierOrderDetail(id) {
 <div>
   <div class="flex justify-between items-start mb-4">
     <h3 class="font-display text-lg font-bold">Pesanan #${o.id.slice(-5).toUpperCase()}</h3>
-    <span class="badge ${o.status === 'rejected' ? 'badge-danger' : 'badge-completed'}">${o.status === 'rejected' ? 'Ditolak' : 'Selesai'}</span>
+    <span class="badge ${o.status === "rejected" ? "badge-danger" : "badge-completed"}">${o.status === "rejected" ? "Ditolak" : "Selesai"}</span>
   </div>
   <div class="text-xs mb-4" style="color:var(--muted)">
     <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}
     ${t ? " — Meja " + t.number : ""}
     ${o.delivery_address ? "<br>" + o.delivery_address : ""}
   </div>
-  ${o.status === 'rejected' && o.reject_reason ? `<div class="card mb-4 text-sm" style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2)"><i class="fas fa-ban mr-1" style="color:var(--danger)"></i><strong>Alasan Penolakan:</strong> ${o.reject_reason}</div>` : ''}
+  ${o.status === "rejected" && o.reject_reason ? `<div class="card mb-4 text-sm" style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2)"><i class="fas fa-ban mr-1" style="color:var(--danger)"></i><strong>Alasan Penolakan:</strong> ${o.reject_reason}</div>` : ""}
   <div class="space-y-2 mb-4">
     ${o.items
       .map((i) => {
@@ -187,7 +224,7 @@ function showCashierOrderDetail(id) {
       .join("")}
   </div>
   <div class="border-t pt-3" style="border-color:var(--border)">
-    ${o.promo_discount ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ''}
+    ${o.promo_discount ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
     <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
     <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "digital" ? "Digital" : "Tunai/COD"}</span></div>
     <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Waktu Selesai</span><span>${formatTime(o.created_at)}</span></div>
@@ -227,7 +264,7 @@ function renderCashierPayment() {
             return mi ? mi.name + " x" + i.quantity : "";
           })
           .join(", ")}</div>
-        ${o.promo_discount ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon promo: <b>-${formatCurrency(o.promo_discount)}</b></div>` : ''}
+        ${o.promo_discount ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon promo: <b>-${formatCurrency(o.promo_discount)}</b></div>` : ""}
         <div class="flex gap-2">
           <button onclick="processPayment('${o.id}')" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-wallet mr-1"></i>Digital</button>
           <button onclick="processCashPayment('${o.id}')" class="btn-secondary btn-sm flex-1 text-center"><i class="fas fa-money-bill mr-1"></i>Tunai</button>
