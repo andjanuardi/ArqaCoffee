@@ -84,10 +84,34 @@ function confirmRejectKitchenOrder(orderId) {
 }
 
 function renderKitchenHistory() {
-  const done = DB.orders.filter((o) => ["ready", "completed", "rejected"].includes(o.status)).slice(0, 15);
+  let done = DB.orders.filter((o) => ["ready", "completed", "rejected"].includes(o.status));
+  const startVal = State.kitchenDateStart || "";
+  const endVal = State.kitchenDateEnd || "";
+  if (startVal) {
+    const s = new Date(startVal);
+    s.setHours(0, 0, 0, 0);
+    done = done.filter((o) => new Date(o.created_at) >= s);
+  }
+  if (endVal) {
+    const e = new Date(endVal);
+    e.setHours(23, 59, 59, 999);
+    done = done.filter((o) => new Date(o.created_at) <= e);
+  }
+  done.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Riwayat</h2>
+    <div class="flex gap-2 mb-4">
+      <div class="flex-1">
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Dari Tanggal</label>
+        <input type="date" id="kitchen-history-start" class="input-field w-full" value="${startVal}" onchange="State.kitchenDateStart=this.value;render()">
+      </div>
+      <div class="flex-1">
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Sampai Tanggal</label>
+        <input type="date" id="kitchen-history-end" class="input-field w-full" value="${endVal}" onchange="State.kitchenDateEnd=this.value;render()">
+      </div>
+      ${startVal || endVal ? '<button onclick="State.kitchenDateStart=\'\';State.kitchenDateEnd=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
+    </div>
     <div class="space-y-2">
       ${done.length === 0 ? '<p class="text-center py-8 text-sm" style="color:var(--muted)">Belum ada riwayat</p>' : ''}
       ${done
@@ -112,7 +136,7 @@ function renderKitchenHistory() {
         </div>
         <div class="text-xs truncate" style="color:var(--muted)">${itemsStr || '-'}</div>
         <div class="flex justify-between items-center mt-1">
-          <span class="text-xs" style="color:var(--muted)"><i class="far fa-clock mr-1"></i>${formatTime(o.created_at)}</span>
+          <span class="text-xs" style="color:var(--muted)"><i class="far fa-clock mr-1"></i>${formatDate(o.created_at)} ${formatTime(o.created_at)}</span>
           <span class="text-sm font-semibold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
         </div>
       </div>`;
