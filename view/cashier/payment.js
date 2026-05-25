@@ -65,7 +65,7 @@ function renderCashTable() {
   const startDate = startVal || new Date().toISOString().split('T')[0];
   const endDate = endVal || new Date().toISOString().split('T')[0];
   const orders = DB.orders.filter(o => {
-    if (o.payment_status !== 'paid' || o.payment_method !== 'cash' || !o.created_at) return false;
+    if (o.payment_status !== 'paid' || (o.payment_method !== 'cash' && o.payment_method !== 'cod') || !o.created_at) return false;
     const d = o.created_at.split('T')[0];
     return d >= startDate && d <= endDate;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -153,7 +153,7 @@ function renderCashierReport() {
     const d = o.created_at.split('T')[0];
     return d >= startDate && d <= endDate;
   });
-  const cashInRange = paidInRange.filter(o => o.payment_method === 'cash');
+  const cashInRange = paidInRange.filter(o => o.payment_method === 'cash' || o.payment_method === 'cod');
   const cashTotal = cashInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
   const digitalInRange = paidInRange.filter(o => o.payment_method === 'digital');
   const digitalTotal = digitalInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
@@ -174,7 +174,7 @@ function renderCashierReport() {
     <div class="grid grid-cols-2 gap-3 mb-5">
       <div class="stat-card cursor-pointer" onclick="State.showCashierCashTable=!State.showCashierCashTable;render()"><div class="flex items-center gap-2"><i class="fas fa-money-bill-wave" style="color:var(--success);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Bayar Tunai</span></div><div class="text-xl font-bold mt-1" style="color:var(--success)">${formatCurrency(cashTotal)}</div></div>
       <div class="stat-card cursor-pointer" onclick="State.showCashierDigitalTable=!State.showCashierDigitalTable;render()"><div class="flex items-center gap-2"><i class="fas fa-credit-card" style="color:var(--accent);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Bayar Digital</span></div><div class="text-xl font-bold mt-1" style="color:var(--accent)">${formatCurrency(digitalTotal)}</div></div>
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Lunas</div><div class="text-xl font-bold mt-1" style="color:var(--success)">${paidInRange.length}</div></div>
+      <div class="stat-card cursor-pointer" onclick="State.currentTab['cashier']='payment';State.showPaymentHistory=true;render()"><div class="flex items-center gap-2"><i class="fas fa-check-circle" style="color:var(--success);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Lunas</span></div><div class="text-xl font-bold mt-1" style="color:var(--success)">${paidInRange.length}</div></div>
       <div class="stat-card cursor-pointer" onclick="State.currentTab['cashier']='payment';render()"><div class="flex items-center gap-2"><i class="fas fa-exclamation-circle" style="color:var(--danger);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Belum Bayar</span></div><div class="text-xl font-bold mt-1" style="color:var(--danger)">${DB.orders.filter(o => {
         if (o.payment_status !== 'unpaid' || !o.created_at) return false;
         const d = o.created_at.split('T')[0];
