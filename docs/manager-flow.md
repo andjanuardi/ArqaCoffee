@@ -193,7 +193,7 @@ Halaman ini untuk mengelola daftar menu makanan dan minuman di kafe.
    - **Harga** — harga jual
    - **Kategori** — pilih: Kopi, Non-Kopi, Makanan, Snack
    - Jika kategori tidak ada, pilih **"+ Tambah Baru..."** untuk membuat kategori sendiri
-3. Klik **"Simpan"**
+3. Klik **"Tambah"**
 
 ---
 
