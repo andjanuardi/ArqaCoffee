@@ -33,6 +33,9 @@ function removeCartItem(i) {
   State.cart.splice(i, 1);
   render();
 }
+function updateCartNotes(i, val) {
+  if (State.cart[i]) State.cart[i].notes = val;
+}
 
 function calcPromoDiscount() {
   if (!State.activePromoId) return 0;

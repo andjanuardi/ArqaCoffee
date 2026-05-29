@@ -102,6 +102,10 @@ Klik tab **Keranjang** (icon tas) di bagian bawah untuk melihat pesanan Anda.
 **Bayar Sekarang:**
 
 - Pilih metode: **QRIS**, **Transfer Bank**, atau **Tunai** (hanya untuk makan di tempat)
+- Setelah konfirmasi pesanan:
+  - **QRIS** — akan muncul kode QR yang bisa di-scan untuk membayar
+  - **Transfer Bank** — akan muncul nomor rekening BCA (1234567890 a.n. ARQA Coffee) untuk ditransfer
+  - **Tunai** — bayar langsung ke kasir, pesanan akan langsung lunas setelah kasir menerima
 - Klik **"Bayar & Proses Pesanan"**
 
 **Bayar Nanti:**
@@ -143,14 +147,14 @@ Klik tab **Pesanan** (icon struk) di bagian bawah untuk melihat semua pesanan An
 | **Telah Diantar** | Sampai tujuan, menunggu konfirmasi pembayaran |
 | **Selesai**       | Pesanan selesai                               |
 | **Ditolak**       | Pesanan ditolak oleh koki (ada alasan)        |
+| **Dibatalkan**    | Pesanan dibatalkan oleh kasir (ada alasan)    |
 
 ### Yang bisa Anda lakukan:
 
 **Batalkan Pesanan** (hanya untuk status **Menunggu**):
 
-- Klik **"Batal"** pada card pesanan
-- Pilih alasan pembatalan
-- Klik **"Hapus Pesanan"**
+- **Dibatalkan oleh Anda:** Klik **"Batal"** pada card pesanan, pilih alasan, klik **"Hapus Pesanan"**
+- **Dibatalkan oleh Kasir:** Jika kasir membatalkan pesanan Anda, akan muncul notifikasi di lonceng yang menyertakan alasan pembatalan
 
 **Bayar Sekarang:**
 
@@ -192,10 +196,19 @@ Klik tab **Profil** (icon orang) di bagian bawah.
 
 ### Skenario 1: Makan di Tempat — Bayar Sekarang
 
+**QRIS / Transfer Bank:**
 ```
 Pilih Menu → Tambah ke Keranjang → Pilih Meja (scan QR) →
-Bayar via QRIS/Transfer/Tunai → Konfirmasi →
-Pesanan Diproses Koki → Siap → Bayar → Selesai
+Konfirmasi → Lihat QR/No. Rekening → Bayar →
+Pesanan Diproses Koki → Siap → Selesai
+```
+
+**Tunai:**
+```
+Pilih Menu → Tambah ke Keranjang → Pilih Meja (scan QR) →
+Konfirmasi → Pesanan dibuat (Belum Bayar) →
+Kasir Terima → Langsung Lunas →
+Pesanan Diproses Koki → Siap → Selesai
 ```
 
 ### Skenario 2: Makan di Tempat — Bayar Nanti
@@ -238,16 +251,17 @@ Di pojok kanan atas layar (di samping nama Anda) terdapat icon **lonceng**. Jika
 
 Klik icon lonceng untuk membuka panel notifikasi. Di dalamnya akan muncul daftar pemberitahuan seperti:
 
-| Kejadian                | Icon | Notifikasi yang Muncul                                   |
-| ----------------------- | ---- | -------------------------------------------------------- |
-| Pesanan berhasil dibuat | 🛎️   | "Pesanan #xf3b4 berhasil dibuat. Status: Menunggu"       |
-| Pesanan mulai dimasak   | 🔔   | "Status pesanan #xf3b4 berubah menjadi Dimasak"          |
-| Pesanan siap saji       | 🔔   | "Pesanan #xf3b4 sudah siap!"                             |
-| Kurir mengambil pesanan | 🚚   | "Pesanan #xf3b4 sedang diantar oleh Kurir"               |
-| Pesanan selesai         | ✅   | "Pesanan #xf3b4 selesai"                                 |
-| Pesanan ditolak         | ❌   | "Pesanan #xf3b4 ditolak: {alasan}"                       |
-| Pembayaran diterima     | 💳   | "Pembayaran #xf3b4 sebesar RpXX via QRIS/Tunai berhasil" |
-| Ada pesan dari kurir    | 💬   | "Pesan baru dari Kurir untuk pesanan #xf3b4"             |
+| Kejadian                | Icon | Notifikasi yang Muncul                                                   |
+| ----------------------- | ---- | ------------------------------------------------------------------------ |
+| Pesanan berhasil dibuat | 🛎️   | "Pesanan #xf3b4 berhasil dibuat. Status: Menunggu"                       |
+| Pesanan mulai dimasak   | 🔔   | "Status pesanan #xf3b4 berubah menjadi Dimasak"                          |
+| Pesanan siap saji       | 🔔   | "Pesanan #xf3b4 sudah siap!"                                             |
+| Kurir mengambil pesanan | 🚚   | "Pesanan #xf3b4 sedang diantar oleh Kurir"                               |
+| Pesanan selesai         | ✅   | "Pesanan #xf3b4 selesai"                                                 |
+| Pesanan ditolak koki    | ❌   | "Pesanan #xf3b4 ditolak: {alasan}"                                       |
+| Pesanan dibatalkan kasir | ❌   | "Pesanan #xf3b4 — Pesanan Anda dibatalkan oleh kasir. Alasan: {alasan}" |
+| Pembayaran diterima     | 💳   | "Pembayaran #xf3b4 sebesar RpXX via QRIS/Tunai berhasil"                 |
+| Ada pesan dari kurir    | 💬   | "Pesan baru dari Kurir untuk pesanan #xf3b4"                             |
 
 Notifikasi yang sudah Anda baca akan ditandai dan jumlahnya di icon lonceng akan berkurang. Panel notifikasi bisa ditutup dengan klik di luar panel atau klik icon lonceng lagi.
 

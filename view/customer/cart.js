@@ -104,25 +104,36 @@ function renderCustomerCart() {
             (!activePromo.menu_ids ||
               !activePromo.menu_ids.length ||
               activePromo.menu_ids.includes(c.menu_item_id));
+          const discUnitPrice = eligible && activePromo.discount_type === "fixed"
+            ? Math.max(0, c.unit_price - activePromo.discount_value)
+            : eligible
+              ? Math.round(c.unit_price * (1 - activePromo.discount_value / 100))
+              : c.unit_price;
           return `
-      <div class="card flex items-center gap-4">
-        <img src="${c.menu_item.image}" class="w-16 h-16 rounded-xl object-cover" onerror="this.src='https://picsum.photos/seed/${c.menu_item.id}/100/100'">
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2">
-            <div class="font-semibold text-sm truncate">${c.menu_item.name}</div>
-            ${eligible ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style="background:rgba(39,174,96,.15);color:var(--success)">Diskon</span>' : ""}
+      <div class="card">
+        <div class="flex items-center gap-4">
+          <img src="${c.menu_item.image}" class="w-16 h-16 rounded-xl object-cover" onerror="this.src='https://picsum.photos/seed/${c.menu_item.id}/100/100'">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <div class="font-semibold text-sm truncate">${c.menu_item.name}</div>
+              ${eligible ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style="background:rgba(39,174,96,.15);color:var(--success)">Diskon</span>' : ""}
+            </div>
+            <div class="flex items-center gap-2 mt-1">
+              <div class="qty-btn" style="width:26px;height:26px;font-size:12px" onclick="updateCartQty(${i},-1)">-</div>
+              <span class="text-sm font-semibold w-6 text-center">${c.quantity}</span>
+              <div class="qty-btn" style="width:26px;height:26px;font-size:12px" onclick="updateCartQty(${i},1)">+</div>
+            </div>
           </div>
-          <div class="text-xs" style="color:var(--muted)">${c.notes || "Tanpa catatan"}</div>
-          <div class="flex items-center gap-2 mt-1">
-            <div class="qty-btn" style="width:26px;height:26px;font-size:12px" onclick="updateCartQty(${i},-1)">-</div>
-            <span class="text-sm font-semibold w-6 text-center">${c.quantity}</span>
-            <div class="qty-btn" style="width:26px;height:26px;font-size:12px" onclick="updateCartQty(${i},1)">+</div>
+          <div class="text-right">
+            ${eligible
+              ? `<div class="text-xs line-through" style="color:var(--muted)">${formatCurrency(c.unit_price * c.quantity)}</div><div class="font-bold text-sm" style="color:var(--success)">${formatCurrency(discUnitPrice * c.quantity)}</div>`
+              : `<div class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(c.unit_price * c.quantity)}</div>`}
+            <button onclick="removeCartItem(${i})" class="text-xs mt-1" style="color:var(--danger);border:1px solid rgba(231,76,60,.2);border-radius:8px;padding:6px 8px;background:rgba(231,76,60,.06)"><i class="fas fa-trash"></i></button>
           </div>
         </div>
-        <div class="text-right">
-          <div class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(c.unit_price * c.quantity)}</div>
-          <button onclick="removeCartItem(${i})" class="text-xs mt-1" style="color:var(--danger)"><i class="fas fa-trash"></i></button>
-        </div>
+        <div class="border-t mt-3 pt-2" style="border-color:var(--border)"></div>
+        <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Catatan</label>
+        <input class="input-field text-sm" placeholder="Misal: kurang gula, extra shot..." value="${c.notes || ""}" onblur="updateCartNotes(${i}, this.value)">
       </div>`;
         })
         .join("")}
