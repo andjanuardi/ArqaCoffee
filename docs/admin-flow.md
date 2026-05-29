@@ -214,7 +214,6 @@ Grid meja dengan ikon kursi. Setiap meja menampilkan:
 | Informasi      | Penjelasan                         |
 | -------------- | ---------------------------------- |
 | **Nomor Meja** | Nomor identitas meja               |
-| **Kapasitas**  | Jumlah kursi (contoh: 4 kursi)     |
 | **Status**     | 🟢 **Tersedia** atau 🔴 **Terisi** |
 | **QR Code**    | Kode QR untuk scan pelanggan       |
 
