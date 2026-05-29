@@ -104,8 +104,10 @@ function staffCheckOut() {
   const today = new Date().toISOString().split('T')[0];
   const att = DB.attendances.find(a => a.user_id === State.currentUser.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
   if (!att) { showToast('Belum check-in hari ini', 'warning'); return; }
+  var role = State.currentUser.role;
   if (!navigator.geolocation) {
     att.check_out = new Date().toISOString();
+    addNotification({ title:'Check-Out', message:'Check-out berhasil', type:'info', icon:'fa-sign-out-alt', targetRoles:[role] });
     showToast('Check-out berhasil', 'success');
     render();
     return;
@@ -114,10 +116,12 @@ function staffCheckOut() {
     att.check_out = new Date().toISOString();
     att.check_out_lat = pos.coords.latitude;
     att.check_out_lng = pos.coords.longitude;
+    addNotification({ title:'Check-Out', message:'Check-out berhasil — lokasi tersimpan', type:'info', icon:'fa-sign-out-alt', targetRoles:[role] });
     showToast('Check-out berhasil — lokasi tersimpan', 'success');
     render();
   }, function() {
     att.check_out = new Date().toISOString();
+    addNotification({ title:'Check-Out', message:'Check-out berhasil', type:'info', icon:'fa-sign-out-alt', targetRoles:[role] });
     showToast('Check-out berhasil (tanpa lokasi)', 'success');
     render();
   }, { enableHighAccuracy: true, timeout: 10000 });
