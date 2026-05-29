@@ -5,6 +5,9 @@ function acceptCashierOrder(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
   o.accepted = true;
+  if (o.payment_method === "cash" && o.payment_status === "unpaid") {
+    o.payment_status = "paid";
+  }
   addNotification({
     title: 'Pesanan Diterima Kasir',
     message: '#' + o.id.slice(-5).toUpperCase() + ' — diterima, menunggu dapur',
