@@ -258,8 +258,8 @@ Daftar promo dengan tampilan kartu berisi:
 | Tombol              | Cara                       | Yang Terjadi                          |
 | ------------------- | -------------------------- | ------------------------------------- |
 | **🔘 Toggle Aktif** | Klik tombol switch         | Mengaktifkan atau menonaktifkan promo |
-| **✏️ Edit**         | Klik icon pensil           | Mengubah data promo                   |
-| **🗑️ Hapus**        | Klik icon tempat sampah    | Menghapus promo (dengan konfirmasi)   |
+| **✏️ Edit**         | Klik area kartu            | Mengubah data promo                   |
+| **🗑️ Hapus**        | Klik area kartu            | Menghapus promo (dengan konfirmasi)   |
 | **➕ Tambah Promo** | Klik tombol "Tambah Promo" | Menambah promo baru                   |
 
 ### Cara menambah promo baru:
@@ -292,13 +292,13 @@ Halaman ini menampilkan laporan keuangan kafe secara detail dengan grafik dan ta
 
 ### 5 Kartu Ringkasan:
 
-| Kartu                    | Warna      | Penjelasan                                              |
-| ------------------------ | ---------- | ------------------------------------------------------- |
-| 💰 **Total Pendapatan**  | Hijau      | Jumlah pendapatan dari semua pesanan yang sudah dibayar |
-| 💸 **Total Pengeluaran** | Merah      | Jumlah pengeluaran (bahan baku, gaji, operasional)      |
-| 📊 **Rata-rata/Hari**    | Biru       | Pendapatan rata-rata per hari                           |
-| 💎 **Laba Bersih**       | Hijau/Emas | Pendapatan - Pengeluaran                                |
-| 📋 **Transaksi**         | Abu        | Jumlah transaksi                                        |
+| Kartu                    | Warna  | Penjelasan                                              |
+| ------------------------ | ------ | ------------------------------------------------------- |
+| 💰 **Total Pendapatan**  | Orange | Jumlah pendapatan dari semua pesanan yang sudah dibayar |
+| 💸 **Total Pengeluaran** | Merah  | Jumlah pengeluaran (bahan baku, gaji, operasional)      |
+| 📊 **Rata-rata/Hari**    | Putih  | Pendapatan rata-rata per hari                           |
+| 💎 **Laba Bersih**       | Hijau  | Pendapatan - Pengeluaran                                |
+| 📋 **Transaksi**         | Putih  | Jumlah transaksi                                        |
 
 Klik setiap kartu untuk melihat tabel detail yang bisa dicetak.
 
