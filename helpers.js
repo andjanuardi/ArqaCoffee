@@ -1,10 +1,10 @@
 function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takeaway' ? 'Takeaway' : 'Delivery' }
         function getStatusLabel(s) {
-            const m = { pending: 'Menunggu', cooking: 'Dimasak', ready: 'Siap Saji', delivering: 'Diantar', delivered: 'Telah Diantar', completed: 'Selesai', cancelled: 'Dibatalkan' };
+            const m = { pending: 'Menunggu', cooking: 'Dimasak', ready: 'Siap Saji', delivering: 'Diantar', delivered: 'Telah Diantar', completed: 'Selesai', cancelled: 'Dibatalkan', rejected: 'Ditolak' };
             return m[s] || s
         }
         function getStatusBadge(s) {
-            const m = { pending: 'badge-pending', cooking: 'badge-cooking', ready: 'badge-ready', delivering: 'badge-delivering', delivered: 'badge-delivering', completed: 'badge-completed', cancelled: 'badge-completed' };
+            const m = { pending: 'badge-pending', cooking: 'badge-cooking', ready: 'badge-ready', delivering: 'badge-delivering', delivered: 'badge-delivering', completed: 'badge-completed', cancelled: 'badge-pending', rejected: 'badge-pending' };
             return m[s] || 'badge-pending'
         }
         function formatCurrency(n) { return 'Rp ' + n.toLocaleString('id-ID') }
