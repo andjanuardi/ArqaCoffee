@@ -26,10 +26,11 @@ function renderCourierAvailable() {
         .map(
           (o) => `
       <div class="card">
-        <div class="flex justify-between items-start mb-2">
+        <div class="flex justify-between items-start mb-1">
           <span class="font-bold">#${o.id.slice(-5).toUpperCase()}</span>
           <span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
         </div>
+        <div class="text-xs mb-1" style="color:var(--muted)">${formatDate(o.created_at)} ${formatTime(o.created_at)}</div>
         <div class="text-sm mb-1"><i class="fas fa-map-marker-alt mr-1" style="color:var(--accent)"></i>${o.delivery_address}</div>
         ${o.delivery_detail ? `<div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-info-circle mr-1"></i>${o.delivery_detail}</div>` : ""}
         <div class="text-xs mb-3" style="color:var(--muted)">${o.items
