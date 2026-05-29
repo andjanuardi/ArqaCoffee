@@ -119,9 +119,10 @@ Setiap kartu menampilkan:
 
 **Yang terjadi setelah pembatalan:**
 
-- ⚠️ **Pesanan dihapus permanen** dari database (bukan hanya diubah statusnya)
+- ⚠️ **Pesanan tidak dihapus** — status diubah menjadi **"Dibatalkan"** dengan alasan tersimpan
 - Jika pesanan **dine-in** dan meja tidak punya pesanan lain, meja kembali **tersedia**
 - Notifikasi dikirim ke **Pelanggan** dengan alasan pembatalan
+- Pesanan yang dibatalkan masuk ke **Riwayat** dengan badge **Dibatalkan** dan tampilan teks & harga berwarna merah
 
 ### 3.6 Mengedit Pesanan
 
@@ -155,7 +156,7 @@ Untuk pesanan **Delivery** yang sudah diantar kurir dengan status **Belum Bayar 
 
 ### 3.9 Cetak Invoice
 
-Setiap pesanan yang sudah selesai atau ditolak bisa dicetak struknya:
+Setiap pesanan yang sudah **selesai** bisa dicetak struknya (tidak tersedia untuk pesanan **Ditolak** atau **Dibatalkan**):
 
 1. Klik kartu pesanan di bagian **Riwayat**
 2. Klik tombol **"Cetak"** di modal detail
@@ -171,24 +172,25 @@ Struk mencetak:
 - Metode & status pembayaran
 - Footer: _"Terima kasih telah berbelanja di ARQA Coffee"_
 
-### 3.10 Riwayat Pesanan (Completed / Rejected)
+### 3.10 Riwayat Pesanan (Completed / Rejected / Cancelled)
 
-Di bagian bawah tab Pesanan, terdapat 5 pesanan terakhir yang sudah **Selesai** atau **Ditolak**.
+Di bagian bawah tab Pesanan, terdapat 5 pesanan terakhir yang sudah **Selesai**, **Ditolak**, atau **Dibatalkan**.
 
 Setiap kartu riwayat menampilkan:
 
 - #ID pesanan
 - Tipe pesanan (Dine-In / Delivery) — diikuti nama pelanggan dan email user `(contoh: Budi (budi@email.com))`
-- Badge **"Ditolak"** (merah) jika ditolak
-- Total harga (hijau)
+- Badge **"Ditolak"** atau **"Dibatalkan"** (merah)
+- Total harga — **hijau** untuk selesai, **merah** untuk ditolak/dibatalkan
+- Teks info (tipe, nama, email) — **muted** untuk selesai, **merah** untuk ditolak/dibatalkan
 
 Klik kartu untuk melihat **modal detail** lengkap:
 
 - ID, status, tipe, meja, pelanggan (dengan email user dalam tanda kurung)
-- Alasan tolak (jika ditolak)
-- Daftar item + total
-- Metode pembayaran
-- Tombol **Cetak** dan **Tutup**
+- Alasan tolak/batal (jika ada)
+- Daftar item + total — **item dan harga berwarna merah** jika ditolak/dibatalkan
+- Metode pembayaran + waktu selesai
+- Tombol **Cetak** (hanya untuk status **Selesai**) dan **Tutup** (selalu ada)
 
 ---
 
@@ -493,8 +495,8 @@ Klik "Buat Pesanan" → Otomatis diterima → Notif ke dapur
 ```
 Pesanan masuk (Menunggu) → Klik "Batal" →
 Pilih alasan dari dropdown → Klik "Ya, Batalkan" →
-Pesanan dihapus permanen → Meja dibebaskan →
-Notif ke pelanggan
+Status pesanan diubah jadi "Dibatalkan" → Meja dibebaskan →
+Notif ke pelanggan → Masuk Riwayat dengan teks & harga merah
 ```
 
 ### Diagram Alur Status:
@@ -560,7 +562,7 @@ Berikut notifikasi yang diterima Kasir:
 ## 11. Tips Penting
 
 - **Pesanan Tunai auto-lunas** saat klik "Terima" — tidak perlu proses bayar lagi
-- **Pembatalan bersifat destruktif** — pesanan dihapus permanen, bukan hanya diubah status
+- **Pembatalan tidak destruktif** — pesanan diubah status jadi "Dibatalkan", bukan dihapus, tetap masuk riwayat
 - **Pesanan manual otomatis diterima** (`accepted: true`) — langsung masuk antrian dapur
 - **Hanya pesanan status "Menunggu"** yang bisa diedit atau dibatalkan
 - **Meja otomatis dikelola** — saat terima, batal, atau edit, meja diatur statusnya secara otomatis
@@ -581,7 +583,7 @@ A: Di tab **Pesanan**, klik tombol **"Terima"** pada kartu pesanan yang statusny
 A: Tombol "Terima" hanya muncul untuk pesanan dengan status **"Menunggu"** yang **belum diterima**. Jika sudah diterima, akan muncul badge "Diterima".
 
 **Q: Bagaimana cara membatalkan pesanan?**
-A: Klik **"Batal"** pada pesanan yang masih **"Menunggu"**, pilih alasan, konfirmasi. Pesanan akan dihapus permanen.
+A: Klik **"Batal"** pada pesanan yang masih **"Menunggu"**, pilih alasan, konfirmasi. Status pesanan berubah menjadi **"Dibatalkan"** dan masuk ke riwayat.
 
 **Q: Kenapa pesanan tidak bisa dibatalkan?**
 A: Pesanan hanya bisa dibatalkan jika status masih **"Menunggu"**. Jika sudah "Dimasak" atau "Siap Saji", tombol Batal tidak tersedia.
