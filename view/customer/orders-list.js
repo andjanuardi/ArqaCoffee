@@ -163,6 +163,30 @@ function printInvoice(id) {
 function payOrder(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
+  closeModal();
+  const data = encodeURIComponent("ARQA-COFFEE:PAY:" + o.id.slice(-6) + ":" + o.total_amount);
+  showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-2 text-center">Pembayaran QRIS</h3>
+      <p class="text-xs text-center mb-4" style="color:var(--muted)">Scan kode QR berikut untuk membayar</p>
+      <div class="flex justify-center mb-4">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${data}" alt="QRIS Payment" style="border-radius:12px;max-width:100%">
+      </div>
+      <div class="text-center mb-4">
+        <div class="text-sm" style="color:var(--muted)">Total Pembayaran</div>
+        <div class="font-bold text-xl" style="color:var(--accent)">${formatCurrency(o.total_amount)}</div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Tutup</button>
+        <button onclick="confirmPayOrder('${o.id}')" class="btn-primary btn-sm flex-1 text-center">Saya Sudah Bayar</button>
+      </div>
+    </div>
+  `);
+}
+
+function confirmPayOrder(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
   o.payment_status = "paid";
   o.payment_method = "qris";
   closeModal();

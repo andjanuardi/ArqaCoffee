@@ -39,10 +39,57 @@ function confirmPlaceOrder() {
 
       <div class="flex gap-3">
         <button onclick="closeModal()" class="btn-secondary flex-1">Kembali</button>
-        <button onclick="closeModal();placeOrder()" class="btn-primary flex-1">Pesan Sekarang</button>
+        <button onclick="closeModal();handleDigitalPayment()" class="btn-primary flex-1">Pesan Sekarang</button>
       </div>
     </div>
   `);
+}
+
+function handleDigitalPayment() {
+  if (State.payTiming !== "now") { placeOrder(); return; }
+  if (selectedPayment !== "qris" && selectedPayment !== "bank_transfer") { placeOrder(); return; }
+  const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
+  const discount = calcPromoDiscount();
+  const afterDiscount = total - discount;
+  const grandTotal = Math.round(afterDiscount * 1.1);
+
+  if (selectedPayment === "qris") {
+    const data = encodeURIComponent("ARQA-COFFEE:PAY:" + genId().slice(-6) + ":" + grandTotal);
+    showModal(`
+      <div>
+        <h3 class="font-display text-lg font-bold mb-2 text-center">Pembayaran QRIS</h3>
+        <p class="text-xs text-center mb-4" style="color:var(--muted)">Scan kode QR berikut untuk membayar</p>
+        <div class="flex justify-center mb-4">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${data}" alt="QRIS Payment" style="border-radius:12px;max-width:100%">
+        </div>
+        <div class="text-center mb-4">
+          <div class="text-sm" style="color:var(--muted)">Total Pembayaran</div>
+          <div class="font-bold text-xl" style="color:var(--accent)">${formatCurrency(grandTotal)}</div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+          <button onclick="closeModal();placeOrder()" class="btn-primary btn-sm flex-1 text-center">Saya Sudah Bayar</button>
+        </div>
+      </div>
+    `);
+  } else if (selectedPayment === "bank_transfer") {
+    showModal(`
+      <div>
+        <h3 class="font-display text-lg font-bold mb-2 text-center">Transfer Bank</h3>
+        <p class="text-xs text-center mb-4" style="color:var(--muted)">Transfer ke rekening berikut</p>
+        <div class="card mb-4 space-y-3">
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">Bank</span><span class="font-semibold">BCA</span></div>
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">No. Rekening</span><span class="font-semibold">1234567890</span></div>
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">Atas Nama</span><span class="font-semibold">ARQA Coffee</span></div>
+          <div class="flex justify-between text-sm pt-2 border-t" style="border-color:var(--border)"><span style="color:var(--muted)">Total Transfer</span><span class="font-bold" style="color:var(--accent)">${formatCurrency(grandTotal)}</span></div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+          <button onclick="closeModal();placeOrder()" class="btn-primary btn-sm flex-1 text-center">Saya Sudah Transfer</button>
+        </div>
+      </div>
+    `);
+  }
 }
 
 function placeOrder() {
