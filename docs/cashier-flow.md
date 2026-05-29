@@ -63,18 +63,18 @@ Menampilkan pesanan dengan status: **Menunggu**, **Dimasak**, **Siap Saji**, ata
 
 Setiap kartu menampilkan:
 
-| Elemen                  | Keterangan                                                        |
-| ----------------------- | ----------------------------------------------------------------- |
-| 🏷️ **#ID Pesanan**      | 5 karakter terakhir, misal `#XF3B4`                               |
-| **Badge Status**        | Warna sesuai status (pending=kuning, cooking=oranye, ready=hijau) |
-| 💳 **Badge Bayar**      | "Lunas" (hijau) atau "Belum Bayar" (merah)                        |
-| 🕐 **Waktu**            | Jam masuk pesanan                                                 |
-| 💺 / 🏍️ **Tipe + Meja** | "Meja 3" untuk dine-in, "Delivery" untuk antar                    |
-| 👤 **Nama Pelanggan**   | Nama pemesan — untuk pesanan online diambil dari **data registrasi user**, untuk pesanan manual diisi kasir |
-| **Item Pesanan**        | Daftar menu x jumlah (dipisah koma)                               |
-| 🏷️ **Diskon Promo**     | Jika ada promo, ditampilkan dalam warna hijau                     |
-| 💰 **Total Harga**      | Total pesanan (warna aksen)                                       |
-| 🔘 **Tombol Aksi**      | Tergantung kondisi (lihat di bawah)                               |
+| Elemen                  | Keterangan                                                                                                                                                                                                                             |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🏷️ **#ID Pesanan**      | 5 karakter terakhir, misal `#XF3B4`                                                                                                                                                                                                    |
+| **Badge Status**        | Warna sesuai status (pending=kuning, cooking=oranye, ready=hijau)                                                                                                                                                                      |
+| 💳 **Badge Bayar**      | "Lunas" (hijau) atau "Belum Bayar" (merah)                                                                                                                                                                                             |
+| 🕐 **Waktu**            | Jam masuk pesanan                                                                                                                                                                                                                      |
+| 💺 / 🏍️ **Tipe + Meja** | "Meja 3" untuk dine-in, "Delivery" untuk antar                                                                                                                                                                                         |
+| 👤 **Nama Pelanggan**   | Nama pemesan — untuk pesanan online diambil dari **data registrasi user**, untuk pesanan manual diisi kasir. Jika pelanggan terdaftar, **email user** ditampilkan dalam tanda kurung di samping nama (contoh: `Budi (budi@email.com)`) |
+| **Item Pesanan**        | Daftar menu x jumlah (dipisah koma)                                                                                                                                                                                                    |
+| 🏷️ **Diskon Promo**     | Jika ada promo, ditampilkan dalam warna hijau                                                                                                                                                                                          |
+| 💰 **Total Harga**      | Total pesanan (warna aksen)                                                                                                                                                                                                            |
+| 🔘 **Tombol Aksi**      | Tergantung kondisi (lihat di bawah)                                                                                                                                                                                                    |
 
 ### 3.3 Tombol Aksi per Kondisi
 
@@ -92,7 +92,7 @@ Setiap kartu menampilkan:
 
 **Saat Anda klik "Terima":**
 
-1. Status pesanan tetap **"Menunggu"**, tapi `accepted` berubah menjadi `true`
+1. Status pesanan tetap **"Menunggu"**
 2. Notifikasi dikirim ke **Dapur** — pesanan muncul di antrian dapur
 3. **Pembayaran Tunai otomatis lunas:** Jika pelanggan memilih bayar **Tunai**, pesanan otomatis langsung **Lunas** saat diterima — tanpa perlu proses bayar lagi
 4. Toast: _"Pesanan #ID diterima — menunggu dapur"_
@@ -178,13 +178,13 @@ Di bagian bawah tab Pesanan, terdapat 5 pesanan terakhir yang sudah **Selesai** 
 Setiap kartu riwayat menampilkan:
 
 - #ID pesanan
-- Tipe pesanan (Dine-In / Delivery)
+- Tipe pesanan (Dine-In / Delivery) — diikuti nama pelanggan dan email user `(contoh: Budi (budi@email.com))`
 - Badge **"Ditolak"** (merah) jika ditolak
 - Total harga (hijau)
 
 Klik kartu untuk melihat **modal detail** lengkap:
 
-- ID, status, tipe, meja, pelanggan
+- ID, status, tipe, meja, pelanggan (dengan email user dalam tanda kurung)
 - Alasan tolak (jika ditolak)
 - Daftar item + total
 - Metode pembayaran
@@ -203,7 +203,7 @@ Menampilkan semua pesanan yang masih **Belum Bayar** (kecuali yang sudah selesai
 Setiap kartu menampilkan:
 
 - #ID + badge status
-- 👤 Nama pelanggan
+- 👤 Nama pelanggan — untuk pelanggan terdaftar, **email user** ditampilkan di sampingnya dengan warna aksen
 - Total harga (warna aksen)
 - Waktu, meja (jika dine-in), label "Delivery"
 - Item pesanan
@@ -234,7 +234,7 @@ Jika semua pesanan sudah lunas, akan muncul icon centang hijau dengan teks _"Sem
 
 Saat klik **"Bayar"** dari tab Pesanan, muncul modal yang menampilkan:
 
-- ID, tipe, meja, nama pelanggan
+- ID, tipe, meja, nama pelanggan (dengan email user jika terdaftar)
 - Total harga (warna aksen)
 - Daftar item lengkap
 - Diskon promo (jika ada)
@@ -250,7 +250,7 @@ Bagian collapsible yang bisa dibuka/tutup. Menampilkan 20 transaksi lunas terakh
 Tampilan:
 
 - Header: _"Riwayat Lunas (jumlah)"_
-- Setiap baris: #ID, tanggal + jam, metode bayar (Tunai/Digital), total harga
+- Setiap baris: #ID, tanggal + jam, metode bayar (Tunai/Digital), nama pelanggan (dengan email user jika terdaftar), total harga
 - Klik baris → modal detail pesanan
 
 ---
@@ -312,14 +312,14 @@ Jika keranjang kosong: icon alat makan + _"Pilih menu untuk menambahkan ke pesan
 
 Klik **"Proses Pesanan"** → muncul modal dengan form:
 
-| Field                                      | Deskripsi                                                                         |
-| ------------------------------------------ | --------------------------------------------------------------------------------- |
+| Field                                      | Deskripsi                                                                                                                                             |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Nama Pelanggan (Opsional)**              | Input teks nama pelanggan. Jika dikosongkan, akan terisi otomatis **"Pelanggan Offline"**. Saat edit pesanan, field ini terisi dengan nama sebelumnya |
-| **Tipe Pesanan**                           | Dropdown: **Makan di Tempat (Dine-in)** atau **Bawa Pulang (Takeaway)**           |
-| **Pilih Meja**                             | Hanya muncul jika tipe **Dine-in** — dropdown daftar meja, meja terisi di-disable |
-| **Status Pembayaran**                      | Dropdown: **Sudah Lunas** atau **Belum Bayar**                                    |
-| Tombol **Batal**                           | Kembali, kosongkan editing ID                                                     |
-| Tombol **Buat Pesanan / Simpan Perubahan** | Finalisasi pesanan                                                                |
+| **Tipe Pesanan**                           | Dropdown: **Makan di Tempat (Dine-in)** atau **Bawa Pulang (Takeaway)**                                                                               |
+| **Pilih Meja**                             | Hanya muncul jika tipe **Dine-in** — dropdown daftar meja, meja terisi di-disable                                                                     |
+| **Status Pembayaran**                      | Dropdown: **Sudah Lunas** atau **Belum Bayar**                                                                                                        |
+| Tombol **Batal**                           | Kembali, kosongkan editing ID                                                                                                                         |
+| Tombol **Buat Pesanan / Simpan Perubahan** | Finalisasi pesanan                                                                                                                                    |
 
 ### 5.6 Finalisasi Pesanan Baru
 
@@ -375,7 +375,7 @@ Tab **Laporan** menampilkan rekap harian kasir.
 **Tabel Tunai:**
 
 - Header: total & jumlah transaksi
-- Baris: Tanggal, Jam, #ID Orders, Menu, Total
+- Baris: Tanggal, Jam, #ID Orders (dengan nama pelanggan & email user), Menu, Total
 - Footer: total keseluruhan
 - Klik baris → modal detail pesanan
 
@@ -383,6 +383,7 @@ Tab **Laporan** menampilkan rekap harian kasir.
 
 - Struktur sama seperti tabel tunai
 - Menampilkan metode bayar per baris (QRIS / Transfer / Digital)
+- Juga menampilkan nama pelanggan & email user di kolom Orders
 
 ### 6.4 Peringatan Stok
 
@@ -392,7 +393,7 @@ Jika ada bahan baku yang stoknya **menipis** (jumlah ≤ minimum), akan muncul c
 
 Daftar 6 pesanan terakhir (scrollable):
 
-- #ID, badge status, icon promo (jika ada), total harga
+- #ID, badge status, icon promo (jika ada), nama pelanggan (dengan email user), total harga
 
 ### 6.6 Grafik Revenue
 
@@ -620,6 +621,9 @@ A: Tidak. Jika kolom nama pelanggan dikosongkan, secara otomatis akan terisi **"
 
 **Q: Dari mana asal nama pelanggan pada pesanan online?**
 A: Nama pelanggan diambil dari **data registrasi user** saat pelanggan login dan membuat pesanan melalui aplikasi pelanggan.
+
+**Q: Apa email dalam tanda kurung di samping nama pelanggan?**
+A: Email tersebut adalah **email registrasi user** yang diambil dari database (`getUser(o.user_id)`). Email hanya muncul jika pelanggan adalah user terdaftar (bukan walk-in). Berguna untuk mengidentifikasi pelanggan yang sudah punya akun.
 
 ---
 

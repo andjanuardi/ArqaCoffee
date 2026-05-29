@@ -49,7 +49,7 @@ function renderCashierOrders() {
     ["pending", "cooking", "ready", "delivered"].includes(o.status),
   );
   const completed = DB.orders
-    .filter((o) => o.status === "completed" || o.status === "rejected")
+    .filter((o) => o.status === "completed" || o.status === "rejected" || o.status === "cancelled")
     .slice(0, 5);
   return `
   <div class="animate-fade-up">
@@ -119,7 +119,7 @@ function renderCashierOrders() {
         <div class="text-sm">
           <span class="font-bold">#${o.id.slice(-5).toUpperCase()}</span> 
           <span style="color:var(--muted)">— ${getOrderTypeName(o.order_type)}${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}</span>
-          ${o.status === "rejected" ? '<span class="badge badge-danger ml-2">Ditolak</span>' : ""}
+          ${o.status === "rejected" ? '<span class="badge badge-danger ml-2">Ditolak</span>' : ""}${o.status === "cancelled" ? '<span class="badge badge-danger ml-2">Dibatalkan</span>' : ""}
         </div>
         <span class="font-semibold text-sm" style="color:var(--success)">${formatCurrency(o.total_amount)}</span>
       </div>`,
@@ -201,7 +201,7 @@ function showCashierOrderDetail(id) {
 <div>
   <div class="flex justify-between items-start mb-4">
     <h3 class="font-display text-lg font-bold">Pesanan #${o.id.slice(-5).toUpperCase()}</h3>
-    <span class="badge ${o.status === "rejected" ? "badge-danger" : "badge-completed"}">${o.status === "rejected" ? "Ditolak" : "Selesai"}</span>
+    <span class="badge ${o.status === "rejected" || o.status === "cancelled" ? "badge-danger" : "badge-completed"}">${o.status === "rejected" ? "Ditolak" : o.status === "cancelled" ? "Dibatalkan" : "Selesai"}</span>
   </div>
   <div class="text-xs mb-4" style="color:var(--muted)">
     <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}
@@ -209,7 +209,7 @@ function showCashierOrderDetail(id) {
     ${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}
     ${o.delivery_address ? "<br>" + o.delivery_address : ""}
   </div>
-  ${o.status === "rejected" && o.reject_reason ? `<div class="card mb-4 text-sm" style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2)"><i class="fas fa-ban mr-1" style="color:var(--danger)"></i><strong>Alasan Penolakan:</strong> ${o.reject_reason}</div>` : ""}
+  ${(o.status === "rejected" || o.status === "cancelled") && o.reject_reason ? `<div class="card mb-4 text-sm" style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2)"><i class="fas fa-ban mr-1" style="color:var(--danger)"></i><strong>${o.status === "cancelled" ? "Alasan Pembatalan:" : "Alasan Penolakan:"}</strong> ${o.reject_reason}</div>` : ""}
   <div class="space-y-2 mb-4">
     ${o.items
       .map((i) => {

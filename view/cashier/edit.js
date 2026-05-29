@@ -88,7 +88,8 @@ function confirmCancelCashierOrder(id) {
     });
   }
 
-  DB.orders.splice(idx, 1);
+  o.status = "cancelled";
+  o.reject_reason = reason;
   showToast("Pesanan berhasil dibatalkan", "success");
   closeModal();
   render();
