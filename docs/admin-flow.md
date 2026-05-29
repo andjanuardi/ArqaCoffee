@@ -292,13 +292,13 @@ Halaman ini menampilkan laporan keuangan kafe secara detail dengan grafik dan ta
 
 ### 5 Kartu Ringkasan:
 
-| Kartu                    | Warna      | Penjelasan                                              |
-| ------------------------ | ---------- | ------------------------------------------------------- |
-| 💰 **Total Pendapatan**  | Hijau      | Jumlah pendapatan dari semua pesanan yang sudah dibayar |
-| 💸 **Total Pengeluaran** | Merah      | Jumlah pengeluaran (bahan baku, gaji, operasional)      |
-| 📊 **Rata-rata/Hari**    | Biru       | Pendapatan rata-rata per hari                           |
-| 💎 **Laba Bersih**       | Hijau/Emas | Pendapatan - Pengeluaran                                |
-| 📋 **Transaksi**         | Abu        | Jumlah transaksi                                        |
+| Kartu                    | Warna  | Penjelasan                                              |
+| ------------------------ | ------ | ------------------------------------------------------- |
+| 💰 **Total Pendapatan**  | Orange | Jumlah pendapatan dari semua pesanan yang sudah dibayar |
+| 💸 **Total Pengeluaran** | Merah  | Jumlah pengeluaran (bahan baku, gaji, operasional)      |
+| 📊 **Rata-rata/Hari**    | Putih  | Pendapatan rata-rata per hari                           |
+| 💎 **Laba Bersih**       | Hijau  | Pendapatan - Pengeluaran                                |
+| 📋 **Transaksi**         | Putih  | Jumlah transaksi                                        |
 
 Klik setiap kartu untuk melihat tabel detail yang bisa dicetak.
 
