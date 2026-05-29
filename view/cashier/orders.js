@@ -231,7 +231,7 @@ function showCashierOrderDetail(id) {
     <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Waktu Selesai</span><span>${formatTime(o.created_at)}</span></div>
   </div>
   <div class="flex gap-2 mt-4">
-    <button onclick="printCashierInvoice('${o.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak</button>
+    ${o.status === "completed" ? `<button onclick="printCashierInvoice('${o.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak</button>` : ""}
     <button onclick="closeModal()" class="btn-secondary flex-1 text-center">Tutup</button>
   </div>
 </div>

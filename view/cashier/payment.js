@@ -181,6 +181,7 @@ function renderCashierReport() {
       <div class="stat-card cursor-pointer" onclick="State.currentTab['cashier']='payment';State.showPaymentHistory=true;render()"><div class="flex items-center gap-2"><i class="fas fa-check-circle" style="color:var(--success);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Lunas</span></div><div class="text-xl font-bold mt-1" style="color:var(--success)">${paidInRange.length}</div></div>
       <div class="stat-card cursor-pointer" onclick="State.currentTab['cashier']='payment';render()"><div class="flex items-center gap-2"><i class="fas fa-exclamation-circle" style="color:var(--danger);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Belum Bayar</span></div><div class="text-xl font-bold mt-1" style="color:var(--danger)">${DB.orders.filter(o => {
         if (o.payment_status !== 'unpaid' || !o.created_at) return false;
+        if (o.status === 'cancelled' || o.status === 'rejected') return false;
         const d = o.created_at.split('T')[0];
         return d >= startDate && d <= endDate;
       }).length}</div></div>
