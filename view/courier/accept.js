@@ -47,6 +47,14 @@ function acceptDelivery(id) {
     recorded_at: new Date().toISOString(),
   });
   notifyDeliveryTaken(o, State.currentUser.name);
+  addNotification({
+    title: 'Pesanan Diambil',
+    message: '#' + o.id.slice(-5).toUpperCase() + ' — mulai pengantaran',
+    type: 'delivery',
+    icon: 'fa-motorcycle',
+    targetRoles: ['courier'],
+    relatedOrderId: o.id
+  });
   showToast("Pesanan diambil — mulai pengantaran", "success");
   State.currentTab.courier = "active";
   render();
