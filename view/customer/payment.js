@@ -37,6 +37,18 @@ function updateCartNotes(i, val) {
   if (State.cart[i]) State.cart[i].notes = val;
 }
 
+function getActivePromo() {
+  return State.activePromoId ? DB.promos.find((x) => x.id === State.activePromoId) : null;
+}
+function isItemEligible(item, promo) {
+  return promo && promo.is_active && (!promo.menu_ids || !promo.menu_ids.length || promo.menu_ids.includes(item.menu_item_id));
+}
+function calcItemDiscount(item, promo) {
+  if (!promo || !promo.is_active) return item.unit_price;
+  if (promo.discount_type === "fixed") return Math.max(0, item.unit_price - promo.discount_value);
+  return Math.round(item.unit_price * (1 - promo.discount_value / 100));
+}
+
 function calcPromoDiscount() {
   if (!State.activePromoId) return 0;
   const p = DB.promos.find(x => x.id === State.activePromoId);
