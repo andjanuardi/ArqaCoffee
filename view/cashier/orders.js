@@ -8,7 +8,7 @@ function showPaymentModal(id) {
   showModal(`
     <div>
       <div class="flex justify-between items-start mb-4">
-        <div><h3 class="font-display text-lg font-bold">Pembayaran</h3><p class="text-xs" style="color:var(--muted)">#${o.id.slice(-5).toUpperCase()} — ${getOrderTypeName(o.order_type)}${t ? " — Meja " + t.number : ""}${o.customer_name ? " — " + o.customer_name : ""}</p></div>
+        <div><h3 class="font-display text-lg font-bold">Pembayaran</h3><p class="text-xs" style="color:var(--muted)">#${o.id.slice(-5).toUpperCase()} — ${getOrderTypeName(o.order_type)}${t ? " — Meja " + t.number : ""}${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}</p></div>
         <span class="font-bold text-lg" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
       </div>
       <div class="card mb-4" style="background:var(--bg2)">
@@ -79,7 +79,7 @@ function renderCashierOrders() {
             <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
           </div>
           <div class="text-xs mb-2" style="color:var(--muted)">
-            <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}${t ? " — Meja " + t.number : ""}${o.customer_name ? " — " + o.customer_name : ""}
+            <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}${t ? " — Meja " + t.number : ""}${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}
           </div>
           <div class="text-xs mb-3">${o.items
             .map((i) => {
@@ -118,7 +118,7 @@ function renderCashierOrders() {
       <div class="card flex justify-between items-center py-3 cursor-pointer hover:scale-[1.02] transition-transform" onclick="showCashierOrderDetail('${o.id}')">
         <div class="text-sm">
           <span class="font-bold">#${o.id.slice(-5).toUpperCase()}</span> 
-          <span style="color:var(--muted)">— ${getOrderTypeName(o.order_type)}</span>
+          <span style="color:var(--muted)">— ${getOrderTypeName(o.order_type)}${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}</span>
           ${o.status === "rejected" ? '<span class="badge badge-danger ml-2">Ditolak</span>' : ""}
         </div>
         <span class="font-semibold text-sm" style="color:var(--success)">${formatCurrency(o.total_amount)}</span>
@@ -206,6 +206,7 @@ function showCashierOrderDetail(id) {
   <div class="text-xs mb-4" style="color:var(--muted)">
     <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}
     ${t ? " — Meja " + t.number : ""}
+    ${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}
     ${o.delivery_address ? "<br>" + o.delivery_address : ""}
   </div>
   ${o.status === "rejected" && o.reject_reason ? `<div class="card mb-4 text-sm" style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2)"><i class="fas fa-ban mr-1" style="color:var(--danger)"></i><strong>Alasan Penolakan:</strong> ${o.reject_reason}</div>` : ""}
@@ -264,7 +265,7 @@ function renderCashierPayment() {
           <div><span class="font-bold">#${o.id.slice(-5).toUpperCase()}</span><span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span></div>
           <span class="font-bold text-lg" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
         </div>
-        <div class="flex items-center gap-3 text-[11px] mb-2" style="color:var(--muted)"><span><i class="far fa-clock mr-1"></i>${oTime}</span>${oTable ? `<span><i class="fas fa-chair mr-1"></i>Meja ${oTable.number}</span>` : ''}${o.order_type === 'delivery' ? '<span><i class="fas fa-truck mr-1"></i>Delivery</span>' : ''}</div>
+        <div class="flex items-center gap-3 text-[11px] mb-2" style="color:var(--muted)"><span><i class="far fa-clock mr-1"></i>${oTime}</span>${oTable ? `<span><i class="fas fa-chair mr-1"></i>Meja ${oTable.number}</span>` : ''}${o.order_type === 'delivery' ? '<span><i class="fas fa-truck mr-1"></i>Delivery</span>' : ''}${o.customer_name ? '<span><i class="fas fa-user mr-1"></i>' + o.customer_name + '</span>' : ''}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? '<span style="font-size:10px;color:var(--accent)">' + getUser(o.user_id).email + '</span>' : ''}</div>
         <div class="text-xs mb-3" style="color:var(--muted)">${o.items
           .map((i) => {
             const mi = getMenuItem(i.menu_item_id);
@@ -293,7 +294,7 @@ function renderCashierPayment() {
           return `
         <div class="card cursor-pointer" onclick="showOrderDetail('${encodeURIComponent(o.id)}')">
           <div class="flex justify-between items-center">
-            <div><span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span><span class="text-[10px] ml-2" style="color:var(--muted)">${formatDate(date)} ${time}</span><span class="text-[10px] ml-1" style="color:${o.payment_method === 'cash' ? 'var(--success)' : 'var(--accent)'}">(${o.payment_method === 'cash' ? 'Tunai' : 'Digital'})</span></div>
+            <div><span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span><span class="text-[10px] ml-2" style="color:var(--muted)">${formatDate(date)} ${time}</span><span class="text-[10px] ml-1" style="color:${o.payment_method === 'cash' ? 'var(--success)' : 'var(--accent)'}">(${o.payment_method === 'cash' ? 'Tunai' : 'Digital'})</span>${o.customer_name ? '<span class="text-[10px] ml-1" style="color:var(--muted)">— ' + o.customer_name + '</span>' : ''}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? '<span class="text-[10px] ml-1" style="color:var(--accent)">(' + getUser(o.user_id).email + ')</span>' : ''}</div>
             <span class="font-bold" style="color:var(--success)">${formatCurrency(o.total_amount)}</span>
           </div>
         </div>`;
