@@ -146,8 +146,8 @@ Klik tab **Pesanan** (icon struk) di bagian bawah untuk melihat semua pesanan An
 | **Diantar**       | Sedang dalam perjalanan (pesan antar)         |
 | **Telah Diantar** | Sampai tujuan, menunggu konfirmasi pembayaran |
 | **Selesai**       | Pesanan selesai                               |
-| **Ditolak**       | Pesanan ditolak oleh koki (ada alasan)        |
-| **Dibatalkan**    | Pesanan dibatalkan oleh kasir (ada alasan)    |
+| **Ditolak**       | Pesanan ditolak oleh koki (ada alasan), badge kuning |
+| **Dibatalkan**    | Pesanan dibatalkan oleh kasir (ada alasan), badge kuning |
 
 ### Yang bisa Anda lakukan:
 
@@ -161,6 +161,7 @@ Klik tab **Pesanan** (icon struk) di bagian bawah untuk melihat semua pesanan An
 - Klik card pesanan untuk melihat detail
 - Jika status masih **belum dibayar**, klik **"Bayar Sekarang"**
 - Pembayaran via QRIS
+- **Tidak tersedia** untuk pesanan **Ditolak** atau **Dibatalkan**
 
 **Lacak Kurir** (untuk pesan antar yang sedang **Diantar**):
 
@@ -177,6 +178,7 @@ Klik tab **Pesanan** (icon struk) di bagian bawah untuk melihat semua pesanan An
 
 - Klik card pesanan untuk melihat detail
 - Klik **"Cetak Invoice"** untuk mencetak struk
+- **Tidak tersedia** untuk pesanan **Ditolak** atau **Dibatalkan** (hanya tombol **Tutup**)
 
 ---
 
