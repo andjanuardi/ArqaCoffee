@@ -118,10 +118,10 @@ function renderCashierOrders() {
       <div class="card flex justify-between items-center py-3 cursor-pointer hover:scale-[1.02] transition-transform" onclick="showCashierOrderDetail('${o.id}')">
         <div class="text-sm">
           <span class="font-bold">#${o.id.slice(-5).toUpperCase()}</span> 
-          <span style="color:var(--muted)">— ${getOrderTypeName(o.order_type)}${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}</span>
+          <span style="color:${o.status === "rejected" || o.status === "cancelled" ? "var(--danger)" : "var(--muted)"}">— ${getOrderTypeName(o.order_type)}${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}</span>
           ${o.status === "rejected" ? '<span class="badge badge-danger ml-2">Ditolak</span>' : ""}${o.status === "cancelled" ? '<span class="badge badge-danger ml-2">Dibatalkan</span>' : ""}
         </div>
-        <span class="font-semibold text-sm" style="color:var(--success)">${formatCurrency(o.total_amount)}</span>
+        <span class="font-semibold text-sm" style="color:${o.status === "rejected" || o.status === "cancelled" ? "var(--danger)" : "var(--success)"}">${formatCurrency(o.total_amount)}</span>
       </div>`,
         )
         .join("")}
@@ -203,7 +203,7 @@ function showCashierOrderDetail(id) {
     <h3 class="font-display text-lg font-bold">Pesanan #${o.id.slice(-5).toUpperCase()}</h3>
     <span class="badge ${o.status === "rejected" || o.status === "cancelled" ? "badge-danger" : "badge-completed"}">${o.status === "rejected" ? "Ditolak" : o.status === "cancelled" ? "Dibatalkan" : "Selesai"}</span>
   </div>
-  <div class="text-xs mb-4" style="color:var(--muted)">
+  <div class="text-xs mb-4" style="color:${o.status === "rejected" || o.status === "cancelled" ? "var(--danger)" : "var(--muted)"}">
     <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}
     ${t ? " — Meja " + t.number : ""}
     ${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}
@@ -216,9 +216,9 @@ function showCashierOrderDetail(id) {
         const mi = getMenuItem(i.menu_item_id);
         return mi
           ? `
-    <div class="flex justify-between text-sm">
+    <div class="flex justify-between text-sm" style="color:${o.status === "rejected" || o.status === "cancelled" ? "var(--danger)" : "inherit"}">
       <span>${mi.name} x${i.quantity} ${i.notes ? '<span style="color:var(--muted)">(' + i.notes + ")</span>" : ""}</span>
-      <span>${formatCurrency(i.unit_price * i.quantity)}</span>
+      <span style="color:${o.status === "rejected" || o.status === "cancelled" ? "var(--danger)" : "var(--muted)"}">${formatCurrency(i.unit_price * i.quantity)}</span>
     </div>`
           : "";
       })
@@ -226,7 +226,7 @@ function showCashierOrderDetail(id) {
   </div>
   <div class="border-t pt-3" style="border-color:var(--border)">
     ${o.promo_discount ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
-    <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
+    <div class="flex justify-between font-bold"><span>Total</span><span style="color:${o.status === "rejected" || o.status === "cancelled" ? "var(--danger)" : "var(--accent)"}">${formatCurrency(o.total_amount)}</span></div>
     <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "digital" ? "Digital" : "Tunai/COD"}</span></div>
     <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Waktu Selesai</span><span>${formatTime(o.created_at)}</span></div>
   </div>
