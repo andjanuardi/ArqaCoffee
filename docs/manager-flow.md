@@ -251,9 +251,9 @@ Daftar promo dengan tampilan kartu berisi:
 
 | Tombol              | Cara                       | Yang Terjadi                          |
 | ------------------- | -------------------------- | ------------------------------------- |
-| **🔘 Toggle Aktif** | Klik tombol switch         | Mengaktifkan atau menonaktifkan promo |
-| **✏️ Edit**         | Klik icon pensil           | Mengubah data promo                   |
-| **🗑️ Hapus**        | Klik icon tempat sampah    | Menghapus promo (dengan konfirmasi)   |
+| **🔘 Toggle Aktif** | Klik tombol aktif/nonaktif | Mengaktifkan atau menonaktifkan promo |
+| **✏️ Edit**         | Klik area kartu            | Mengubah data promo                   |
+| **🗑️ Hapus**        | Klik area kartu            | Menghapus promo (dengan konfirmasi)   |
 | **➕ Tambah Promo** | Klik tombol "Tambah Promo" | Menambah promo baru                   |
 
 ### Cara menambah promo baru:
