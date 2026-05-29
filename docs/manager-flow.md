@@ -323,13 +323,13 @@ Halaman ini untuk mengelola stok bahan baku kafe.
 
 Daftar bahan baku diurutkan dari yang stoknya paling menipis. Setiap item menampilkan:
 
-| Informasi         | Penjelasan                                                                     |
-| ----------------- | ------------------------------------------------------------------------------ |
-| **Nama Bahan**    | Nama bahan baku                                                                |
-| **Satuan**        | Contoh: kg, liter, pack, butir                                                 |
-| **Stok Saat Ini** | Jumlah stok tersedia                                                           |
-| **Stok Minimal**  | Batas minimum stok                                                             |
-| **Progress Bar**  | 🟢 Hijau = aman, 🟡 Kuning = waspada, 🔴 Merah = kritis (dengan animasi kedip) |
+| Informasi         | Penjelasan                     |
+| ----------------- | ------------------------------ |
+| **Nama Bahan**    | Nama bahan baku                |
+| **Satuan**        | Contoh: kg, liter, pack, butir |
+| **Stok Saat Ini** | Jumlah stok tersedia           |
+| **Stok Minimal**  | Batas minimum stok             |
+| **Progress Bar**  | orange = aman, Merah = kritis  |
 
 ### Yang bisa Anda lakukan:
 
