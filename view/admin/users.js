@@ -34,6 +34,7 @@ function showAddUserModal() {
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama</label><input id="new-user-name" class="input-field text-sm" placeholder="Nama lengkap"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Email</label><input id="new-user-email" class="input-field text-sm" placeholder="email@arqa.coffee"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Password</label><input id="new-user-pass" type="password" class="input-field text-sm" placeholder="Minimal 6 karakter"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Telepon</label><input id="new-user-phone" class="input-field text-sm" placeholder="Nomor telepon"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Peran</label>
           <select id="new-user-role" class="input-field text-sm">
             <option value="cashier">Kasir</option><option value="kitchen">Juru Masak</option><option value="courier">Kurir</option><option value="manager">Manager</option><option value="customer">Pelanggan</option>
@@ -50,8 +51,9 @@ function addUser() {
   const email = document.getElementById('new-user-email')?.value;
   const pass = document.getElementById('new-user-pass')?.value;
   const role = document.getElementById('new-user-role')?.value;
+  const phone = document.getElementById('new-user-phone')?.value || '';
   if (!name || !email) { showToast('Nama dan email wajib diisi', 'warning'); return; }
-  DB.users.push({ id: 'u' + Date.now(), name, email, password: pass || 'password123', role, phone: '', avatar: name[0].toUpperCase() });
+  DB.users.push({ id: 'u' + Date.now(), name, email, password: pass || 'password123', role, phone, avatar: name[0].toUpperCase() });
   closeModal(); showToast('Pengguna ditambahkan', 'success'); render();
 }
 
