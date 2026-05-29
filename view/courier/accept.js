@@ -48,5 +48,6 @@ function acceptDelivery(id) {
   });
   notifyDeliveryTaken(o, State.currentUser.name);
   showToast("Pesanan diambil — mulai pengantaran", "success");
+  State.currentTab.courier = "active";
   render();
 }

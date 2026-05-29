@@ -68,7 +68,7 @@ Jika Anda melihat pesanan yang siap diantar dan ingin mengambilnya:
 1. Klik tombol **"Ambil Pesanan"** pada kartu pesanan yang dipilih
 2. Sistem akan mencatat bahwa Anda yang mengambil pesanan tersebut
 3. Status pesanan berubah menjadi **"Dalam Perjalanan"**
-4. Anda otomatis dialihkan ke tab **Aktif**
+4. Anda **otomatis dialihkan** ke tab **Aktif** untuk melihat pengantaran yang berjalan
 5. Muncul notifikasi sukses: **"Pesanan diambil — mulai pengantaran"**
 6. Pelanggan, kasir, admin, dan manajer mendapat notifikasi bahwa Anda sedang mengantar
 
