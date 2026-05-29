@@ -180,7 +180,7 @@ Halaman ini untuk mengelola daftar menu makanan dan minuman di kafe.
 | ---------------------- | ------------------------- | ------------------------------------------------------------------ |
 | **🔘 Toggle Tersedia** | Klik tombol switch        | Mengubah status ketersediaan menu (tersedia/tidak tersedia)        |
 | **✏️ Edit**            | Klik area kartu           | Muncul jendela edit: ubah nama, deskripsi, gambar, harga, kategori |
-| **🗑️ Hapus**           | Klik icon tempat sampah   | Muncul konfirmasi hapus                                            |
+| **🗑️ Hapus**           | Klik area kartu           | Muncul konfirmasi hapus                                            |
 | **➕ Tambah Menu**     | Klik tombol "Tambah Menu" | Muncul jendela untuk menambah menu baru                            |
 
 ### Cara menambah menu baru:
