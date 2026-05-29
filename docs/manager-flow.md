@@ -446,7 +446,6 @@ Halaman ini menampilkan status absensi seluruh staff (Manajer, Kasir, Koki, Kuri
 | **Nama**   | Nama staff                                                                                  |
 | **Role**   | Jabatan                                                                                     |
 | **Status** | 🟢 **Sedang Bekerja** (jam check-in) atau ⚪ **Offline** (belum check-in / sudah check-out) |
-| **Lokasi** | Koordinat GPS saat check-in (jika ada)                                                      |
 
 ### Melihat Laporan Absensi:
 
