@@ -330,6 +330,12 @@ function renderActiveOrders() {
     const d = o.created_at.split('T')[0];
     return d >= State.activeOrderStart && d <= State.activeOrderEnd;
   }).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+  const history = DB.orders.filter(o =>
+    o.status === 'completed' && o.created_at
+  ).filter(o => {
+    const d = o.created_at.split('T')[0];
+    return d >= State.activeOrderStart && d <= State.activeOrderEnd;
+  }).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
   return `
   <div class="animate-fade-up">
     <div class="flex justify-between items-center mb-4">
@@ -375,12 +381,43 @@ function renderActiveOrders() {
           return mi ? mi.name + ' x' + i.quantity : '';
         }).filter(Boolean).join(', ') || '-'}</div>
         ${o.promo_discount ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon: -${formatCurrency(o.promo_discount)}</div>` : ''}
+        ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--accent)"><i class="fas fa-truck"></i>Ongkos Kirim: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ''}
         <div class="flex justify-between items-center">
           <span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
         </div>
       </div>`;
       }).join('')}
     </div>
+    ${history.length > 0 ? `
+    <div class="mt-6">
+      <div class="flex items-center gap-2 mb-3 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')" style="user-select:none">
+        <h3 class="font-semibold text-sm" style="color:var(--success)">Riwayat Pesanan</h3>
+        <span class="text-xs" style="color:var(--muted)">${history.length}</span>
+        <div class="text-xs transition-transform" style="color:var(--muted)"><i class="fas fa-chevron-down"></i></div>
+      </div>
+      <div class="space-y-2 hidden">
+        ${history.map(o => {
+          const t = o.table_id ? getTable(o.table_id) : null;
+          return `
+        <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showOrderDetail('${o.id}')" style="border-color:rgba(39,174,96,.2)">
+          <div class="flex justify-between items-start mb-1">
+            <div>
+              <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
+              <span class="badge badge-completed ml-2">${getStatusLabel(o.status)}</span>
+              <span class="badge ${o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid'} ml-1">${o.payment_status === 'paid' ? 'Lunas' : 'Belum Bayar'}</span>
+            </div>
+            <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
+          </div>
+          <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-user mr-1" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</div>
+          <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-phone mr-1" style="color:var(--accent)"></i>${o.customer_phone || (getUser(o.user_id)?.phone || '—')}</div>
+          <div class="text-xs mb-2" style="color:var(--muted)">${getOrderTypeName(o.order_type)}${t ? ' — Meja ' + t.number : ''}</div>
+          <div class="flex justify-between items-center">
+            <span class="text-xs" style="color:var(--muted)">${formatDate(o.created_at)}</span>
+            <span class="font-bold text-sm" style="color:var(--success)">${formatCurrency(o.total_amount)}</span>
+          </div>
+        </div>`;}).join('')}
+      </div>
+    </div>` : ''}
     ${cancelled.length > 0 ? `
     <div class="mt-6">
       <div class="flex items-center gap-2 mb-3 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')" style="user-select:none">
