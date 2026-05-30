@@ -34,7 +34,9 @@ function initCourierMap(orderId) {
 
 function renderCourierHistory() {
   let done = DB.orders.filter(
-    (o) => o.courier_id === State.currentUser.id && o.status === "completed",
+    (o) =>
+      o.courier_id === State.currentUser.id &&
+      (o.status === "completed" || o.status === "delivered"),
   );
   const startVal = State.courierDateStart || "";
   const endVal = State.courierDateEnd || "";
@@ -69,7 +71,11 @@ function renderCourierHistory() {
         .map(
           (o) => `
       <div class="card flex justify-between items-center py-3 cursor-pointer hover:scale-[1.02] transition-transform" onclick="showCourierOrderDetail('${o.id}')">
-         <div><span class="font-semibold text-sm">#${o.id.slice(-5).toUpperCase()}</span><div class="text-xs" style="color:var(--muted)">${formatDate(o.created_at)} ${formatTime(o.created_at)}</div><div class="text-xs" style="color:var(--muted)">${o.delivery_address?.slice(0, 30) || ""}</div>${o.delivery_detail ? `<div class="text-xs" style="color:var(--muted)">${o.delivery_detail?.slice(0, 30) || ""}</div>` : ""}</div>
+        <div>
+          <div><span class="font-semibold text-sm">#${o.id.slice(-5).toUpperCase()}</span> ${o.status === "delivered" ? '<span class="badge badge-unpaid" style="background:rgba(241,196,15,.15);color:#f1c40f">Belum Setor</span>' : '<span class="badge badge-completed">Selesai</span>'}</div>
+          <div class="text-xs" style="color:var(--muted)"><i class="fas fa-user mr-1" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</div>
+          <div class="text-xs" style="color:var(--muted)">${formatDate(o.created_at)} ${formatTime(o.created_at)}</div>
+          <div class="text-xs" style="color:var(--muted)">${o.delivery_address?.slice(0, 30) || ""}</div>${o.delivery_detail ? `<div class="text-xs" style="color:var(--muted)">${o.delivery_detail?.slice(0, 30) || ""}</div>` : ""}</div>
         <span class="font-bold text-sm" style="color:var(--success)">${formatCurrency(o.total_amount)}</span>
       </div>`,
         )
@@ -85,10 +91,11 @@ function showCourierOrderDetail(id) {
     <div>
       <div class="flex justify-between items-start mb-4">
         <h3 class="font-display text-lg font-bold">Pesanan #${o.id.slice(-5).toUpperCase()}</h3>
-        <span class="badge badge-completed">Selesai</span>
+        ${o.status === "delivered" ? '<span class="badge badge-unpaid" style="background:rgba(241,196,15,.15);color:#f1c40f">Menunggu Setoran</span>' : '<span class="badge badge-completed">Selesai</span>'}
       </div>
       <div class="text-sm mb-4">
-        <i class="fas fa-map-marker-alt mr-2" style="color:var(--accent)"></i>${o.delivery_address}
+        <div class="mb-2"><i class="fas fa-user mr-2" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</div>
+        <div class="mb-1"><i class="fas fa-map-marker-alt mr-2" style="color:var(--accent)"></i>${o.delivery_address}</div>
         ${o.delivery_detail ? `<div class="text-xs mt-1" style="color:var(--muted)"><i class="fas fa-info-circle mr-1"></i>${o.delivery_detail}</div>` : ""}
       </div>
       <div class="space-y-2 mb-4">
@@ -106,7 +113,7 @@ function showCourierOrderDetail(id) {
       </div>
       <div class="border-t pt-3" style="border-color:var(--border)">
         <div class="flex justify-between font-bold"><span>Total Pendapatan</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
-        <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Metode Pembayaran</span><span>${o.payment_method === 'qris' ? 'QRIS' : o.payment_method === 'bank_transfer' ? 'Transfer Bank' : o.payment_method === 'digital' ? 'Digital' : o.payment_method === "" ? 'Bayar Nanti' : 'Tunai/COD'}</span></div>
+        <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Metode Pembayaran</span><span>${o.payment_method === 'qris' ? 'QRIS' : o.payment_method === 'bank_transfer' ? 'Transfer Bank' : o.payment_method === 'digital' ? 'Digital' : o.payment_method === "" ? 'Bayar Nanti (COD)' : 'Tunai/COD'}</span></div>
         <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}">${o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>
         <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Waktu Selesai</span><span>${formatTime(o.created_at)}</span></div>
       </div>
