@@ -153,6 +153,7 @@ function printInvoice(id) {
       <div class="totals">
         <div><span>Subtotal</span><span>${formatCurrency(o.total_amount)}</span></div>
         <div><span>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(o.items)))}</span></div>
+        ${o.shipping_cost && o.shipping_cost > 0 ? `<div><span>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ''}
         <div style="font-weight:bold;font-size:15px"><span>Total</span><span>${formatCurrency(o.total_amount)}</span></div>
         <div style="margin-top:8px"><span>Pembayaran</span><span>${o.payment_method === 'qris' ? 'QRIS' : o.payment_method === 'bank_transfer' ? 'Transfer Bank' : o.payment_method === 'cod' ? 'COD' : o.payment_method === '' ? 'Bayar Nanti' : 'Tunai'}</span></div>
         ${o.order_type !== 'delivery' ? `<div><span>Status</span><span>${statusLabel}</span></div>` : ''}

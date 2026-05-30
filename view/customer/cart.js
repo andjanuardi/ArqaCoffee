@@ -118,14 +118,15 @@ function renderPromoBanner(activePromo) {
     <button onclick="State.activePromoId=null;render()" class="text-xs underline" style="color:var(--muted)">Batalkan</button>
   </div>`;
 }
-function renderOrderSummary(total, discount, afterDiscount) {
+function renderOrderSummary(total, discount, afterDiscount, shippingCost) {
   const tax = Math.round(calcItemTax(State.cart));
   return `<div class="card mb-4">
     <div class="flex justify-between mb-2 text-sm"><span style="color:var(--muted)">Subtotal</span><span>${formatCurrency(total)}</span></div>
     ${discount > 0 ? `<div class="flex justify-between mb-2 text-sm"><span style="color:var(--success)"><i class="fas fa-tag mr-1"></i>Diskon</span><span style="color:var(--success)">-${formatCurrency(discount)}</span></div>` : ""}
     <div class="flex justify-between mb-2 text-sm"><span style="color:var(--muted)">Pajak</span><span>${formatCurrency(tax)}</span></div>
+    ${shippingCost > 0 ? `<div class="flex justify-between mb-2 text-sm"><span style="color:var(--muted)">Ongkos Kirim</span><span>${formatCurrency(shippingCost)}</span></div>` : ""}
     <div class="border-t pt-2 mt-2" style="border-color:var(--border)">
-      <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(afterDiscount + tax)}</span></div>
+      <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(afterDiscount + tax + shippingCost)}</span></div>
     </div>
   </div>`;
 }
@@ -167,7 +168,13 @@ function renderDeliveryAddress() {
     <input id="delivery-address" class="input-field text-sm mb-2" placeholder="Masukkan alamat lengkap..." value="${State.deliveryAddress || ""}" readonly style="cursor:not-allowed;opacity:.7">
     <label class="text-xs font-semibold mt-2 mb-1 block" style="color:var(--muted)">Detail Alamat</label>
     <input id="delivery-detail" class="input-field text-sm mb-2" placeholder="Nomor rumah, blok, patokan, dll..." value="${State.deliveryDetail || ""}" oninput="State.deliveryDetail = this.value">
-    ${State.deliveryLocation ? `<div class="text-[10px] flex items-center gap-1" style="color:var(--success)"><i class="fas fa-check-circle"></i> Titik koordinat lokasi tersimpan</div>` : ""}
+    ${State.deliveryLocation
+      ? `<div class="text-[10px] flex items-center gap-1" style="color:var(--success)"><i class="fas fa-check-circle"></i> Titik koordinat lokasi tersimpan</div>
+      <div class="flex justify-between text-xs mt-2 pt-2" style="border-top:1px solid var(--border)">
+        <span style="color:var(--muted)">Ongkos Kirim</span>
+        <span class="font-semibold" style="color:var(--accent)">${formatCurrency(calcShippingCost(State.deliveryLocation.lat, State.deliveryLocation.lng))}</span>
+      </div>`
+      : ""}
   </div>`;
 }
 function renderPaymentTiming() {
@@ -208,12 +215,14 @@ function renderCustomerCart() {
   const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
   const discount = calcPromoDiscount();
   const afterDiscount = total - discount;
+  const shippingCost = State.orderType === "delivery" && State.deliveryLocation
+    ? calcShippingCost(State.deliveryLocation.lat, State.deliveryLocation.lng) : 0;
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Keranjang Anda</h2>
     ${renderCartItems(State.cart, activePromo)}
     ${activePromo ? renderPromoBanner(activePromo) : ""}
-    ${renderOrderSummary(total, discount, afterDiscount)}
+    ${renderOrderSummary(total, discount, afterDiscount, shippingCost)}
     ${renderOrderTypeSelector()}
     ${State.orderType === "delivery" ? renderDeliveryAddress() : ""}
     ${renderPaymentTiming()}

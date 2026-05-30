@@ -77,6 +77,7 @@ function renderCashierCreateOrder() {
         <span>Total (inc. Pajak)</span>
         <span style="color:var(--accent)">${formatCurrency(total + Math.round(calcItemTax(State.cashierCart)))}</span>
       </div>
+      ${State.editingOrderId && DB.orders.find(o => o.id === State.editingOrderId)?.shipping_cost ? `<div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Ongkos Kirim</span><span>${formatCurrency(DB.orders.find(o => o.id === State.editingOrderId).shipping_cost)}</span></div>` : ""}
     </div>
     `
         : '<div class="text-center text-sm py-8" style="color:var(--muted)"><i class="fas fa-utensils text-2xl mb-2"></i><br>Pilih menu untuk menambahkan ke pesanan</div>'

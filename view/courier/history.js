@@ -13,7 +13,7 @@ function initCourierMap(orderId) {
   const last =
     tracks.length > 0
       ? tracks[tracks.length - 1]
-      : { latitude: -6.9175, longitude: 107.6191 };
+      : { latitude: DB.cafe.location.lat, longitude: DB.cafe.location.lng };
   const map = L.map(el).setView([last.latitude, last.longitude], 15);
   L.tileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",

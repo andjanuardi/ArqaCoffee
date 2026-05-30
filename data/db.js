@@ -296,7 +296,7 @@ const DB =
       orders: [
         // {
         //   id: "o1", user_id: "u6", table_id: "t3", order_type: "dine-in", status: "cooking",
-        //   total_amount: 54000, payment_method: "digital", payment_status: "paid",
+        //   total_amount: 54000, shipping_cost: 0, payment_method: "digital", payment_status: "paid",
         //   delivery_address: "", delivery_detail: "", delivery_location: null,
         //   customer_name: null, accepted: true, promo_id: null, promo_discount: 0,
         //   created_at: "2025-01-15T08:30:00",
@@ -307,7 +307,7 @@ const DB =
         // },
         // {
         //   id: "o2", user_id: "u6", table_id: null, order_type: "delivery", status: "delivering",
-        //   total_amount: 48000, payment_method: "cod", payment_status: "unpaid",
+        //   total_amount: 48000, shipping_cost: 0, payment_method: "cod", payment_status: "unpaid",
         //   delivery_address: "Jl. Mawar No. 15, RT 03/RW 05", delivery_detail: "", delivery_location: null,
         //   customer_name: "Sari Pelanggan", accepted: null, promo_id: null, promo_discount: 0,
         //   created_at: "2025-01-15T09:15:00",
@@ -319,7 +319,7 @@ const DB =
         // },
         // {
         //   id: "o3", user_id: "u6", table_id: "t6", order_type: "dine-in", status: "pending",
-        //   total_amount: 22000, payment_method: "", payment_status: "unpaid",
+        //   total_amount: 22000, shipping_cost: 0, payment_method: "", payment_status: "unpaid",
         //   delivery_address: "", delivery_detail: "", delivery_location: null,
         //   customer_name: null, accepted: false, promo_id: null, promo_discount: 0,
         //   created_at: "2025-01-15T10:00:00",
@@ -611,8 +611,8 @@ const DB =
           user_id: "u3",
           check_in: "2025-01-15T07:55:00",
           check_out: null,
-          lat: -6.9175,
-          lng: 107.6191,
+          lat: 2.458461,
+          lng: 96.3766943,
           status: "present",
         },
         {
@@ -620,8 +620,8 @@ const DB =
           user_id: "u4",
           check_in: "2025-01-15T07:50:00",
           check_out: null,
-          lat: -6.9175,
-          lng: 107.6191,
+          lat: 2.458461,
+          lng: 96.3766943,
           status: "present",
         },
         {
@@ -629,8 +629,8 @@ const DB =
           user_id: "u5",
           check_in: "2025-01-15T08:00:00",
           check_out: null,
-          lat: -6.9175,
-          lng: 107.6191,
+          lat: 2.458461,
+          lng: 96.3766943,
           status: "present",
         },
         {
@@ -638,8 +638,8 @@ const DB =
           user_id: "u3",
           check_in: "2025-01-14T08:05:00",
           check_out: "2025-01-14T17:00:00",
-          lat: -6.9175,
-          lng: 107.6191,
+          lat: 2.458461,
+          lng: 96.3766943,
           status: "present",
         },
         {
@@ -647,8 +647,8 @@ const DB =
           user_id: "u4",
           check_in: "2025-01-14T07:58:00",
           check_out: "2025-01-14T17:05:00",
-          lat: -6.9175,
-          lng: 107.6191,
+          lat: 2.458461,
+          lng: 96.3766943,
           status: "present",
         },
       ],
@@ -657,11 +657,14 @@ const DB =
           id: "ct1",
           order_id: "o2",
           courier_id: "u5",
-          latitude: -6.9175,
-          longitude: 107.6191,
+          latitude: 2.458461,
+          longitude: 96.3766943,
           recorded_at: "2025-01-15T09:30:00",
         },
       ],
+      cafe: {
+        location: { lat: 2.458461, lng: 96.3766943 },
+      },
       promos: [
         {
           id: "p1",

@@ -20,8 +20,8 @@ function pickDeliveryLocation() {
         const el = document.getElementById("map-picker");
         if (!el) return;
 
-        let lat = State.deliveryLocation?.lat || -6.9175;
-        let lng = State.deliveryLocation?.lng || 107.6191;
+        let lat = State.deliveryLocation?.lat || DB.cafe.location.lat;
+        let lng = State.deliveryLocation?.lng || DB.cafe.location.lng;
 
         if (!State.deliveryLocation && navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(

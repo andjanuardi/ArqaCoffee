@@ -62,7 +62,12 @@ function finalizeManualOrder() {
     (s, c) => s + c.unit_price * c.quantity,
     0,
   );
-  const grandTotal = total + Math.round(calcItemTax(State.cashierCart));
+  let shippingCost = 0;
+  if (State.editingOrderId) {
+    const existing = DB.orders.find(o => o.id === State.editingOrderId);
+    if (existing && existing.shipping_cost) shippingCost = existing.shipping_cost;
+  }
+  const grandTotal = total + Math.round(calcItemTax(State.cashierCart)) + shippingCost;
 
   if (type === "dine-in" && tableId) {
     const t = getTable(tableId);

@@ -23,6 +23,7 @@ function showPaymentModal(id) {
             .join("")}
         </div>
         ${o.promo_discount ? `<div class="flex justify-between text-xs mt-2 pt-2" style="border-top:1px solid var(--border);color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
+        ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mt-1" style="color:var(--accent)"><span><i class="fas fa-truck mr-1"></i>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ""}
         <div class="flex justify-between text-xs mt-1" style="color:var(--accent)"><span><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(o.items)))}</span></div>
       </div>
       <div class="flex gap-2 mb-3">
@@ -89,8 +90,9 @@ function renderCashierOrders() {
               return mi ? mi.name + " x" + i.quantity : "";
             })
             .join(", ")}</div>
-          ${o.promo_discount ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon promo: <b>-${formatCurrency(o.promo_discount)}</b></div>` : ""}
-          ${tax > 0 ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--accent)"><i class="fas fa-receipt"></i>Pajak: <b>${formatCurrency(tax)}</b></div>` : ""}
+          ${o.promo_discount ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon promo: <b>-${formatCurrency(o.promo_discount)}</b></div>` : ""}
+          ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--accent)"><i class="fas fa-truck"></i>Ongkos Kirim: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ""}
+          ${tax > 0 ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--accent)"><i class="fas fa-receipt"></i>Pajak: <b>${formatCurrency(tax)}</b></div>` : ""}
           <div class="flex justify-between items-center">
             <span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
             <div class="flex gap-2">
@@ -184,6 +186,7 @@ function printCashierInvoice(id) {
       <div class="totals">
         <div><span>Subtotal</span><span>${formatCurrency(subtotal)}</span></div>
         ${o.promo_discount ? `<div style="color:#27ae60"><span>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
+        ${o.shipping_cost && o.shipping_cost > 0 ? `<div><span>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ""}
         <div><span>Pajak</span><span>${formatCurrency(Math.round(tax))}</span></div>
         <div style="font-weight:bold;font-size:15px"><span>Total</span><span>${formatCurrency(o.total_amount)}</span></div>
         <div style="margin-top:8px"><span>Pembayaran</span><span>${paymentMethodLabel}</span></div>
@@ -229,6 +232,7 @@ function showCashierOrderDetail(id) {
   </div>
   <div class="border-t pt-3" style="border-color:var(--border)">
     ${o.promo_discount ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
+    ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-truck mr-1"></i>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ""}
     <div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(o.items)))}</span></div>
     <div class="flex justify-between font-bold"><span>Total</span><span style="color:${o.status === "rejected" || o.status === "cancelled" ? "var(--danger)" : "var(--accent)"}">${formatCurrency(o.total_amount)}</span></div>
     <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "digital" ? "Digital" : "Tunai/COD"}</span></div>
@@ -277,6 +281,7 @@ function renderCashierPayment() {
           })
           .join(", ")}</div>
         ${o.promo_discount ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon promo: <b>-${formatCurrency(o.promo_discount)}</b></div>` : ""}
+        ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--accent)"><i class="fas fa-truck"></i>Ongkos Kirim: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ""}
         <div class="flex gap-2">
           <button onclick="processPayment('${o.id}')" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-wallet mr-1"></i>Digital</button>
           <button onclick="processCashPayment('${o.id}')" class="btn-secondary btn-sm flex-1 text-center"><i class="fas fa-money-bill mr-1"></i>Tunai</button>
@@ -298,7 +303,7 @@ function renderCashierPayment() {
           return `
         <div class="card cursor-pointer" onclick="showOrderDetail('${encodeURIComponent(o.id)}')">
           <div class="flex justify-between items-center">
-            <div><span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span><span class="text-[10px] ml-2" style="color:var(--muted)">${formatDate(date)} ${time}</span><span class="text-[10px] ml-1" style="color:${o.payment_method === 'cash' ? 'var(--success)' : 'var(--accent)'}">(${o.payment_method === 'cash' ? 'Tunai' : 'Digital'})</span>${o.customer_name ? '<span class="text-[10px] ml-1" style="color:var(--muted)">— ' + o.customer_name + '</span>' : ''}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? '<span class="text-[10px] ml-1" style="color:var(--accent)">(' + getUser(o.user_id).email + ')</span>' : ''}</div>
+            <div><span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span><span class="text-[10px] ml-2" style="color:var(--muted)">${formatDate(date)} ${time}</span><span class="text-[10px] ml-1" style="color:${o.payment_method === 'cash' ? 'var(--success)' : 'var(--accent)'}">(${o.payment_method === 'cash' ? 'Tunai' : 'Digital'})</span>${o.customer_name ? '<span class="text-[10px] ml-1" style="color:var(--muted)">— ' + o.customer_name + '</span>' : ''}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? '<span class="text-[10px] ml-1" style="color:var(--accent)">(' + getUser(o.user_id).email + ')</span>' : ''}${o.shipping_cost && o.shipping_cost > 0 ? '<span class="text-[10px] ml-1" style="color:var(--accent)"><i class="fas fa-truck"></i></span>' : ''}</div>
             <span class="font-bold" style="color:var(--success)">${formatCurrency(o.total_amount)}</span>
           </div>
         </div>`;

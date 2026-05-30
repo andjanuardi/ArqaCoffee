@@ -14,6 +14,23 @@ function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takea
         function getMenuItem(id) { return DB.menuItems.find(m => m.id === id) }
         function getUser(id) { return DB.users.find(u => u.id === id) }
         function getTable(id) { return DB.tables.find(t => t.id === id) }
+        const CAFE_LOCATION = (DB && DB.cafe && DB.cafe.location) || { lat: 2.458461, lng: 96.3766943 };
+        const SHIPPING_RATE_PER_KM = 3000;
+        const SHIPPING_MIN = 5000;
+        const SHIPPING_MAX = 50000;
+
+        function calcShippingCost(lat, lng) {
+          if (!lat || !lng) return 0;
+          const R = 6371;
+          const dLat = (lat - CAFE_LOCATION.lat) * Math.PI / 180;
+          const dLng = (lng - CAFE_LOCATION.lng) * Math.PI / 180;
+          const a = Math.sin(dLat/2)**2 + Math.cos(CAFE_LOCATION.lat * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLng/2)**2;
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          const dist = R * c;
+          const cost = Math.round(dist * SHIPPING_RATE_PER_KM);
+          return Math.min(SHIPPING_MAX, Math.max(SHIPPING_MIN, cost));
+        }
+
         function calcItemTax(items) {
           return items.reduce((sum, item) => {
             const mi = DB.menuItems.find(m => m.id === item.menu_item_id);

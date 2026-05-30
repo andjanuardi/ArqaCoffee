@@ -20,8 +20,8 @@ function showTrackingMap(orderId) {
       setTimeout(() => {
         const el = document.getElementById("map-tracking");
         if (!el) return;
-        const lat = -6.9175,
-          lng = 107.6191;
+        const lat = DB.cafe.location.lat,
+          lng = DB.cafe.location.lng;
         const map = L.map(el).setView([lat, lng], 15);
         L.tileLayer(
           "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",

@@ -37,8 +37,8 @@ function acceptDelivery(id) {
     id: "ct" + Date.now(),
     order_id: o.id,
     courier_id: State.currentUser.id,
-    latitude: -6.9175,
-    longitude: 107.6191,
+    latitude: DB.cafe.location.lat,
+    longitude: DB.cafe.location.lng,
     recorded_at: new Date().toISOString(),
   });
   notifyDeliveryTaken(o, State.currentUser.name);
