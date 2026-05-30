@@ -46,6 +46,8 @@ Setelah masuk, Anda akan langsung berada di halaman **Tersedia**. Di sini Anda b
 |-----------|------------|
 | **Nomor Pesanan** | Kode unik pesanan (5 huruf/angka terakhir) |
 | **Total Harga** | Jumlah yang harus dibayar pelanggan |
+| **Nama Pelanggan** | Nama atau email pelanggan pemesan |
+| **Nomor Telepon** | Nomor telepon pelanggan yang bisa dihubungi |
 | **Alamat** | Alamat lengkap tujuan pengantaran |
 | **Detail Alamat** | Petunjuk tambahan (jika ada), misalnya "Depan rumah cat hijau" |
 | **Isi Pesanan** | Daftar menu yang dipesan, contoh: "Kopi Susu x2, Nasi Goreng x1" |
@@ -111,6 +113,8 @@ Setelah Anda mengambil pesanan, kartu pesanan akan muncul di tab **Aktif**. Di s
 |-----------|------------|
 | **Nomor Pesanan** | Kode pesanan + badge **"Dalam Perjalanan"** (warna biru) |
 | **Total Harga** | Jumlah yang harus dibayar |
+| **Nama Pelanggan** | Nama atau email pelanggan pemesan |
+| **Nomor Telepon** | Nomor telepon pelanggan yang bisa dihubungi |
 | **Alamat** | Alamat tujuan |
 | **Peta Lokasi** | Peta satellite yang menunjukkan posisi Anda |
 | **3 Tombol Aksi** | Update, Chat, Selesai (lihat tabel di bawah) |
@@ -165,6 +169,9 @@ Di sini Anda bisa melihat semua pengantaran yang sudah Anda selesaikan.
 ### Yang tampil di setiap kartu:
 
 - Nomor pesanan
+- **Badge status:** **"Selesai"** (hijau) jika sudah lunas, atau **"Belum Setor"** (kuning) jika masih menunggu setoran ke kasir
+- Nama pelanggan
+- Nomor telepon pelanggan
 - Tanggal dan jam pengantaran
 - Alamat tujuan (terpotong jika terlalu panjang)
 - Total harga (warna hijau)
@@ -173,12 +180,14 @@ Di sini Anda bisa melihat semua pengantaran yang sudah Anda selesaikan.
 
 1. Klik kartu pesanan yang ingin dilihat
 2. Akan muncul jendela detail yang menampilkan:
-   - Nomor pesanan + badge **"Selesai"**
+   - Nomor pesanan + badge **"Selesai"** (hijau) atau **"Menunggu Setoran"** (kuning)
+   - Nama pelanggan
+   - Nomor telepon pelanggan
    - Alamat tujuan
    - Daftar menu yang dipesan
    - **Total Pendapatan**
-   - **Metode Pembayaran:** QRIS / Transfer Bank / Digital / Tunai/COD
-   - **Status Bayar:** Lunas ✅ atau Belum Bayar ❌
+   - **Metode Pembayaran:** QRIS / Transfer Bank / Digital / Bayar Nanti (COD) / Tunai/COD
+   - **Status Bayar:** Lunas ✅, Belum Bayar ❌, atau **Belum Setor** 🟡 (khusus status "Menunggu Setoran")
    - Waktu selesai
 3. Klik **"Tutup"** untuk menutup jendela
 
