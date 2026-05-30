@@ -20,14 +20,9 @@ function confirmRejectCourierOrder(orderId) {
     return;
   }
   o.courier_id = null;
-  addNotification({
-    title: 'Pesanan Ditolak Kurir',
-    message: '#' + o.id.slice(-5).toUpperCase() + ' — Alasan: ' + reason,
-    type: 'warning',
-    icon: 'fa-ban',
-    targetRoles: ['manager', 'admin'],
-    relatedOrderId: o.id
-  });
+  o.status = "rejected";
+  o.reject_reason = "Ditolak Kurir: " + reason;
+  notifyRejected(o, o.reject_reason);
   showToast("Pesanan ditolak", "info");
   closeModal();
   render();
