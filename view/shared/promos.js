@@ -37,11 +37,21 @@ function renderAdminPromos() {
 
 function togglePromoStatus(id) {
   const p = DB.promos.find(x => x.id === id);
-  if (p) {
-    p.is_active = !p.is_active;
-    showToast(`Promo ${p.title} ${p.is_active ? 'diaktifkan' : 'dinonaktifkan'}`, 'info');
-    render();
+  if (!p) return;
+  if (!p.is_active && (p.start_date || p.end_date)) {
+    const now = new Date();
+    if (p.start_date && new Date(p.start_date) > now) {
+      showToast('Promo belum bisa diaktifkan — tanggal mulai belum tiba', 'warning');
+      return;
+    }
+    if (p.end_date && new Date(p.end_date) < now) {
+      showToast('Promo tidak bisa diaktifkan — periode sudah berakhir', 'warning');
+      return;
+    }
   }
+  p.is_active = !p.is_active;
+  showToast(`Promo ${p.title} ${p.is_active ? 'diaktifkan' : 'dinonaktifkan'}`, 'info');
+  render();
 }
 
 function renderPromoMenuCheckboxes(prefix, selected) {

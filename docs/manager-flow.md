@@ -258,7 +258,7 @@ Daftar promo dengan tampilan kartu berisi:
 
 | Tombol              | Cara                       | Yang Terjadi                          |
 | ------------------- | -------------------------- | ------------------------------------- |
-| **🔘 Toggle Aktif** | Klik tombol aktif/nonaktif | Mengaktifkan atau menonaktifkan promo |
+| **🔘 Toggle Aktif** | Klik tombol aktif/nonaktif | Mengaktifkan atau menonaktifkan promo. Promo hanya bisa diaktifkan jika tanggal saat ini berada dalam periode yang ditentukan (tanggal mulai — tanggal selesai) |
 | **✏️ Edit**         | Klik area kartu            | Mengubah data promo                   |
 | **🗑️ Hapus**        | Klik area kartu            | Menghapus promo (dengan konfirmasi)   |
 | **➕ Tambah Promo** | Klik tombol "Tambah Promo" | Menambah promo baru                   |
