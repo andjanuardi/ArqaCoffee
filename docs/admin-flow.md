@@ -125,6 +125,11 @@ Halaman ini menampilkan daftar **semua** pengguna aplikasi, **termasuk akun Admi
 | **No. Telepon** | Nomor telepon                                                                        |
 | **Role**        | Jabatan (Admin, Manajer, Kasir, Koki, Kurir, Pelanggan) — dengan badge warna berbeda |
 
+### Filter Role:
+
+- Gunakan **filter chip** untuk menampilkan pengguna berdasarkan role: **[ Semua ]** **[ Admin ]** **[ Manager ]** **[ Kasir ]** **[ Juru Masak ]** **[ Kurir ]** **[ Pelanggan ]**
+- Klik chip yang diinginkan, chip aktif akan berwarna **oranye**
+
 ### Yang bisa Anda lakukan:
 
 | Tombol                                  | Cara                          | Yang Terjadi                                                           |
@@ -145,7 +150,7 @@ Halaman ini menampilkan daftar **semua** pengguna aplikasi, **termasuk akun Admi
 3. Ada tombol **"Hapus"** (merah) dan **"Simpan"** (oranye)
 4. Klik **"Simpan"** untuk menyimpan perubahan
 
-> **⚠️ Berbeda dengan Manajer:** Admin bisa mengubah role seseorang menjadi **Admin**, melihat dan mengedit akun Admin lain, serta memiliki field **Password** di form edit. Manajer tidak bisa melakukan semua ini.
+> **⚠️ Berbeda dengan Manajer:** Admin bisa mengubah role seseorang menjadi **Admin** serta melihat dan mengedit akun Admin lain. Manajer tidak bisa melakukan ini.
 
 ### Saat menambah pengguna baru:
 
@@ -170,7 +175,8 @@ Halaman ini untuk mengelola daftar menu makanan dan minuman di kafe.
 
 **Filter Kategori:**
 
-- Klik dropdown filter untuk memilih: **Semua**, **Kopi**, **Non-Kopi**, **Makanan**, atau **Snack**
+- Gunakan **filter chip** untuk memilih kategori: **[ Semua ]** **[ Kopi ]** **[ Non-Kopi ]** **[ Makanan ]** **[ Snack ]**
+- Klik chip yang diinginkan, chip aktif akan berwarna **oranye**
 
 **Setiap kartu menu menampilkan:**
 

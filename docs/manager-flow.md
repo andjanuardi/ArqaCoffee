@@ -123,11 +123,16 @@ Halaman ini menampilkan daftar semua pengguna aplikasi kecuali **Admin** (akun a
 | **No. Telepon** | Nomor telepon                                    |
 | **Role**        | Jabatan (Manajer, Kasir, Koki, Kurir, Pelanggan) |
 
+### Filter Role:
+
+- Gunakan **filter chip** untuk menampilkan pengguna berdasarkan role: **[ Semua ]** **[ Manager ]** **[ Kasir ]** **[ Juru Masak ]** **[ Kurir ]** **[ Pelanggan ]**
+- Klik chip yang diinginkan, chip aktif akan berwarna **oranye**
+
 ### Yang bisa Anda lakukan:
 
 | Tombol                                  | Cara                          | Yang Terjadi                                                 |
 | --------------------------------------- | ----------------------------- | ------------------------------------------------------------ |
-| **✏️ Edit**                             | Klik icon pensil pada kartu   | Muncul jendela untuk mengubah nama, email, telepon, dan role |
+| **✏️ Edit**                             | Klik icon pensil pada kartu   | Muncul jendela untuk mengubah nama, email, telepon, password, dan role |
 | **🗑️ Hapus**                            | Klik icon tempat sampah       | Muncul konfirmasi, klik "Hapus" untuk menghapus pengguna     |
 | **➕ Tambah Pengguna** (tombol di atas) | Klik tombol "Tambah Pengguna" | Muncul jendela untuk memasukkan data pengguna baru           |
 
@@ -138,6 +143,7 @@ Halaman ini menampilkan daftar semua pengguna aplikasi kecuali **Admin** (akun a
    - **Nama Lengkap** — ubah nama
    - **Email** — ubah alamat email
    - **No. Telepon** — ubah nomor telepon
+   - **Password** — isi jika ingin mengganti password (kosongkan jika tidak diubah)
    - **Role** — pilih jabatan (Manajer/Kasir/Koki/Kurir/Pelanggan)
 3. Klik **"Simpan"** untuk menyimpan perubahan
 
@@ -164,7 +170,8 @@ Halaman ini untuk mengelola daftar menu makanan dan minuman di kafe.
 
 **Filter Kategori:**
 
-- Klik dropdown filter untuk memilih: **Semua**, **Kopi**, **Non-Kopi**, **Makanan**, atau **Snack**
+- Gunakan **filter chip** untuk memilih kategori: **[ Semua ]** **[ Kopi ]** **[ Non-Kopi ]** **[ Makanan ]** **[ Snack ]**
+- Klik chip yang diinginkan, chip aktif akan berwarna **oranye**
 
 **Setiap kartu menu menampilkan:**
 
