@@ -149,6 +149,22 @@ Klik tab **Pesanan** (icon struk) di bagian bawah untuk melihat semua pesanan An
 | **Ditolak**       | Pesanan ditolak oleh koki atau kurir (ada alasan), badge merah — ditampilkan dengan sumber: ⬤ Ditolak Dapur / ⬤ Ditolak Kurir |
 | **Dibatalkan**    | Pesanan dibatalkan oleh kasir (ada alasan), badge merah — ditampilkan dengan sumber: ⬤ Dibatalkan Kasir |
 
+### Modal Detail Pesanan:
+
+Klik kartu pesanan untuk melihat detail lengkap yang menampilkan:
+
+- **Status badge** — warna sesuai status (Menunggu/Dimasak/Siap Saji/dll)
+- **Info pesanan** — tipe pesanan, meja (jika dine-in), alamat (jika delivery)
+- **Alasan tolak/batal** — jika pesanan ditolak atau dibatalkan (card merah)
+- **Daftar item** — nama menu x jumlah + subtotal
+- **Diskon Promo** — jika ada promo diterapkan
+- **Ongkos Kirim** — jika pesanan delivery
+- **Pajak 10%** — perhitungan otomatis
+- **Total** — jumlah akhir
+- **Metode pembayaran & status bayar**
+- Tombol **Cetak Invoice** (tidak untuk ditolak/dibatalkan)
+- Tombol **Bayar Sekarang** (jika belum bayar) atau **Batal Pesanan** (jika masih menunggu)
+
 ### Yang bisa Anda lakukan:
 
 **Batalkan Pesanan** (hanya untuk status **Menunggu**):
