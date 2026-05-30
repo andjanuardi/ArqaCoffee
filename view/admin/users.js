@@ -2,14 +2,28 @@
 // ADMIN VIEW — Users Management
 // ============================================================
 function renderAdminUsers() {
+  if (!State.adminRoleFilter) State.adminRoleFilter = '';
+  const roleChips = [
+    { id: '', label: 'Semua' },
+    { id: 'admin', label: 'Admin' },
+    { id: 'manager', label: 'Manager' },
+    { id: 'cashier', label: 'Kasir' },
+    { id: 'kitchen', label: 'Juru Masak' },
+    { id: 'courier', label: 'Kurir' },
+    { id: 'customer', label: 'Pelanggan' },
+  ];
+  const filtered = DB.users.filter(u => !State.adminRoleFilter || u.role === State.adminRoleFilter);
   return `
   <div class="animate-fade-up">
     <div class="flex justify-between items-center mb-4">
       <h2 class="font-display text-xl font-bold">Kelola Pengguna</h2>
       <button onclick="showAddUserModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
     </div>
+    <div class="flex gap-2 mb-4 overflow-x-auto pb-2" style="-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+      ${roleChips.map(c => `<div class="category-chip ${State.adminRoleFilter === c.id ? 'active' : ''}" onclick="State.adminRoleFilter='${c.id}';render()">${c.label}</div>`).join('')}
+    </div>
     <div class="space-y-3">
-      ${DB.users.map(u => `
+      ${filtered.map(u => `
       <div class="card flex items-center gap-4">
         <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold" style="background:var(--accent);color:#fff">${u.avatar}</div>
         <div class="flex-1">

@@ -116,15 +116,28 @@ function renderManagerDashboard() {
 }
 
 function renderManagerUsers() {
-  const users = DB.users.filter(u => u.role !== 'admin');
+  if (!State.managerRoleFilter) State.managerRoleFilter = '';
+  const roleChips = [
+    { id: '', label: 'Semua' },
+    { id: 'manager', label: 'Manager' },
+    { id: 'cashier', label: 'Kasir' },
+    { id: 'kitchen', label: 'Juru Masak' },
+    { id: 'courier', label: 'Kurir' },
+    { id: 'customer', label: 'Pelanggan' },
+  ];
+  const base = DB.users.filter(u => u.role !== 'admin');
+  const filtered = base.filter(u => !State.managerRoleFilter || u.role === State.managerRoleFilter);
   return `
   <div class="animate-fade-up">
     <div class="flex justify-between items-center mb-4">
       <h2 class="font-display text-xl font-bold">Kelola Pengguna</h2>
       <button onclick="showAddUserModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
     </div>
+    <div class="flex gap-2 mb-4 overflow-x-auto pb-2" style="-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+      ${roleChips.map(c => `<div class="category-chip ${State.managerRoleFilter === c.id ? 'active' : ''}" onclick="State.managerRoleFilter='${c.id}';render()">${c.label}</div>`).join('')}
+    </div>
     <div class="space-y-3">
-      ${users.map(u => `
+      ${filtered.map(u => `
       <div class="card flex items-center gap-4">
         <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold" style="background:var(--accent);color:#fff">${u.avatar}</div>
         <div class="flex-1">
@@ -151,6 +164,7 @@ function showEditUserManagerModal(id) {
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama</label><input id="edit-user-name" class="input-field text-sm" value="${u.name}"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Email</label><input id="edit-user-email" class="input-field text-sm" value="${u.email}"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Telepon</label><input id="edit-user-phone" class="input-field text-sm" value="${u.phone || ''}"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Password <span class="text-[10px]" style="color:var(--muted)">(kosongkan jika tidak diubah)</span></label><input id="edit-user-pass" type="password" class="input-field text-sm" placeholder="Password baru"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Peran</label>
           <select id="edit-user-role" class="input-field text-sm">
             <option value="manager" ${u.role === 'manager' ? 'selected' : ''}>Manager</option>
@@ -175,9 +189,11 @@ function saveEditUserManager(id) {
   const name = document.getElementById('edit-user-name')?.value;
   const email = document.getElementById('edit-user-email')?.value;
   const phone = document.getElementById('edit-user-phone')?.value;
+  const pass = document.getElementById('edit-user-pass')?.value;
   const role = document.getElementById('edit-user-role')?.value;
   if (!name || !email) { showToast('Nama dan email wajib diisi', 'warning'); return; }
   u.name = name; u.email = email; u.phone = phone; u.role = role; u.avatar = name[0].toUpperCase();
+  if (pass) u.password = pass;
   closeModal(); showToast('Pengguna berhasil diperbarui', 'success'); render();
 }
 
