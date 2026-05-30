@@ -301,7 +301,7 @@ function renderCashierPayment() {
           const time = o.created_at?.split('T')[1]?.slice(0, 5) || '-';
           const date = o.created_at?.split('T')[0] || '';
           return `
-        <div class="card cursor-pointer" onclick="showOrderDetail('${encodeURIComponent(o.id)}')">
+        <div class="card cursor-pointer" onclick="showFinanceOrderDetail('${encodeURIComponent(o.id)}')">
           <div class="flex justify-between items-center">
             <div><span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span><span class="text-[10px] ml-2" style="color:var(--muted)">${formatDate(date)} ${time}</span><span class="text-[10px] ml-1" style="color:${o.payment_method === 'cash' ? 'var(--success)' : 'var(--accent)'}">(${o.payment_method === 'cash' ? 'Tunai' : 'Digital'})</span>${o.customer_name ? '<span class="text-[10px] ml-1" style="color:var(--muted)">— ' + o.customer_name + '</span>' : ''}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? '<span class="text-[10px] ml-1" style="color:var(--accent)">(' + getUser(o.user_id).email + ')</span>' : ''}${o.shipping_cost && o.shipping_cost > 0 ? '<span class="text-[10px] ml-1" style="color:var(--accent)"><i class="fas fa-truck"></i></span>' : ''}</div>
             <span class="font-bold" style="color:var(--success)">${formatCurrency(o.total_amount)}</span>

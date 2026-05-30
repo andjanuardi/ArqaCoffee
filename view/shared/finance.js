@@ -42,33 +42,45 @@ function setFinanceRange(startDate, endDate) {
   render();
 }
 
-function showOrderDetail(orderId) {
-  const order = DB.orders.find((o) => o.id === orderId);
-  if (!order) return;
-  let rows = "";
-  let total = 0;
-  (order.items || []).forEach((item) => {
-    const mi = DB.menuItems.find((m) => m.id === item.menu_item_id);
-    const name = mi ? mi.name : "(unknown)";
-    const subtotal = (item.quantity || 0) * (item.unit_price || 0);
-    total += subtotal;
-    rows += `<tr><td style="border-bottom:1px solid var(--border);padding:8px 10px">${name}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right">${item.quantity}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--muted)">${formatCurrency(item.unit_price || 0)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(subtotal)}</td></tr>`;
-  });
+function showFinanceOrderDetail(orderId) {
+  const o = DB.orders.find((x) => x.id === orderId);
+  if (!o) return;
+  const t = o.table_id ? getTable(o.table_id) : null;
   showModal(`
-    <div style="max-width:500px">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="font-semibold text-base">Detail Order #${order.id.slice(-5).toUpperCase()}</h3>
-        <button onclick="closeModal()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
-      </div>
-      <div class="text-sm mb-3" style="color:var(--muted)">${getOrderTypeName(order.order_type)} — ${formatDate(order.created_at?.split("T")[0])} ${order.created_at?.split("T")[1]?.slice(0, 5) || ""}</div>
-      <div class="overflow-x-auto max-h-96 overflow-y-auto">
-        <table class="w-full text-sm" style="border-collapse:collapse">
-          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Menu</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Qty</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Harga</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Subtotal</th></tr></thead>
-          <tbody>${rows || '<tr><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:center;color:var(--muted)" colspan="4">Tidak ada data</td></tr>'}</tbody>
-          <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)" colspan="3">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(total)}</td></tr></tfoot>
-        </table>
-      </div>
-    </div>
+<div>
+  <div class="flex justify-between items-start mb-4">
+    <h3 class="font-display text-lg font-bold">Pesanan #${o.id.slice(-5).toUpperCase()}</h3>
+    <span class="badge ${getStatusBadge(o.status)}">${getStatusLabel(o.status)}</span>
+  </div>
+  <div class="text-xs mb-4" style="color:var(--muted)">
+    <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}
+    ${t ? " — Meja " + t.number : ""}
+    ${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}
+    ${o.delivery_address ? "<br>" + o.delivery_address : ""}
+  </div>
+  <div class="space-y-2 mb-4">
+    ${o.items.map(i => {
+      const mi = getMenuItem(i.menu_item_id);
+      return mi ? `
+    <div class="flex justify-between text-sm">
+      <span>${mi.name} x${i.quantity} ${i.notes ? '<span style="color:var(--muted)">(' + i.notes + ")</span>" : ""}</span>
+      <span style="color:var(--muted)">${formatCurrency(i.unit_price * i.quantity)}</span>
+    </div>` : "";
+    }).join('')}
+  </div>
+  <div class="border-t pt-3" style="border-color:var(--border)">
+    ${o.promo_discount ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
+    ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-truck mr-1"></i>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ""}
+    <div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(o.items)))}</span></div>
+    <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
+    <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "qris" ? "QRIS" : o.payment_method === "bank_transfer" ? "Transfer Bank" : o.payment_method === "digital" ? "Digital" : o.payment_method === "cod" ? "COD" : o.payment_method === "" ? "Bayar Nanti" : "Tunai"}</span></div>
+    <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}">${o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>
+  </div>
+  <div class="flex gap-2 mt-4">
+    ${o.status !== "cancelled" && o.status !== "rejected" ? `<button onclick="printCashierInvoice('${o.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak Invoice</button>` : ""}
+    <button onclick="closeModal()" class="btn-secondary flex-1 text-center">Tutup</button>
+  </div>
+</div>
   `);
 }
 
@@ -458,7 +470,7 @@ function renderFinanceReport() {
                 .map(([name, qty]) => name + " x" + qty)
                 .join(", ");
               const encoded = encodeURIComponent(o.id);
-              return `<tr class="cursor-pointer hover:bg-white/5" onclick="showOrderDetail('${encoded}')"><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})<br><span style="font-size:10px;color:${o.payment_method === "cash" || o.payment_method === "cod" ? "var(--success)" : "var(--accent)"}">${o.payment_method === "cash" || o.payment_method === "cod" ? "Tunai" : "Digital"}</span></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(o.total_amount || 0)}</td></tr>`;
+              return `<tr class="cursor-pointer hover:bg-white/5" onclick="showFinanceOrderDetail('${encoded}')"><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})<br><span style="font-size:10px;color:${o.payment_method === "cash" || o.payment_method === "cod" ? "var(--success)" : "var(--accent)"}">${o.payment_method === "cash" || o.payment_method === "cod" ? "Tunai" : "Digital"}</span></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(o.total_amount || 0)}</td></tr>`;
             })
             .join("")}</tbody>
           <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(totalRev)}</td></tr></tfoot>
