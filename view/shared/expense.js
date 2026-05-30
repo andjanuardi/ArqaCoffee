@@ -297,6 +297,48 @@ function confirmDeleteExpense(id) {
 // ------------------------------------------------------------------
 // ACTIVE ORDERS (shared: admin + manager)
 // ------------------------------------------------------------------
+function showActiveOrderDetail(orderId) {
+  const o = DB.orders.find((x) => x.id === orderId);
+  if (!o) return;
+  const t = o.table_id ? getTable(o.table_id) : null;
+  showModal(`
+<div>
+  <div class="flex justify-between items-start mb-4">
+    <h3 class="font-display text-lg font-bold">Pesanan #${o.id.slice(-5).toUpperCase()}</h3>
+    <span class="badge ${getStatusBadge(o.status)}">${getStatusLabel(o.status)}</span>
+  </div>
+  <div class="text-xs mb-4" style="color:var(--muted)">
+    <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}
+    ${t ? " — Meja " + t.number : ""}
+    ${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}
+    ${o.delivery_address ? "<br>" + o.delivery_address : ""}
+  </div>
+  <div class="space-y-2 mb-4">
+    ${o.items.map(i => {
+      const mi = getMenuItem(i.menu_item_id);
+      return mi ? `
+    <div class="flex justify-between text-sm">
+      <span>${mi.name} x${i.quantity} ${i.notes ? '<span style="color:var(--muted)">(' + i.notes + ")</span>" : ""}</span>
+      <span style="color:var(--muted)">${formatCurrency(i.unit_price * i.quantity)}</span>
+    </div>` : "";
+    }).join('')}
+  </div>
+  <div class="border-t pt-3" style="border-color:var(--border)">
+    ${o.promo_discount ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
+    ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-truck mr-1"></i>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ""}
+    <div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(o.items)))}</span></div>
+    <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
+    <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "qris" ? "QRIS" : o.payment_method === "bank_transfer" ? "Transfer Bank" : o.payment_method === "digital" ? "Digital" : o.payment_method === "cod" ? "COD" : o.payment_method === "" ? "Bayar Nanti" : "Tunai"}</span></div>
+    <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}">${o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>
+  </div>
+  <div class="flex gap-2 mt-4">
+    ${o.status !== "cancelled" && o.status !== "rejected" ? `<button onclick="printCashierInvoice('${o.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak Invoice</button>` : ""}
+    <button onclick="closeModal()" class="btn-secondary flex-1 text-center">Tutup</button>
+  </div>
+</div>
+  `);
+}
+
 function renderActiveOrders() {
   if (!State.activeOrderStart) {
     const d = new Date(); d.setDate(d.getDate() - 30);
@@ -362,7 +404,7 @@ function renderActiveOrders() {
       ${filtered.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')).map(o => {
         const t = o.table_id ? getTable(o.table_id) : null;
         return `
-      <div class="order-card" onclick="showOrderDetail('${o.id}')">
+      <div class="order-card" onclick="showActiveOrderDetail('${o.id}')">
         <div class="flex justify-between items-start mb-2">
           <div>
             <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
@@ -399,7 +441,7 @@ function renderActiveOrders() {
         ${history.map(o => {
           const t = o.table_id ? getTable(o.table_id) : null;
           return `
-        <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showOrderDetail('${o.id}')" style="border-color:rgba(39,174,96,.2)">
+        <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showActiveOrderDetail('${o.id}')" style="border-color:rgba(39,174,96,.2)">
           <div class="flex justify-between items-start mb-1">
             <div>
               <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
@@ -436,7 +478,7 @@ function renderActiveOrders() {
           }
           else if (o.reject_reason && o.reject_reason.startsWith('Ditolak Kurir:')) pelaku = 'Kurir';
           return `
-        <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showOrderDetail('${o.id}')" style="border-color:rgba(231,76,60,.3)">
+        <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showActiveOrderDetail('${o.id}')" style="border-color:rgba(231,76,60,.3)">
           <div class="flex justify-between items-start mb-1">
             <div>
               <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
