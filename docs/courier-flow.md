@@ -94,8 +94,8 @@ Jika Anda tidak bisa mengambil pesanan tertentu:
 | Lainnya... | Pilih ini jika alasan tidak ada di atas, lalu ketik alasan Anda sendiri |
 
 4. Klik **"Tolak Pesanan"** (tombol merah)
-5. Pesanan akan kembali ke daftar **Tersedia** dan bisa diambil oleh kurir lain
-6. Hanya admin dan manajer yang mendapat notifikasi penolakan
+5. Status pesanan berubah menjadi **"Ditolak"** dengan alasan **"Ditolak Kurir: {alasan}"** — pesanan tidak kembali ke daftar Tersedia
+6. Notifikasi penolakan dikirim ke **pelanggan**, **kasir**, **admin**, dan **manajer**
 
 > **💡 Jika alasan belum diisi:** Akan muncul peringatan "Silakan pilih atau isi alasan penolakan".
 
@@ -247,7 +247,8 @@ Kasir klik "Terima Setoran" → Masuk ke Riwayat
 ```
 Tersedia → Lihat Pesanan → Klik "Tolak" →
 Pilih Alasan → Klik "Tolak Pesanan" →
-Pesanan Kembali ke Daftar → Bisa Diambil Kurir Lain
+Pesanan Ditolak → Notifikasi ke Pelanggan, Kasir, Admin, Manajer →
+Masuk Riwayat dengan badge "Ditolak"
 ```
 
 ---
@@ -300,7 +301,7 @@ Notifikasi yang sudah Anda baca akan ditandai dan jumlahnya di icon lonceng akan
 2. **Update posisi berkala** — Klik **"Update"** beberapa kali selama perjalanan agar pelanggan bisa melihat perkembangan posisi Anda di peta
 3. **COD = setor ke kasir** — Jika pelanggan bayar tunai, jangan lupa setor uang ke kasir setelah antar, agar pesanan benar-benar selesai
 4. **Chat dengan sopan** — Gunakan fitur chat jika perlu konfirmasi alamat atau memberi tahu pelanggan bahwa Anda sudah dekat
-5. **Tolak dengan alasan jelas** — Pilih alasan yang sesuai agar manajer dan admin memahami mengapa Anda menolak
+5. **Tolak dengan alasan jelas** — Pilih alasan yang sesuai karena pelanggan, kasir, admin, dan manajer akan mendapat notifikasi penolakan Anda
 6. **Absen setiap hari** — Jangan lupa check-in saat tiba di kafe dan check-out saat pulang
 7. **Check-in harus di kafe** — Anda harus berada dalam radius 200 meter dari kafe untuk bisa check-in
 
@@ -324,7 +325,7 @@ A: Buka tab **Aktif**, klik tombol **"Chat"** pada kartu pesanan. Anda bisa kiri
 A: Jika pelanggan bayar tunai (COD), statusnya menjadi **"Telah Diantar"** dulu. Anda harus setor uang ke kasir, lalu kasir yang klik **"Terima Setoran"** untuk menyelesaikannya.
 
 **Q: Apakah pelanggan tahu kalau saya menolak pesanan?**
-A: Tidak. Hanya admin dan manajer yang mendapat notifikasi penolakan.
+A: Ya. Pelanggan, kasir, admin, dan manajer semuanya mendapat notifikasi penolakan. Status pesanan berubah menjadi "Ditolak" dan masuk ke riwayat.
 
 **Q: Bagaimana cara check-in?**
 A: Buka tab **Profil**, pastikan Anda berada di area kafe, lalu klik **"Check In"**.

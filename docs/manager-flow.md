@@ -426,11 +426,37 @@ Halaman ini menampilkan semua pesanan yang sedang berlangsung di kafe.
 | **Tipe**          | Makan di Tempat / Delivery    |
 | **Meja / Alamat** | Nomor meja atau alamat tujuan |
 | **Pelanggan**     | Nama pemesan                  |
+| **No. Telepon**   | Nomor telepon pelanggan       |
 | **Items**         | Daftar menu yang dipesan      |
 | **Promo**         | Diskon promo (jika ada)       |
 | **Total**         | Jumlah tagihan                |
 
 Klik kartu pesanan untuk melihat detail lengkap.
+
+### 11.1 Riwayat Pembatalan
+
+Di bagian bawah halaman Pesanan Aktif, terdapat bagian **"Riwayat Pembatalan"** yang bisa dibuka/tutup (collapsible). Bagian ini menampilkan semua pesanan yang **dibatalkan** atau **ditolak** dalam rentang tanggal yang dipilih.
+
+Klik header **"Riwayat Pembatalan (jumlah)"** untuk membuka/tutup daftar.
+
+Setiap kartu pesanan yang dibatalkan/ditolak menampilkan:
+
+| Informasi           | Penjelasan                                               |
+| ------------------- | -------------------------------------------------------- |
+| **Nomor Pesanan**   | Kode unik pesanan (teks & harga berwarna merah)          |
+| **Status**          | Badge merah **Ditolak** atau **Dibatalkan**              |
+| **Sumber**          | Badge source: ⬤ **Dibatalkan Kasir** / ⬤ **Ditolak Dapur** / ⬤ **Ditolak Kurir** |
+| **Tipe / Meja**     | Makan di Tempat (Meja X) atau Delivery                   |
+| **Pelanggan**       | Nama pemesan                                              |
+| **No. Telepon**     | Nomor telepon pelanggan                                  |
+| **Alasan**          | Alasan pembatalan/penolakan                              |
+| **Total**           | Jumlah tagihan (warna merah)                             |
+
+Sumber pembatalan dideteksi dari prefix alasan:
+- **Dibatalkan Pelanggan:** — alasan diawali "Dibatalkan Pelanggan: ..."
+- **Ditolak Dapur:** — status "rejected" tanpa prefix khusus
+- **Ditolak Kurir:** — alasan diawali "Ditolak Kurir: ..."
+- **Dibatalkan Kasir:** — status "cancelled" tanpa prefix khusus
 
 ---
 
@@ -509,6 +535,7 @@ Klik icon lonceng untuk membuka panel notifikasi. Berikut notifikasi yang akan A
 | Kurir mengambil pesanan | 🚚   | "Pesanan #xf3b4 sedang diantar oleh Kurir"               |
 | Pesanan selesai         | ✅   | "Pesanan #xf3b4 selesai"                                 |
 | Pesanan ditolak kurir   | ⛔   | "Pesanan #xf3b4 — Alasan: Jarak terlalu jauh"            |
+| Pesanan dibatalkan pelanggan | ❌   | "Pesanan Dibatalkan Pelanggan — #xf3b4 — Alasan: {alasan}" |
 | Pembayaran diterima     | 💳   | "Pembayaran #xf3b4 sebesar RpXX via QRIS/Tunai berhasil" |
 | Stok bahan menipis      | 📦   | "Stok menipis: Tepung Terigu (2 kg)"                     |
 | Check-out staff         | 🚪   | "Check-out berhasil"                                     |

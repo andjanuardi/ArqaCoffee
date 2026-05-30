@@ -553,6 +553,8 @@ Berikut notifikasi yang diterima Kasir:
 | Pesanan sedang diantar  | 🏍️   | "Status Pesanan — #ID — Diantar"                        |
 | Pesanan selesai         | ✅   | "Status Pesanan — #ID — Selesai"                        |
 | Pesanan ditolak dapur   | ⚠️   | "Pesanan Ditolak — #ID — Alasan: {alasan}"              |
+| Pesanan ditolak kurir   | ⛔   | "Pesanan Ditolak Kurir — #ID — Alasan: {alasan}"        |
+| Pelanggan membatalkan pesanan | ❌   | "Pesanan Dibatalkan Pelanggan — #ID — Alasan: {alasan}" |
 | Kurir mengambil pesanan | 🏍️   | "Pesanan Diambil Kurir — #ID — {nama} sedang mengantar" |
 | Pengantaran selesai     | ✅   | "Pesanan Selesai — #ID — Pengantaran selesai"           |
 | Pembayaran diterima     | 💳   | "Pembayaran Diterima — #ID — Lunas via Digital/Tunai"   |

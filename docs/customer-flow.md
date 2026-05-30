@@ -146,14 +146,14 @@ Klik tab **Pesanan** (icon struk) di bagian bawah untuk melihat semua pesanan An
 | **Diantar**       | Sedang dalam perjalanan (pesan antar)         |
 | **Telah Diantar** | Sampai tujuan, menunggu konfirmasi pembayaran |
 | **Selesai**       | Pesanan selesai                               |
-| **Ditolak**       | Pesanan ditolak oleh koki (ada alasan), badge kuning |
-| **Dibatalkan**    | Pesanan dibatalkan oleh kasir (ada alasan), badge kuning |
+| **Ditolak**       | Pesanan ditolak oleh koki atau kurir (ada alasan), badge merah — ditampilkan dengan sumber: ⬤ Ditolak Dapur / ⬤ Ditolak Kurir |
+| **Dibatalkan**    | Pesanan dibatalkan oleh kasir (ada alasan), badge merah — ditampilkan dengan sumber: ⬤ Dibatalkan Kasir |
 
 ### Yang bisa Anda lakukan:
 
 **Batalkan Pesanan** (hanya untuk status **Menunggu**):
 
-- **Dibatalkan oleh Anda:** Klik **"Batal"** pada card pesanan, pilih alasan, klik **"Hapus Pesanan"**
+- **Dibatalkan oleh Anda:** Klik **"Batal"** pada card pesanan, pilih alasan, klik **"Ya, Batalkan"**. Pesanan **tidak dihapus** — status diubah menjadi **"Dibatalkan"** dengan alasan tersimpan, dan muncul di riwayat. Admin & manajer mendapat notifikasi.
 - **Dibatalkan oleh Kasir:** Jika kasir membatalkan pesanan Anda, akan muncul notifikasi di lonceng yang menyertakan alasan pembatalan
 
 **Bayar Sekarang:**
@@ -261,6 +261,7 @@ Klik icon lonceng untuk membuka panel notifikasi. Di dalamnya akan muncul daftar
 | Kurir mengambil pesanan | 🚚   | "Pesanan #xf3b4 sedang diantar oleh Kurir"                               |
 | Pesanan selesai         | ✅   | "Pesanan #xf3b4 selesai"                                                 |
 | Pesanan ditolak koki    | ❌   | "Pesanan #xf3b4 ditolak: {alasan}"                                       |
+| Pesanan ditolak kurir   | ⛔   | "Pesanan #xf3b4 ditolak Kurir — Alasan: {alasan}"                        |
 | Pesanan dibatalkan kasir | ❌   | "Pesanan #xf3b4 — Pesanan Anda dibatalkan oleh kasir. Alasan: {alasan}" |
 | Pembayaran diterima     | 💳   | "Pembayaran #xf3b4 sebesar RpXX via QRIS/Tunai berhasil"                 |
 | Ada pesan dari kurir    | 💬   | "Pesan baru dari Kurir untuk pesanan #xf3b4"                             |
