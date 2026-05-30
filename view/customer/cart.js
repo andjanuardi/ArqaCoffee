@@ -74,6 +74,8 @@ function renderEmptyCart() {
   </div>`;
 }
 function renderCartItem(c, i, eligible, discUnitPrice) {
+  const mi = getMenuItem(c.menu_item_id);
+  const taxRate = mi ? mi.tax_percentage : 0;
   return `
   <div class="card">
     <div class="flex items-center gap-4">
@@ -81,6 +83,7 @@ function renderCartItem(c, i, eligible, discUnitPrice) {
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2">
           <div class="font-semibold text-sm truncate">${c.menu_item.name}</div>
+          ${taxRate > 0 ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style="background:rgba(224,122,58,.12);color:var(--accent)">Pajak ${taxRate}%</span>` : ""}
           ${eligible ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style="background:rgba(39,174,96,.15);color:var(--success)">Diskon</span>' : ""}
         </div>
         <div class="flex items-center gap-2 mt-1">

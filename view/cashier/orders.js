@@ -23,6 +23,7 @@ function showPaymentModal(id) {
             .join("")}
         </div>
         ${o.promo_discount ? `<div class="flex justify-between text-xs mt-2 pt-2" style="border-top:1px solid var(--border);color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
+        <div class="flex justify-between text-xs mt-1" style="color:var(--accent)"><span><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(o.items)))}</span></div>
       </div>
       <div class="flex gap-2 mb-3">
         <button onclick="closeModal();processPayment('${o.id}')" class="btn-primary flex-1 text-center py-3"><i class="fas fa-wallet mr-2"></i>Digital</button>
@@ -68,6 +69,7 @@ function renderCashierOrders() {
       ${pending
         .map((o) => {
           const t = o.table_id ? getTable(o.table_id) : null;
+          const tax = Math.round(calcItemTax(o.items));
           return `
         <div class="order-card">
           <div class="flex justify-between items-start mb-2">
@@ -88,6 +90,7 @@ function renderCashierOrders() {
             })
             .join(", ")}</div>
           ${o.promo_discount ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon promo: <b>-${formatCurrency(o.promo_discount)}</b></div>` : ""}
+          ${tax > 0 ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--accent)"><i class="fas fa-receipt"></i>Pajak: <b>${formatCurrency(tax)}</b></div>` : ""}
           <div class="flex justify-between items-center">
             <span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
             <div class="flex gap-2">
@@ -226,6 +229,7 @@ function showCashierOrderDetail(id) {
   </div>
   <div class="border-t pt-3" style="border-color:var(--border)">
     ${o.promo_discount ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
+    <div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(o.items)))}</span></div>
     <div class="flex justify-between font-bold"><span>Total</span><span style="color:${o.status === "rejected" || o.status === "cancelled" ? "var(--danger)" : "var(--accent)"}">${formatCurrency(o.total_amount)}</span></div>
     <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "digital" ? "Digital" : "Tunai/COD"}</span></div>
     <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Waktu Selesai</span><span>${formatTime(o.created_at)}</span></div>
