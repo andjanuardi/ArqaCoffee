@@ -12,11 +12,9 @@ function renderAdminMenuMgmt() {
       <h2 class="font-display text-xl font-bold">Kelola Menu</h2>
       <button onclick="showAddMenuItemModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
     </div>
-    <div class="mb-4">
-      <select id="admin-menu-filter" class="input-field text-sm" onchange="State.adminMenuFilter=this.value;render()">
-        <option value="">Semua Kategori</option>
-        ${cats.map(c => `<option value="${c}" ${State.adminMenuFilter === c ? 'selected' : ''}>${labelMap[c] || c}</option>`).join('')}
-      </select>
+    <div class="flex gap-2 mb-4 overflow-x-auto pb-2" style="-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+      <div class="category-chip ${!State.adminMenuFilter ? 'active' : ''}" onclick="State.adminMenuFilter='';render()">Semua</div>
+      ${cats.map(c => `<div class="category-chip ${State.adminMenuFilter === c ? 'active' : ''}" onclick="State.adminMenuFilter='${c}';render()">${labelMap[c] || c}</div>`).join('')}
     </div>
     <div class="space-y-3">
       ${filtered.map(m => `
