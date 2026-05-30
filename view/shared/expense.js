@@ -359,8 +359,10 @@ function renderActiveOrders() {
           </div>
           <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
         </div>
+        <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-user mr-1" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</div>
+        <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-phone mr-1" style="color:var(--accent)"></i>${o.customer_phone || (getUser(o.user_id)?.phone || '—')}</div>
         <div class="text-xs mb-2" style="color:var(--muted)">
-          <i class="fas ${o.order_type === 'dine-in' ? 'fa-chair' : 'fa-motorcycle'} mr-1"></i>${getOrderTypeName(o.order_type)}${t ? ' — Meja ' + t.number : ''}${o.customer_name ? ' — ' + o.customer_name : ''}
+          <i class="fas ${o.order_type === 'dine-in' ? 'fa-chair' : 'fa-motorcycle'} mr-1"></i>${getOrderTypeName(o.order_type)}${t ? ' — Meja ' + t.number : ''}
         </div>
         <div class="text-xs mb-3">${(o.items || []).map(i => {
           const mi = getMenuItem(i.menu_item_id);
