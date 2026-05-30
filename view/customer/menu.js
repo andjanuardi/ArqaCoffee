@@ -33,7 +33,7 @@ function renderCustomerMenu() {
         ? `<div class="mb-4 flex items-center gap-2"><span class="badge badge-ready"><i class="fas fa-qrcode mr-1"></i>Meja ${getTable(State.selectedTable)?.number || "-"}</span></div>`
         : `
     <div class="mb-6">
-      <h2 class="font-display text-2xl md:text-3xl font-black mb-1">Good ${getGreeting()}, ${State.currentUser.name.split(" ")[0]}</h2>
+      <h2 class="font-display text-2xl md:text-3xl font-black mb-1">Selamat ${getGreeting()}, ${State.currentUser.name.split(" ")[0]}</h2>
       <p style="color:var(--muted)">It's time for a coffee break!</p>
     </div>`
     }
