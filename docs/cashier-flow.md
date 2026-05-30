@@ -189,7 +189,10 @@ Klik kartu untuk melihat **modal detail** lengkap:
 - ID, status, tipe, meja, pelanggan (dengan email user dalam tanda kurung)
 - Alasan tolak/batal (jika ada)
 - Daftar item + total — **item dan harga berwarna merah** jika ditolak/dibatalkan
-- Metode pembayaran + waktu selesai
+- **Diskon Promo** — jika ada promo diterapkan
+- **Ongkos Kirim** — jika pesanan delivery
+- **Pajak 10%** — perhitungan otomatis
+- Metode pembayaran + status bayar
 - Tombol **Cetak** (hanya untuk status **Selesai**) dan **Tutup** (selalu ada)
 
 ---

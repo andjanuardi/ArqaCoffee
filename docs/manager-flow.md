@@ -313,8 +313,18 @@ Klik setiap kartu untuk melihat tabel detail yang bisa dicetak.
 
 ### Melihat Detail Pesanan:
 
-- Klik **nominal** di tabel pendapatan untuk melihat detail pesanan
-- Akan muncul jendela berisi informasi lengkap pesanan tersebut
+- Klik **baris pesanan** di tabel pendapatan untuk melihat detail pesanan
+- Akan muncul jendela berisi:
+  - **Status badge** — warna sesuai status (Menunggu/Dimasak/Siap Saji/dll)
+  - **Info pelanggan** — tipe pesanan, meja, nama pelanggan, email, alamat delivery
+  - **Daftar item** — nama menu x jumlah + subtotal
+  - **Diskon Promo** — jika ada promo diterapkan
+  - **Ongkos Kirim** — jika pesanan delivery
+  - **Pajak 10%** — perhitungan otomatis
+  - **Total** — jumlah akhir
+  - **Metode Pembayaran** — QRIS/Transfer Bank/Digital/COD/Tunai
+  - **Status Bayar** — Lunas / Belum Bayar
+  - **Cetak Invoice** — tombol cetak struk (tidak untuk ditolak/dibatalkan)
 
 ### Mencetak Laporan:
 
@@ -425,20 +435,22 @@ Halaman ini menampilkan semua pesanan yang sedang berlangsung di kafe.
 
 ### Yang tampil di setiap kartu pesanan:
 
-| Informasi         | Penjelasan                    |
-| ----------------- | ----------------------------- |
-| **Nomor Pesanan** | Kode unik pesanan             |
-| **Status**        | Badge warna sesuai status     |
-| **Status Bayar**  | 💳 Lunas / ❌ Belum Bayar     |
-| **Tipe**          | Makan di Tempat / Delivery    |
-| **Meja / Alamat** | Nomor meja atau alamat tujuan |
-| **Pelanggan**     | Nama pemesan                  |
-| **No. Telepon**   | Nomor telepon pelanggan       |
-| **Items**         | Daftar menu yang dipesan      |
-| **Promo**         | Diskon promo (jika ada)       |
-| **Total**         | Jumlah tagihan                |
+| Informasi         | Penjelasan                        |
+| ----------------- | --------------------------------- |
+| **Nomor Pesanan** | Kode unik pesanan                 |
+| **Status**        | Badge warna sesuai status         |
+| **Status Bayar**  | 💳 Lunas / ❌ Belum Bayar         |
+| **Tipe**          | Makan di Tempat / Delivery        |
+| **Meja / Alamat** | Nomor meja atau alamat tujuan     |
+| **Pelanggan**     | Nama pemesan                      |
+| **No. Telepon**   | Nomor telepon pelanggan           |
+| **Items**         | Daftar menu yang dipesan          |
+| **Promo**         | Diskon promo (jika ada)           |
+| **Ongkos Kirim**  | Biaya pengiriman (jika delivery)  |
+| **Pajak**         | Pajak 10% dari subtotal           |
+| **Total**         | Jumlah tagihan                    |
 
-Klik kartu pesanan untuk melihat detail lengkap.
+Klik kartu pesanan untuk melihat modal detail lengkap (status badge, info pelanggan, diskon, ongkir, pajak, metode & status bayar, cetak invoice).
 
 ### 11.1 Riwayat Pembatalan
 
@@ -457,6 +469,9 @@ Setiap kartu pesanan yang dibatalkan/ditolak menampilkan:
 | **Pelanggan**       | Nama pemesan                                              |
 | **No. Telepon**     | Nomor telepon pelanggan                                  |
 | **Alasan**          | Alasan pembatalan/penolakan                              |
+| **Promo**           | Diskon promo (jika ada)                                  |
+| **Ongkos Kirim**    | Biaya pengiriman (jika delivery)                         |
+| **Pajak**           | Pajak 10% dari subtotal                                  |
 | **Total**           | Jumlah tagihan (warna merah)                             |
 
 Sumber pembatalan dideteksi dari prefix alasan:
