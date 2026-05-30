@@ -13,8 +13,9 @@ function showEditMenuItemModal(id) {
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Gambar</label>
           ${renderImageInput('edit', m.image)}
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-3 gap-3">
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Harga</label><input id="edit-menu-price" type="number" class="input-field text-sm" value="${m.price}"></div>
+          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Pajak (%)</label><input id="edit-menu-tax" type="number" class="input-field text-sm" value="${m.tax_percentage ?? 0}" min="0" max="100"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kategori</label>
             ${getCategoryOptions(m.category, 'edit')}
           </div>
@@ -69,6 +70,7 @@ function saveEditMenuItem(id) {
   m.price = price;
   if (image) m.image = image;
   if (cat) m.category = cat;
+  m.tax_percentage = parseFloat(document.getElementById('edit-menu-tax')?.value) || 0;
   m.description = document.getElementById('edit-menu-desc')?.value || '';
   closeModal(); showToast('Menu berhasil diperbarui', 'success'); render();
 }
@@ -97,8 +99,9 @@ function showAddMenuItemModal() {
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Gambar</label>
           ${renderImageInput('add', '')}
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-3 gap-3">
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Harga</label><input id="add-menu-price" type="number" class="input-field text-sm" placeholder="0"></div>
+          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Pajak (%)</label><input id="add-menu-tax" type="number" class="input-field text-sm" value="0" min="0" max="100"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kategori</label>
             ${getCategoryOptions('', 'add')}
           </div>
@@ -126,6 +129,7 @@ function addMenuItem() {
   if (cat === '__new__' || !cat) {
     cat = document.getElementById('add-menu-cat-custom')?.value.trim() || 'coffee';
   }
-  DB.menuItems.push({ id, name, description: document.getElementById('add-menu-desc')?.value || '', price, category: cat, image, is_available: true });
+  const tax_percentage = parseFloat(document.getElementById('add-menu-tax')?.value) || 0;
+  DB.menuItems.push({ id, name, description: document.getElementById('add-menu-desc')?.value || '', price, category: cat, image, is_available: true, tax_percentage });
   closeModal(); showToast('Menu ditambahkan', 'success'); render();
 }

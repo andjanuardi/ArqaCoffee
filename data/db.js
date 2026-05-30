@@ -150,6 +150,7 @@ const DB =
           category: "coffee",
           image: "https://picsum.photos/seed/espresso41/400/300",
           is_available: true,
+          tax_percentage: 0,
         },
         {
           id: "m2",
@@ -159,6 +160,7 @@ const DB =
           category: "coffee",
           image: "https://picsum.photos/seed/cappuccino77/400/300",
           is_available: true,
+          tax_percentage: 0,
         },
         {
           id: "m3",
@@ -168,6 +170,7 @@ const DB =
           category: "coffee",
           image: "https://picsum.photos/seed/latte55/400/300",
           is_available: true,
+          tax_percentage: 0,
         },
         {
           id: "m4",
@@ -177,6 +180,7 @@ const DB =
           category: "coffee",
           image: "https://picsum.photos/seed/americano33/400/300",
           is_available: true,
+          tax_percentage: 0,
         },
         {
           id: "m5",
@@ -186,6 +190,7 @@ const DB =
           category: "coffee",
           image: "https://picsum.photos/seed/v60brew/400/300",
           is_available: true,
+          tax_percentage: 0,
         },
         {
           id: "m6",
@@ -195,6 +200,7 @@ const DB =
           category: "non-coffee",
           image: "https://picsum.photos/seed/tehtarik/400/300",
           is_available: true,
+          tax_percentage: 0,
         },
         {
           id: "m7",
@@ -204,6 +210,7 @@ const DB =
           category: "non-coffee",
           image: "https://picsum.photos/seed/matchalatte/400/300",
           is_available: true,
+          tax_percentage: 0,
         },
         {
           id: "m8",
@@ -213,6 +220,7 @@ const DB =
           category: "non-coffee",
           image: "https://picsum.photos/seed/chocoblis/400/300",
           is_available: true,
+          tax_percentage: 0,
         },
         {
           id: "m9",
@@ -222,6 +230,7 @@ const DB =
           category: "food",
           image: "https://picsum.photos/seed/nasgor88/400/300",
           is_available: true,
+          tax_percentage: 0,
         },
         {
           id: "m10",
@@ -231,6 +240,7 @@ const DB =
           category: "food",
           image: "https://picsum.photos/seed/rotibkr/400/300",
           is_available: true,
+          tax_percentage: 0,
         },
         {
           id: "m11",
@@ -240,6 +250,7 @@ const DB =
           category: "food",
           image: "https://picsum.photos/seed/croissant9/400/300",
           is_available: true,
+          tax_percentage: 0,
         },
         {
           id: "m12",
@@ -249,6 +260,7 @@ const DB =
           category: "food",
           image: "https://picsum.photos/seed/pisgoreng/400/300",
           is_available: true,
+          tax_percentage: 0,
         },
         {
           id: "m13",
@@ -258,6 +270,7 @@ const DB =
           category: "snack",
           image: "https://picsum.photos/seed/brownies7/400/300",
           is_available: true,
+          tax_percentage: 0,
         },
         {
           id: "m14",
@@ -267,6 +280,7 @@ const DB =
           category: "snack",
           image: "https://picsum.photos/seed/fries44/400/300",
           is_available: true,
+          tax_percentage: 0,
         },
         {
           id: "m15",
@@ -276,6 +290,7 @@ const DB =
           category: "snack",
           image: "https://picsum.photos/seed/cheesecake3/400/300",
           is_available: true,
+          tax_percentage: 0,
         },
       ],
       orders: [

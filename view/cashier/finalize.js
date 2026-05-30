@@ -62,7 +62,7 @@ function finalizeManualOrder() {
     (s, c) => s + c.unit_price * c.quantity,
     0,
   );
-  const grandTotal = Math.round(total * 1.1);
+  const grandTotal = total + Math.round(calcItemTax(State.cashierCart));
 
   if (type === "dine-in" && tableId) {
     const t = getTable(tableId);

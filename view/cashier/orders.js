@@ -142,7 +142,7 @@ function printCashierInvoice(id) {
     (sum, i) => sum + i.unit_price * i.quantity,
     0,
   );
-  const tax = o.total_amount - (subtotal - (o.promo_discount || 0));
+  const tax = Math.round(calcItemTax(o.items));
   win.document.write(`
     <html><head>
       <title>Invoice #${o.id.slice(-5).toUpperCase()}</title>
@@ -181,7 +181,7 @@ function printCashierInvoice(id) {
       <div class="totals">
         <div><span>Subtotal</span><span>${formatCurrency(subtotal)}</span></div>
         ${o.promo_discount ? `<div style="color:#27ae60"><span>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
-        <div><span>Pajak (10%)</span><span>${formatCurrency(Math.round(tax))}</span></div>
+        <div><span>Pajak</span><span>${formatCurrency(Math.round(tax))}</span></div>
         <div style="font-weight:bold;font-size:15px"><span>Total</span><span>${formatCurrency(o.total_amount)}</span></div>
         <div style="margin-top:8px"><span>Pembayaran</span><span>${paymentMethodLabel}</span></div>
         <div><span>Status</span><span>${paidLabel}</span></div>

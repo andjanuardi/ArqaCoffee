@@ -5,8 +5,8 @@ function confirmPlaceOrder() {
   const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
   const discount = calcPromoDiscount();
   const afterDiscount = total - discount;
-  const tax = Math.round(afterDiscount * 0.1);
-  const grandTotal = Math.round(afterDiscount * 1.1);
+  const tax = Math.round(calcItemTax(State.cart));
+  const grandTotal = afterDiscount + tax;
   const itemsList = State.cart.map(c =>
     `${c.menu_item.name} x${c.quantity} = ${formatCurrency(c.unit_price * c.quantity)}`
   ).join('</div><div class="text-sm" style="color:var(--muted)">');
@@ -26,7 +26,7 @@ function confirmPlaceOrder() {
         <div class="border-t pt-2 mt-2" style="border-color:var(--border)">
           <div class="flex justify-between text-sm"><span style="color:var(--muted)">Subtotal</span><span>${formatCurrency(total)}</span></div>
           ${discount > 0 ? `<div class="flex justify-between text-sm"><span style="color:var(--success)"><i class="fas fa-tag mr-1"></i>Diskon ${activePromo ? activePromo.title : ''}</span><span style="color:var(--success)">-${formatCurrency(discount)}</span></div>` : ''}
-          <div class="flex justify-between text-sm"><span style="color:var(--muted)">Pajak (10%)</span><span>${formatCurrency(tax)}</span></div>
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">Pajak</span><span>${formatCurrency(tax)}</span></div>
           <div class="flex justify-between font-bold mt-1"><span>Total</span><span style="color:var(--accent)">${formatCurrency(grandTotal)}</span></div>
         </div>
       </div>
@@ -51,7 +51,8 @@ function handleDigitalPayment() {
   const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
   const discount = calcPromoDiscount();
   const afterDiscount = total - discount;
-  const grandTotal = Math.round(afterDiscount * 1.1);
+  const tax = Math.round(calcItemTax(State.cart));
+  const grandTotal = afterDiscount + tax;
 
   if (selectedPayment === "qris") {
     const data = encodeURIComponent("ARQA-COFFEE:PAY:" + genId().slice(-6) + ":" + grandTotal);
@@ -114,7 +115,8 @@ function placeOrder() {
   const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
   const discount = calcPromoDiscount();
   const afterDiscount = total - discount;
-  const grandTotal = Math.round(afterDiscount * 1.1);
+  const tax = Math.round(calcItemTax(State.cart));
+  const grandTotal = afterDiscount + tax;
 
   if (State.orderType === "dine-in" && State.payTiming === "later") {
     const existingOrder = DB.orders.find(

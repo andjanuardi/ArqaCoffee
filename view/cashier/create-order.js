@@ -75,7 +75,7 @@ function renderCashierCreateOrder() {
         .join("")}
       <div class="flex justify-between font-bold mt-3 text-sm">
         <span>Total (inc. Pajak)</span>
-        <span style="color:var(--accent)">${formatCurrency(total * 1.1)}</span>
+        <span style="color:var(--accent)">${formatCurrency(total + Math.round(calcItemTax(State.cashierCart)))}</span>
       </div>
     </div>
     `
@@ -85,7 +85,7 @@ function renderCashierCreateOrder() {
     <div class="fixed bottom-[70px] left-0 right-0 p-4 border-t" style="z-index:40; max-width:768px; margin:0 auto; background:var(--bg); border-color:var(--border)">
       <button onclick="submitCashierOrder()" class="btn-primary w-full flex justify-between items-center ${State.cashierCart.length === 0 ? "opacity-50 cursor-not-allowed" : ""}">
         <span><i class="fas fa-check mr-1"></i> Proses Pesanan</span>
-        <span>${formatCurrency(total * 1.1)}</span>
+        <span>${formatCurrency(total + Math.round(calcItemTax(State.cashierCart)))}</span>
       </button>
     </div>
   </div>

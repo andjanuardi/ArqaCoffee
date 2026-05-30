@@ -14,4 +14,11 @@ function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takea
         function getMenuItem(id) { return DB.menuItems.find(m => m.id === id) }
         function getUser(id) { return DB.users.find(u => u.id === id) }
         function getTable(id) { return DB.tables.find(t => t.id === id) }
+        function calcItemTax(items) {
+          return items.reduce((sum, item) => {
+            const mi = DB.menuItems.find(m => m.id === item.menu_item_id);
+            const rate = (mi && mi.tax_percentage) || 0;
+            return sum + (item.unit_price * item.quantity * rate / 100);
+          }, 0);
+        }
 
