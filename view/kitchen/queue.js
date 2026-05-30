@@ -68,7 +68,7 @@ function renderKitchenQueue() {
                 <button onclick="rejectKitchenOrder('${i.orderId}')" class="text-xs font-bold px-3 py-1.5 rounded" style="color:var(--danger); background:rgba(231,76,60,.1)">Tolak</button>
                 <button onclick="updateItemStatus('${i.orderId}','${i.menu_item_id}','cooking')" class="btn-primary btn-sm">Masak</button>
               ` : ""}
-              ${i.status === "cooking" ? `<button onclick="updateItemStatus('${i.orderId}','${i.menu_item_id}','ready')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Siap</button>` : ""}
+              ${i.status === "cooking" ? `<button onclick="updateItemStatus('${i.orderId}','${i.menu_item_id}','ready')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Siap Saji</button>` : ""}
             </div>
           </div>
         </div>`;

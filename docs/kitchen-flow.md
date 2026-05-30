@@ -96,7 +96,7 @@ Jika item berstatus **"Menunggu"**, tersedia 2 tombol:
 1. Status item berubah menjadi **"Dimasak"**
 2. Status pesanan otomatis berubah menjadi **"Dimasak"** (jika ada item lain yang juga dimasak)
 3. Item akan pindah ke bagian yang sama dengan kartu berwarna oranye
-4. Tombol berubah menjadi **"Siap"**
+4. Tombol berubah menjadi **"Siap Saji"**
 
 ### 4.2 Menandai Selesai Masak
 
@@ -104,9 +104,9 @@ Jika item berstatus **"Dimasak"**, tombol yang muncul:
 
 | Tombol | Fungsi |
 |--------|--------|
-| 🟢 **Siap** | Menandai item sudah siap saji |
+| 🟢 **Siap Saji** | Menandai item sudah siap saji |
 
-**Saat Anda klik "Siap":**
+**Saat Anda klik "Siap Saji":**
 
 1. Status item berubah menjadi **"Siap"**
 2. Item akan **hilang** dari antrian dapur (karena item siap tidak ditampilkan)
@@ -270,7 +270,7 @@ Klik tab **Profil** (icon orang) di bagian bawah.
 Customer pesan → Kasir Terima → Muncul di Antrian →
 Stat "Menunggu" bertambah →
 Klik "Masak" → Item jadi "Dimasak" → Stat "Dimasak" bertambah →
-Klik "Siap" → Item jadi "Siap" → Item hilang dari antrian →
+Klik "Siap Saji" → Item jadi "Siap" → Item hilang dari antrian →
 Semua item siap → Otomatis "Siap Saji" → Notif ke cashier →
 Kasir bayar → Selesai (masuk Riwayat)
 ```
@@ -279,7 +279,7 @@ Kasir bayar → Selesai (masuk Riwayat)
 
 ```
 Customer pesan → Kasir Terima → Muncul di Antrian →
-Klik "Masak" → Klik "Siap" → Semua item siap →
+Klik "Masak" → Klik "Siap Saji" → Semua item siap →
 Otomatis "Siap Saji" →
 Kurir ambil dan antar → Selesai (masuk Riwayat)
 ```
@@ -338,16 +338,16 @@ A: Pastikan kasir sudah mengklik **"Terima"** pada pesanan tersebut. Tanpa itu, 
 A: Klik **"Tolak"** pada item yang masih berstatus **"Menunggu"**, pilih alasan, lalu konfirmasi.
 
 **Q: Kenapa tombol "Tolak" tidak muncul?**
-A: Tombol "Tolak" hanya muncul untuk item berstatus **"Menunggu"**. Jika sudah "Dimasak", tombol berubah menjadi "Siap" saja.
+A: Tombol "Tolak" hanya muncul untuk item berstatus **"Menunggu"**. Jika sudah "Dimasak", tombol berubah menjadi **"Siap Saji"**.
 
 **Q: Apakah saya bisa memasak beberapa item sekaligus?**
-A: Ya. Setiap item bisa dikelola secara independen. Anda bisa klik "Masak" pada beberapa item, lalu "Siap" satu per satu sesuai selesai.
+A: Ya. Setiap item bisa dikelola secara independen. Anda bisa klik "Masak" pada beberapa item, lalu "Siap Saji" satu per satu sesuai selesai.
 
 **Q: Bagaimana cara tahu pesanan sudah selesai semua?**
 A: Jika **semua item** dalam satu pesanan sudah berstatus "Siap", pesanan akan otomatis berubah menjadi "Siap Saji" dan notifikasi dikirim ke kasir.
 
 **Q: Kenapa pesanan tidak otomatis jadi "Siap Saji"?**
-A: Pastikan **setiap item** dalam pesanan tersebut sudah Anda klik **"Siap"**. Sistem baru mengubah status pesanan jika semua item sudah siap.
+A: Pastikan **setiap item** dalam pesanan tersebut sudah Anda klik **"Siap Saji"**. Sistem baru mengubah status pesanan jika semua item sudah siap.
 
 **Q: Apakah saya bisa melihat riwayat pesanan yang sudah lama?**
 A: Ya. Gunakan filter tanggal di tab **Riwayat** untuk melihat pesanan dalam rentang tanggal tertentu.
@@ -355,7 +355,7 @@ A: Ya. Gunakan filter tanggal di tab **Riwayat** untuk melihat pesanan dalam ren
 **Q: Kenapa ada item yang tiba-tiba hilang dari antrian?**
 A: Item akan hilang dari antrian jika statusnya sudah **"Siap"**. Item yang sudah selesai dimasak tidak perlu ditampilkan lagi.
 
-**Q: Saya tidak sengaja klik "Siap" padahal belum selesai, bagaimana?**
+**Q: Saya tidak sengaja klik "Siap Saji" padahal belum selesai, bagaimana?**
 A: Setelah item berstatus "Siap", tidak ada tombol untuk mengembalikannya ke "Dimasak". Sebaiknya koordinasi dengan kasir jika terjadi kesalahan.
 
 **Q: Apakah saya bisa melihat detail pesanan dari antrian?**
