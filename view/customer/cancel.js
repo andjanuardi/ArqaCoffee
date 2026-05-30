@@ -78,16 +78,18 @@ function confirmCancelOrder(id) {
     }
   }
 
+  o.status = "cancelled";
+  o.reject_reason = "Dibatalkan Pelanggan: " + reason;
+
   addNotification({
     title: 'Pesanan Dibatalkan',
     message: '#' + o.id.slice(-5).toUpperCase() + ' dibatalkan oleh pelanggan: ' + reason,
     type: 'warning',
     icon: 'fa-ban',
-    targetRoles: ['cashier', 'kitchen'],
+    targetRoles: ['cashier', 'kitchen', 'admin', 'manager'],
     relatedOrderId: o.id
   });
-  DB.orders.splice(idx, 1);
-  showToast("Pesanan berhasil dibatalkan dan dihapus", "success");
+  showToast("Pesanan berhasil dibatalkan", "success");
   closeModal();
   render();
 }

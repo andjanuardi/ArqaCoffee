@@ -324,6 +324,12 @@ function renderActiveOrders() {
     const statusMatch = getStatusLabel(o.status).toLowerCase().includes(q);
     return idMatch || nameMatch || statusMatch;
   });
+  const cancelled = DB.orders.filter(o =>
+    ['cancelled', 'rejected'].includes(o.status) && o.created_at
+  ).filter(o => {
+    const d = o.created_at.split('T')[0];
+    return d >= State.activeOrderStart && d <= State.activeOrderEnd;
+  }).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
   return `
   <div class="animate-fade-up">
     <div class="flex justify-between items-center mb-4">
@@ -375,5 +381,43 @@ function renderActiveOrders() {
       </div>`;
       }).join('')}
     </div>
+    ${cancelled.length > 0 ? `
+    <div class="mt-6">
+      <div class="flex items-center gap-2 mb-3 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')" style="user-select:none">
+        <h3 class="font-semibold text-sm" style="color:var(--danger)">Riwayat Pembatalan</h3>
+        <span class="text-xs" style="color:var(--muted)">${cancelled.length}</span>
+        <div class="text-xs transition-transform" style="color:var(--muted)"><i class="fas fa-chevron-down"></i></div>
+      </div>
+      <div class="space-y-2 hidden">
+        ${cancelled.map(o => {
+          const t = o.table_id ? getTable(o.table_id) : null;
+          let label = 'Ditolak';
+          let pelaku = 'Dapur';
+          if (o.status === 'cancelled') {
+            label = 'Dibatalkan';
+            pelaku = o.reject_reason && o.reject_reason.startsWith('Dibatalkan Pelanggan:') ? 'Pelanggan' : 'Kasir';
+          }
+          else if (o.reject_reason && o.reject_reason.startsWith('Ditolak Kurir:')) pelaku = 'Kurir';
+          return `
+        <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showOrderDetail('${o.id}')" style="border-color:rgba(231,76,60,.3)">
+          <div class="flex justify-between items-start mb-1">
+            <div>
+              <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
+              <span class="badge badge-danger ml-2">${label}</span>
+              <span class="text-xs ml-1 px-2 py-0.5 rounded" style="background:rgba(231,76,60,.1);color:var(--danger)"><i class="fas fa-user mr-1"></i>${pelaku}</span>
+            </div>
+            <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
+          </div>
+          <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-user mr-1" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</div>
+          <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-phone mr-1" style="color:var(--accent)"></i>${o.customer_phone || (getUser(o.user_id)?.phone || '—')}</div>
+          <div class="text-xs mb-2" style="color:var(--muted)">${getOrderTypeName(o.order_type)}${t ? ' — Meja ' + t.number : ''}</div>
+          ${o.reject_reason ? `<div class="text-xs mb-2 p-2 rounded" style="background:rgba(231,76,60,.08);color:var(--danger)"><i class="fas fa-ban mr-1"></i>${o.reject_reason}</div>` : ''}
+          <div class="flex justify-between items-center">
+            <span class="text-xs" style="color:var(--muted)">${formatDate(o.created_at)}</span>
+            <span class="font-bold text-sm" style="color:var(--danger)">${formatCurrency(o.total_amount)}</span>
+          </div>
+        </div>`;}).join('')}
+      </div>
+    </div>` : ''}
   </div>`;
 }
