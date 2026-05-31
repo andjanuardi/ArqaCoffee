@@ -2,6 +2,11 @@
 // CUSTOMER VIEW — Place Order
 // ============================================================
 function confirmPlaceOrder() {
+  if (State.orderType === "dine-in" && !State.selectedTable) {
+    showToast("Silahkan memilih meja terlebih dahulu", "warning");
+    startQRScan();
+    return;
+  }
   const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
   const discount = calcPromoDiscount();
   const afterDiscount = total - discount;

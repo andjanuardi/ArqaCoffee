@@ -106,6 +106,7 @@ Klik tab **Keranjang** (icon tas) di bagian bawah untuk melihat pesanan Anda.
   - **QRIS** — akan muncul kode QR yang bisa di-scan untuk membayar
   - **Transfer Bank** — akan muncul nomor rekening BCA (1234567890 a.n. ARQA Coffee) untuk ditransfer
   - **Tunai** — bayar langsung ke kasir, pesanan akan langsung lunas setelah kasir menerima
+- Jika Anda belum memilih meja, akan muncul peringatan **"Silahkan memilih meja terlebih dahulu"** dan pemindai QR terbuka — modal konfirmasi tidak akan muncul
 - Klik **"Bayar & Proses Pesanan"**
 
 **Bayar Nanti:**
@@ -119,6 +120,8 @@ Klik tab **Keranjang** (icon tas) di bagian bawah untuk melihat pesanan Anda.
 ## 4. Konfirmasi dan Memproses Pesanan
 
 Sebelum pesanan dikirim, akan muncul jendela konfirmasi yang menampilkan:
+
+> **PENTING:** Untuk **Pesan di Tempat**, Anda harus memilih meja terlebih dahulu. Jika belum, akan muncul peringatan dan QR scanner terbuka.
 
 - Daftar menu yang dipesan
 - Tipe pesanan (makan di tempat / antar)
