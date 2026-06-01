@@ -1,0 +1,87 @@
+Baru 01/06/2026
+
+Fitur Playground, user kasir playground (input tiket pendamping dan anak per jam seperti billing), pesan minum playground
+
+tambah user waiters
+
+fitur buka/tutup layanan warung
+
+fitur kurir terdekat dengan mitra ( ganti absensi menjadi on of )
+
+Fitur control Harga ongkir kurir pada admin
+
+Dapur Mitra/Marchant, fitur control Harga dengan dapur mitra, fitur buka/tutup layanan menu dapur mitra/marchant
+
+Fitur pindah meja pada edit pesanan
+
+- Waiters
+	- User Baru
+	- Seperti Pelanggan Tidak Ada Pesan Antar
+	- Tidak Ada Scan, Pilih Meja Manual
+	- Absensi
+- Kurir
+	- Hilangkan Absesi
+	- Ganti Absensi Jadi Status
+	- Kurir Mendapat Order dari yang terdekat dari warung atau mitra
+- Pelanggan
+	- Bisa Ganti Meja, kecuali sudah status selesai
+	- Kalau ganti meja harus scan barcode, otomatis meja sebelumnya tersedia
+	- Jika Menu tidak tersedia, tetap tampil tapi tidak bisa di order
+- Admin
+	- Kontrol Harga Ongkir Admin (Lower Rate + Per KM)
+	- Verifikasi Approval User Mitra baru
+	- Verifikasi Approval Menu Mitra
+	- Verifikasi Approval Kurir Baru
+	- Kontrol Buka Tutup Layanan
+		- Tombol Tutup Manual
+		- Input jadwal tutup otomatis (pakai hari)
+	- Laporan keuangan dari mitra
+	- Laporan keuangan dari kurir
+	- Laporan keuangan dari playround
+	- Laporan Pajak
+- Admin/Manager
+	- Stok bahan - Tidak bisa edit Harga dan satuan
+	- Stok bahan - Nama Stok bahan pakai Harga
+	- Stok bahan - Menambah Bahan, Hilangkan Jumlah, tambah Harga
+	- Stok bahan - Kurangi Barang Pakai Input
+	- Stok bahan - Menambah Stok pakai modal pilihan di catat kek pengeluaran atau tidak?
+	- Stok bahan - Menambah Stok Pakai Input
+	- Stok bahan - Boleh hapus Kalau stok 0
+- Manager
+	- Laporan keuangan seperti kasir
+	- Dashboard
+		- Hapus Total Pendapatan
+		- Hapus Total Pengeluaran
+		- Hapus Grafik Keuangan
+- Kasir
+	- Filter tanggal laporan cukup tanggal 1  hari
+	- Bisa Ganti Meja, kecuali sudah status selesai
+- Mitra
+	- User Baru
+	- Seperti Juru Masak
+	- Tapi Ada Kelola Menu
+	- Laporan Keuangan Untuk dia Sendiri
+	- fitur on off layanan
+
+- Playground
+	- user Baru
+	- Laporan keuangan sendiri
+	- Stok Makanan Sendiri
+	- Membuat Tiket Pelanggan
+	- Ada List Urutan Pelanggan Aktif berdasarkan Waktu yang mau habis
+	- Input Pelanaggan Baru,
+		Atas nama
+		Jumlah Anak
+			Nama Anak
+		Jumlah Pendamping
+			Nama Pendamping
+		Harga Peranak 20rb
+		pendamping + 10rb
+		kaos kaki + 10rb
+		include snack 
+		jumlah jam (min. 1 jam)
+
+- Form Pendaftaran Mitra dan Kurir
+	- Buat buat tombol baru "Ingin Jadi Mitra Kami?"
+	- Keluar Form dengan pilihan kurir atau mitra
+	- jika selesai muncul pemberitahuan untuk menunggu approval dari admin, jika berhasil approval akan di email/ di hubungi
