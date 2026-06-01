@@ -14,7 +14,7 @@ Dapur Mitra/Marchant, fitur control Harga dengan dapur mitra, fitur buka/tutup l
 
 Fitur pindah meja pada edit pesanan
 
-- Waiters
+- Waiters (Selesai)
 	- User Baru
 	- Seperti Pelanggan Tidak Ada Pesan Antar
 	- Tidak Ada Scan, Pilih Meja Manual

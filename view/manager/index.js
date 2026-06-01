@@ -123,6 +123,7 @@ function renderManagerUsers() {
     { id: 'cashier', label: 'Kasir' },
     { id: 'kitchen', label: 'Juru Masak' },
     { id: 'courier', label: 'Kurir' },
+    { id: 'waiter', label: 'Waiters' },
     { id: 'customer', label: 'Pelanggan' },
   ];
   const base = DB.users.filter(u => u.role !== 'admin');
@@ -144,7 +145,7 @@ function renderManagerUsers() {
           <div class="font-semibold text-sm">${u.name}</div>
           <div class="text-xs" style="color:var(--muted)">${u.email} — ${u.phone || '-'}</div>
         </div>
-        <span class="badge ${u.role === 'manager' ? 'badge-delivering' : u.role === 'cashier' ? 'badge-ready' : u.role === 'kitchen' ? 'badge-cooking' : 'badge-pending'}">${getRoleLabel(u.role)}</span>
+        <span class="badge ${u.role === 'manager' ? 'badge-delivering' : u.role === 'cashier' ? 'badge-ready' : u.role === 'kitchen' ? 'badge-cooking' : u.role === 'waiter' ? 'badge-cooking' : 'badge-pending'}">${getRoleLabel(u.role)}</span>
         <div class="flex gap-1">
           <button onclick="showEditUserManagerModal('${u.id}')" class="btn-sm" style="background:rgba(224,122,58,.12);color:var(--accent);border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-pen"></i></button>
           <button onclick="deleteUserManager('${u.id}')" class="btn-sm" style="background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-trash"></i></button>
@@ -171,6 +172,7 @@ function showEditUserManagerModal(id) {
             <option value="cashier" ${u.role === 'cashier' ? 'selected' : ''}>Kasir</option>
             <option value="kitchen" ${u.role === 'kitchen' ? 'selected' : ''}>Juru Masak</option>
             <option value="courier" ${u.role === 'courier' ? 'selected' : ''}>Kurir</option>
+            <option value="waiter" ${u.role === 'waiter' ? 'selected' : ''}>Waiters</option>
             <option value="customer" ${u.role === 'customer' ? 'selected' : ''}>Pelanggan</option>
           </select>
         </div>

@@ -30,7 +30,7 @@ function renderAdminUsers() {
           <div class="font-semibold text-sm">${u.name}</div>
           <div class="text-xs" style="color:var(--muted)">${u.email} — ${u.phone}</div>
         </div>
-        <span class="badge ${u.role === 'admin' ? 'badge-cooking' : u.role === 'manager' ? 'badge-delivering' : u.role === 'cashier' ? 'badge-ready' : 'badge-pending'}">${getRoleLabel(u.role)}</span>
+        <span class="badge ${u.role === 'admin' ? 'badge-cooking' : u.role === 'manager' ? 'badge-delivering' : u.role === 'cashier' ? 'badge-ready' : u.role === 'waiter' ? 'badge-cooking' : 'badge-pending'}">${getRoleLabel(u.role)}</span>
         <div class="flex gap-1">
           <button onclick="showEditUserModal('${u.id}')" class="btn-sm" style="background:rgba(224,122,58,.12);color:var(--accent);border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-pen"></i></button>
           <button onclick="deleteUser('${u.id}')" class="btn-sm" style="background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-trash"></i></button>
@@ -51,7 +51,7 @@ function showAddUserModal() {
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Telepon</label><input id="new-user-phone" class="input-field text-sm" placeholder="Nomor telepon"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Peran</label>
           <select id="new-user-role" class="input-field text-sm">
-            <option value="cashier">Kasir</option><option value="kitchen">Juru Masak</option><option value="courier">Kurir</option><option value="manager">Manager</option><option value="customer">Pelanggan</option>
+            <option value="cashier">Kasir</option><option value="kitchen">Juru Masak</option><option value="courier">Kurir</option><option value="waiter">Waiters</option><option value="manager">Manager</option><option value="customer">Pelanggan</option>
           </select>
         </div>
       </div>
@@ -89,6 +89,7 @@ function showEditUserModal(id) {
             <option value="cashier" ${u.role === 'cashier' ? 'selected' : ''}>Kasir</option>
             <option value="kitchen" ${u.role === 'kitchen' ? 'selected' : ''}>Juru Masak</option>
             <option value="courier" ${u.role === 'courier' ? 'selected' : ''}>Kurir</option>
+            <option value="waiter" ${u.role === 'waiter' ? 'selected' : ''}>Waiters</option>
             <option value="customer" ${u.role === 'customer' ? 'selected' : ''}>Pelanggan</option>
           </select>
         </div>
