@@ -1,0 +1,361 @@
+// ============================================================
+// PLAYGROUND — CREATE TICKET
+// ============================================================
+
+let pgChildCount = 0;
+let pgCompanionCount = 0;
+
+function renderPlaygroundCreate() {
+  pgChildCount = State._pgChildCount || 0;
+  pgCompanionCount = State._pgCompanionCount || 0;
+  const hours = State._pgHours || 1;
+  const snackItems = DB.menuItems.filter(
+    (m) => m.is_available && (m.category === "snack" || m.category === "food"),
+  );
+  const selectedSnacks = State._pgSelectedSnacks || [];
+
+  const children = [];
+  const childSocks = [];
+  for (let i = 0; i < pgChildCount; i++) {
+    const val = State["_pgChildName" + i] || "";
+    children.push({ name: val || "Anak " + (i + 1) });
+    childSocks.push(State["_pgChildHasSocks" + i] === true);
+  }
+  const companions = [];
+  for (let i = 0; i < pgCompanionCount; i++) {
+    const val = State["_pgCompanionName" + i] || "";
+    companions.push({ name: val || "Pendamping " + (i + 1) });
+  }
+  const calc = calcPlaygroundTotal(
+    children,
+    companions,
+    hours,
+    childSocks,
+    selectedSnacks,
+  );
+
+  return `
+  <div class="animate-fade-up pb-36">
+    <h2 class="font-display text-xl font-bold mb-4">Buat Tiket Baru</h2>
+
+    <div class="card mb-4">
+      <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama Pelanggan</label>
+      <input id="pg-customer-name" class="input-field text-sm" placeholder="Nama orang tua / pelanggan" value="${State._pgCustomerName || ""}" oninput="State._pgCustomerName=this.value">
+    </div>
+
+    <div class="card mb-4">
+      <div class="flex justify-between items-center mb-3">
+        <div>
+          <label class="text-xs font-semibold" style="color:var(--muted)">Anak-anak</label>
+          <div class="text-xs mt-0.5" style="color:var(--accent)">${formatCurrency(PG_CHILD_PRICE)}/anak/jam</div>
+        </div>
+        <div class="flex gap-1">
+          <button onclick="pgAddChild()" class="btn-sm" style="background:rgba(39,174,96,.15);color:var(--success);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-plus"></i> Tambah</button>
+          ${pgChildCount > 0 ? `<button onclick="pgRemoveChild()" class="btn-sm" style="background:rgba(231,76,60,.15);color:var(--danger);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-minus"></i></button>` : ""}
+        </div>
+      </div>
+      ${Array.from(
+        { length: pgChildCount },
+        (_, i) => `
+        <div class="flex items-center gap-2 mb-2">
+          <i class="fas fa-child" style="color:var(--accent);font-size:14px"></i>
+          <input class="input-field text-sm flex-1" placeholder="Nama anak ${i + 1}" value="${State["_pgChildName" + i] || ""}" oninput="State['_pgChildName${i}']=this.value">
+          <div class="flex items-center gap-1 cursor-pointer px-2 py-1 rounded text-xs whitespace-nowrap" onclick="State['_pgChildHasSocks${i}']=!(State['_pgChildHasSocks${i}']===true);render()" style="background:${State["_pgChildHasSocks" + i] === true ? "rgba(39,174,96,.15)" : "transparent"};border:1px solid ${State["_pgChildHasSocks" + i] === true ? "var(--success)" : "var(--border)"}">
+            <div class="w-4 h-4 rounded flex items-center justify-center text-xs font-bold" style="background:${State["_pgChildHasSocks" + i] === true ? "var(--success)" : "var(--bg2)"};color:${State["_pgChildHasSocks" + i] === true ? "#fff" : "var(--muted)"}">
+              ${State["_pgChildHasSocks" + i] === true ? '<i class="fas fa-check fa-xs"></i>' : ""}
+            </div>
+            <span style="color:${State["_pgChildHasSocks" + i] === true ? "var(--success)" : "var(--muted)"}">Kaos kaki</span>
+          </div>
+        </div>`,
+      ).join("")}
+    </div>
+
+    <div class="card mb-4">
+      <div class="flex justify-between items-center mb-3">
+        <div>
+          <label class="text-xs font-semibold" style="color:var(--muted)">Pendamping</label>
+          <div class="text-xs mt-0.5" style="color:var(--accent)">${formatCurrency(PG_COMPANION_PRICE)}/orang/jam</div>
+        </div>
+        <div class="flex gap-1">
+          <button onclick="pgAddCompanion()" class="btn-sm" style="background:rgba(39,174,96,.15);color:var(--success);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-plus"></i> Tambah</button>
+          ${pgCompanionCount > 0 ? `<button onclick="pgRemoveCompanion()" class="btn-sm" style="background:rgba(231,76,60,.15);color:var(--danger);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-minus"></i></button>` : ""}
+        </div>
+      </div>
+      ${Array.from(
+        { length: pgCompanionCount },
+        (_, i) => `
+        <div class="flex items-center gap-2 mb-2">
+          <i class="fas fa-user" style="color:var(--accent);font-size:14px"></i>
+          <input class="input-field text-sm flex-1" placeholder="Nama pendamping ${i + 1}" value="${State["_pgCompanionName" + i] || ""}" oninput="State['_pgCompanionName${i}']=this.value">
+        </div>`,
+      ).join("")}
+    </div>
+
+    <div class="card mb-4">
+      <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Durasi</label>
+      <div class="flex items-center gap-3">
+        <button onclick="pgAdjustHours(-1)" class="qty-btn">-</button>
+        <span class="font-bold text-lg w-8 text-center">${hours}</span>
+        <button onclick="pgAdjustHours(1)" class="qty-btn">+</button>
+        <span class="text-sm" style="color:var(--muted)">jam (min 1)</span>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Snack Tambahan</label>
+      <div class="flex gap-2 mb-3 overflow-x-auto pb-2" style="-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+        ${snackItems
+          .map((m) => {
+            const inCart = selectedSnacks.find((s) => s.menu_item_id === m.id);
+            return `
+          <div class="card text-center py-2 px-3 cursor-pointer text-xs ${inCart ? "ring-2" : ""}" onclick="pgToggleSnack('${m.id}')" style="${inCart ? "--tw-ring-color:var(--success);border-color:var(--success)" : "border-color:var(--border)"};min-width:80px">
+            <div class="font-semibold truncate">${m.name}</div>
+            <div style="color:var(--accent)">${formatCurrency(m.price)}</div>
+            ${inCart ? '<div style="color:var(--success)">x' + inCart.quantity + "</div>" : ""}
+          </div>`;
+          })
+          .join("")}
+      </div>
+    </div>
+
+    ${
+      children.length > 0 ||
+      companions.length > 0 ||
+      calc.socks > 0 ||
+      calc.itemsTotal > 0
+        ? `
+    <div class="card mb-4">
+      <div class="text-xs font-semibold mb-2" style="color:var(--muted)">Rincian Harga</div>
+      ${
+        children.length > 0
+          ? `
+        <div class="text-xs font-semibold mb-1" style="color:var(--muted)">Tiket anak-anak</div>
+      `
+          : ""
+      }
+      ${children
+        .map(
+          (c, i) => `
+        <div class="flex justify-between text-sm mb-1.5 items-center">
+          <span>
+            <i class="fas fa-child mr-1" style="color:var(--accent);font-size:12px"></i>
+            ${c.name}
+          </span>
+          <span>${formatCurrency(PG_CHILD_PRICE * calc.hours)}</span>
+        </div>
+      `,
+        )
+        .join("")}
+      ${
+        companions.length > 0
+          ? `
+        <div class="text-xs font-semibold mb-1" style="color:var(--muted)">Tiket pendamping</div>
+      `
+          : ""
+      }
+      ${companions
+        .map(
+          (c) => `
+        <div class="flex justify-between text-sm mb-1.5 items-center">
+          <span>
+            <i class="fas fa-user mr-1" style="color:var(--accent);font-size:12px"></i>
+            ${c.name}
+          </span>
+          <span>${formatCurrency(PG_COMPANION_PRICE * calc.hours)}</span>
+        </div>
+      `,
+        )
+        .join("")}
+      <div class="text-xs pt-1 pb-1" style="color:var(--muted)"><i class="fas fa-clock mr-1"></i>Durasi ${calc.hours} jam</div>
+      <div class="border-t pt-2 mt-2" style="border-color:var(--border)">
+        
+      </div>
+      ${calc.socks > 0 ? `<div class="flex justify-between text-sm mb-1"><span style="color:var(--muted)">Kaos kaki x${calc.socksCount}</span><span>${formatCurrency(calc.socks)}</span></div>` : ""}
+      ${
+        selectedSnacks.length > 0
+          ? `
+        <div class="text-xs font-semibold mt-2 mb-1" style="color:var(--muted)">Snack</div>
+      `
+          : ""
+      }
+      ${selectedSnacks
+        .map(
+          (s) => `
+        <div class="flex justify-between text-sm mb-1">
+          <span style="color:var(--muted)"><i class="fas fa-utensils mr-1" style="font-size:12px"></i>${s.name} x${s.quantity}</span>
+          <span>${formatCurrency(s.unit_price * s.quantity)}</span>
+        </div>
+      `,
+        )
+        .join("")}
+      <div class="border-t pt-2 mt-2" style="border-color:var(--border)">
+        <div class="flex justify-between font-bold">
+          <span>Total</span>
+          <span style="color:var(--accent)">${formatCurrency(calc.total)}</span>
+        </div>
+      </div>
+    </div>
+    `
+        : ""
+    }
+
+    <div class="card mb-4">
+      <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Pembayaran</label>
+      <div class="grid grid-cols-3 gap-3">
+        <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectPayment('qris')" style="${State._pgPayment === "qris" || !State._pgPayment ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-qrcode mb-1" style="color:var(--accent)"></i><br>QRIS</div>
+        <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectPayment('cash')" style="${State._pgPayment === "cash" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-money-bill mb-1" style="color:var(--success)"></i><br>Tunai</div>
+        <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectPayment('unpaid')" style="${State._pgPayment === "unpaid" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-clock mb-1" style="color:var(--warning)"></i><br>Bayar Nanti</div>
+      </div>
+    </div>
+
+    <button onclick="createPlaygroundTicket()" class="btn-primary w-full text-center flex items-center justify-center gap-2">
+      <i class="fas fa-ticket"></i> Buat Tiket — ${formatCurrency(calc.total)}
+    </button>
+  </div>`;
+}
+
+function pgAddChild() {
+  State._pgChildCount = (State._pgChildCount || 0) + 1;
+  render();
+}
+
+function pgRemoveChild() {
+  const c = State._pgChildCount || 0;
+  if (c > 0) {
+    delete State["_pgChildName" + (c - 1)];
+    State._pgChildCount = c - 1;
+  }
+  render();
+}
+
+function pgAddCompanion() {
+  State._pgCompanionCount = (State._pgCompanionCount || 0) + 1;
+  render();
+}
+
+function pgRemoveCompanion() {
+  const c = State._pgCompanionCount || 0;
+  if (c > 0) {
+    delete State["_pgCompanionName" + (c - 1)];
+    State._pgCompanionCount = c - 1;
+  }
+  render();
+}
+
+function pgAdjustHours(d) {
+  State._pgHours = Math.max(1, (State._pgHours || 1) + d);
+  render();
+}
+
+function pgToggleSnack(id) {
+  if (!State._pgSelectedSnacks) State._pgSelectedSnacks = [];
+  const idx = State._pgSelectedSnacks.findIndex((s) => s.menu_item_id === id);
+  if (idx >= 0) {
+    const s = State._pgSelectedSnacks[idx];
+    if (s.quantity >= 2) {
+      s.quantity--;
+    } else {
+      State._pgSelectedSnacks.splice(idx, 1);
+    }
+  } else {
+    const m = getMenuItem(id);
+    if (m)
+      State._pgSelectedSnacks.push({
+        menu_item_id: id,
+        name: m.name,
+        quantity: 1,
+        unit_price: m.price,
+      });
+  }
+  render();
+}
+
+function pgSelectPayment(val) {
+  State._pgPayment = val;
+  render();
+}
+
+function createPlaygroundTicket() {
+  const name = State._pgCustomerName;
+  if (!name || !name.trim()) {
+    showToast("Masukkan nama pelanggan", "warning");
+    return;
+  }
+  const childCount = State._pgChildCount || 0;
+  const children = [];
+  for (let i = 0; i < childCount; i++) {
+    const n = State["_pgChildName" + i];
+    if (!n || !n.trim()) {
+      showToast("Isi nama anak ke-" + (i + 1), "warning");
+      return;
+    }
+    children.push({ name: n.trim() });
+  }
+  const companionCount = State._pgCompanionCount || 0;
+  const companions = [];
+  for (let i = 0; i < companionCount; i++) {
+    const n = State["_pgCompanionName" + i];
+    if (!n || !n.trim()) {
+      showToast("Isi nama pendamping ke-" + (i + 1), "warning");
+      return;
+    }
+    companions.push({ name: n.trim() });
+  }
+  const hours = State._pgHours || 1;
+  const childSocks = [];
+  for (let i = 0; i < children.length; i++) {
+    childSocks.push(State["_pgChildHasSocks" + i] === true);
+  }
+  const selectedSnacks = State._pgSelectedSnacks || [];
+  const calc = calcPlaygroundTotal(
+    children,
+    companions,
+    hours,
+    childSocks,
+    selectedSnacks,
+  );
+  const payment = State._pgPayment || "qris";
+
+  const now = new Date();
+  const ticket = {
+    id: "pg" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    user_id: State.currentUser.id,
+    customer_name: name.trim(),
+    children,
+    companions,
+    companion_count: companions.length,
+    socks_per_child: childSocks,
+    socks_total: calc.socks,
+    items: selectedSnacks.map((s) => ({
+      menu_item_id: s.menu_item_id,
+      name: s.name,
+      quantity: s.quantity,
+      unit_price: s.unit_price,
+    })),
+    hours,
+    start_time: now.toISOString(),
+    end_time: new Date(now.getTime() + hours * 3600000).toISOString(),
+    subtotal: calc.subtotal,
+    items_total: calc.itemsTotal,
+    total_amount: calc.total,
+    payment_status: payment === "unpaid" ? "unpaid" : "paid",
+    payment_method: payment === "unpaid" ? "" : payment,
+    status: "active",
+    created_at: now.toISOString(),
+  };
+  if (!DB.playgroundTickets) DB.playgroundTickets = [];
+  DB.playgroundTickets.unshift(ticket);
+
+  State._pgCustomerName = "";
+  State._pgChildCount = 0;
+  State._pgCompanionCount = 0;
+  State._pgHours = 1;
+  State._pgSelectedSnacks = [];
+  State._pgPayment = "qris";
+  for (let i = 0; i < 10; i++) delete State["_pgChildName" + i];
+  for (let i = 0; i < 10; i++) delete State["_pgChildHasSocks" + i];
+  for (let i = 0; i < 10; i++) delete State["_pgCompanionName" + i];
+
+  showToast("Tiket " + name.trim() + " berhasil dibuat!", "success");
+  switchTab("tickets");
+}
