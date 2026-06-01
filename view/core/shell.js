@@ -7,6 +7,7 @@ function renderMainApp() {
   let content = '';
   if (role === 'customer') content = renderCustomerView();
   else if (role === 'waiter') content = renderWaiterView();
+  else if (role === 'playground') content = renderPlaygroundView();
   else if (role === 'cashier') content = renderCashierView();
   else if (role === 'kitchen') content = renderKitchenView();
   else if (role === 'courier') content = renderCourierView();
@@ -44,7 +45,7 @@ function renderMainApp() {
 }
 
 function getRoleLabel(r) {
-  const m = { admin: 'Admin', manager: 'Manager', cashier: 'Kasir', kitchen: 'Juru Masak', courier: 'Kurir', waiter: 'Waiters', customer: 'Pelanggan' };
+  const m = { admin: 'Admin', manager: 'Manager', cashier: 'Kasir', kitchen: 'Juru Masak', courier: 'Kurir', waiter: 'Waiters', playground: 'Playground', customer: 'Pelanggan' };
   return m[r] || r;
 }
 
@@ -52,6 +53,7 @@ function renderBottomNav(role) {
   const tabs = {
     customer: [{ id: 'menu', icon: 'fa-utensils', label: 'Menu' }, { id: 'cart', icon: 'fa-shopping-bag', label: 'Keranjang' }, { id: 'orders', icon: 'fa-receipt', label: 'Pesanan' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
     waiter: [{ id: 'menu', icon: 'fa-utensils', label: 'Menu' }, { id: 'cart', icon: 'fa-shopping-bag', label: 'Keranjang' }, { id: 'orders', icon: 'fa-receipt', label: 'Pesanan' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
+    playground: [{ id: 'tickets', icon: 'fa-ticket', label: 'Tiket' }, { id: 'create', icon: 'fa-plus-circle', label: 'Buat' }, { id: 'stock', icon: 'fa-warehouse', label: 'Stok' }, { id: 'report', icon: 'fa-chart-bar', label: 'Laporan' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
     cashier: [{ id: 'orders', icon: 'fa-clipboard-list', label: 'Pesanan' }, { id: 'payment', icon: 'fa-credit-card', label: 'Bayar' }, { id: 'report', icon: 'fa-chart-bar', label: 'Laporan' }, { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Meja' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
     kitchen: [{ id: 'queue', icon: 'fa-fire-burner', label: 'Antrian' }, { id: 'history', icon: 'fa-clock-rotate-left', label: 'Riwayat' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
     courier: [{ id: 'available', icon: 'fa-box', label: 'Tersedia' }, { id: 'active', icon: 'fa-route', label: 'Aktif' }, { id: 'history', icon: 'fa-clock-rotate-left', label: 'Riwayat' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],

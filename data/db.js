@@ -92,6 +92,16 @@ const DB =
           avatar: "W",
           address: "",
         },
+        {
+          id: "u8",
+          name: "Rina Playground",
+          email: "playground@arqa.coffee",
+          password: "playground123",
+          role: "playground",
+          phone: "081234567897",
+          avatar: "R",
+          address: "",
+        },
       ],
       tables: [
         {
@@ -758,6 +768,68 @@ const DB =
         //{ id: "e6", date: "2025-01-14", category: "Operasional", amount: 520000, note: "Beli snack dan roti", volume: 8, unit: "pak", unitPrice: 65000 },
         //{ id: "e7", date: "2025-01-15", category: "Lainnya", amount: 100000, note: "Biaya kebersihan", volume: 1, unit: "kali", unitPrice: 100000 },
       ],
+      playgroundTickets: [
+        {
+          id: "pg1",
+          user_id: "u8",
+          customer_name: "Bu Sarah",
+          children: [{ name: "Rafi" }, { name: "Dinda" }],
+          companion_count: 1,
+          has_socks: true,
+          socks_total: 20000,
+          items: [{ menu_item_id: "m13", name: "Brownies Lava", quantity: 1, unit_price: 26000 }],
+          hours: 2,
+          start_time: new Date(Date.now() - 90 * 60000).toISOString(),
+          end_time: new Date(Date.now() + 30 * 60000).toISOString(),
+          subtotal: 100000,
+          items_total: 26000,
+          total_amount: 146000,
+          payment_status: "unpaid",
+          payment_method: "",
+          status: "active",
+          created_at: new Date(Date.now() - 95 * 60000).toISOString(),
+        },
+        {
+          id: "pg2",
+          user_id: "u8",
+          customer_name: "Pak Andi",
+          children: [{ name: "Bima" }],
+          companion_count: 0,
+          has_socks: false,
+          socks_total: 0,
+          items: [],
+          hours: 1,
+          start_time: new Date(Date.now() - 10 * 60000).toISOString(),
+          end_time: new Date(Date.now() + 50 * 60000).toISOString(),
+          subtotal: 20000,
+          items_total: 0,
+          total_amount: 20000,
+          payment_status: "unpaid",
+          payment_method: "",
+          status: "active",
+          created_at: new Date(Date.now() - 15 * 60000).toISOString(),
+        },
+        {
+          id: "pg3",
+          user_id: "u8",
+          customer_name: "Bu Dewi",
+          children: [{ name: "Sari" }, { name: "Aji" }, { name: "Rizky" }],
+          companion_count: 2,
+          has_socks: true,
+          socks_total: 30000,
+          items: [{ menu_item_id: "m14", name: "French Fries Truffle", quantity: 2, unit_price: 24000 }, { menu_item_id: "m15", name: "Cheesecake Slice", quantity: 1, unit_price: 30000 }],
+          hours: 2,
+          start_time: new Date(Date.now() - 150 * 60000).toISOString(),
+          end_time: new Date(Date.now() - 30 * 60000).toISOString(),
+          subtotal: 220000,
+          items_total: 78000,
+          total_amount: 328000,
+          payment_status: "paid",
+          payment_method: "qris",
+          status: "completed",
+          created_at: new Date(Date.now() - 155 * 60000).toISOString(),
+        },
+      ],
     };
   })();
 
@@ -775,5 +847,21 @@ if (!DB.users.some(u => u.role === 'waiter')) {
     avatar: "W",
     address: "",
   });
+  saveDB();
+}
+
+// Migration: ensure playground user and data exists
+if (!DB.users.some(u => u.role === 'playground')) {
+  DB.users.push({
+    id: "u8",
+    name: "Rina Playground",
+    email: "playground@arqa.coffee",
+    password: "playground123",
+    role: "playground",
+    phone: "081234567897",
+    avatar: "R",
+    address: "",
+  });
+  if (!DB.playgroundTickets) DB.playgroundTickets = [];
   saveDB();
 }
