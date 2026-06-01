@@ -20,8 +20,8 @@ Fitur pindah meja pada edit pesanan
 	- Tidak Ada Scan, Pilih Meja Manual
 	- Absensi
 - Kurir
-	- Hilangkan Absesi
-	- Ganti Absensi Jadi Status
+	- Hilangkan Absesi (selesai)
+	- Ganti Absensi Jadi Status (selesai)
 	- Kurir Mendapat Order dari yang terdekat dari warung atau mitra
 - Pelanggan
 	- Bisa Ganti Meja, kecuali sudah status selesai

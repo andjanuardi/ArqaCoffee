@@ -6,7 +6,7 @@ function renderCourierView() {
   if (tab === "available") return renderCourierAvailable();
   if (tab === "active") return renderCourierActive();
   if (tab === "history") return renderCourierHistory();
-  if (tab === "profile") return renderGenericProfile();
+  if (tab === "profile") return renderCourierProfile();
   return renderCourierAvailable();
 }
 
@@ -51,6 +51,51 @@ function renderCourierAvailable() {
         .join("")}
     </div>
   </div>`;
+}
+
+function renderCourierProfile() {
+  const u = State.currentUser;
+  const isOnline = State.courierStatus === "online";
+  const today = new Date().toISOString().split('T')[0];
+  const att = DB.attendances.find(a => a.user_id === u.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
+  return `
+  <div class="animate-fade-up">
+    <div class="card text-center mb-4">
+      <div class="w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold" style="background:var(--accent);color:#fff">${u.avatar}</div>
+      <h3 class="font-semibold text-lg">${u.name}</h3>
+      <p class="text-sm" style="color:var(--muted)">${u.email}</p>
+      <p class="text-sm" style="color:var(--muted)">${u.phone}</p>
+      <div class="mt-4 space-y-3 text-left">
+        <div class="card" style="border-color:${isOnline ? 'rgba(39,174,96,.3)' : 'rgba(231,76,60,.3)'}">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:${isOnline ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)'};color:${isOnline ? 'var(--success)' : 'var(--danger)'}"><i class="fas ${isOnline ? 'fa-toggle-on' : 'fa-toggle-off'}"></i></div>
+            <div class="flex-1">
+              <div class="font-semibold text-sm" style="color:${isOnline ? 'var(--success)' : 'var(--danger)'}">${isOnline ? 'Aktif' : 'Tidak Aktif'}</div>
+              <div class="text-xs" style="color:var(--muted)">${isOnline ? 'Kamu siap menerima pesanan' : 'Kamu tidak menerima pesanan'}</div>
+            </div>
+            <button onclick="toggleCourierStatus()" class="btn-sm" style="background:${isOnline ? 'rgba(231,76,60,.12)' : 'rgba(39,174,96,.12)'};color:${isOnline ? 'var(--danger)' : 'var(--success)'};border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">
+              <i class="fas ${isOnline ? 'fa-power-off' : 'fa-play'} mr-1"></i>${isOnline ? 'Nonaktifkan' : 'Aktifkan'}
+            </button>
+          </div>
+          <div class="flex items-center justify-between text-xs px-1" style="color:var(--muted)">
+            <span><i class="fas fa-clock mr-1"></i>${att ? 'Check-in: ' + formatTime(att.check_in) : 'Belum check-in hari ini'}</span>
+            <span class="${isOnline ? 'badge badge-ready' : 'badge badge-pending'}">${isOnline ? 'Online' : 'Offline'}</span>
+          </div>
+        </div>
+        <div class="card flex items-center gap-3 cursor-pointer" onclick="handleLogout()">
+          <i class="fas fa-right-from-bracket" style="color:var(--danger)"></i>
+          <span class="text-sm flex-1">Keluar dari Akun</span>
+          <i class="fas fa-chevron-right" style="color:var(--muted);font-size:12px"></i>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleCourierStatus() {
+  State.courierStatus = State.courierStatus === "online" ? "offline" : "online";
+  showToast(State.courierStatus === "online" ? 'Kamu sekarang Aktif — siap menerima pesanan' : 'Kamu sekarang Tidak Aktif', State.courierStatus === "online" ? 'success' : 'info');
+  render();
 }
 
 function rejectCourierOrder(orderId) {

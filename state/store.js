@@ -16,4 +16,5 @@ const State = {
   selectedCategory: "all",
   editingOrder: null,
   sidebarOpen: false,
+  courierStatus: "offline",
 };
