@@ -15,11 +15,11 @@ function renderPlaygroundView() {
   return renderPlaygroundTickets();
 }
 
-function calcPlaygroundTotal(children, companionCount, hours, hasSocks, items) {
+function calcPlaygroundTotal(children, companions, hours, childSocks, items) {
   const subtotal =
-    (children.length * PG_CHILD_PRICE + companionCount * PG_COMPANION_PRICE) *
+    (children.length * PG_CHILD_PRICE + companions.length * PG_COMPANION_PRICE) *
     Math.max(1, hours);
-  const socks = hasSocks ? children.length * PG_SOCKS_PRICE : 0;
+  const socks = childSocks.filter(s => s).length * PG_SOCKS_PRICE;
   const itemsTotal = items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
   return { subtotal, socks, itemsTotal, total: subtotal + socks + itemsTotal };
 }
@@ -66,7 +66,7 @@ function renderPlaygroundTickets() {
           </div>
           <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-2" style="color:var(--muted)">
             <span><i class="fas fa-child mr-1"></i>${t.children.map((c) => c.name).join(", ")}</span>
-            ${t.companion_count > 0 ? `<span><i class="fas fa-user mr-1"></i>${t.companion_count} pendamping</span>` : ""}
+            ${t.companions && t.companions.length > 0 ? `<span><i class="fas fa-user mr-1"></i>${t.companions.map(c => c.name).join(', ')}</span>` : t.companion_count > 0 ? `<span><i class="fas fa-user mr-1"></i>${t.companion_count} pendamping</span>` : ''}
             <span><i class="fas fa-clock mr-1"></i>${t.hours} jam</span>
             <span><i class="fas fa-hourglass-half mr-1"></i><span style="color:${isExpired ? "var(--danger)" : isUrgent ? "var(--warning)" : "var(--success)"}">${isExpired ? "Waktu habis" : "Sisa " + formatRemaining(remaining)}</span></span>
           </div>
@@ -112,27 +112,34 @@ function renderPlaygroundTickets() {
 // CREATE TICKET
 // ============================================================
 let pgChildCount = 1;
+let pgCompanionCount = 1;
 
 function renderPlaygroundCreate() {
   pgChildCount = State._pgChildCount || 1;
-  const companionCount = State._pgCompanionCount || 0;
+  pgCompanionCount = State._pgCompanionCount || 1;
   const hours = State._pgHours || 1;
-  const hasSocks = State._pgHasSocks !== false;
   const snackItems = DB.menuItems.filter(
     (m) => m.is_available && (m.category === "snack" || m.category === "food"),
   );
   const selectedSnacks = State._pgSelectedSnacks || [];
 
   const children = [];
+  const childSocks = [];
   for (let i = 0; i < pgChildCount; i++) {
     const val = State["_pgChildName" + i] || "";
     children.push({ name: val || "Anak " + (i + 1) });
+    childSocks.push(State["_pgChildHasSocks" + i] !== false);
+  }
+  const companions = [];
+  for (let i = 0; i < pgCompanionCount; i++) {
+    const val = State["_pgCompanionName" + i] || "";
+    companions.push({ name: val || "Pendamping " + (i + 1) });
   }
   const calc = calcPlaygroundTotal(
     children,
-    companionCount,
+    companions,
     hours,
-    hasSocks,
+    childSocks,
     selectedSnacks,
   );
 
@@ -147,7 +154,10 @@ function renderPlaygroundCreate() {
 
     <div class="card mb-4">
       <div class="flex justify-between items-center mb-3">
-        <label class="text-xs font-semibold" style="color:var(--muted)">Nama Anak-anak</label>
+        <div>
+          <label class="text-xs font-semibold" style="color:var(--muted)">Nama Anak-anak</label>
+          <div class="text-xs mt-0.5" style="color:var(--accent)">${formatCurrency(PG_CHILD_PRICE)}/anak/jam</div>
+        </div>
         <div class="flex gap-1">
           <button onclick="pgAddChild()" class="btn-sm" style="background:rgba(39,174,96,.15);color:var(--success);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-plus"></i> Tambah</button>
           ${pgChildCount > 1 ? `<button onclick="pgRemoveChild()" class="btn-sm" style="background:rgba(231,76,60,.15);color:var(--danger);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-minus"></i></button>` : ""}
@@ -158,20 +168,36 @@ function renderPlaygroundCreate() {
         (_, i) => `
         <div class="flex items-center gap-2 mb-2">
           <i class="fas fa-child" style="color:var(--accent);font-size:14px"></i>
-          <input class="input-field text-sm flex-1" placeholder="Nama anak ${i + 1}" value="${State["_pgChildName" + i] || ""}" oninput="State['_pgChildName' + i]=this.value">
+          <input class="input-field text-sm flex-1" placeholder="Nama anak ${i + 1}" value="${State["_pgChildName" + i] || ""}" oninput="State['_pgChildName${i}']=this.value">
+          <div class="flex items-center gap-1 cursor-pointer px-2 py-1 rounded text-xs whitespace-nowrap" onclick="State['_pgChildHasSocks${i}']=!(State['_pgChildHasSocks${i}']!==false);render()" style="background:${(State["_pgChildHasSocks" + i] !== false) ? "rgba(39,174,96,.15)" : "transparent"};border:1px solid ${(State["_pgChildHasSocks" + i] !== false) ? "var(--success)" : "var(--border)"}">
+            <div class="w-4 h-4 rounded flex items-center justify-center text-xs font-bold" style="background:${(State["_pgChildHasSocks" + i] !== false) ? "var(--success)" : "var(--bg2)"};color:${(State["_pgChildHasSocks" + i] !== false) ? "#fff" : "var(--muted)"}">
+              ${(State["_pgChildHasSocks" + i] !== false) ? '<i class="fas fa-check fa-xs"></i>' : ""}
+            </div>
+            <span style="color:${(State["_pgChildHasSocks" + i] !== false) ? "var(--success)" : "var(--muted)"}">Kaos</span>
+          </div>
         </div>`,
       ).join("")}
-      <div class="text-xs mt-2" style="color:var(--muted)">Rp ${formatCurrency(PG_CHILD_PRICE)}/anak/jam</div>
     </div>
 
     <div class="card mb-4">
-      <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Pendamping</label>
-      <div class="flex items-center gap-3">
-        <button onclick="pgAdjustCompanion(-1)" class="qty-btn">-</button>
-        <span class="font-bold text-lg w-8 text-center">${companionCount}</span>
-        <button onclick="pgAdjustCompanion(1)" class="qty-btn">+</button>
-        <span class="text-sm" style="color:var(--muted)">orang — Rp ${formatCurrency(PG_COMPANION_PRICE)}/orang/jam</span>
+      <div class="flex justify-between items-center mb-3">
+        <div>
+          <label class="text-xs font-semibold" style="color:var(--muted)">Pendamping</label>
+          <div class="text-xs mt-0.5" style="color:var(--accent)">${formatCurrency(PG_COMPANION_PRICE)}/orang/jam</div>
+        </div>
+        <div class="flex gap-1">
+          <button onclick="pgAddCompanion()" class="btn-sm" style="background:rgba(39,174,96,.15);color:var(--success);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-plus"></i> Tambah</button>
+          ${pgCompanionCount > 1 ? `<button onclick="pgRemoveCompanion()" class="btn-sm" style="background:rgba(231,76,60,.15);color:var(--danger);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-minus"></i></button>` : ""}
+        </div>
       </div>
+      ${Array.from(
+        { length: pgCompanionCount },
+        (_, i) => `
+        <div class="flex items-center gap-2 mb-2">
+          <i class="fas fa-user" style="color:var(--accent);font-size:14px"></i>
+          <input class="input-field text-sm flex-1" placeholder="Nama pendamping ${i + 1}" value="${State["_pgCompanionName" + i] || ""}" oninput="State['_pgCompanionName${i}']=this.value">
+        </div>`,
+      ).join("")}
     </div>
 
     <div class="card mb-4">
@@ -182,19 +208,6 @@ function renderPlaygroundCreate() {
         <button onclick="pgAdjustHours(1)" class="qty-btn">+</button>
         <span class="text-sm" style="color:var(--muted)">jam (min 1)</span>
       </div>
-    </div>
-
-    <div class="card mb-4">
-      <label class="flex items-center gap-3 cursor-pointer" onclick="State._pgHasSocks=!State._pgHasSocks;render()">
-        <div class="w-6 h-6 rounded flex items-center justify-center text-sm font-bold" style="background:${hasSocks ? "var(--success)" : "var(--bg2)"};color:${hasSocks ? "#fff" : "var(--muted)"}">
-          ${hasSocks ? '<i class="fas fa-check"></i>' : ""}
-        </div>
-        <div class="flex-1">
-          <div class="font-semibold text-sm">Kaos Kaki</div>
-          <div class="text-xs" style="color:var(--muted)">Rp ${formatCurrency(PG_SOCKS_PRICE)}/anak</div>
-        </div>
-        <div class="font-semibold text-sm" style="color:var(--accent)">${hasSocks ? formatCurrency(pgChildCount * PG_SOCKS_PRICE) : "-"}</div>
-      </label>
     </div>
 
     <div class="card mb-4">
@@ -252,8 +265,17 @@ function pgRemoveChild() {
   render();
 }
 
-function pgAdjustCompanion(d) {
-  State._pgCompanionCount = Math.max(0, (State._pgCompanionCount || 0) + d);
+function pgAddCompanion() {
+  State._pgCompanionCount = (State._pgCompanionCount || 0) + 1;
+  render();
+}
+
+function pgRemoveCompanion() {
+  const c = State._pgCompanionCount || 0;
+  if (c > 1) {
+    delete State["_pgCompanionName" + (c - 1)];
+    State._pgCompanionCount = c - 1;
+  }
   render();
 }
 
@@ -306,15 +328,27 @@ function createPlaygroundTicket() {
     }
     children.push({ name: n.trim() });
   }
-  const companionCount = State._pgCompanionCount || 0;
+  const companionCount = State._pgCompanionCount || 1;
+  const companions = [];
+  for (let i = 0; i < companionCount; i++) {
+    const n = State["_pgCompanionName" + i];
+    if (!n || !n.trim()) {
+      showToast("Isi nama pendamping ke-" + (i + 1), "warning");
+      return;
+    }
+    companions.push({ name: n.trim() });
+  }
   const hours = State._pgHours || 1;
-  const hasSocks = State._pgHasSocks !== false;
+  const childSocks = [];
+  for (let i = 0; i < children.length; i++) {
+    childSocks.push(State["_pgChildHasSocks" + i] !== false);
+  }
   const selectedSnacks = State._pgSelectedSnacks || [];
   const calc = calcPlaygroundTotal(
     children,
-    companionCount,
+    companions,
     hours,
-    hasSocks,
+    childSocks,
     selectedSnacks,
   );
   const payment = State._pgPayment || "qris";
@@ -325,8 +359,9 @@ function createPlaygroundTicket() {
     user_id: State.currentUser.id,
     customer_name: name.trim(),
     children,
-    companion_count: companionCount,
-    has_socks: hasSocks,
+    companions,
+    companion_count: companions.length,
+    socks_per_child: childSocks,
     socks_total: calc.socks,
     items: selectedSnacks.map((s) => ({
       menu_item_id: s.menu_item_id,
@@ -350,12 +385,13 @@ function createPlaygroundTicket() {
 
   State._pgCustomerName = "";
   State._pgChildCount = 1;
-  State._pgCompanionCount = 0;
+  State._pgCompanionCount = 1;
   State._pgHours = 1;
-  State._pgHasSocks = true;
   State._pgSelectedSnacks = [];
   State._pgPayment = "qris";
   for (let i = 0; i < 10; i++) delete State["_pgChildName" + i];
+  for (let i = 0; i < 10; i++) delete State["_pgChildHasSocks" + i];
+  for (let i = 0; i < 10; i++) delete State["_pgCompanionName" + i];
 
   showToast("Tiket " + name.trim() + " berhasil dibuat!", "success");
   switchTab("tickets");
