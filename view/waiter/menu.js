@@ -39,23 +39,68 @@ function renderWaiterMenu() {
         <input type="text" placeholder="Cari menu..." class="input-field pl-9 text-sm" value="${State.searchQuery}" oninput="State.searchQuery=this.value" onchange="render()" onkeypress="if(event.key==='Enter')render()">
       </div>
     </div>
-
+    ${
+      State.activePromoId
+        ? (() => {
+            const activeP = DB.promos.find(x => x.id === State.activePromoId);
+            return activeP ? `
+    <div class="flex items-center gap-2 mb-4 text-xs p-3 rounded-xl" style="background:rgba(39,174,96,.1);color:var(--success)">
+      <i class="fas fa-tag"></i>
+      <span class="flex-1">Promo <b>${activeP.title}</b> aktif — diskon otomatis di keranjang</span>
+      <button onclick="State.activePromoId=null;showToast('Promo dibatalkan','info');render()" class="text-xs font-bold underline shrink-0" style="color:var(--danger)">Batalkan</button>
+    </div>` : '';
+          })()
+        : ""
+    }
+    ${
+      DB.promos && DB.promos.filter((p) => p.is_active && isPromoActiveByDate(p) && !isPromoUsedByUser(p.id) && p.id !== State.activePromoId).length > 0
+        ? `
+    <div class="promo-carousel" id="promo-carousel">
+      <div class="promo-track" id="promo-track">
+        ${DB.promos
+          .filter((p) => p.is_active && isPromoActiveByDate(p) && !isPromoUsedByUser(p.id) && p.id !== State.activePromoId)
+          .map(
+            (p) => {
+              const discLabel = p.discount_type === 'fixed' ? formatCurrency(p.discount_value) : p.discount_value + '%';
+              const bgStyle = p.image ? `background:linear-gradient(135deg,rgba(0,0,0,.6),rgba(0,0,0,.3)),url('${p.image}') center/cover` : `background:linear-gradient(135deg,${p.color || '#E07A3A'},${p.color || '#E07A3A'}dd)`;
+              return `
+        <div class="rounded-2xl p-4 relative overflow-hidden cursor-pointer promo-card" onclick="showPromoDetail('${p.id}')" style="${bgStyle};color:#fff">
+          <div class="text-xs font-semibold mb-1 uppercase" style="opacity:.85;letter-spacing:1px">Diskon ${discLabel}</div>
+          <div class="font-display text-lg font-black mb-1 promo-title">${p.title}</div>
+          <div class="text-xs mb-3 promo-desc" style="opacity:.8">${p.desc}</div>
+          <div class="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-lg" style="background:rgba(255,255,255,.25)">Klaim <i class="fas fa-arrow-right" style="font-size:10px"></i></div>
+        </div>`;
+            }
+          )
+          .join("")}
+      </div>
+      ${DB.promos.filter((p) => p.is_active && isPromoActiveByDate(p) && !isPromoUsedByUser(p.id) && p.id !== State.activePromoId).length > 1 ? '<div class="promo-dots" id="promo-dots"></div>' : ''}
+    </div>`
+        : ""
+    }
     <div class="flex gap-2 mb-5 overflow-x-auto pb-2" style="-webkit-overflow-scrolling:touch;scrollbar-width:none;">
       ${cats.map((c) => `<div class="category-chip ${State.selectedCategory === c.id ? "active" : ""}" onclick="State.selectedCategory='${c.id}';render()">${c.label}</div>`).join("")}
     </div>
     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
       ${items
         .map(
-          (m) => `
-      <div class="menu-card" onclick="showMenuItem('${m.id}')">
+          (m) => {
+            const hasPromo = State.activePromoId && (() => {
+              const p = DB.promos.find(x => x.id === State.activePromoId);
+              if (!p || !p.is_active) return false;
+              return !p.menu_ids || !p.menu_ids.length || p.menu_ids.includes(m.id);
+            })();
+            return `
+      <div class="menu-card ${hasPromo ? 'ring-2' : ''}" onclick="showMenuItem('${m.id}')" ${hasPromo ? 'style="--tw-ring-color:var(--success)"' : ''}>
         <div class="relative">
           <img src="${m.image}" alt="${m.name}" loading="lazy" onerror="this.src='https://picsum.photos/seed/${m.id}/400/300'">
+          ${hasPromo ? '<div class="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:var(--success);color:#fff"><i class="fas fa-tag mr-1" style="font-size:8px"></i>Diskon</div>' : ''}
         </div>
         <div class="p-3">
           <div class="font-semibold text-sm mb-1 truncate">${m.name}</div>
           <div class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(m.price)}</div>
         </div>
-      </div>`
+      </div>`;}
         )
         .join("")}
     </div>
@@ -65,19 +110,26 @@ function renderWaiterMenu() {
 
 function renderWaiterCart() {
   if (State.cart.length === 0) return renderWaiterEmptyCart();
+  const activePromo = getActivePromo();
   const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
-  const discount = 0;
+  const discount = calcPromoDiscount();
   const afterDiscount = total - discount;
   const tax = Math.round(calcItemTax(State.cart));
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Keranjang Pesanan</h2>
-    <div class="space-y-3 mb-6">${State.cart.map((c, i) => renderWaiterCartItem(c, i)).join("")}</div>
+    <div class="space-y-3 mb-6">${State.cart.map((c, i) => {
+      const eligible = isItemEligible(c, activePromo);
+      const discUnitPrice = calcItemDiscount(c, activePromo);
+      return renderWaiterCartItem(c, i, eligible, discUnitPrice);
+    }).join("")}</div>
+    ${activePromo ? renderWaiterPromoBanner(activePromo) : ""}
     <div class="card mb-4">
       <div class="flex justify-between mb-2 text-sm"><span style="color:var(--muted)">Subtotal</span><span>${formatCurrency(total)}</span></div>
+      ${discount > 0 ? `<div class="flex justify-between mb-2 text-sm"><span style="color:var(--success)"><i class="fas fa-tag mr-1"></i>Diskon</span><span style="color:var(--success)">-${formatCurrency(discount)}</span></div>` : ""}
       <div class="flex justify-between mb-2 text-sm"><span style="color:var(--muted)">Pajak</span><span>${formatCurrency(tax)}</span></div>
       <div class="border-t pt-2 mt-2" style="border-color:var(--border)">
-        <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(total + tax)}</span></div>
+        <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(afterDiscount + tax)}</span></div>
       </div>
     </div>
     <div class="card mb-4">
@@ -122,7 +174,7 @@ function renderWaiterCart() {
   </div>`;
 }
 
-function renderWaiterCartItem(c, i) {
+function renderWaiterCartItem(c, i, eligible, discUnitPrice) {
   const mi = getMenuItem(c.menu_item_id);
   const taxRate = mi ? mi.tax_percentage : 0;
   return `
@@ -133,6 +185,7 @@ function renderWaiterCartItem(c, i) {
         <div class="flex items-center gap-2">
           <div class="font-semibold text-sm truncate">${c.menu_item.name}</div>
           ${taxRate > 0 ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style="background:rgba(224,122,58,.12);color:var(--accent)">Pajak ${taxRate}%</span>` : ""}
+          ${eligible ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style="background:rgba(39,174,96,.15);color:var(--success)">Diskon</span>' : ""}
         </div>
         <div class="flex items-center gap-2 mt-1">
           <div class="qty-btn" style="width:26px;height:26px;font-size:12px" onclick="updateCartQty(${i},-1)">-</div>
@@ -141,13 +194,23 @@ function renderWaiterCartItem(c, i) {
         </div>
       </div>
       <div class="text-right">
-        <div class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(c.unit_price * c.quantity)}</div>
+        ${eligible
+          ? `<div class="text-xs line-through" style="color:var(--muted)">${formatCurrency(c.unit_price * c.quantity)}</div><div class="font-bold text-sm" style="color:var(--success)">${formatCurrency(discUnitPrice * c.quantity)}</div>`
+          : `<div class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(c.unit_price * c.quantity)}</div>`}
         <button onclick="removeCartItem(${i})" class="text-xs mt-1" style="color:var(--danger);border:1px solid rgba(231,76,60,.2);border-radius:8px;padding:6px 8px;background:rgba(231,76,60,.06)"><i class="fas fa-trash"></i></button>
       </div>
     </div>
     <div class="border-t mt-3 pt-2" style="border-color:var(--border)"></div>
     <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Catatan</label>
     <input class="input-field text-sm" placeholder="Misal: kurang gula, extra shot..." value="${c.notes || ""}" onblur="updateCartNotes(${i}, this.value)">
+  </div>`;
+}
+
+function renderWaiterPromoBanner(activePromo) {
+  return `<div class="flex items-center gap-2 mb-3 text-xs p-3 rounded-xl" style="background:rgba(39,174,96,.1);color:var(--success)">
+    <i class="fas fa-tag"></i>
+    <span class="flex-1">Promo <b>${activePromo.title}</b> aktif</span>
+    <button onclick="State.activePromoId=null;render()" class="text-xs underline" style="color:var(--muted)">Batalkan</button>
   </div>`;
 }
 
@@ -196,13 +259,14 @@ function confirmWaiterPlaceOrder() {
     return;
   }
   const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
-  const discount = 0;
+  const discount = calcPromoDiscount();
   const afterDiscount = total - discount;
   const tax = Math.round(calcItemTax(State.cart));
   const grandTotal = afterDiscount + tax;
   const itemsList = State.cart.map(c =>
     `${c.menu_item.name} x${c.quantity} = ${formatCurrency(c.unit_price * c.quantity)}`
   ).join('</div><div class="text-sm" style="color:var(--muted)">');
+  const activePromo = State.activePromoId ? DB.promos.find(x => x.id === State.activePromoId) : null;
 
   showModal(`
     <div>
@@ -217,6 +281,7 @@ function confirmWaiterPlaceOrder() {
         <div>${itemsList}</div>
         <div class="border-t pt-2 mt-2" style="border-color:var(--border)">
           <div class="flex justify-between text-sm"><span style="color:var(--muted)">Subtotal</span><span>${formatCurrency(total)}</span></div>
+          ${discount > 0 ? `<div class="flex justify-between text-sm"><span style="color:var(--success)"><i class="fas fa-tag mr-1"></i>Diskon ${activePromo ? activePromo.title : ''}</span><span style="color:var(--success)">-${formatCurrency(discount)}</span></div>` : ""}
           <div class="flex justify-between text-sm"><span style="color:var(--muted)">Pajak</span><span>${formatCurrency(tax)}</span></div>
           <div class="flex justify-between font-bold mt-1"><span>Total</span><span style="color:var(--accent)">${formatCurrency(grandTotal)}</span></div>
         </div>
@@ -245,7 +310,7 @@ function placeWaiterOrder() {
     return;
   }
   const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
-  const discount = 0;
+  const discount = calcPromoDiscount();
   const afterDiscount = total - discount;
   const tax = Math.round(calcItemTax(State.cart));
   const grandTotal = afterDiscount + tax;
@@ -263,8 +328,8 @@ function placeWaiterOrder() {
     delivery_address: "",
     delivery_detail: "",
     delivery_location: null,
-    promo_id: null,
-    promo_discount: 0,
+    promo_id: State.activePromoId || null,
+    promo_discount: discount || 0,
     created_at: new Date().toISOString(),
     items: State.cart.map((c) => ({
       menu_item_id: c.menu_item_id,
