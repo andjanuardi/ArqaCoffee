@@ -82,6 +82,16 @@ const DB =
           avatar: "S",
           address: "",
         },
+        {
+          id: "u7",
+          name: "Wina Waiters",
+          email: "waiter@arqa.coffee",
+          password: "waiter123",
+          role: "waiter",
+          phone: "081234567896",
+          avatar: "W",
+          address: "",
+        },
       ],
       tables: [
         {
@@ -752,3 +762,18 @@ const DB =
   })();
 
 if (!localStorage.getItem(STORAGE_KEY)) saveDB();
+
+// Migration: ensure waiter user exists when localStorage has stale data
+if (!DB.users.some(u => u.role === 'waiter')) {
+  DB.users.push({
+    id: "u7",
+    name: "Wina Waiters",
+    email: "waiter@arqa.coffee",
+    password: "waiter123",
+    role: "waiter",
+    phone: "081234567896",
+    avatar: "W",
+    address: "",
+  });
+  saveDB();
+}

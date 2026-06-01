@@ -17,7 +17,7 @@ function renderGenericProfile() {
     if (State.mapInstances[k]) { State.mapInstances[k].remove(); delete State.mapInstances[k]; }
   });
   const u = State.currentUser;
-  const isStaff = ['manager', 'cashier', 'kitchen', 'courier'].includes(u.role);
+  const isStaff = ['manager', 'cashier', 'kitchen', 'courier', 'waiter'].includes(u.role);
   const today = new Date().toISOString().split('T')[0];
   const att = DB.attendances.find(a => a.user_id === u.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
   return `

@@ -8,6 +8,7 @@ function renderLogin() {
     { role: 'cashier', icon: 'fa-cash-register', label: 'Kasir', color: '#27ae60', desc: 'Kelola pesanan & bayar' },
     { role: 'kitchen', icon: 'fa-fire-burner', label: 'Juru Masak', color: '#e07a3a', desc: 'Proses pesanan dapur' },
     { role: 'courier', icon: 'fa-motorcycle', label: 'Kurir', color: '#9b59b6', desc: 'Antar pesanan delivery' },
+    { role: 'waiter', icon: 'fa-bell-concierge', label: 'Waiters', color: '#f39c12', desc: 'Layanan pesanan meja' },
     { role: 'customer', icon: 'fa-user', label: 'Pelanggan', color: '#1abc9c', desc: 'Pesan & lacak pesanan' },
   ];
   return `
@@ -85,7 +86,7 @@ function handleLogin() {
 }
 
 function getDefaultTab(role) {
-  const m = { admin: 'overview', manager: 'dashboard', cashier: 'orders', kitchen: 'queue', courier: 'available', customer: 'menu' };
+  const m = { admin: 'overview', manager: 'dashboard', cashier: 'orders', kitchen: 'queue', courier: 'available', waiter: 'menu', customer: 'menu' };
   return m[role] || 'menu';
 }
 
