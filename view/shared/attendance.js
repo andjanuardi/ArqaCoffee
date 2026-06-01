@@ -3,7 +3,7 @@
 // ------------------------------------------------------------------
 function renderAttendance() {
   const today = new Date().toISOString().split('T')[0];
-  const staff = DB.users.filter(u => ['manager', 'cashier', 'kitchen', 'courier', 'waiter'].includes(u.role));
+  const staff = DB.users.filter(u => ['manager', 'cashier', 'kitchen', 'courier', 'waiter', 'playground'].includes(u.role));
   return `
   <div class="animate-fade-up">
     <div class="flex justify-between items-center mb-4">
