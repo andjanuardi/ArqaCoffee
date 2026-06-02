@@ -81,7 +81,7 @@ Fitur pindah meja pada edit pesanan
 		include snack 
 		jumlah jam (min. 1 jam)
 
-- Form Pendaftaran Mitra dan Kurir
+- Form Pendaftaran Mitra dan Kurir (selesai)
 	- Buat buat tombol baru "Ingin Jadi Mitra Kami?"
 	- Keluar Form dengan pilihan kurir atau mitra
 	- jika selesai muncul pemberitahuan untuk menunggu approval dari admin, jika berhasil approval akan di email/ di hubungi
