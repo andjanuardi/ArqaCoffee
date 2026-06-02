@@ -13,6 +13,7 @@ function renderAdminView() {
   if (tab === 'expenses') return renderExpenseManagement();
   if (tab === 'active-orders') return renderActiveOrders();
   if (tab === 'courier-finance') return renderAdminCourierFinance();
+  if (tab === 'mitra-finance') return renderAdminMitraFinance();
   if (tab === 'attendance') return renderAttendance();
   if (tab === 'profile') return renderGenericProfile();
   return renderAdminOverview();
@@ -78,6 +79,78 @@ function renderAdminCourierFinance() {
             <div style="color:${o.payment_status === 'paid' ? 'var(--success)' : 'var(--danger)'}">${formatCurrency(o.total_amount)}</div>
             <div class="text-[10px]" style="color:var(--muted)">${o.payment_status === 'paid' ? 'Lunas' : 'Belum Bayar'}</div>
           </div>
+        </div>`;}).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderAdminMitraFinance() {
+  if (!State.adminMitraDate) State.adminMitraDate = new Date().toISOString().split('T')[0];
+  const dateVal = State.adminMitraDate;
+  const mitraUsers = DB.users.filter(u => u.role === 'mitra_juru_masak');
+  const mitraOrders = DB.orders.filter(o => o.created_at && o.created_at.split('T')[0] === dateVal && o.items.some(i => i.claimed_by));
+  const mitraStats = mitraUsers.map(m => {
+    const items = [];
+    let revenue = 0;
+    mitraOrders.forEach(o => {
+      o.items.forEach(i => {
+        if (i.claimed_by === m.name) {
+          items.push({ ...i, order: o });
+          if (o.payment_status === 'paid') revenue += (i.unit_price * i.quantity) || 0;
+        }
+      });
+    });
+    return { ...m, items, revenue, count: items.length };
+  });
+  const totalRevenue = mitraStats.reduce((s, m) => s + m.revenue, 0);
+  const totalItems = mitraStats.reduce((s, m) => s + m.count, 0);
+  return `
+  <div class="animate-fade-up">
+    <h2 class="font-display text-xl font-bold mb-4">Keuangan Mitra Juru Masak</h2>
+    <div class="mb-4">
+      <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Filter Tanggal</label>
+      <input type="date" class="input-field" style="max-width:260px" value="${dateVal}" onchange="State.adminMitraDate=this.value;render()">
+    </div>
+    <div class="grid grid-cols-2 gap-3 mb-5">
+      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pendapatan Mitra</div><div class="text-xl font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRevenue)}</div></div>
+      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Item Diproses</div><div class="text-xl font-bold mt-1">${totalItems}</div></div>
+    </div>
+    <div class="space-y-3 mb-4">
+      <h3 class="font-semibold text-sm">Kinerja Mitra</h3>
+      ${mitraStats.map(ms => `
+      <div class="card">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold" style="background:var(--accent);color:#fff">${ms.avatar || ms.name[0]}</div>
+          <div class="flex-1">
+            <div class="font-semibold text-sm">${ms.name}</div>
+            <div class="text-xs" style="color:var(--muted)">${ms.email}</div>
+          </div>
+          <div class="text-right">
+            <div class="text-sm font-bold" style="color:var(--success)">${ms.count}</div>
+            <div class="text-[10px]" style="color:var(--muted)">Item</div>
+          </div>
+        </div>
+        <div class="text-sm flex justify-between px-1">
+          <span style="color:var(--muted)">Pendapatan:</span>
+          <span style="color:var(--accent)">${formatCurrency(ms.revenue)}</span>
+        </div>
+      </div>`).join('')}
+      ${mitraStats.length === 0 ? '<p class="text-sm text-center py-4" style="color:var(--muted)">Belum ada data mitra</p>' : ''}
+    </div>
+    <div class="card">
+      <h3 class="font-semibold text-sm mb-3">Riwayat Proses Mitra</h3>
+      <div class="space-y-2 max-h-80 overflow-y-auto">
+        ${mitraOrders.length === 0 ? '<p class="text-sm text-center py-4" style="color:var(--muted)">Belum ada item diproses mitra</p>' : mitraOrders.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).map(o => {
+          const claimedItems = o.items.filter(i => i.claimed_by);
+          return `
+        <div class="flex justify-between items-center text-sm py-2 border-b" style="border-color:var(--border)">
+          <div>
+            <span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span>
+            <span class="badge ${getStatusBadge(o.status)} ml-1">${getStatusLabel(o.status)}</span>
+            <div class="text-[10px] mt-0.5" style="color:var(--muted)">${claimedItems.map(i => i.claimed_by + ' (' + (getMenuItem(i.menu_item_id)?.name || 'Item') + ' x' + i.quantity + ')').join(', ')}</div>
+          </div>
+          <div style="color:${o.payment_status === 'paid' ? 'var(--success)' : 'var(--danger)'}">${formatCurrency(o.total_amount)}</div>
         </div>`;}).join('')}
       </div>
     </div>

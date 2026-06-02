@@ -85,6 +85,7 @@ function renderSideDrawer(role) {
     { id: 'expenses', icon: 'fa-money-bill-wave', label: 'Pengeluaran' },
     { id: 'active-orders', icon: 'fa-clipboard-list', label: 'Pesanan Aktif' },
     { id: 'courier-finance', icon: 'fa-motorcycle', label: 'Keuangan Kurir' },
+    { id: 'mitra-finance', icon: 'fa-handshake', label: 'Keuangan Mitra' },
     { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
   ] : [
     { id: 'dashboard', icon: 'fa-gauge-high', label: 'Dashboard' },
