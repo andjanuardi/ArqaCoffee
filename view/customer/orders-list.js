@@ -63,7 +63,7 @@ function renderCustomerOrders() {
           ${o.status === "rejected" && o.reject_reason ? `<div class="mt-2 text-xs p-2 rounded" style="background:rgba(231,76,60,.1);color:var(--danger);border:1px solid rgba(231,76,60,.2)"><i class="fas fa-ban mr-1"></i><strong>Ditolak:</strong> ${o.reject_reason}</div>` : ""}
           ${o.status === "cancelled" && o.reject_reason ? `<div class="mt-2 text-xs p-2 rounded" style="background:rgba(231,76,60,.1);color:var(--danger);border:1px solid rgba(231,76,60,.2)"><i class="fas fa-ban mr-1"></i><strong>Dibatalkan:</strong> ${o.reject_reason}</div>` : ""}
           ${o.order_type === "delivery" && o.status === "delivering" ? `<div class="mt-3 flex gap-2"><button onclick="event.stopPropagation();showTrackingMap('${o.id}')" class="btn-primary btn-sm flex-1"><i class="fas fa-map-marker-alt mr-1"></i>Lacak Kurir</button><button onclick="event.stopPropagation();openChatModal('${o.id}')" class="btn-secondary btn-sm flex-1" style="background:rgba(224,122,58,.1);color:var(--accent);border-color:transparent;position:relative"><i class="fas fa-comment-alt mr-1"></i>Chat Kurir${getOrderChatUnreadCount(o.id) > 0 ? `<span class="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style="background:var(--danger);color:#fff">${getOrderChatUnreadCount(o.id)}</span>` : ""}</button></div>` : ""}
-          ${o.status === "pending" ? `<div class="mt-3 flex justify-end"><button onclick="event.stopPropagation();cancelOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded-lg" style="color:var(--danger); background:rgba(231,76,60,.1)">Batal Pesanan</button></div>` : ""}
+          ${o.order_type === "dine-in" && o.status !== "completed" ? `<div class="mt-3 flex gap-2"><button onclick="event.stopPropagation();changeOrderTable('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded-lg flex-1" style="color:var(--accent);background:rgba(224,122,58,.1)"><i class="fas fa-rotate mr-1"></i>Ganti Meja</button>${o.status === "pending" ? `<button onclick="event.stopPropagation();cancelOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded-lg" style="color:var(--danger);background:rgba(231,76,60,.1)">Batal Pesanan</button>` : ""}</div>` : o.status === "pending" ? `<div class="mt-3 flex justify-end"><button onclick="event.stopPropagation();cancelOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded-lg" style="color:var(--danger); background:rgba(231,76,60,.1)">Batal Pesanan</button></div>` : ""}
         </div>`;
         })
         .join("")}
@@ -200,5 +200,55 @@ function confirmPayOrder(id) {
   o.payment_method = "qris";
   closeModal();
   showToast("Pembayaran berhasil!", "success");
+  render();
+}
+
+function changeOrderTable(orderId) {
+  const o = DB.orders.find((x) => x.id === orderId);
+  if (!o) return;
+  const currentTable = o.table_id ? getTable(o.table_id) : null;
+  showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-2 text-center">Ganti Meja</h3>
+      <p class="text-sm mb-4 text-center" style="color:var(--muted)">Pilih meja baru untuk pesanan #${o.id.slice(-5).toUpperCase()}</p>
+      ${currentTable ? `<div class="mb-4 p-3 rounded-xl text-center text-sm" style="background:var(--bg2)"><span style="color:var(--muted)">Meja saat ini:</span> <strong>${currentTable.number}</strong></div>` : ""}
+      <div class="grid grid-cols-4 gap-3 mb-6">
+        ${DB.tables
+          .map(
+            (t) => {
+              const isCurrent = t.id === o.table_id;
+              const isOccupied = t.status === "occupied" && !isCurrent;
+              return `<button class="card text-center py-3 text-sm font-semibold ${isOccupied ? "opacity-40 cursor-not-allowed" : ""}" onclick="${!isOccupied ? `selectNewTable('${orderId}','${t.id}')` : ""}" style="${isOccupied ? "pointer-events:none" : ""} ${isCurrent ? "border:2px solid var(--accent)" : ""}">
+            <i class="fas fa-chair mb-1" style="color:${isCurrent ? "var(--accent)" : isOccupied ? "var(--danger)" : "var(--success)"}"></i><br>${t.number}${isCurrent ? '<br><span style="font-size:9px;color:var(--accent)">Sekarang</span>' : ""}
+          </button>`;
+            },
+          )
+          .join("")}
+      </div>
+      <button onclick="closeModal()" class="btn-secondary w-full text-center">Batal</button>
+    </div>
+  `);
+}
+
+function selectNewTable(orderId, newTableId) {
+  const o = DB.orders.find((x) => x.id === orderId);
+  if (!o) return;
+  const oldTable = o.table_id ? getTable(o.table_id) : null;
+  const newTable = getTable(newTableId);
+  if (!newTable) return;
+  if (newTable.status === "occupied" && newTable.id !== o.table_id) {
+    showToast("Meja sedang ditempati!", "error");
+    return;
+  }
+  if (oldTable) {
+    const hasOtherOrders = DB.orders.some(
+      (x) => x.id !== orderId && x.table_id === oldTable.id && x.status !== "completed" && x.status !== "cancelled" && x.status !== "rejected",
+    );
+    if (!hasOtherOrders) oldTable.status = "available";
+  }
+  o.table_id = newTableId;
+  newTable.status = "occupied";
+  closeModal();
+  showToast(`Pesanan dipindahkan ke Meja ${newTable.number}`, "success");
   render();
 }
