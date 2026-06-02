@@ -9,8 +9,8 @@ function renderPlaygroundCreate() {
   pgChildCount = State._pgChildCount || 0;
   pgCompanionCount = State._pgCompanionCount || 0;
   const hours = State._pgHours || 1;
-  const snackItems = DB.menuItems.filter(
-    (m) => m.is_available && (m.category === "snack" || m.category === "food"),
+  const snackItems = (DB.pgStockItems || []).filter(
+    (s) => s.current_quantity > 0,
   );
   const selectedSnacks = State._pgSelectedSnacks || [];
 
@@ -102,15 +102,16 @@ function renderPlaygroundCreate() {
     </div>
 
     <div class="card mb-4">
-      <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Snack Tambahan</label>
+      <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Makanan dan minuman</label>
       <div class="flex gap-2 mb-3 overflow-x-auto pb-2" style="-webkit-overflow-scrolling:touch;scrollbar-width:none;">
         ${snackItems
-          .map((m) => {
-            const inCart = selectedSnacks.find((s) => s.menu_item_id === m.id);
+          .map((s) => {
+            const inCart = selectedSnacks.find((x) => x.menu_item_id === s.id);
             return `
-          <div class="card text-center py-2 px-3 cursor-pointer text-xs ${inCart ? "ring-2" : ""}" onclick="pgToggleSnack('${m.id}')" style="${inCart ? "--tw-ring-color:var(--success);border-color:var(--success)" : "border-color:var(--border)"};min-width:80px">
-            <div class="font-semibold truncate">${m.name}</div>
-            <div style="color:var(--accent)">${formatCurrency(m.price)}</div>
+          <div class="card text-center py-2 px-2 cursor-pointer text-xs ${inCart ? "ring-2" : ""}" onclick="pgIncSnack('${s.id}')" style="${inCart ? "--tw-ring-color:var(--success);border-color:var(--success)" : "border-color:var(--border)"};min-width:80px">
+            ${s.image ? `<img src="${s.image}" onerror="this.style.display='none'" style="width:40px;height:40px;object-fit:cover;border-radius:8px;margin:0 auto 4px">` : ""}
+            <div class="font-semibold truncate">${s.name}</div>
+            <div style="color:var(--accent)">${formatCurrency(s.price)}</div>
             ${inCart ? '<div style="color:var(--success)">x' + inCart.quantity + "</div>" : ""}
           </div>`;
           })
@@ -181,9 +182,14 @@ function renderPlaygroundCreate() {
       ${selectedSnacks
         .map(
           (s) => `
-        <div class="flex justify-between text-sm mb-1">
-          <span style="color:var(--muted)"><i class="fas fa-utensils mr-1" style="font-size:12px"></i>${s.name} x${s.quantity}</span>
-          <span>${formatCurrency(s.unit_price * s.quantity)}</span>
+        <div class="flex justify-between text-sm mb-1 items-center">
+          <span style="color:var(--muted)"><i class="fas fa-utensils mr-1" style="font-size:12px"></i>${s.name}</span>
+          <div class="flex items-center gap-2">
+            <button onclick="pgDecSnack('${s.menu_item_id}')" class="qty-btn" style="width:24px;height:24px;font-size:12px;padding:0;line-height:24px">-</button>
+            <span class="text-xs font-semibold w-4 text-center">${s.quantity}</span>
+            <button onclick="pgIncSnack('${s.menu_item_id}')" class="qty-btn" style="width:24px;height:24px;font-size:12px;padding:0;line-height:24px">+</button>
+            <span>${formatCurrency(s.unit_price * s.quantity)}</span>
+          </div>
         </div>
       `,
         )
@@ -211,18 +217,20 @@ function renderPlaygroundCreate() {
           <div class="text-[10px] mt-1" style="color:var(--muted)">Bayar di kasir</div>
         </div>
       </div>
-      ${State._pgPayTiming !== "later"
-        ? `
+      ${
+        State._pgPayTiming !== "later"
+          ? `
       <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Metode Pembayaran</label>
       <div class="grid grid-cols-3 gap-3">
         <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectMethod('qris')" style="${(State._pgPaymentMethod || "qris") === "qris" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-qrcode mb-1" style="color:var(--accent)"></i><br>QRIS</div>
         <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectMethod('transfer')" style="${State._pgPaymentMethod === "transfer" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-university mb-1" style="color:var(--accent)"></i><br>Transfer</div>
         <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectMethod('cash')" style="${State._pgPaymentMethod === "cash" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-money-bill mb-1" style="color:var(--success)"></i><br>Tunai</div>
       </div>`
-        : `<div class="flex items-center gap-2 p-3 rounded-xl text-xs" style="background:rgba(243,156,18,.1);color:var(--warning)">
+          : `<div class="flex items-center gap-2 p-3 rounded-xl text-xs" style="background:rgba(243,156,18,.1);color:var(--warning)">
       <i class="fas fa-info-circle"></i>
       <span>Tiket akan dibuat dengan status <b>Belum Bayar</b>. Silakan bayar di kasir.</span>
-    </div>`}
+    </div>`
+      }
     </div>
 
     <button onclick="createPlaygroundTicket()" class="btn-primary w-full text-center flex items-center justify-center gap-2">
@@ -264,25 +272,33 @@ function pgAdjustHours(d) {
   render();
 }
 
-function pgToggleSnack(id) {
+function pgIncSnack(id) {
   if (!State._pgSelectedSnacks) State._pgSelectedSnacks = [];
   const idx = State._pgSelectedSnacks.findIndex((s) => s.menu_item_id === id);
   if (idx >= 0) {
-    const s = State._pgSelectedSnacks[idx];
-    if (s.quantity >= 2) {
-      s.quantity--;
-    } else {
-      State._pgSelectedSnacks.splice(idx, 1);
-    }
+    State._pgSelectedSnacks[idx].quantity++;
   } else {
-    const m = getMenuItem(id);
-    if (m)
+    const s = (DB.pgStockItems || []).find((x) => x.id === id);
+    if (s)
       State._pgSelectedSnacks.push({
         menu_item_id: id,
-        name: m.name,
+        name: s.name,
         quantity: 1,
-        unit_price: m.price,
+        unit_price: s.price,
       });
+  }
+  render();
+}
+
+function pgDecSnack(id) {
+  if (!State._pgSelectedSnacks) return;
+  const idx = State._pgSelectedSnacks.findIndex((s) => s.menu_item_id === id);
+  if (idx < 0) return;
+  const s = State._pgSelectedSnacks[idx];
+  if (s.quantity > 1) {
+    s.quantity--;
+  } else {
+    State._pgSelectedSnacks.splice(idx, 1);
   }
   render();
 }
@@ -339,7 +355,7 @@ function createPlaygroundTicket() {
     selectedSnacks,
   );
   const payLater = State._pgPayTiming === "later";
-  const paymentMethod = payLater ? "" : (State._pgPaymentMethod || "qris");
+  const paymentMethod = payLater ? "" : State._pgPaymentMethod || "qris";
 
   if (payLater || paymentMethod === "cash") {
     finalizePlaygroundTicket();
@@ -406,9 +422,15 @@ function finalizePlaygroundTicket() {
     childSocks.push(State["_pgChildHasSocks" + i] === true);
   }
   const selectedSnacks = State._pgSelectedSnacks || [];
-  const calc = calcPlaygroundTotal(children, companions, hours, childSocks, selectedSnacks);
+  const calc = calcPlaygroundTotal(
+    children,
+    companions,
+    hours,
+    childSocks,
+    selectedSnacks,
+  );
   const payLater = State._pgPayTiming === "later";
-  const paymentMethod = payLater ? "" : (State._pgPaymentMethod || "qris");
+  const paymentMethod = payLater ? "" : State._pgPaymentMethod || "qris";
 
   const now = new Date();
   const ticket = {
