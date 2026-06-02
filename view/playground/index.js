@@ -38,11 +38,12 @@ function calcPlaygroundTotal(children, companions, hours, childSocks, items) {
 
 function formatRemaining(ms) {
   if (ms <= 0) return "Habis";
-  const min = Math.floor(ms / 60000);
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  if (h > 0) return h + "j " + m + "m";
-  return m + "m";
+  const sec = Math.floor(ms / 1000);
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (h > 0) return h + "j " + m + "m " + s + "d";
+  return m + "m " + s + "d";
 }
 
 function renderPlaygroundStock() {

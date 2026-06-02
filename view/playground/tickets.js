@@ -47,7 +47,7 @@ function renderPlaygroundTickets() {
           <div class="time-bar-container mb-3">
             <div class="flex justify-between text-xs mb-1" style="color:var(--muted)">
               <span>${formatTime(new Date(t.start_time))}</span>
-              <span style="color:${barColor};font-weight:600">${isExpired ? "-" + formatRemaining(Math.abs(remaining)) : formatRemaining(remaining)}</span>
+              <span class="pg-remaining" data-end="${t.end_time}" data-over="${isExpired}" style="color:${barColor};font-weight:600">${isExpired ? "-" + formatRemaining(Math.abs(remaining)) : formatRemaining(remaining)}</span>
               <span>${formatTime(new Date(t.end_time))}</span>
             </div>
             <div class="time-bar-bg">

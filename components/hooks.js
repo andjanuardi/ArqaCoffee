@@ -5,6 +5,7 @@ function afterRender() {
   initCharts();
   initMaps();
   initPromoCarousel();
+  initPlaygroundTimer();
 }
 
 function initCharts() {
@@ -295,4 +296,22 @@ function initMaps() {
       doPreview(ARQA_COORDS.lat, ARQA_COORDS.lng);
     }
   }
+}
+
+function initPlaygroundTimer() {
+  if (window._pgTimerInterval) { clearInterval(window._pgTimerInterval); window._pgTimerInterval = null; }
+  if (State.currentTab?.playground !== 'tickets') return;
+  window._pgTimerInterval = setInterval(() => {
+    document.querySelectorAll('.pg-remaining').forEach(el => {
+      const end = new Date(el.dataset.end).getTime();
+      const isOver = el.dataset.over === 'true';
+      const now = Date.now();
+      const remaining = end - now;
+      if (isOver) {
+        el.textContent = remaining <= 0 ? 'Habis' : '-' + formatRemaining(Math.abs(remaining));
+      } else {
+        el.textContent = remaining <= 0 ? 'Habis' : formatRemaining(remaining);
+      }
+    });
+  }, 1000);
 }
