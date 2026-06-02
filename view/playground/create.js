@@ -10,7 +10,7 @@ function renderPlaygroundCreate() {
   pgCompanionCount = State._pgCompanionCount || 0;
   const hours = State._pgHours || 1;
   const snackItems = (DB.pgStockItems || []).filter(
-    (s) => s.current_quantity > 0,
+    (s) => s.current_quantity > 0 && (s.category === "Makanan" || s.category === "Minuman"),
   );
   const selectedSnacks = State._pgSelectedSnacks || [];
 
@@ -60,7 +60,7 @@ function renderPlaygroundCreate() {
         <div class="flex items-center gap-2 mb-2">
           <i class="fas fa-child" style="color:var(--accent);font-size:14px"></i>
           <input class="input-field text-sm flex-1" placeholder="Nama anak ${i + 1}" value="${State["_pgChildName" + i] || ""}" oninput="State['_pgChildName${i}']=this.value">
-          <div class="flex items-center gap-1 cursor-pointer px-2 py-1 rounded text-xs whitespace-nowrap" onclick="State['_pgChildHasSocks${i}']=!(State['_pgChildHasSocks${i}']===true);render()" style="background:${State["_pgChildHasSocks" + i] === true ? "rgba(39,174,96,.15)" : "transparent"};border:1px solid ${State["_pgChildHasSocks" + i] === true ? "var(--success)" : "var(--border)"}">
+          <div class="flex items-center gap-1 cursor-pointer px-2 py-1 rounded text-xs whitespace-nowrap" onclick="pgToggleChildSocks(${i})" style="background:${State["_pgChildHasSocks" + i] === true ? "rgba(39,174,96,.15)" : "transparent"};border:1px solid ${State["_pgChildHasSocks" + i] === true ? "var(--success)" : "var(--border)"}">
             <div class="w-4 h-4 rounded flex items-center justify-center text-xs font-bold" style="background:${State["_pgChildHasSocks" + i] === true ? "var(--success)" : "var(--bg2)"};color:${State["_pgChildHasSocks" + i] === true ? "#fff" : "var(--muted)"}">
               ${State["_pgChildHasSocks" + i] === true ? '<i class="fas fa-check fa-xs"></i>' : ""}
             </div>
@@ -264,6 +264,30 @@ function pgAdjustHours(d) {
   render();
 }
 
+function pgToggleChildSocks(i) {
+  const currentlyChecked = State["_pgChildHasSocks" + i] === true;
+  if (!currentlyChecked) {
+    const sockStock = (DB.pgStockItems || []).find((s) => s.category === "Perlengkapan");
+    let totalChecked = 0;
+    for (let j = 0; j < (State._pgChildCount || 0); j++) {
+      if (State["_pgChildHasSocks" + j] === true) totalChecked++;
+    }
+    if (!sockStock || totalChecked >= sockStock.current_quantity) {
+      showModal(`
+        <div class="text-center">
+          <div class="text-4xl mb-3" style="color:var(--warning)"><i class="fas fa-exclamation-triangle"></i></div>
+          <h3 class="font-display text-lg font-bold mb-2">Stok Kaos Kaki Habis</h3>
+          <p class="text-sm" style="color:var(--muted)">Maaf, stok kaos kaki sedang kosong. Silakan hubungi staf untuk pengisian ulang.</p>
+          <button onclick="closeModal()" class="btn-primary w-full mt-4 text-center">Mengerti</button>
+        </div>
+      `);
+      return;
+    }
+  }
+  State["_pgChildHasSocks" + i] = !currentlyChecked;
+  render();
+}
+
 function pgIncSnack(id) {
   if (!State._pgSelectedSnacks) State._pgSelectedSnacks = [];
   const stock = (DB.pgStockItems || []).find((x) => x.id === id);
@@ -308,15 +332,25 @@ function pgDecSnack(id) {
 }
 
 function showPgSnackModal() {
-  const items = (DB.pgStockItems || []).filter((s) => s.current_quantity > 0);
+  if (!State.pgModalCategory) State.pgModalCategory = 'all';
+  const categories = ['all', 'Makanan', 'Minuman'];
+  const allItems = (DB.pgStockItems || []).filter(
+    (s) => s.current_quantity > 0 && (s.category === "Makanan" || s.category === "Minuman"),
+  );
+  const items = State.pgModalCategory === 'all' ? allItems : allItems.filter(s => s.category === State.pgModalCategory);
   const selected = State._pgSelectedSnacks || [];
   showModal(`
     <div>
       <div class="flex justify-between items-center mb-4">
-        <h3 class="font-display text-lg font-bold">Pilih Makanan & Minuman</h3>
+        <h3 class="font-display text-lg font-bold">Pilih Item</h3>
         <button onclick="closeModal();render()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
       </div>
-      <div class="grid grid-cols-2 gap-3" style="max-height:70vh;overflow-y:auto;padding-bottom:12px">
+      <div class="flex gap-2 mb-3 overflow-x-auto pb-1" style="-webkit-overflow-scrolling:touch;scrollbar-width:none">
+        ${categories.map(c => `
+          <button onclick="State.pgModalCategory='${c}';closeModal();showPgSnackModal()" class="btn-sm px-3 py-1.5 text-xs font-semibold whitespace-nowrap" style="background:${State.pgModalCategory === c ? 'var(--accent)' : 'var(--bg2)'};color:${State.pgModalCategory === c ? '#fff' : 'var(--muted)'};border:1px solid ${State.pgModalCategory === c ? 'var(--accent)' : 'var(--border)'};border-radius:20px;cursor:pointer">${c === 'all' ? 'Semua' : c}</button>
+        `).join('')}
+      </div>
+      <div class="grid grid-cols-2 gap-3" style="max-height:60vh;overflow-y:auto;padding-bottom:12px">
         ${items
           .map((s) => {
             const inCart = selected.find((x) => x.menu_item_id === s.id);
@@ -615,6 +649,25 @@ function finalizePlaygroundTicket() {
       if (stock.current_quantity <= stock.min_quantity) notifyLowStock(stock);
     }
   });
+
+  const sockCount = childSocks.filter(Boolean).length;
+  if (sockCount > 0) {
+    const sockStock = (DB.pgStockItems || []).find((s) => s.category === "Perlengkapan");
+    if (sockStock) {
+      sockStock.current_quantity = Math.max(0, sockStock.current_quantity - sockCount);
+      sockStock.updated_at = new Date().toISOString();
+      (DB.pgStockMovements || (DB.pgStockMovements = [])).push({
+        id: "psm" + Date.now() + Math.random().toString(36).slice(2, 6),
+        stock_item_id: sockStock.id,
+        user_id: State.currentUser.id,
+        type: "out",
+        quantity: sockCount,
+        notes: "Kaos kaki via tiket",
+        created_at: new Date().toISOString(),
+      });
+      if (sockStock.current_quantity <= sockStock.min_quantity) notifyLowStock(sockStock);
+    }
+  }
 
   State._pgCustomerName = "";
   State._pgChildCount = 0;

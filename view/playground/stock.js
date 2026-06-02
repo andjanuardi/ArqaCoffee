@@ -4,8 +4,11 @@
 
 function renderPlaygroundPgStock() {
   if (!State.pgStockSearch) State.pgStockSearch = '';
+  if (!State.pgStockCategory) State.pgStockCategory = 'all';
+  const categories = ['all', 'Makanan', 'Minuman', 'Perlengkapan'];
   const bySearch = (DB.pgStockItems || []).filter(s => !State.pgStockSearch || s.name.toLowerCase().includes(State.pgStockSearch.toLowerCase()));
-  const sorted = [...bySearch].sort((a, b) => {
+  const byCategory = State.pgStockCategory === 'all' ? bySearch : bySearch.filter(s => s.category === State.pgStockCategory);
+  const sorted = [...byCategory].sort((a, b) => {
     const aPct = a.min_quantity > 0 ? a.current_quantity / a.min_quantity : a.current_quantity;
     const bPct = b.min_quantity > 0 ? b.current_quantity / b.min_quantity : b.current_quantity;
     return aPct - bPct;
@@ -13,11 +16,16 @@ function renderPlaygroundPgStock() {
   return `
   <div class="animate-fade-up">
     <div class="flex justify-between items-center mb-4">
-      <h2 class="font-display text-xl font-bold">Stok Makanan & Minuman</h2>
+      <h2 class="font-display text-xl font-bold">Stok item include</h2>
       <button onclick="showAddPgStockModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
     </div>
     <div class="card mb-4" style="padding:10px">
       <input type="text" class="input-field text-sm w-full" placeholder="Cari item..." value="${State.pgStockSearch}" oninput="State.pgStockSearch=this.value;render()">
+    </div>
+    <div class="flex gap-2 mb-4 overflow-x-auto pb-1" style="-webkit-overflow-scrolling:touch;scrollbar-width:none">
+      ${categories.map(c => `
+        <button onclick="State.pgStockCategory='${c}';render()" class="btn-sm px-3 py-1.5 text-xs font-semibold whitespace-nowrap" style="background:${State.pgStockCategory === c ? 'var(--accent)' : 'var(--bg2)'};color:${State.pgStockCategory === c ? '#fff' : 'var(--muted)'};border:1px solid ${State.pgStockCategory === c ? 'var(--accent)' : 'var(--border)'};border-radius:20px;cursor:pointer">${c === 'all' ? 'Semua' : c}</button>
+      `).join('')}
     </div>
     <div class="space-y-3">
       ${sorted.map(s => {
@@ -28,8 +36,11 @@ function renderPlaygroundPgStock() {
           <div class="flex gap-3">
             ${s.image ? `<img src="${s.image}" onerror="this.style.display='none'" style="width:56px;height:56px;object-fit:cover;border-radius:10px;flex-shrink:0">` : ''}
             <div class="flex-1 min-w-0">
-              <div class="flex justify-between items-center mb-2">
-                <div class="font-semibold text-sm truncate">${s.name} ${isLow ? '<span style="color:var(--danger);font-size:11px"><i class="fas fa-exclamation-triangle"></i> Rendah</span>' : ''}</div>
+              <div class="flex justify-between items-center mb-1">
+                <div>
+                  <div class="font-semibold text-sm truncate">${s.name}</div>
+                  <div class="text-xs" style="color:var(--muted)">${s.category || 'Makanan'}</div>
+                </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
                   <div class="text-right">
                     <div class="text-sm font-bold" style="color:${isLow ? 'var(--danger)' : 'var(--accent)'}">${s.current_quantity} ${s.unit}</div>
@@ -59,11 +70,17 @@ function renderPlaygroundPgStock() {
 function showEditPgStockModal(id) {
   const s = (DB.pgStockItems || []).find(x => x.id === id);
   if (!s) return;
+  const cats = ['Makanan', 'Minuman', 'Perlengkapan'];
   showModal(`
     <div>
       <h3 class="font-display text-lg font-bold mb-4">Edit Item</h3>
       <div class="space-y-3">
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama</label><input id="edit-pgstock-name" class="input-field text-sm" value="${s.name}"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kategori</label>
+          <select id="edit-pgstock-category" class="input-field text-sm">
+            ${cats.map(c => `<option value="${c}" ${s.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+          </select>
+        </div>
         <div class="grid grid-cols-2 gap-3">
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Jumlah</label><input id="edit-pgstock-qty" type="number" class="input-field text-sm" value="${s.current_quantity}"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Satuan</label><input id="edit-pgstock-unit" class="input-field text-sm" value="${s.unit}"></div>
@@ -103,6 +120,7 @@ function saveEditPgStock(id) {
     if (img) image = img.src;
   }
   s.name = name;
+  s.category = document.getElementById('edit-pgstock-category')?.value || 'Makanan';
   s.current_quantity = parseInt(document.getElementById('edit-pgstock-qty')?.value || '0');
   s.unit = document.getElementById('edit-pgstock-unit')?.value || 'pcs';
   s.price = parseInt(document.getElementById('edit-pgstock-price')?.value || '0');
@@ -149,6 +167,13 @@ function showAddPgStockModal() {
       <h3 class="font-display text-lg font-bold mb-4">Tambah Item</h3>
       <div class="space-y-3">
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama</label><input id="new-pgstock-name" class="input-field text-sm" placeholder="Misal: Air Mineral"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kategori</label>
+          <select id="new-pgstock-category" class="input-field text-sm">
+            <option value="Makanan">Makanan</option>
+            <option value="Minuman">Minuman</option>
+            <option value="Perlengkapan">Perlengkapan</option>
+          </select>
+        </div>
         <div class="grid grid-cols-2 gap-3">
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Jumlah</label><input id="new-pgstock-qty" type="number" class="input-field text-sm" value="10"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Satuan</label><input id="new-pgstock-unit" class="input-field text-sm" value="pcs"></div>
@@ -183,6 +208,6 @@ function addPgStockItem() {
     if (img) image = img.src;
   }
   if (!DB.pgStockItems) DB.pgStockItems = [];
-  DB.pgStockItems.push({ id: 'ps' + Date.now(), name, unit: document.getElementById('new-pgstock-unit')?.value || 'pcs', current_quantity: parseInt(document.getElementById('new-pgstock-qty')?.value || '10'), price: parseInt(document.getElementById('new-pgstock-price')?.value || '0'), image, min_quantity: parseInt(document.getElementById('new-pgstock-min')?.value || '3'), updated_at: new Date().toISOString() });
+  DB.pgStockItems.push({ id: 'ps' + Date.now(), name, category: document.getElementById('new-pgstock-category')?.value || 'Makanan', unit: document.getElementById('new-pgstock-unit')?.value || 'pcs', current_quantity: parseInt(document.getElementById('new-pgstock-qty')?.value || '10'), price: parseInt(document.getElementById('new-pgstock-price')?.value || '0'), image, min_quantity: parseInt(document.getElementById('new-pgstock-min')?.value || '3'), updated_at: new Date().toISOString() });
   closeModal(); showToast('Item ditambahkan', 'success'); render();
 }

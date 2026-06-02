@@ -20,7 +20,9 @@ function calcPlaygroundTotal(children, companions, hours, childSocks, items) {
   const baseRate =
     children.length * PG_CHILD_PRICE + companions.length * PG_COMPANION_PRICE;
   const subtotal = baseRate * Math.max(1, hours);
-  const socks = childSocks.filter((s) => s).length * PG_SOCKS_PRICE;
+  const sockItem = (DB.pgStockItems || []).find((s) => s.category === "Perlengkapan");
+  const sockPrice = sockItem ? sockItem.price : PG_SOCKS_PRICE;
+  const socks = childSocks.filter((s) => s).length * sockPrice;
   const socksCount = childSocks.filter((s) => s).length;
   const itemsTotal = items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
   return {
