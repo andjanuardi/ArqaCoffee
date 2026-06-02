@@ -23,7 +23,7 @@ Fitur pindah meja pada edit pesanan
 	- Hilangkan Absesi (selesai)
 	- Ganti Absensi Jadi Status (selesai)
 	- Kurir Mendapat Order dari yang terdekat dari warung atau mitra
-- Pelanggan
+- Pelanggan  (Selesai)
 	- Bisa Ganti Meja, kecuali sudah status selesai	
 	- Kalau ganti meja harus scan barcode, otomatis meja sebelumnya tersedia
 	- Jika Menu tidak tersedia, tetap tampil tapi tidak bisa di order

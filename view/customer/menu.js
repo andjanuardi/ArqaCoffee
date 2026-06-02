@@ -18,7 +18,7 @@ function renderCustomerMenu() {
     { id: "food", label: "Makanan" },
     { id: "snack", label: "Snack" },
   ];
-  let items = DB.menuItems.filter((m) => m.is_available);
+  let items = [...DB.menuItems];
   if (State.selectedCategory !== "all")
     items = items.filter((m) => m.category === State.selectedCategory);
   if (State.searchQuery)
@@ -97,13 +97,15 @@ function renderCustomerMenu() {
               if (!p || !p.is_active) return false;
               return !p.menu_ids || !p.menu_ids.length || p.menu_ids.includes(m.id);
             })();
+            const available = m.is_available !== false;
             return `
-      <div class="menu-card ${hasPromo ? 'ring-2' : ''}" onclick="showMenuItem('${m.id}')" ${hasPromo ? 'style="--tw-ring-color:var(--success)"' : ''}>
+      <div class="menu-card ${hasPromo ? 'ring-2' : ''} ${!available ? 'opacity-45' : ''}" onclick="${available ? `showMenuItem('${m.id}')` : ''}" style="${hasPromo ? '--tw-ring-color:var(--success);' : ''}${!available ? 'cursor:default;filter:grayscale(.6);' : ''}">
         <div class="relative">
           <img src="${m.image}" alt="${m.name}" loading="lazy" onerror="this.src='https://picsum.photos/seed/${m.id}/400/300'">
           ${hasPromo ? '<div class="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:var(--success);color:#fff"><i class="fas fa-tag mr-1" style="font-size:8px"></i>Diskon</div>' : ''}
+          ${!available ? '<div class="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:rgba(100,100,100,.85);color:#fff"><i class="fas fa-circle mr-1" style="font-size:6px"></i>Tidak Tersedia</div>' : ''}
         </div>
-        <div class="p-3">
+        <div class="p-3 ${!available ? 'opacity-60' : ''}">
           <div class="font-semibold text-sm mb-1 truncate">${m.name}</div>
           <div class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(m.price)}</div>
         </div>
