@@ -34,6 +34,17 @@ function renderPlaygroundFinance() {
     </div>
     ${State.pgShowCashTable ? renderPgCashTable(dateVal) : ''}
     ${State.pgShowDigitalTable ? renderPgDigitalTable(dateVal) : ''}
+    ${(() => {
+      const lowStock = (DB.pgStockItems || []).filter(s => s.current_quantity <= s.min_quantity);
+      if (!lowStock.length) return '';
+      return `
+    <div class="card mb-4" style="border-color:rgba(231,76,60,.3)">
+      <h3 class="font-semibold text-sm mb-2" style="color:var(--danger)"><i class="fas fa-exclamation-triangle mr-1"></i>Peringatan Stok Rendah</h3>
+      <div class="space-y-2">
+        ${lowStock.map(s => `<div class="flex justify-between text-sm"><span>${s.name}</span><span style="color:var(--danger)">${s.current_quantity} / ${s.min_quantity} ${s.unit}</span></div>`).join('')}
+      </div>
+      <button onclick="State.currentTab.playground='stock';render()" class="text-xs font-bold mt-2 flex items-center gap-1" style="color:var(--accent)">Selengkapnya <i class="fas fa-arrow-right" style="font-size:10px"></i></button>
+    </div>`})()}
     <div class="card mb-4">
       <h3 class="font-semibold text-sm mb-3">Tiket Terkini</h3>
       <div class="space-y-2 max-h-64 overflow-y-auto">
