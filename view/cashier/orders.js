@@ -82,7 +82,7 @@ function renderCashierOrders() {
             <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
           </div>
           <div class="text-xs mb-2" style="color:var(--muted)">
-            <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}${t ? " — Meja " + t.number : ""}${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}
+            <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}${t ? " — Meja " + t.number : ""}${o.order_type === "dine-in" && o.status !== "completed" && o.status !== "cancelled" && o.status !== "rejected" ? ` <button onclick="event.stopPropagation();changeOrderTable('${o.id}')" class="text-xs ml-1 inline-flex items-center" style="color:var(--accent)"><i class="fas fa-pen"></i></button>` : ""}${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}
           </div>
           <div class="text-xs mb-3">${o.items
             .map((i) => {
@@ -244,6 +244,54 @@ function showCashierOrderDetail(id) {
   </div>
 </div>
 `);
+}
+
+function changeOrderTable(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o || o.status === "completed" || o.status === "cancelled" || o.status === "rejected") return;
+  showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-4">Ubah Meja</h3>
+      <p class="text-xs mb-4" style="color:var(--muted)">Pesanan #${o.id.slice(-5).toUpperCase()}</p>
+      <div class="mb-4">
+        <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Pilih Meja</label>
+        <select id="change-table-select" class="input-field w-full text-sm">
+          <option value="">-- Pilih Meja --</option>
+          ${DB.tables.map((t) => {
+            const isCurrent = o.table_id === t.id;
+            const isOccupied = t.status === "occupied" && !isCurrent;
+            return `<option value="${t.id}" ${isCurrent ? "selected" : ""} ${isOccupied ? "disabled" : ""}>${isCurrent ? "✓ " : ""}Meja ${t.number} (${t.capacity} orang)${isOccupied ? " — Terisi" : isCurrent ? " — Saat Ini" : ""}</option>`;
+          }).join("")}
+        </select>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="closeModal()" class="btn-secondary flex-1">Batal</button>
+        <button onclick="saveOrderTable('${o.id}')" class="btn-primary flex-1">Simpan</button>
+      </div>
+    </div>
+  `);
+}
+
+function saveOrderTable(id) {
+  const tableId = document.getElementById("change-table-select")?.value || null;
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  if (o.table_id === tableId) { closeModal(); return; }
+  if (o.table_id) {
+    const oldT = getTable(o.table_id);
+    const hasOtherOrders = DB.orders.some(
+      (x) => x.id !== o.id && x.table_id === o.table_id && x.status !== "completed" && x.status !== "cancelled",
+    );
+    if (oldT && !hasOtherOrders) oldT.status = "available";
+  }
+  o.table_id = tableId;
+  if (tableId) {
+    const newT = getTable(tableId);
+    if (newT) newT.status = "occupied";
+  }
+  showToast(`Meja pesanan #${o.id.slice(-5).toUpperCase()} berhasil diubah`, "success");
+  closeModal();
+  render();
 }
 
 function renderCashierPayment() {

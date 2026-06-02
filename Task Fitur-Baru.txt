@@ -53,7 +53,7 @@ Fitur pindah meja pada edit pesanan
 		- Hapus Total Pendapatan
 		- Hapus Total Pengeluaran
 		- Hapus Grafik Keuangan
-- Kasir
+- Kasir (Selesai)
 	- Filter tanggal laporan cukup tanggal 1  hari
 	- Bisa Ganti Meja, kecuali sudah status selesai
 - Mitra
