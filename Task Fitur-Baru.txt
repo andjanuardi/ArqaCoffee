@@ -56,7 +56,7 @@ Fitur pindah meja pada edit pesanan
 - Kasir (Selesai)
 	- Filter tanggal laporan cukup tanggal 1  hari
 	- Bisa Ganti Meja, kecuali sudah status selesai
-- Mitra
+- Mitra (Selesai)
 	- User Baru
 	- Seperti Juru Masak
 	- Tapi Ada Kelola Menu
