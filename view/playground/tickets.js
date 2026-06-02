@@ -31,7 +31,7 @@ function renderPlaygroundTickets() {
           <div class="flex justify-between items-start mb-2">
             <div>
               <span class="font-bold text-sm">${t.customer_name}</span>
-              <span class="badge ${isExpired ? "badge-pending" : "badge-cooking"} ml-2">${isExpired ? "Over Time" : "Aktif"}</span>
+              <span class="badge ${isExpired ? "badge-pending" : "badge-cooking"} ml-2">${isExpired ? "Over Time" : "Aktif"}</span>${t.payment_status === "paid" ? '<span class="badge badge-paid ml-1">Lunas</span>' : ""}
             </div>
             <span class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(t.total_amount)}</span>
           </div>
