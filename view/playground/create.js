@@ -200,12 +200,29 @@ function renderPlaygroundCreate() {
     }
 
     <div class="card mb-4">
-      <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Pembayaran</label>
-      <div class="grid grid-cols-3 gap-3">
-        <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectPayment('qris')" style="${State._pgPayment === "qris" || !State._pgPayment ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-qrcode mb-1" style="color:var(--accent)"></i><br>QRIS</div>
-        <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectPayment('cash')" style="${State._pgPayment === "cash" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-money-bill mb-1" style="color:var(--success)"></i><br>Tunai</div>
-        <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectPayment('unpaid')" style="${State._pgPayment === "unpaid" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-clock mb-1" style="color:var(--warning)"></i><br>Bayar Nanti</div>
+      <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Kapan Membayar?</label>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectPayTiming('now')" style="${State._pgPayTiming !== "later" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}">
+          <i class="fas fa-bolt mb-1" style="color:var(--accent)"></i><br><span class="font-semibold">Bayar Sekarang</span>
+          <div class="text-[10px] mt-1" style="color:var(--muted)">Langsung selesai</div>
+        </div>
+        <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectPayTiming('later')" style="${State._pgPayTiming === "later" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}">
+          <i class="fas fa-clock mb-1" style="color:var(--warning)"></i><br><span class="font-semibold">Bayar Nanti</span>
+          <div class="text-[10px] mt-1" style="color:var(--muted)">Bayar di kasir</div>
+        </div>
       </div>
+      ${State._pgPayTiming !== "later"
+        ? `
+      <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Metode Pembayaran</label>
+      <div class="grid grid-cols-3 gap-3">
+        <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectMethod('qris')" style="${(State._pgPaymentMethod || "qris") === "qris" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-qrcode mb-1" style="color:var(--accent)"></i><br>QRIS</div>
+        <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectMethod('transfer')" style="${State._pgPaymentMethod === "transfer" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-university mb-1" style="color:var(--accent)"></i><br>Transfer</div>
+        <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectMethod('cash')" style="${State._pgPaymentMethod === "cash" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-money-bill mb-1" style="color:var(--success)"></i><br>Tunai</div>
+      </div>`
+        : `<div class="flex items-center gap-2 p-3 rounded-xl text-xs" style="background:rgba(243,156,18,.1);color:var(--warning)">
+      <i class="fas fa-info-circle"></i>
+      <span>Tiket akan dibuat dengan status <b>Belum Bayar</b>. Silakan bayar di kasir.</span>
+    </div>`}
     </div>
 
     <button onclick="createPlaygroundTicket()" class="btn-primary w-full text-center flex items-center justify-center gap-2">
@@ -270,8 +287,15 @@ function pgToggleSnack(id) {
   render();
 }
 
-function pgSelectPayment(val) {
-  State._pgPayment = val;
+function pgSelectPayTiming(t) {
+  State._pgPayTiming = t;
+  if (t === "later") State._pgPaymentMethod = "";
+  else State._pgPaymentMethod = State._pgPaymentMethod || "qris";
+  render();
+}
+
+function pgSelectMethod(val) {
+  State._pgPaymentMethod = val;
   render();
 }
 
@@ -314,7 +338,8 @@ function createPlaygroundTicket() {
     childSocks,
     selectedSnacks,
   );
-  const payment = State._pgPayment || "qris";
+  const payLater = State._pgPayTiming === "later";
+  const paymentMethod = payLater ? "" : (State._pgPaymentMethod || "qris");
 
   const now = new Date();
   const ticket = {
@@ -338,8 +363,8 @@ function createPlaygroundTicket() {
     subtotal: calc.subtotal,
     items_total: calc.itemsTotal,
     total_amount: calc.total,
-    payment_status: payment === "unpaid" ? "unpaid" : "paid",
-    payment_method: payment === "unpaid" ? "" : payment,
+    payment_status: payLater ? "unpaid" : "paid",
+    payment_method: paymentMethod,
     status: "active",
     created_at: now.toISOString(),
   };
@@ -351,7 +376,8 @@ function createPlaygroundTicket() {
   State._pgCompanionCount = 0;
   State._pgHours = 1;
   State._pgSelectedSnacks = [];
-  State._pgPayment = "qris";
+  State._pgPayTiming = "now";
+  State._pgPaymentMethod = "qris";
   for (let i = 0; i < 10; i++) delete State["_pgChildName" + i];
   for (let i = 0; i < 10; i++) delete State["_pgChildHasSocks" + i];
   for (let i = 0; i < 10; i++) delete State["_pgCompanionName" + i];

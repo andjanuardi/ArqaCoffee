@@ -174,6 +174,7 @@ function showPlaygroundTicketDetail(id) {
       ? '<span class="badge badge-completed">Selesai</span>'
       : '<span class="badge badge-pending">Dibatalkan</span>';
   const methodLabel = t.payment_method === "qris" ? "QRIS"
+    : t.payment_method === "transfer" ? "Transfer"
     : t.payment_method === "cash" ? "Tunai" : t.payment_method || "-";
   const isCancelled = t.status === "cancelled";
 
@@ -262,6 +263,7 @@ function printPlaygroundInvoice(id) {
     ? t.companions.map((c) => c.name).join(", ")
     : t.companion_count > 0 ? t.companion_count + " orang" : "";
   const methodLabel = t.payment_method === "qris" ? "QRIS"
+    : t.payment_method === "transfer" ? "Transfer"
     : t.payment_method === "cash" ? "Tunai" : t.payment_method || "-";
 
   const win = window.open("", "_blank");
