@@ -47,7 +47,7 @@ Fitur pindah meja pada edit pesanan
 	- Stok bahan - Menambah Stok pakai modal pilihan di catat kek pengeluaran atau tidak?
 	- Stok bahan - Menambah Stok Pakai Input
 	- Stok bahan - Boleh hapus Kalau stok 0
-- Manager
+- Manager (Selesai)
 	- Laporan keuangan seperti kasir
 	- Dashboard
 		- Hapus Total Pendapatan

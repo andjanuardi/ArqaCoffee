@@ -4,6 +4,7 @@
 function renderManagerView() {
   const tab = State.currentTab.manager || 'dashboard';
   if (tab === 'dashboard') return renderManagerDashboard();
+  if (tab === 'report') return renderManagerReport();
   if (tab === 'finance') return renderFinanceReport();
   if (tab === 'stock') return renderStockManagement();
   if (tab === 'expenses') return renderExpenseManagement();
@@ -15,6 +16,117 @@ function renderManagerView() {
   if (tab === 'users') return renderManagerUsers();
   if (tab === 'profile') return renderGenericProfile();
   return renderManagerDashboard();
+}
+
+function renderManagerReport() {
+  const dateVal = State.managerReportDate || new Date().toISOString().split('T')[0];
+  const paidInRange = DB.orders.filter(o => {
+    if (o.payment_status !== 'paid' || !o.created_at) return false;
+    const d = o.created_at.split('T')[0];
+    return d === dateVal;
+  });
+  const cashInRange = paidInRange.filter(o => o.payment_method === 'cash' || o.payment_method === 'cod');
+  const cashTotal = cashInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const digitalInRange = paidInRange.filter(o => o.payment_method === 'digital' || o.payment_method === 'qris' || o.payment_method === 'bank_transfer');
+  const digitalTotal = digitalInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const unpaidOrders = DB.orders.filter(o => o.status !== 'cancelled' && o.status !== 'rejected' && o.payment_status === 'unpaid' && (!o.created_at || o.created_at.split('T')[0] === dateVal));
+  return `
+  <div class="animate-fade-up">
+    <h2 class="font-display text-xl font-bold mb-4">Laporan Harian</h2>
+    <div class="mb-4">
+      <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Filter Tanggal</label>
+      <input type="date" id="manager-report-date" class="input-field w-full" value="${dateVal}" onchange="State.managerReportDate=this.value;render()">
+    </div>
+    <div class="grid grid-cols-2 gap-3 mb-5">
+      <div class="stat-card cursor-pointer" onclick="State.showManagerCashTable=!State.showManagerCashTable;render()"><div class="flex items-center gap-2"><i class="fas fa-money-bill-wave" style="color:var(--success);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Bayar Tunai</span></div><div class="text-xl font-bold mt-1" style="color:var(--success)">${formatCurrency(cashTotal)}</div></div>
+      <div class="stat-card cursor-pointer" onclick="State.showManagerDigitalTable=!State.showManagerDigitalTable;render()"><div class="flex items-center gap-2"><i class="fas fa-credit-card" style="color:var(--accent);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Bayar Digital</span></div><div class="text-xl font-bold mt-1" style="color:var(--accent)">${formatCurrency(digitalTotal)}</div></div>
+      <div class="stat-card"><div class="flex items-center gap-2"><i class="fas fa-check-circle" style="color:var(--success);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Lunas</span></div><div class="text-xl font-bold mt-1" style="color:var(--success)">${paidInRange.length}</div></div>
+      <div class="stat-card"><div class="flex items-center gap-2"><i class="fas fa-exclamation-circle" style="color:var(--danger);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Belum Bayar</span></div><div class="text-xl font-bold mt-1" style="color:var(--danger)">${unpaidOrders.length}</div></div>
+    </div>
+    ${State.showManagerCashTable ? renderManagerCashTable(dateVal) : ''}
+    ${State.showManagerDigitalTable ? renderManagerDigitalTable(dateVal) : ''}
+    <div class="card">
+      <h3 class="font-semibold text-sm mb-3">Pesanan Terkini</h3>
+      <div class="space-y-2 max-h-64 overflow-y-auto">
+        ${DB.orders.slice(0, 6).map(o => `
+        <div class="flex justify-between items-center text-sm py-2 border-b" style="border-color:var(--border)">
+          <div><span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span><span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>${o.promo_discount ? '<span class="text-[10px] ml-1" style="color:var(--success)"><i class="fas fa-tag"></i></span>' : ''}${o.customer_name ? '<span class="text-[10px] ml-1" style="color:var(--muted)">— ' + o.customer_name + '</span>' : ''}</div>
+          <span>${formatCurrency(o.total_amount)}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderManagerCashTable(dateVal) {
+  const orders = DB.orders.filter(o => {
+    if (o.payment_status !== 'paid' || (o.payment_method !== 'cash' && o.payment_method !== 'cod') || !o.created_at) return false;
+    return o.created_at.split('T')[0] === dateVal;
+  }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
+  return `
+    <div class="card mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-sm">Detail Bayar Tunai</h3>
+        <button onclick="State.showManagerCashTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Tunai</div><div class="text-base font-bold mt-1" style="color:var(--success)">${formatCurrency(total)}</div></div>
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Jumlah Transaksi</div><div class="text-base font-bold mt-1">${orders.length}</div></div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm" style="border-collapse:collapse">
+          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Orders</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Menu</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
+          <tbody>${orders.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="4">Belum ada transaksi tunai</td></tr>' : orders.map(o => {
+            const time = o.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            const menuCount = {};
+            (o.items || []).forEach(item => {
+              const mi = DB.menuItems.find(m => m.id === item.menu_item_id);
+              if (mi) menuCount[mi.name] = (menuCount[mi.name] || 0) + item.quantity;
+            });
+            const menuList = Object.entries(menuCount).map(([name, qty]) => name + ' x' + qty).join(', ');
+            return `<tr><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})${o.customer_name ? '<br><span style="font-size:10px">' + o.customer_name + '</span>' : ''}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(o.total_amount || 0)}</td></tr>`;
+          }).join('')}</tbody>
+          <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(total)}</td></tr></tfoot>
+        </table>
+      </div>
+    </div>`;
+}
+
+function renderManagerDigitalTable(dateVal) {
+  const orders = DB.orders.filter(o => {
+    if (o.payment_status !== 'paid' || (o.payment_method !== 'digital' && o.payment_method !== 'qris' && o.payment_method !== 'bank_transfer') || !o.created_at) return false;
+    return o.created_at.split('T')[0] === dateVal;
+  }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
+  return `
+    <div class="card mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-sm">Detail Bayar Digital</h3>
+        <button onclick="State.showManagerDigitalTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Digital</div><div class="text-base font-bold mt-1" style="color:var(--accent)">${formatCurrency(total)}</div></div>
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Jumlah Transaksi</div><div class="text-base font-bold mt-1">${orders.length}</div></div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm" style="border-collapse:collapse">
+          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Orders</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Menu</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
+          <tbody>${orders.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="4">Belum ada transaksi digital</td></tr>' : orders.map(o => {
+            const time = o.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            const menuCount = {};
+            (o.items || []).forEach(item => {
+              const mi = DB.menuItems.find(m => m.id === item.menu_item_id);
+              if (mi) menuCount[mi.name] = (menuCount[mi.name] || 0) + item.quantity;
+            });
+            const menuList = Object.entries(menuCount).map(([name, qty]) => name + ' x' + qty).join(', ');
+            const payLabel = o.payment_method === 'qris' ? 'QRIS' : o.payment_method === 'bank_transfer' ? 'Transfer' : 'Digital';
+            return `<tr><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})${o.customer_name ? '<br><span style="font-size:10px">' + o.customer_name + '</span>' : ''}<br><span style="font-size:10px;color:var(--accent)">${payLabel}</span></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--accent)">${formatCurrency(o.total_amount || 0)}</td></tr>`;
+          }).join('')}</tbody>
+          <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(total)}</td></tr></tfoot>
+        </table>
+      </div>
+    </div>`;
 }
 
 function renderManagerDashboard() {
