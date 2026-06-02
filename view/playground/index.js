@@ -44,7 +44,7 @@ function formatRemaining(ms) {
 }
 
 function renderPlaygroundStock() {
-  return renderStockManagement();
+  return renderPlaygroundPgStock();
 }
 
 function renderPlaygroundProfile() {

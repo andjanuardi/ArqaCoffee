@@ -780,6 +780,21 @@ const DB =
         //{ id: "e7", date: "2025-01-15", category: "Lainnya", amount: 100000, note: "Biaya kebersihan", volume: 1, unit: "kali", unitPrice: 100000 },
       ],
       playgroundTickets: [],
+      pgStockItems: [
+        { id: "ps1", name: "Air Mineral 600ml", unit: "botol", current_quantity: 48, min_quantity: 12, price: 5000, updated_at: new Date().toISOString() },
+        { id: "ps2", name: "Soft Drink Kaleng", unit: "kaleng", current_quantity: 36, min_quantity: 12, price: 8000, updated_at: new Date().toISOString() },
+        { id: "ps3", name: "Kopi Sachet", unit: "sachet", current_quantity: 60, min_quantity: 20, price: 3000, updated_at: new Date().toISOString() },
+        { id: "ps4", name: "Teh Celup", unit: "kantong", current_quantity: 100, min_quantity: 30, price: 2500, updated_at: new Date().toISOString() },
+        { id: "ps5", name: "Mie Cup", unit: "cup", current_quantity: 24, min_quantity: 12, price: 7000, updated_at: new Date().toISOString() },
+        { id: "ps6", name: "Keripik Singkong", unit: "pack", current_quantity: 18, min_quantity: 6, price: 6000, updated_at: new Date().toISOString() },
+        { id: "ps7", name: "Biskuit", unit: "pack", current_quantity: 12, min_quantity: 6, price: 5000, updated_at: new Date().toISOString() },
+        { id: "ps8", name: "Saus Sambal", unit: "sachet", current_quantity: 200, min_quantity: 50, price: 1000, updated_at: new Date().toISOString() },
+        { id: "ps9", name: "Susu UHT Kotak", unit: "kotak", current_quantity: 24, min_quantity: 12, price: 6000, updated_at: new Date().toISOString() },
+        { id: "ps10", name: "Jus Kemasan", unit: "botol", current_quantity: 12, min_quantity: 6, price: 10000, updated_at: new Date().toISOString() },
+        { id: "ps11", name: "Air Mineral 1.5L", unit: "botol", current_quantity: 24, min_quantity: 6, price: 8000, updated_at: new Date().toISOString() },
+        { id: "ps12", name: "Cokelat Batang", unit: "pcs", current_quantity: 15, min_quantity: 5, price: 12000, updated_at: new Date().toISOString() },
+      ],
+      pgStockMovements: [],
     };
   })();
 
@@ -834,5 +849,7 @@ if (!DB.users.some(u => u.role === 'playground')) {
     address: "",
   });
   if (!DB.playgroundTickets) DB.playgroundTickets = [];
+  if (!DB.pgStockItems) DB.pgStockItems = [];
+  if (!DB.pgStockMovements) DB.pgStockMovements = [];
   saveDB();
 }
