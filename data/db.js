@@ -781,18 +781,18 @@ const DB =
       ],
       playgroundTickets: [],
       pgStockItems: [
-        { id: "ps1", name: "Air Mineral 600ml", unit: "botol", current_quantity: 48, min_quantity: 12, price: 5000, updated_at: new Date().toISOString() },
-        { id: "ps2", name: "Soft Drink Kaleng", unit: "kaleng", current_quantity: 36, min_quantity: 12, price: 8000, updated_at: new Date().toISOString() },
-        { id: "ps3", name: "Kopi Sachet", unit: "sachet", current_quantity: 60, min_quantity: 20, price: 3000, updated_at: new Date().toISOString() },
-        { id: "ps4", name: "Teh Celup", unit: "kantong", current_quantity: 100, min_quantity: 30, price: 2500, updated_at: new Date().toISOString() },
-        { id: "ps5", name: "Mie Cup", unit: "cup", current_quantity: 24, min_quantity: 12, price: 7000, updated_at: new Date().toISOString() },
-        { id: "ps6", name: "Keripik Singkong", unit: "pack", current_quantity: 18, min_quantity: 6, price: 6000, updated_at: new Date().toISOString() },
-        { id: "ps7", name: "Biskuit", unit: "pack", current_quantity: 12, min_quantity: 6, price: 5000, updated_at: new Date().toISOString() },
-        { id: "ps8", name: "Saus Sambal", unit: "sachet", current_quantity: 200, min_quantity: 50, price: 1000, updated_at: new Date().toISOString() },
-        { id: "ps9", name: "Susu UHT Kotak", unit: "kotak", current_quantity: 24, min_quantity: 12, price: 6000, updated_at: new Date().toISOString() },
-        { id: "ps10", name: "Jus Kemasan", unit: "botol", current_quantity: 12, min_quantity: 6, price: 10000, updated_at: new Date().toISOString() },
-        { id: "ps11", name: "Air Mineral 1.5L", unit: "botol", current_quantity: 24, min_quantity: 6, price: 8000, updated_at: new Date().toISOString() },
-        { id: "ps12", name: "Cokelat Batang", unit: "pcs", current_quantity: 15, min_quantity: 5, price: 12000, updated_at: new Date().toISOString() },
+        { id: "ps1", name: "Air Mineral 600ml", unit: "botol", current_quantity: 48, min_quantity: 12, price: 5000, image: "https://picsum.photos/seed/pg1/400/400", updated_at: new Date().toISOString() },
+        { id: "ps2", name: "Soft Drink Kaleng", unit: "kaleng", current_quantity: 36, min_quantity: 12, price: 8000, image: "https://picsum.photos/seed/pg2/400/400", updated_at: new Date().toISOString() },
+        { id: "ps3", name: "Kopi Sachet", unit: "sachet", current_quantity: 60, min_quantity: 20, price: 3000, image: "https://picsum.photos/seed/pg3/400/400", updated_at: new Date().toISOString() },
+        { id: "ps4", name: "Teh Celup", unit: "kantong", current_quantity: 100, min_quantity: 30, price: 2500, image: "https://picsum.photos/seed/pg4/400/400", updated_at: new Date().toISOString() },
+        { id: "ps5", name: "Mie Cup", unit: "cup", current_quantity: 24, min_quantity: 12, price: 7000, image: "https://picsum.photos/seed/pg5/400/400", updated_at: new Date().toISOString() },
+        { id: "ps6", name: "Keripik Singkong", unit: "pack", current_quantity: 18, min_quantity: 6, price: 6000, image: "https://picsum.photos/seed/pg6/400/400", updated_at: new Date().toISOString() },
+        { id: "ps7", name: "Biskuit", unit: "pack", current_quantity: 12, min_quantity: 6, price: 5000, image: "https://picsum.photos/seed/pg7/400/400", updated_at: new Date().toISOString() },
+        { id: "ps8", name: "Saus Sambal", unit: "sachet", current_quantity: 200, min_quantity: 50, price: 1000, image: "https://picsum.photos/seed/pg8/400/400", updated_at: new Date().toISOString() },
+        { id: "ps9", name: "Susu UHT Kotak", unit: "kotak", current_quantity: 24, min_quantity: 12, price: 6000, image: "https://picsum.photos/seed/pg9/400/400", updated_at: new Date().toISOString() },
+        { id: "ps10", name: "Jus Kemasan", unit: "botol", current_quantity: 12, min_quantity: 6, price: 10000, image: "https://picsum.photos/seed/pg10/400/400", updated_at: new Date().toISOString() },
+        { id: "ps11", name: "Air Mineral 1.5L", unit: "botol", current_quantity: 24, min_quantity: 6, price: 8000, image: "https://picsum.photos/seed/pg11/400/400", updated_at: new Date().toISOString() },
+        { id: "ps12", name: "Cokelat Batang", unit: "pcs", current_quantity: 15, min_quantity: 5, price: 12000, image: "https://picsum.photos/seed/pg12/400/400", updated_at: new Date().toISOString() },
       ],
       pgStockMovements: [],
     };
@@ -853,3 +853,6 @@ if (!DB.users.some(u => u.role === 'playground')) {
   if (!DB.pgStockMovements) DB.pgStockMovements = [];
   saveDB();
 }
+
+// Migration: ensure pgStockItems have image field
+(DB.pgStockItems || []).forEach(s => { if (!s.image) s.image = ''; });
