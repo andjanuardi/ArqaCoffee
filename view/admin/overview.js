@@ -12,6 +12,7 @@ function renderAdminView() {
   if (tab === 'stock') return renderStockManagement();
   if (tab === 'expenses') return renderExpenseManagement();
   if (tab === 'active-orders') return renderActiveOrders();
+  if (tab === 'service-control') return renderServiceControl();
   if (tab === 'courier-finance') return renderAdminCourierFinance();
   if (tab === 'mitra-finance') return renderAdminMitraFinance();
   if (tab === 'mitra-approval') return renderAdminMitraApproval();
@@ -436,6 +437,87 @@ function renderAdminOverview() {
     </div>
   </div>
   </div>`;
+}
+
+function isServiceClosed() {
+  if (!DB.cafe) DB.cafe = {};
+  if (DB.cafe.serviceStatus === 'closed') return true;
+  if (DB.cafe.serviceSchedule) {
+    const today = new Date().getDay();
+    const idx = today === 0 ? 6 : today - 1;
+    const day = DB.cafe.serviceSchedule[idx];
+    if (day && !day.active) return true;
+  }
+  return false;
+}
+
+function renderServiceControl() {
+  if (!DB.cafe) DB.cafe = {};
+  if (!DB.cafe.serviceStatus) DB.cafe.serviceStatus = 'open';
+  if (!DB.cafe.serviceSchedule) {
+    const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu', 'Minggu'];
+    DB.cafe.serviceSchedule = days.map((name, i) => ({ day: i, name, active: true }));
+  }
+  const isOpen = DB.cafe.serviceStatus === 'open';
+  return `
+  <div class="animate-fade-up">
+    <h2 class="font-display text-xl font-bold mb-1">Kontrol Buka Tutup Layanan</h2>
+    <p class="text-sm mb-5" style="color:var(--muted)">Atur jadwal operasional ARQA Coffee</p>
+    <div class="card mb-5 text-center py-8" style="border:2px solid ${isOpen ? 'rgba(39,174,96,.3)' : 'rgba(231,76,60,.3)'}">
+      <div class="w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center text-4xl" style="background:${isOpen ? 'rgba(39,174,96,.12)' : 'rgba(231,76,60,.12)'};color:${isOpen ? 'var(--success)' : 'var(--danger)'}">
+        <i class="fas ${isOpen ? 'fa-store' : 'fa-store-slash'}"></i>
+      </div>
+      <div class="text-2xl font-bold mb-1" style="color:${isOpen ? 'var(--success)' : 'var(--danger)'}">${isOpen ? 'BUKA' : 'TUTUP'}</div>
+      <p class="text-sm mb-4" style="color:var(--muted)">Layanan sedang ${isOpen ? 'beroperasi' : 'tidak beroperasi'}</p>
+      <button onclick="toggleServiceStatus()" class="btn-sm font-semibold" style="background:${isOpen ? 'rgba(231,76,60,.1)' : 'rgba(39,174,96,.1)'};color:${isOpen ? 'var(--danger)' : 'var(--success)'};border:1px solid ${isOpen ? 'rgba(231,76,60,.2)' : 'rgba(39,174,96,.2)'};padding:10px 24px;border-radius:12px;cursor:pointer">
+        <i class="fas ${isOpen ? 'fa-store-slash' : 'fa-store'} mr-1"></i>${isOpen ? 'Tutup Manual' : 'Buka Manual'}
+      </button>
+    </div>
+    <div class="card">
+      <h3 class="font-semibold text-sm mb-1"><i class="fas fa-calendar-week mr-1"></i>Jadwal Buka Otomatis</h3>
+      <p class="text-xs mb-4" style="color:var(--muted)">Atur hari apa saja layanan buka. Di luar hari ini layanan otomatis tutup.</p>
+      <div class="space-y-2 mb-4">
+        ${DB.cafe.serviceSchedule.map(d => `
+        <div class="flex items-center justify-between py-2 px-3 rounded-xl" style="background:var(--bg2)">
+          <span class="text-sm font-medium">${d.name}</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" class="sr-only peer" ${d.active ? 'checked' : ''} onchange="scheduleDayToggle(${d.day}, this.checked)">
+            <div class="w-11 h-6 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" style="background:${d.active ? 'var(--success)' : 'rgba(255,255,255,.15)'}"></div>
+          </label>
+        </div>`).join('')}
+      </div>
+      <button onclick="saveServiceSchedule()" class="btn-primary w-full text-center"><i class="fas fa-save mr-1"></i>Simpan Jadwal</button>
+    </div>
+    ${DB.cafe.serviceSchedule.some(d => !d.active) ? `
+    <div class="card mt-4" style="border-color:rgba(243,156,18,.2)">
+      <div class="flex items-start gap-3">
+        <i class="fas fa-info-circle mt-0.5" style="color:var(--warning)"></i>
+        <div>
+          <p class="text-sm font-semibold mb-1" style="color:var(--warning)">Jadwal Tidak Penuh</p>
+          <p class="text-xs" style="color:var(--muted)">Layanan akan otomatis tutup pada hari ${DB.cafe.serviceSchedule.filter(d => !d.active).map(d => d.name).join(', ')}.</p>
+        </div>
+      </div>
+    </div>` : ''}
+  </div>`;
+}
+
+function toggleServiceStatus() {
+  if (!DB.cafe) DB.cafe = {};
+  DB.cafe.serviceStatus = DB.cafe.serviceStatus === 'open' ? 'closed' : 'open';
+  const label = DB.cafe.serviceStatus === 'open' ? 'Layanan dibuka' : 'Layanan ditutup';
+  showToast(label, DB.cafe.serviceStatus === 'open' ? 'success' : 'warning');
+  render();
+}
+
+function scheduleDayToggle(day, checked) {
+  if (!DB.cafe?.serviceSchedule) return;
+  DB.cafe.serviceSchedule[day].active = checked;
+}
+
+function saveServiceSchedule() {
+  if (!DB.cafe) DB.cafe = {};
+  showToast('Jadwal layanan tersimpan!', 'success');
+  render();
 }
 
 function showTableDetail(id) {

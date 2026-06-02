@@ -32,9 +32,9 @@ Fitur pindah meja pada edit pesanan
 	- Verifikasi Approval User Mitra baru (selesai)
 	- Verifikasi Approval Menu Mitra (selesai)
 	- Verifikasi Approval Kurir Baru (selesai)
-	- Kontrol Buka Tutup Layanan
-		- Tombol Tutup Manual
-		- Input jadwal tutup otomatis (pakai hari)
+	- Kontrol Buka Tutup Layanan (selesai)
+		- Tombol Tutup Manual (selesai)
+		- Input jadwal tutup otomatis (pakai hari) (selesai)
 	- Laporan keuangan dari mitra (selesai)
 	- Laporan keuangan dari kurir (selesai)
 	- Laporan keuangan dari playround

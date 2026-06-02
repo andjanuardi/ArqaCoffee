@@ -85,6 +85,7 @@ function renderSideDrawer(role) {
     { id: 'stock', icon: 'fa-warehouse', label: 'Stok Bahan' },
     { id: 'expenses', icon: 'fa-money-bill-wave', label: 'Pengeluaran' },
     { id: 'active-orders', icon: 'fa-clipboard-list', label: 'Pesanan Aktif' },
+    { id: 'service-control', icon: 'fa-store', label: 'Buka Tutup Layanan' },
     { id: 'mitra-approval', icon: 'fa-user-check', label: 'Approval Mitra' },
     { id: 'courier-finance', icon: 'fa-motorcycle', label: 'Keuangan Kurir' },
     { id: 'mitra-finance', icon: 'fa-handshake', label: 'Keuangan Mitra' },

@@ -66,7 +66,21 @@ function renderLogin() {
   </div>`;
 }
 
+function showServiceClosedPopup() {
+  showModal(`
+    <div class="text-center">
+      <div class="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl" style="background:rgba(231,76,60,.12);color:var(--danger)">
+        <i class="fas fa-store-slash"></i>
+      </div>
+      <h3 class="font-display text-lg font-bold mb-2">Layanan Tutup</h3>
+      <p class="text-sm mb-4" style="color:var(--muted)">Maaf, ARQA Coffee sedang tutup. Silakan coba lagi nanti.</p>
+      <button onclick="closeModal()" class="btn-primary w-full text-center">Tutup</button>
+    </div>
+  `);
+}
+
 function quickLogin(role) {
+  if (role === 'customer' && isServiceClosed()) { showServiceClosedPopup(); return; }
   const u = DB.users.find(u => u.role === role);
   if (u) {
     State.currentUser = u;
@@ -82,6 +96,7 @@ function handleLogin() {
   const p = document.getElementById('login-pass').value;
   const u = DB.users.find(u => u.email === e && u.password === p);
   if (u) {
+    if (u.role === 'customer' && isServiceClosed()) { showServiceClosedPopup(); return; }
     State.currentUser = u;
     State.currentView = 'main';
     State.currentTab[u.role] = getDefaultTab(u.role);
@@ -119,6 +134,7 @@ function registerCustomer() {
   const address = document.getElementById('reg-address')?.value;
   if (!name || !name.trim() || !email || !email.trim()) { showToast('Nama dan email wajib diisi', 'warning'); return; }
   if (DB.users.find(u => u.email === email.trim())) { showToast('Email sudah terdaftar', 'error'); return; }
+  if (isServiceClosed()) { closeModal(); showServiceClosedPopup(); return; }
   const u = { id: 'u' + Date.now(), name: name.trim(), email: email.trim(), password: pass || 'password123', role: 'customer', phone: phone?.trim() || '', address: address?.trim() || '', avatar: name.trim()[0].toUpperCase() };
   DB.users.push(u);
   State.currentUser = u;
