@@ -249,32 +249,62 @@ function showCashierOrderDetail(id) {
 function changeOrderTable(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o || o.status === "completed" || o.status === "cancelled" || o.status === "rejected") return;
+  const currentTable = o.table_id ? getTable(o.table_id) : null;
   showModal(`
     <div>
-      <h3 class="font-display text-lg font-bold mb-4">Ubah Meja</h3>
-      <p class="text-xs mb-4" style="color:var(--muted)">Pesanan #${o.id.slice(-5).toUpperCase()}</p>
-      <div class="mb-4">
-        <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Pilih Meja</label>
-        <select id="change-table-select" class="input-field w-full text-sm">
-          <option value="">-- Pilih Meja --</option>
-          ${DB.tables.map((t) => {
-            const isCurrent = o.table_id === t.id;
-            const isOccupied = t.status === "occupied" && !isCurrent;
-            return `<option value="${t.id}" ${isCurrent ? "selected" : ""} ${isOccupied ? "disabled" : ""}>${isCurrent ? "✓ " : ""}Meja ${t.number} (${t.capacity} orang)${isOccupied ? " — Terisi" : isCurrent ? " — Saat Ini" : ""}</option>`;
-          }).join("")}
-        </select>
+      <h3 class="font-display text-lg font-bold mb-2 text-center">Ubah Meja</h3>
+      <p class="text-xs mb-4 text-center" style="color:var(--muted)">Pesanan #${o.id.slice(-5).toUpperCase()}</p>
+      ${currentTable ? `<div class="mb-4 p-3 rounded-xl text-center text-sm" style="background:var(--bg2)"><span style="color:var(--muted)">Meja saat ini:</span> <strong>${currentTable.number}</strong></div>` : ""}
+      <div id="qr-reader" class="qr-scanner-area mb-4 flex items-center justify-center" style="width:100%;min-height:220px;background:rgba(0,0,0,.3);border-radius:12px;overflow:hidden;position:relative">
+        <div class="qr-line"></div>
+        <i class="fas fa-qrcode text-5xl" style="color:var(--accent);opacity:.3"></i>
       </div>
-      <div class="flex gap-3">
-        <button onclick="closeModal()" class="btn-secondary flex-1">Batal</button>
-        <button onclick="saveOrderTable('${o.id}')" class="btn-primary flex-1">Simpan</button>
+      <p class="text-xs mb-3 text-center" style="color:var(--muted)">Atau pilih meja secara manual:</p>
+      <div class="grid grid-cols-4 gap-3 mb-4">
+        ${DB.tables.map((t) => {
+          const isCurrent = t.id === o.table_id;
+          const isOccupied = t.status === "occupied" && !isCurrent;
+          const canSelect = !isOccupied;
+          return `<button class="card text-center py-3 text-sm font-semibold ${!canSelect ? "opacity-40 cursor-not-allowed" : ""}" onclick="${canSelect ? `selectCashierTable('${o.id}','${t.id}')` : ""}" style="${!canSelect ? "pointer-events:none" : ""} ${isCurrent ? "border:2px solid var(--accent)" : ""}">
+            <i class="fas fa-chair mb-1" style="color:${isCurrent ? "var(--accent)" : isOccupied ? "var(--danger)" : "var(--success)"}"></i><br>${t.number}${isCurrent ? '<br><span style="font-size:8px;color:var(--accent)">Sekarang</span>' : ""}
+          </button>`;
+        }).join("")}
       </div>
+      <button onclick="closeModal()" class="btn-secondary w-full text-center">Batal</button>
     </div>
-  `);
+  `, () => {
+    initCashierQRScanner(id);
+  });
 }
 
-function saveOrderTable(id) {
-  const tableId = document.getElementById("change-table-select")?.value || null;
-  const o = DB.orders.find((x) => x.id === id);
+function initCashierQRScanner(orderId) {
+  const readerEl = document.getElementById('qr-reader');
+  if (!readerEl || typeof Html5Qrcode === 'undefined') return;
+  try {
+    _qrScannerInstance = new Html5Qrcode("qr-reader");
+    _qrScannerInstance.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 220, height: 220 } },
+      (decodedText) => {
+        handleCashierQRResult(decodedText, orderId);
+      },
+      () => {}
+    ).catch(() => {});
+  } catch (e) {}
+}
+
+function handleCashierQRResult(code, orderId) {
+  const table = DB.tables.find((t) => t.qr_code === code);
+  if (!table) {
+    showToast("QR code tidak dikenal!", "error");
+    return;
+  }
+  stopQRScanner();
+  selectCashierTable(orderId, table.id);
+}
+
+function selectCashierTable(orderId, tableId) {
+  const o = DB.orders.find((x) => x.id === orderId);
   if (!o) return;
   if (o.table_id === tableId) { closeModal(); return; }
   if (o.table_id) {
