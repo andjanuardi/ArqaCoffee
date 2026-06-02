@@ -55,9 +55,9 @@ function renderLogin() {
             <div class="mt-2">
               <button onclick="showForgotPasswordModal()" class="text-xs font-medium" style="color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:3px"><i class="fas fa-lock mr-1"></i>Lupa Password?</button>
             </div>
-          </div>
-          <div class="mt-6">
-            <button onclick="showMitraRegistrationModal()" class="w-full text-center py-3 rounded-xl font-semibold text-sm transition-all" style="background:linear-gradient(135deg,#e84393,#c0392b);color:#fff"><i class="fas fa-handshake mr-2"></i>Ingin Jadi Mitra Kami?</button>
+            <div class="mt-1">
+              <button onclick="showMitraRegistrationModal()" class="text-xs font-medium" style="color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:3px"><i class="fas fa-handshake mr-1"></i>Ingin Jadi Mitra Kami?</button>
+            </div>
           </div>
         </div>
       </div>

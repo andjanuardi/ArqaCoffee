@@ -28,7 +28,7 @@ Fitur pindah meja pada edit pesanan
 	- Kalau ganti meja harus scan barcode, otomatis meja sebelumnya tersedia
 	- Jika Menu tidak tersedia, tetap tampil tapi tidak bisa di order (selesai)
 - Admin
-	- Kontrol Harga Ongkir Admin (Lower Rate + Per KM)
+	- Kontrol Harga Ongkir Admin (Lower Rate + Per KM) (selesai)
 	- Verifikasi Approval User Mitra baru (selesai)
 	- Verifikasi Approval Menu Mitra (selesai)
 	- Verifikasi Approval Kurir Baru (selesai)
