@@ -729,6 +729,30 @@
   background: var(--accent);
 }
 
+.time-bar-bg {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border);
+  overflow: hidden;
+  position: relative;
+}
+.time-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s linear;
+  position: relative;
+}
+.time-bar-fill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,.3);
+}
+
 @media(max-width:768px) {
             .side-drawer {
                 width: 240px
