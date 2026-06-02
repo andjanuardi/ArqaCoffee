@@ -11,6 +11,7 @@ function renderLogin() {
     { role: 'waiter', icon: 'fa-bell-concierge', label: 'Waiters', color: '#f39c12', desc: 'Layanan pesanan meja' },
     { role: 'playground', icon: 'fa-people-group', label: 'Playground', color: '#e67e22', desc: 'Tiket bermain anak' },
     { role: 'customer', icon: 'fa-user', label: 'Pelanggan', color: '#1abc9c', desc: 'Pesan & lacak pesanan' },
+    { role: 'mitra_juru_masak', icon: 'fa-handshake', label: 'Mitra Juru Masak', color: '#e84393', desc: 'Antrian, menu & laporan keuangan' },
   ];
   return `
   <div class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style="background:linear-gradient(135deg,#0a1a1f 0%,#112830 40%,#162e38 70%,#0a1a1f 100%)">
@@ -87,7 +88,7 @@ function handleLogin() {
 }
 
 function getDefaultTab(role) {
-  const m = { admin: 'overview', manager: 'dashboard', cashier: 'orders', kitchen: 'queue', courier: 'available', waiter: 'menu', playground: 'tickets', customer: 'menu' };
+  const m = { admin: 'overview', manager: 'dashboard', cashier: 'orders', kitchen: 'queue', courier: 'available', waiter: 'menu', playground: 'tickets', customer: 'menu', mitra_juru_masak: 'queue' };
   return m[role] || 'menu';
 }
 

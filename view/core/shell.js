@@ -13,6 +13,7 @@ function renderMainApp() {
   else if (role === 'courier') content = renderCourierView();
   else if (role === 'manager') content = renderManagerView();
   else if (role === 'admin') content = renderAdminView();
+  else if (role === 'mitra_juru_masak') content = renderMitraView();
 
   const useDrawer = ['admin', 'manager'].includes(role);
 
@@ -45,7 +46,7 @@ function renderMainApp() {
 }
 
 function getRoleLabel(r) {
-  const m = { admin: 'Admin', manager: 'Manager', cashier: 'Kasir', kitchen: 'Juru Masak', courier: 'Kurir', waiter: 'Waiters', playground: 'Playground', customer: 'Pelanggan' };
+  const m = { admin: 'Admin', manager: 'Manager', cashier: 'Kasir', kitchen: 'Juru Masak', courier: 'Kurir', waiter: 'Waiters', playground: 'Playground', customer: 'Pelanggan', mitra_juru_masak: 'Mitra Juru Masak' };
   return m[r] || r;
 }
 
@@ -56,6 +57,7 @@ function renderBottomNav(role) {
     playground: [{ id: 'tickets', icon: 'fa-ticket', label: 'Tiket' }, { id: 'create', icon: 'fa-plus-circle', label: 'Buat' }, { id: 'stock', icon: 'fa-warehouse', label: 'Stok' }, { id: 'report', icon: 'fa-chart-bar', label: 'Laporan' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
     cashier: [{ id: 'orders', icon: 'fa-clipboard-list', label: 'Pesanan' }, { id: 'payment', icon: 'fa-credit-card', label: 'Bayar' }, { id: 'report', icon: 'fa-chart-bar', label: 'Laporan' }, { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Meja' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
     kitchen: [{ id: 'queue', icon: 'fa-fire-burner', label: 'Antrian' }, { id: 'history', icon: 'fa-clock-rotate-left', label: 'Riwayat' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
+    mitra_juru_masak: [{ id: 'queue', icon: 'fa-fire-burner', label: 'Antrian' }, { id: 'history', icon: 'fa-clock-rotate-left', label: 'Riwayat' }, { id: 'menu-mgmt', icon: 'fa-utensils', label: 'Menu' }, { id: 'finance', icon: 'fa-chart-pie', label: 'Laporan' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
     courier: [{ id: 'available', icon: 'fa-box', label: 'Tersedia' }, { id: 'active', icon: 'fa-route', label: 'Aktif' }, { id: 'history', icon: 'fa-clock-rotate-left', label: 'Riwayat' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
     admin: [{ id: 'overview', icon: 'fa-gauge-high', label: 'Overview' }, { id: 'promos', icon: 'fa-tags', label: 'Promo' }, { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],
     manager: [{ id: 'dashboard', icon: 'fa-gauge-high', label: 'Dashboard' }, { id: 'promos', icon: 'fa-tags', label: 'Promo' }, { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' }, { id: 'profile', icon: 'fa-user', label: 'Profil' }],

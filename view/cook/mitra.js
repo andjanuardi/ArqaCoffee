@@ -1,0 +1,154 @@
+// ============================================================
+// MITRA JURU MASAK VIEW
+// ============================================================
+function renderMitraView() {
+  const tab = State.currentTab.mitra_juru_masak || 'queue';
+  if (tab === 'queue') return renderMitraQueue();
+  if (tab === 'history') return renderMitraHistory();
+  if (tab === 'menu-mgmt') return renderCustomerMenu();
+  if (tab === 'finance') return renderMitraFinance();
+  if (tab === 'profile') return renderGenericProfile();
+  return renderMitraQueue();
+}
+
+function renderMitraQueue() {
+  return renderKitchenQueue();
+}
+
+function renderMitraHistory() {
+  let done = DB.orders.filter((o) => ["ready", "completed", "rejected"].includes(o.status));
+  const startVal = State.mitraDateStart || "";
+  const endVal = State.mitraDateEnd || "";
+  if (startVal) {
+    const s = new Date(startVal);
+    s.setHours(0, 0, 0, 0);
+    done = done.filter((o) => new Date(o.created_at) >= s);
+  }
+  if (endVal) {
+    const e = new Date(endVal);
+    e.setHours(23, 59, 59, 999);
+    done = done.filter((o) => new Date(o.created_at) <= e);
+  }
+  done.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  return `
+  <div class="animate-fade-up">
+    <h2 class="font-display text-xl font-bold mb-4">Riwayat Pesanan</h2>
+    <div class="flex gap-2 mb-4">
+      <div class="flex-1">
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Dari Tanggal</label>
+        <input type="date" id="mitra-history-start" class="input-field w-full" value="${startVal}" onchange="State.mitraDateStart=this.value;render()">
+      </div>
+      <div class="flex-1">
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Sampai Tanggal</label>
+        <input type="date" id="mitra-history-end" class="input-field w-full" value="${endVal}" onchange="State.mitraDateEnd=this.value;render()">
+      </div>
+      ${startVal || endVal ? '<button onclick="State.mitraDateStart=\'\';State.mitraDateEnd=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
+    </div>
+    <div class="space-y-2">
+      ${done.length === 0 ? '<p class="text-center py-8 text-sm" style="color:var(--muted)">Belum ada riwayat</p>' : ''}
+      ${done.map((o) => {
+        const t = o.table_id ? getTable(o.table_id) : null;
+        const itemsStr = (o.items || []).map(i => {
+          const mi = getMenuItem(i.menu_item_id);
+          return mi ? mi.name + ' x' + i.quantity : '';
+        }).filter(Boolean).join(', ');
+        return `
+      <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showMitraOrderDetail('${o.id}')">
+        <div class="flex justify-between items-start mb-1">
+          <div class="flex items-center gap-2">
+            <span class="font-semibold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
+            <span class="text-xs" style="color:var(--muted)">${getOrderTypeName(o.order_type)}</span>
+          </div>
+          <span class="badge ${o.status === 'rejected' ? 'badge-danger' : 'badge-completed'}">${o.status === 'rejected' ? 'Ditolak' : getStatusLabel(o.status)}</span>
+        </div>
+        <div class="text-xs mb-1" style="color:var(--muted)">
+          ${o.customer_name ? '<i class="fas fa-user mr-1"></i>' + o.customer_name : '<i class="fas fa-chair mr-1"></i>Walk-in'}${t ? ' — Meja ' + t.number : ''}
+        </div>
+        <div class="text-xs truncate" style="color:var(--muted)">${itemsStr || '-'}</div>
+        <div class="flex justify-between items-center mt-1">
+          <span class="text-xs" style="color:var(--muted)"><i class="far fa-clock mr-1"></i>${formatDate(o.created_at)} ${formatTime(o.created_at)}</span>
+          <span class="text-sm font-semibold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
+        </div>
+      </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function showMitraOrderDetail(id) {
+  const o = DB.orders.find(x => x.id === id); if (!o) return;
+  const t = o.table_id ? getTable(o.table_id) : null;
+  showModal(`
+<div>
+  <div class="flex justify-between items-start mb-4">
+    <h3 class="font-display text-lg font-bold">Pesanan #${o.id.slice(-5).toUpperCase()}</h3>
+    <span class="badge ${o.status === 'rejected' ? 'badge-danger' : 'badge-completed'}">${o.status === 'rejected' ? 'Ditolak' : 'Selesai'}</span>
+  </div>
+  <div class="text-xs mb-4" style="color:var(--muted)">
+    <i class="fas ${o.order_type === 'dine-in' ? 'fa-chair' : 'fa-motorcycle'} mr-1"></i>${getOrderTypeName(o.order_type)}
+    ${t ? ' — Meja ' + t.number : ''}
+    ${o.customer_name ? ' — ' + o.customer_name : ''}
+    ${o.delivery_address ? '<br>' + o.delivery_address : ''}
+  </div>
+  ${o.reject_reason ? `<div class="card mb-4 text-sm" style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2)"><i class="fas fa-ban mr-1" style="color:var(--danger)"></i><strong>Alasan Tolak:</strong> ${o.reject_reason}</div>` : ''}
+  <div class="space-y-2 mb-4">
+    ${o.items.map(i => {
+      const mi = getMenuItem(i.menu_item_id); return mi ? `
+    <div class="flex justify-between text-sm">
+      <div>
+        <span>${mi.name} x${i.quantity} ${i.notes ? '<span style="color:var(--muted)">(' + i.notes + ')</span>' : ''}</span>
+      </div>
+      <span style="color:var(--muted)">${formatCurrency(i.unit_price * i.quantity)}</span>
+    </div>` : '';
+    }).join('')}
+  </div>
+  <div class="border-t pt-3" style="border-color:var(--border)">
+    <div class="flex justify-between font-bold text-sm"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
+    <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Waktu</span><span>${formatTime(o.created_at)}</span></div>
+  </div>
+  <button onclick="closeModal()" class="btn-secondary w-full mt-4 text-center">Tutup</button>
+</div>
+`);
+}
+
+function renderMitraFinance() {
+  const today = new Date().toISOString().split('T')[0];
+  const paidOrders = DB.orders.filter(o => o.payment_status === 'paid' && o.created_at);
+  const totalRevenue = paidOrders.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const totalOrders = paidOrders.length;
+  const todayPaid = paidOrders.filter(o => o.created_at.split('T')[0] === today);
+  const todayRevenue = todayPaid.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const todayCount = todayPaid.length;
+  return `
+  <div class="animate-fade-up">
+    <h2 class="font-display text-xl font-bold mb-4">Laporan Keuangan Mitra</h2>
+    <div class="grid grid-cols-2 gap-3 mb-5">
+      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRevenue)}</div></div>
+      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pesanan Lunas</div><div class="text-lg font-bold mt-1">${totalOrders}</div></div>
+      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pendapatan Hari Ini</div><div class="text-lg font-bold mt-1" style="color:var(--success)">${formatCurrency(todayRevenue)}</div></div>
+      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pesanan Hari Ini</div><div class="text-lg font-bold mt-1">${todayCount}</div></div>
+    </div>
+    <div class="card mb-4">
+      <h3 class="font-semibold text-sm mb-3">Menu Terlaris</h3>
+      <div class="space-y-2">
+        ${(() => {
+          const count = {};
+          paidOrders.forEach(o => (o.items || []).forEach(i => {
+            const mi = getMenuItem(i.menu_item_id);
+            if (mi) count[mi.name] = (count[mi.name] || 0) + i.quantity;
+          }));
+          const sorted = Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 5);
+          if (!sorted.length) return '<p class="text-sm" style="color:var(--muted)">Belum ada data</p>';
+          const maxQty = sorted[0][1];
+          return sorted.map(([name, qty]) => `
+            <div>
+              <div class="flex justify-between text-sm mb-1"><span>${name}</span><span style="color:var(--muted)">${qty} terjual</span></div>
+              <div class="stock-bar"><div class="stock-bar-fill" style="width:${(qty / maxQty) * 100}%;background:linear-gradient(90deg,var(--accent),var(--accent3))"></div></div>
+            </div>
+          `).join('');
+        })()}
+      </div>
+    </div>
+    <div class="card"><canvas id="chart-cashier" height="200"></canvas></div>
+  </div>`;
+}

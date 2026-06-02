@@ -102,6 +102,16 @@ const DB =
           avatar: "R",
           address: "",
         },
+        {
+          id: "u9",
+          name: "Rizky Mitra",
+          email: "mitra@arqa.coffee",
+          password: "mitra123",
+          role: "mitra_juru_masak",
+          phone: "081234567898",
+          avatar: "M",
+          address: "",
+        },
       ],
       tables: [
         {
@@ -851,6 +861,21 @@ if (!DB.users.some(u => u.role === 'waiter')) {
     role: "waiter",
     phone: "081234567896",
     avatar: "W",
+    address: "",
+  });
+  saveDB();
+}
+
+// Migration: ensure mitra_juru_masak user exists
+if (!DB.users.some(u => u.role === 'mitra_juru_masak')) {
+  DB.users.push({
+    id: "u9",
+    name: "Rizky Mitra",
+    email: "mitra@arqa.coffee",
+    password: "mitra123",
+    role: "mitra_juru_masak",
+    phone: "081234567898",
+    avatar: "M",
     address: "",
   });
   saveDB();
