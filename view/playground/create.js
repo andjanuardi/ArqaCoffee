@@ -91,31 +91,23 @@ function renderPlaygroundCreate() {
       ).join("")}
     </div>
 
-    <div class="card mb-4">
-      <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Durasi</label>
-      <div class="flex items-center gap-3">
-        <button onclick="pgAdjustHours(-1)" class="qty-btn">-</button>
-        <span class="font-bold text-lg w-8 text-center">${hours}</span>
-        <button onclick="pgAdjustHours(1)" class="qty-btn">+</button>
-        <span class="text-sm" style="color:var(--muted)">jam (min 1)</span>
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div class="card">
+        <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Durasi</label>
+        <div class="flex items-center gap-3">
+          <button onclick="pgAdjustHours(-1)" class="qty-btn">-</button>
+          <span class="font-bold text-lg w-8 text-center">${hours}</span>
+          <button onclick="pgAdjustHours(1)" class="qty-btn">+</button>
+          <span class="text-xs" style="color:var(--muted)">Min. 1</span>
+        </div>
       </div>
-    </div>
-
-    <div class="card mb-4">
-      <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Makanan dan minuman</label>
-      <div class="flex gap-2 mb-3 overflow-x-auto pb-2" style="-webkit-overflow-scrolling:touch;scrollbar-width:none;">
-        ${snackItems
-          .map((s) => {
-            const inCart = selectedSnacks.find((x) => x.menu_item_id === s.id);
-            return `
-          <div class="card text-center py-2 px-2 cursor-pointer text-xs ${inCart ? "ring-2" : ""}" onclick="pgIncSnack('${s.id}')" style="${inCart ? "--tw-ring-color:var(--success);border-color:var(--success)" : "border-color:var(--border)"};min-width:80px">
-            ${s.image ? `<img src="${s.image}" onerror="this.style.display='none'" style="width:40px;height:40px;object-fit:cover;border-radius:8px;margin:0 auto 4px">` : ""}
-            <div class="font-semibold truncate">${s.name}</div>
-            <div style="color:var(--accent)">${formatCurrency(s.price)}</div>
-            ${inCart ? '<div style="color:var(--success)">x' + inCart.quantity + "</div>" : ""}
-          </div>`;
-          })
-          .join("")}
+      <div class="card cursor-pointer text-center" onclick="showPgSnackModal()">
+        <label class="text-xs font-semibold mb-2 block" style="color:var(--muted)">Makanan & minuman</label>
+        ${
+          selectedSnacks.length > 0
+            ? `<div style="color:var(--accent)"><i class="fas fa-utensils" style="font-size:18px"></i><div class="text-sm font-semibold mt-1">${selectedSnacks.length} item</div></div>`
+            : `<div style="color:var(--accent);padding-top:8px"><i class="fas fa-utensils" style="font-size:18px"></i><div class="text-xs mt-1" style="color:var(--muted)">Pilih</div></div>`
+        }
       </div>
     </div>
 
@@ -303,6 +295,120 @@ function pgDecSnack(id) {
   render();
 }
 
+function showPgSnackModal() {
+  const items = (DB.pgStockItems || []).filter((s) => s.current_quantity > 0);
+  const selected = State._pgSelectedSnacks || [];
+  showModal(`
+    <div>
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-display text-lg font-bold">Pilih Makanan & Minuman</h3>
+        <button onclick="closeModal();render()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="grid grid-cols-2 gap-3" style="max-height:70vh;overflow-y:auto;padding-bottom:12px">
+        ${items
+          .map((s) => {
+            const inCart = selected.find((x) => x.menu_item_id === s.id);
+            return `
+          <div id="pg-modal-item-${s.id}" class="card text-center py-3 px-2 cursor-pointer ${inCart ? "ring-2" : ""}" onclick="pgIncSnackFromModal('${s.id}')" style="${inCart ? "--tw-ring-color:var(--success);border-color:var(--success)" : ""}">
+            ${s.image ? `<img src="${s.image}" onerror="this.style.display='none'" style="width:56px;height:56px;object-fit:cover;border-radius:8px;margin:0 auto 6px">` : '<div style="width:56px;height:56px;border-radius:8px;margin:0 auto 6px;background:var(--bg2);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:20px"><i class="fas fa-utensils"></i></div>'}
+            <div class="font-semibold text-sm truncate">${s.name}</div>
+            <div style="color:var(--accent);font-size:12px">${formatCurrency(s.price)}</div>
+            ${
+              inCart
+                ? `<div class="flex items-center justify-center gap-2 mt-2 pg-modal-controls">
+              <button onclick="event.stopPropagation();pgDecSnackFromModal('${s.id}')" class="qty-btn" style="width:24px;height:24px;font-size:12px;padding:0;line-height:24px">-</button>
+              <span class="font-bold text-xs w-4 text-center pg-modal-qty" data-id="${s.id}">${inCart.quantity}</span>
+              <button onclick="event.stopPropagation();pgIncSnackFromModal('${s.id}')" class="qty-btn" style="width:24px;height:24px;font-size:12px;padding:0;line-height:24px">+</button>
+            </div>`
+                : '<div class="text-xs mt-2 pg-modal-add" data-id="' +
+                  s.id +
+                  '" style="color:var(--success)">+ Tambah</div>'
+            }
+          </div>`;
+          })
+          .join("")}
+        ${items.length === 0 ? '<div class="col-span-2 text-center py-6 text-sm" style="color:var(--muted)">Tidak ada item tersedia</div>' : ""}
+      </div>
+      <button onclick="closeModal();render()" class="btn-secondary w-full mt-3 text-center">Selesai</button>
+    </div>
+  `);
+}
+
+function pgIncSnackFromModal(id) {
+  if (!State._pgSelectedSnacks) State._pgSelectedSnacks = [];
+  const idx = State._pgSelectedSnacks.findIndex((s) => s.menu_item_id === id);
+  if (idx >= 0) {
+    State._pgSelectedSnacks[idx].quantity++;
+  } else {
+    const s = (DB.pgStockItems || []).find((x) => x.id === id);
+    if (!s) return;
+    State._pgSelectedSnacks.push({
+      menu_item_id: id,
+      name: s.name,
+      quantity: 1,
+      unit_price: s.price,
+    });
+  }
+  const card = document.getElementById("pg-modal-item-" + id);
+  if (!card) return;
+  card.classList.add("ring-2");
+  card.style.borderColor = "var(--success)";
+  card.style.setProperty("--tw-ring-color", "var(--success)");
+  const addEl = card.querySelector(".pg-modal-add");
+  if (addEl) {
+    const qty = State._pgSelectedSnacks.find(
+      (x) => x.menu_item_id === id,
+    ).quantity;
+    addEl.outerHTML =
+      '<div class="flex items-center justify-center gap-2 mt-2 pg-modal-controls">' +
+      "<button onclick=\"event.stopPropagation();pgDecSnackFromModal('" +
+      id +
+      '\')" class="qty-btn" style="width:24px;height:24px;font-size:12px;padding:0;line-height:24px">-</button>' +
+      '<span class="font-bold text-xs w-4 text-center pg-modal-qty" data-id="' +
+      id +
+      '">' +
+      qty +
+      "</span>" +
+      "<button onclick=\"event.stopPropagation();pgIncSnackFromModal('" +
+      id +
+      '\')" class="qty-btn" style="width:24px;height:24px;font-size:12px;padding:0;line-height:24px">+</button>' +
+      "</div>";
+  } else {
+    const qtyEl = card.querySelector(".pg-modal-qty");
+    if (qtyEl) qtyEl.textContent = parseInt(qtyEl.textContent) + 1;
+  }
+}
+
+function pgDecSnackFromModal(id) {
+  if (!State._pgSelectedSnacks) return;
+  const idx = State._pgSelectedSnacks.findIndex((s) => s.menu_item_id === id);
+  if (idx < 0) return;
+  const s = State._pgSelectedSnacks[idx];
+  if (s.quantity > 1) {
+    s.quantity--;
+  } else {
+    State._pgSelectedSnacks.splice(idx, 1);
+  }
+  const card = document.getElementById("pg-modal-item-" + id);
+  if (!card) return;
+  const stillInCart = State._pgSelectedSnacks.find(
+    (x) => x.menu_item_id === id,
+  );
+  if (stillInCart) {
+    const qtyEl = card.querySelector(".pg-modal-qty");
+    if (qtyEl) qtyEl.textContent = stillInCart.quantity;
+  } else {
+    card.classList.remove("ring-2");
+    card.style.borderColor = "";
+    const ctrl = card.querySelector(".pg-modal-controls");
+    if (ctrl)
+      ctrl.outerHTML =
+        '<div class="text-xs mt-2 pg-modal-add" data-id="' +
+        id +
+        '" style="color:var(--success)">+ Tambah</div>';
+  }
+}
+
 function pgSelectPayTiming(t) {
   State._pgPayTiming = t;
   if (t === "later") State._pgPaymentMethod = "";
@@ -468,12 +574,12 @@ function finalizePlaygroundTicket() {
       stock.current_quantity = Math.max(0, stock.current_quantity - s.quantity);
       stock.updated_at = new Date().toISOString();
       (DB.pgStockMovements || (DB.pgStockMovements = [])).push({
-        id: 'psm' + Date.now() + Math.random().toString(36).slice(2, 6),
+        id: "psm" + Date.now() + Math.random().toString(36).slice(2, 6),
         stock_item_id: stock.id,
         user_id: State.currentUser.id,
-        type: 'out',
+        type: "out",
         quantity: s.quantity,
-        notes: 'Terjual via tiket',
+        notes: "Terjual via tiket",
         created_at: new Date().toISOString(),
       });
       if (stock.current_quantity <= stock.min_quantity) notifyLowStock(stock);
