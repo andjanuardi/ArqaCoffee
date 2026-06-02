@@ -14,6 +14,7 @@ function renderAdminView() {
   if (tab === 'active-orders') return renderActiveOrders();
   if (tab === 'courier-finance') return renderAdminCourierFinance();
   if (tab === 'mitra-finance') return renderAdminMitraFinance();
+  if (tab === 'mitra-approval') return renderAdminMitraApproval();
   if (tab === 'attendance') return renderAttendance();
   if (tab === 'profile') return renderGenericProfile();
   return renderAdminOverview();
@@ -155,6 +156,85 @@ function renderAdminMitraFinance() {
       </div>
     </div>
   </div>`;
+}
+
+function renderAdminMitraApproval() {
+  if (!DB.mitraRegistrations) DB.mitraRegistrations = [];
+  const pending = DB.mitraRegistrations.filter(r => r.status === 'pending');
+  const approved = DB.mitraRegistrations.filter(r => r.status === 'approved');
+  const rejected = DB.mitraRegistrations.filter(r => r.status === 'rejected');
+  return `
+  <div class="animate-fade-up">
+    <h2 class="font-display text-xl font-bold mb-4">Approval Pendaftaran Mitra</h2>
+    ${pending.length > 0 ? `<div class="mb-4 p-3 rounded-xl flex items-center gap-2" style="background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.2)">
+      <i class="fas fa-clock" style="color:var(--warning)"></i>
+      <span class="text-sm font-semibold" style="color:var(--warning)">${pending.length} pendaftaran menunggu</span>
+    </div>` : ''}
+    <div class="space-y-3 mb-6">
+      <h3 class="font-semibold text-sm">Menunggu Persetujuan</h3>
+      ${pending.length === 0 ? '<p class="text-sm text-center py-6" style="color:var(--muted)">Tidak ada pendaftaran baru</p>' : pending.map(r => `
+      <div class="card">
+        <div class="flex items-start gap-3 mb-3">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm" style="background:${r.role === 'courier' ? 'rgba(155,89,182,.15)' : 'rgba(232,67,147,.15)'};color:${r.role === 'courier' ? '#9b59b6' : '#e84393'}">${r.name[0]}</div>
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-sm">${r.name}</div>
+            <div class="text-xs" style="color:var(--muted)">${r.email}${r.phone ? ' • ' + r.phone : ''}</div>
+            <div class="text-xs mt-1"><span class="badge" style="background:${r.role === 'courier' ? 'rgba(155,89,182,.15)' : 'rgba(232,67,147,.15)'};color:${r.role === 'courier' ? '#9b59b6' : '#e84393'}">${r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}</span></div>
+            ${r.address ? `<div class="text-xs mt-1" style="color:var(--muted)"><i class="fas fa-map-pin mr-1"></i>${r.address}</div>` : ''}
+            <div class="text-[10px] mt-1" style="color:var(--muted)">Daftar: ${formatDate(r.created_at)}</div>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="approveMitraRegistration('${r.id}')" class="btn-primary btn-sm flex-1 text-center" style="background:linear-gradient(135deg,var(--success),#1e8449)"><i class="fas fa-check mr-1"></i>Setujui</button>
+          <button onclick="rejectMitraRegistration('${r.id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px;border-radius:10px;cursor:pointer;font-size:12px"><i class="fas fa-times mr-1"></i>Tolak</button>
+        </div>
+      </div>`).join('')}
+    </div>
+    ${approved.length > 0 ? `
+    <details class="mb-4">
+      <summary class="text-xs font-semibold cursor-pointer" style="color:var(--success)"><i class="fas fa-check-circle mr-1"></i>Disetujui (${approved.length})</summary>
+      <div class="mt-3 space-y-2">${approved.map(r => `
+        <div class="card flex items-center gap-3 py-2 px-3">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background:rgba(39,174,96,.15);color:var(--success)">${r.name[0]}</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold">${r.name}</div>
+            <div class="text-xs" style="color:var(--muted)">${r.email} — ${r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}</div>
+          </div>
+          <span class="text-[10px]" style="color:var(--muted)">${formatDate(r.created_at)}</span>
+        </div>`).join('')}</div>
+    </details>` : ''}
+    ${rejected.length > 0 ? `
+    <details>
+      <summary class="text-xs font-semibold cursor-pointer" style="color:var(--danger)"><i class="fas fa-times-circle mr-1"></i>Ditolak (${rejected.length})</summary>
+      <div class="mt-3 space-y-2">${rejected.map(r => `
+        <div class="card flex items-center gap-3 py-2 px-3">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background:rgba(231,76,60,.15);color:var(--danger)">${r.name[0]}</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold">${r.name}</div>
+            <div class="text-xs" style="color:var(--muted)">${r.email} — ${r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}</div>
+          </div>
+          <span class="text-[10px]" style="color:var(--muted)">${formatDate(r.created_at)}</span>
+        </div>`).join('')}</div>
+    </details>` : ''}
+  </div>`;
+}
+
+function approveMitraRegistration(id) {
+  const r = DB.mitraRegistrations?.find(x => x.id === id);
+  if (!r) return;
+  r.status = 'approved';
+  const pwd = 'password123';
+  DB.users.push({ id: 'u' + Date.now(), name: r.name, email: r.email, password: pwd, role: r.role, phone: r.phone || '', address: r.address || '', avatar: r.name[0].toUpperCase() });
+  showToast(`${r.name} disetujui sebagai ${r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}!`, 'success');
+  render();
+}
+
+function rejectMitraRegistration(id) {
+  const r = DB.mitraRegistrations?.find(x => x.id === id);
+  if (!r) return;
+  r.status = 'rejected';
+  showToast(`${r.name} ditolak`, 'info');
+  render();
 }
 
 function renderAdminOverview() {
