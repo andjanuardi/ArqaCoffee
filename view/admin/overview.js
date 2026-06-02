@@ -21,6 +21,18 @@ function renderAdminView() {
   return renderAdminOverview();
 }
 
+function saveShippingRate() {
+  if (!DB.cafe) DB.cafe = {};
+  if (!DB.cafe.shipping) DB.cafe.shipping = {};
+  const min = parseInt(document.getElementById('shipping-min-input')?.value);
+  const rate = parseInt(document.getElementById('shipping-rate-input')?.value);
+  if (!min || !rate || min < 0 || rate < 0) { showToast('Nilai tidak valid', 'warning'); return; }
+  DB.cafe.shipping.min = min;
+  DB.cafe.shipping.rate_per_km = rate;
+  showToast('Tarif ongkir diperbarui! Min ' + formatCurrency(min) + ', Per KM ' + formatCurrency(rate), 'success');
+  render();
+}
+
 function renderAdminCourierFinance() {
   if (!State.adminCourierDate) State.adminCourierDate = new Date().toISOString().split('T')[0];
   const dateVal = State.adminCourierDate;
@@ -33,9 +45,37 @@ function renderAdminCourierFinance() {
     const completed = assigned.filter(o => o.status === 'completed' || o.status === 'delivered');
     return { ...c, assigned, completed, revenue: completed.reduce((s, o) => s + (o.total_amount || 0), 0) };
   });
+  const cfg = DB.cafe?.shipping || { rate_per_km: 3000, min: 5000, max: 50000 };
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Keuangan Kurir</h2>
+    <div class="card mb-4" style="border-color:rgba(39,174,96,.2)">
+      <details ${State._shippingOpen ? 'open' : ''} onclick="if(event.target.tagName==='SUMMARY'){State._shippingOpen=!State._shippingOpen}">
+        <summary class="font-semibold text-sm cursor-pointer" style="color:var(--accent)"><i class="fas fa-truck mr-1"></i>Kontrol Harga Ongkos Kirim</summary>
+        <div class="mt-3 space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tarif Dasar (Min)</label>
+              <div class="flex items-center gap-2">
+                <input type="number" id="shipping-min-input" class="input-field text-sm" style="flex:1" value="${cfg.min}" min="0" step="500">
+                <button onclick="saveShippingRate()" class="btn-sm" style="background:var(--accent);color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px"><i class="fas fa-check"></i></button>
+              </div>
+            </div>
+            <div>
+              <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tarif Per KM</label>
+              <div class="flex items-center gap-2">
+                <input type="number" id="shipping-rate-input" class="input-field text-sm" style="flex:1" value="${cfg.rate_per_km}" min="0" step="500">
+                <button onclick="saveShippingRate()" class="btn-sm" style="background:var(--accent);color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px"><i class="fas fa-check"></i></button>
+              </div>
+            </div>
+          </div>
+          <div class="text-xs p-2 rounded-lg" style="background:var(--bg2);color:var(--muted)">
+            <i class="fas fa-info-circle mr-1"></i>
+            Ongkir = Jarak (km) × Tarif Per KM. Minimal <strong>${formatCurrency(cfg.min)}</strong>, maksimal <strong>${formatCurrency(cfg.max)}</strong>.
+          </div>
+        </div>
+      </details>
+    </div>
     <div class="mb-4">
       <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Filter Tanggal</label>
       <input type="date" class="input-field" style="max-width:260px" value="${dateVal}" onchange="State.adminCourierDate=this.value;render()">

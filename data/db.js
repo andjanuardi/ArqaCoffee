@@ -694,6 +694,7 @@ const DB =
       ],
       cafe: {
         location: { lat: 2.458461, lng: 96.3766943 },
+        shipping: { rate_per_km: 3000, min: 5000, max: 50000 },
       },
       promos: [
         {
@@ -872,6 +873,12 @@ const DB =
   })();
 
 if (!localStorage.getItem(STORAGE_KEY)) saveDB();
+
+// Migration: ensure shipping config exists in cafe
+if (DB.cafe && !DB.cafe.shipping) {
+  DB.cafe.shipping = { rate_per_km: 3000, min: 5000, max: 50000 };
+  saveDB();
+}
 
 // Migration: ensure waiter user exists when localStorage has stale data
 if (!DB.users.some(u => u.role === 'waiter')) {

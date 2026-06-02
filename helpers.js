@@ -15,9 +15,10 @@ function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takea
         function getUser(id) { return DB.users.find(u => u.id === id) }
         function getTable(id) { return DB.tables.find(t => t.id === id) }
         const CAFE_LOCATION = (DB && DB.cafe && DB.cafe.location) || { lat: 2.458461, lng: 96.3766943 };
-        const SHIPPING_RATE_PER_KM = 3000;
-        const SHIPPING_MIN = 5000;
-        const SHIPPING_MAX = 50000;
+        function getShippingConfig() {
+          const s = DB.cafe?.shipping;
+          return { rate_per_km: s?.rate_per_km ?? 3000, min: s?.min ?? 5000, max: s?.max ?? 50000 };
+        }
 
         function calcShippingCost(lat, lng) {
           if (!lat || !lng) return 0;
@@ -27,8 +28,9 @@ function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takea
           const a = Math.sin(dLat/2)**2 + Math.cos(CAFE_LOCATION.lat * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLng/2)**2;
           const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
           const dist = R * c;
-          const cost = Math.round(dist * SHIPPING_RATE_PER_KM);
-          return Math.min(SHIPPING_MAX, Math.max(SHIPPING_MIN, cost));
+          const cfg = getShippingConfig();
+          const cost = Math.round(dist * cfg.rate_per_km);
+          return Math.min(cfg.max, Math.max(cfg.min, cost));
         }
 
         function calcItemTax(items) {
