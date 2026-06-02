@@ -12,7 +12,10 @@ function renderMitraView() {
 }
 
 function renderMitraQueue() {
-  return renderKitchenQueue();
+  const mitraMenuIds = DB.menuItems
+    .filter(m => m.submitted_by === State.currentUser.name)
+    .map(m => m.id);
+  return renderKitchenQueue((i, mi, o) => mitraMenuIds.includes(mi.id));
 }
 
 function renderMitraHistory() {

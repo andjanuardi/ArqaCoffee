@@ -3,13 +3,13 @@
 // ============================================================
 function renderKitchenView() {
   const tab = State.currentTab.kitchen || "queue";
-  if (tab === "queue") return renderKitchenQueue();
+  if (tab === "queue") return renderKitchenQueue((i, mi) => !mi.submitted_by);
   if (tab === "history") return renderKitchenHistory();
   if (tab === "profile") return renderGenericProfile();
-  return renderKitchenQueue();
+  return renderKitchenQueue((i, mi) => !mi.submitted_by);
 }
 
-function renderKitchenQueue() {
+function renderKitchenQueue(itemFilterFn) {
   const active = DB.orders.filter((o) =>
     o.accepted === true && ["pending", "cooking", "ready"].includes(o.status),
   );
@@ -17,7 +17,7 @@ function renderKitchenQueue() {
   active.forEach((o) => {
     o.items.forEach((i) => {
       const mi = getMenuItem(i.menu_item_id);
-      if (mi && i.status !== "ready")
+      if (mi && i.status !== "ready" && (!itemFilterFn || itemFilterFn(i, mi, o)))
         allItems.push({
           ...i,
           menu_item: mi,
