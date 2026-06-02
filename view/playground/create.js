@@ -462,6 +462,24 @@ function finalizePlaygroundTicket() {
   if (!DB.playgroundTickets) DB.playgroundTickets = [];
   DB.playgroundTickets.unshift(ticket);
 
+  selectedSnacks.forEach((s) => {
+    const stock = (DB.pgStockItems || []).find((x) => x.id === s.menu_item_id);
+    if (stock) {
+      stock.current_quantity = Math.max(0, stock.current_quantity - s.quantity);
+      stock.updated_at = new Date().toISOString();
+      (DB.pgStockMovements || (DB.pgStockMovements = [])).push({
+        id: 'psm' + Date.now() + Math.random().toString(36).slice(2, 6),
+        stock_item_id: stock.id,
+        user_id: State.currentUser.id,
+        type: 'out',
+        quantity: s.quantity,
+        notes: 'Terjual via tiket',
+        created_at: new Date().toISOString(),
+      });
+      if (stock.current_quantity <= stock.min_quantity) notifyLowStock(stock);
+    }
+  });
+
   State._pgCustomerName = "";
   State._pgChildCount = 0;
   State._pgCompanionCount = 0;
