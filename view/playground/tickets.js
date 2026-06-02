@@ -52,7 +52,8 @@ function renderPlaygroundTickets() {
             </div>
           </div>
           <div class="flex gap-2">
-            <button onclick="event.stopPropagation();completePlaygroundTicket('${t.id}')" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-check mr-1"></i>Selesaikan</button>
+            ${t.payment_status === "paid" ? `<button onclick="event.stopPropagation();confirmCompletePlaygroundTicket('${t.id}')" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-check mr-1"></i>Selesaikan</button>` : ""}
+            ${t.payment_status === "unpaid" ? `<button onclick="event.stopPropagation();payPlaygroundTicket('${t.id}')" class="btn-sm flex-1 text-center" style="background:rgba(39,174,96,.1);color:var(--success);border:none;border-radius:10px;padding:8px"><i class="fas fa-credit-card mr-1"></i>Bayar</button>` : ""}
             <button onclick="event.stopPropagation();confirmCancelPlaygroundTicket('${t.id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;border-radius:10px;padding:8px"><i class="fas fa-times mr-1"></i>Batalkan</button>
           </div>
         </div>`;
@@ -91,6 +92,31 @@ function renderPlaygroundTickets() {
 // ============================================================
 // COMPLETE / CANCEL TICKET
 // ============================================================
+
+function confirmCompletePlaygroundTicket(id) {
+  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
+  if (!t) return;
+  const willAutoPay = t.payment_status === "unpaid";
+  showModal(`
+    <div class="text-center">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style="background:rgba(39,174,96,.15)">
+        <i class="fas fa-check-circle text-3xl" style="color:var(--success)"></i>
+      </div>
+      <h3 class="font-display text-lg font-bold mb-2">Selesaikan Tiket</h3>
+      <p class="text-sm mb-4" style="color:var(--muted)">Yakin ingin menyelesaikan tiket atas nama <span class="font-semibold" style="color:var(--text)">${t.customer_name}</span>?</p>
+      <div class="card mb-4 text-left text-sm" style="background:var(--bg2)">
+        <div class="flex justify-between mb-1"><span style="color:var(--muted)">Status</span><span>Aktif</span></div>
+        <div class="flex justify-between mb-1"><span style="color:var(--muted)">Total</span><span style="color:var(--accent)">${formatCurrency(t.total_amount)}</span></div>
+        <div class="flex justify-between"><span style="color:var(--muted)">Pembayaran</span><span>${t.payment_status === "paid" ? "Lunas" : "Belum Lunas"}</span></div>
+      </div>
+      ${willAutoPay ? '<div class="flex items-center gap-2 p-3 rounded-xl text-xs mb-4" style="background:rgba(243,156,18,.1);color:var(--warning)"><i class="fas fa-info-circle"></i><span>Pembayaran akan otomatis dicatat sebagai <b>Tunai Lunas</b></span></div>' : ""}
+      <div class="flex gap-3">
+        <button onclick="closeModal()" class="btn-secondary btn-sm flex-1 text-center">Kembali</button>
+        <button onclick="closeModal();completePlaygroundTicket('${id}')" class="btn-sm flex-1 text-center" style="background:var(--success);color:#fff;border:none;border-radius:10px;padding:10px"><i class="fas fa-check mr-1"></i>Ya, Selesaikan</button>
+      </div>
+    </div>
+  `);
+}
 
 function completePlaygroundTicket(id) {
   const t = (DB.playgroundTickets || []).find((x) => x.id === id);
@@ -243,6 +269,7 @@ function showPlaygroundTicketDetail(id) {
       </div>
 
       <div class="flex gap-2">
+        ${t.payment_status === "unpaid" && !isCancelled ? `<button onclick="closeModal();payPlaygroundTicket('${id}')" class="btn-sm flex-1 text-center" style="background:rgba(39,174,96,.1);color:var(--success);border:none;border-radius:10px;padding:10px"><i class="fas fa-credit-card mr-1"></i> Bayar</button>` : ""}
         ${!isCancelled ? `<button onclick="closeModal();printPlaygroundInvoice('${id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i> Cetak Invoice</button>` : ""}
         <button onclick="closeModal()" class="btn-secondary flex-1 text-center">Tutup</button>
       </div>
@@ -319,4 +346,101 @@ function printPlaygroundInvoice(id) {
     </body></html>
   `);
   win.document.close();
+}
+
+// ============================================================
+// PAY TICKET
+// ============================================================
+
+function payPlaygroundTicket(id) {
+  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
+  if (!t) return;
+  showModal(`
+    <div>
+      <div class="text-center mb-4">
+        <div class="w-16 h-16 mx-auto mb-3 rounded-full flex items-center justify-center text-3xl" style="background:rgba(39,174,96,.1);color:var(--success)">
+          <i class="fas fa-credit-card"></i>
+        </div>
+        <h3 class="font-display text-lg font-bold">Pembayaran Tiket</h3>
+        <p class="text-sm mt-1" style="color:var(--muted)">${t.customer_name} — ${formatCurrency(t.total_amount)}</p>
+      </div>
+      <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Pilih Metode Pembayaran</label>
+      <div class="grid grid-cols-3 gap-3 mb-6">
+        <div class="pay-method-card card text-center py-3 cursor-pointer text-sm" onclick="document.querySelectorAll('.pay-method-card').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='var(--success)';window._pgPayMethod='qris'" style="border-color:var(--border)">
+          <i class="fas fa-qrcode mb-1" style="color:var(--accent)"></i><br>QRIS
+        </div>
+        <div class="pay-method-card card text-center py-3 cursor-pointer text-sm" onclick="document.querySelectorAll('.pay-method-card').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='var(--success)';window._pgPayMethod='transfer'" style="border-color:var(--border)">
+          <i class="fas fa-university mb-1" style="color:var(--accent)"></i><br>Transfer
+        </div>
+        <div class="pay-method-card card text-center py-3 cursor-pointer text-sm" onclick="document.querySelectorAll('.pay-method-card').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='var(--success)';window._pgPayMethod='cash'" style="border-color:var(--border)">
+          <i class="fas fa-money-bill mb-1" style="color:var(--success)"></i><br>Tunai
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="closeModal()" class="btn-secondary btn-sm flex-1 text-center">Batal</button>
+        <button onclick="confirmPlaygroundPayment('${id}')" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-check mr-1"></i>Konfirmasi Bayar</button>
+      </div>
+    </div>
+  `);
+  window._pgPayMethod = "qris";
+  setTimeout(() => {
+    document.querySelectorAll('.pay-method-card')[0].style.borderColor = 'var(--success)';
+  }, 100);
+}
+
+function confirmPlaygroundPayment(id) {
+  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
+  if (!t) return;
+  const method = window._pgPayMethod || "qris";
+  const totalStr = formatCurrency(t.total_amount);
+
+  if (method === "qris") {
+    const data = encodeURIComponent("ARQA-COFFEE:PAY:PG:" + t.total_amount);
+    showModal(`
+      <div>
+        <h3 class="font-display text-lg font-bold mb-2 text-center">Pembayaran QRIS</h3>
+        <p class="text-xs text-center mb-4" style="color:var(--muted)">Scan kode QR berikut untuk membayar</p>
+        <div class="flex justify-center mb-4">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${data}" alt="QRIS Payment" style="border-radius:12px;max-width:100%">
+        </div>
+        <div class="text-center mb-4">
+          <div class="text-sm" style="color:var(--muted)">Total Pembayaran</div>
+          <div class="font-bold text-xl" style="color:var(--accent)">${totalStr}</div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+          <button onclick="processPlaygroundPayment('${id}','qris')" class="btn-primary btn-sm flex-1 text-center">Saya Sudah Bayar</button>
+        </div>
+      </div>
+    `);
+  } else if (method === "transfer") {
+    showModal(`
+      <div>
+        <h3 class="font-display text-lg font-bold mb-2 text-center">Transfer Bank</h3>
+        <p class="text-xs text-center mb-4" style="color:var(--muted)">Transfer ke rekening berikut</p>
+        <div class="card mb-4 space-y-3">
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">Bank</span><span class="font-semibold">BCA</span></div>
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">No. Rekening</span><span class="font-semibold">1234567890</span></div>
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">Atas Nama</span><span class="font-semibold">ARQA Coffee</span></div>
+          <div class="flex justify-between text-sm pt-2 border-t" style="border-color:var(--border)"><span style="color:var(--muted)">Total Transfer</span><span class="font-bold" style="color:var(--accent)">${totalStr}</span></div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+          <button onclick="processPlaygroundPayment('${id}','transfer')" class="btn-primary btn-sm flex-1 text-center">Saya Sudah Transfer</button>
+        </div>
+      </div>
+    `);
+  } else {
+    processPlaygroundPayment(id, "cash");
+  }
+}
+
+function processPlaygroundPayment(id, method) {
+  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
+  if (!t) return;
+  t.payment_status = "paid";
+  t.payment_method = method;
+  closeModal();
+  showToast("Pembayaran " + t.customer_name + " berhasil (" + (method === "qris" ? "QRIS" : method === "transfer" ? "Transfer" : "Tunai") + ")", "success");
+  render();
 }

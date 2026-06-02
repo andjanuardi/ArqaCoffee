@@ -341,11 +341,80 @@ function createPlaygroundTicket() {
   const payLater = State._pgPayTiming === "later";
   const paymentMethod = payLater ? "" : (State._pgPaymentMethod || "qris");
 
+  if (payLater || paymentMethod === "cash") {
+    finalizePlaygroundTicket();
+    return;
+  }
+
+  const totalStr = formatCurrency(calc.total);
+
+  if (paymentMethod === "qris") {
+    const data = encodeURIComponent("ARQA-COFFEE:PAY:PG:" + calc.total);
+    showModal(`
+      <div>
+        <h3 class="font-display text-lg font-bold mb-2 text-center">Pembayaran QRIS</h3>
+        <p class="text-xs text-center mb-4" style="color:var(--muted)">Scan kode QR berikut untuk membayar</p>
+        <div class="flex justify-center mb-4">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${data}" alt="QRIS Payment" style="border-radius:12px;max-width:100%">
+        </div>
+        <div class="text-center mb-4">
+          <div class="text-sm" style="color:var(--muted)">Total Pembayaran</div>
+          <div class="font-bold text-xl" style="color:var(--accent)">${totalStr}</div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+          <button onclick="closeModal();finalizePlaygroundTicket()" class="btn-primary btn-sm flex-1 text-center">Saya Sudah Bayar</button>
+        </div>
+      </div>
+    `);
+  } else if (paymentMethod === "transfer") {
+    showModal(`
+      <div>
+        <h3 class="font-display text-lg font-bold mb-2 text-center">Transfer Bank</h3>
+        <p class="text-xs text-center mb-4" style="color:var(--muted)">Transfer ke rekening berikut</p>
+        <div class="card mb-4 space-y-3">
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">Bank</span><span class="font-semibold">BCA</span></div>
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">No. Rekening</span><span class="font-semibold">1234567890</span></div>
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">Atas Nama</span><span class="font-semibold">ARQA Coffee</span></div>
+          <div class="flex justify-between text-sm pt-2 border-t" style="border-color:var(--border)"><span style="color:var(--muted)">Total Transfer</span><span class="font-bold" style="color:var(--accent)">${totalStr}</span></div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+          <button onclick="closeModal();finalizePlaygroundTicket()" class="btn-primary btn-sm flex-1 text-center">Saya Sudah Transfer</button>
+        </div>
+      </div>
+    `);
+  }
+}
+
+function finalizePlaygroundTicket() {
+  const name = State._pgCustomerName ? State._pgCustomerName.trim() : "";
+  const childCount = State._pgChildCount || 0;
+  const children = [];
+  for (let i = 0; i < childCount; i++) {
+    const n = State["_pgChildName" + i];
+    children.push({ name: n ? n.trim() : "Anak " + (i + 1) });
+  }
+  const companions = [];
+  for (let i = 0; i < (State._pgCompanionCount || 0); i++) {
+    const n = State["_pgCompanionName" + i];
+    companions.push({ name: n ? n.trim() : "Pendamping " + (i + 1) });
+  }
+  const hours = State._pgHours || 1;
+  const childSocks = [];
+  for (let i = 0; i < children.length; i++) {
+    childSocks.push(State["_pgChildHasSocks" + i] === true);
+  }
+  const selectedSnacks = State._pgSelectedSnacks || [];
+  const calc = calcPlaygroundTotal(children, companions, hours, childSocks, selectedSnacks);
+  const payLater = State._pgPayTiming === "later";
+  const paymentMethod = payLater ? "" : (State._pgPaymentMethod || "qris");
+
   const now = new Date();
   const ticket = {
     id: "pg" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     user_id: State.currentUser.id,
-    customer_name: name.trim(),
+    customer_name: name,
     children,
     companions,
     companion_count: companions.length,
@@ -357,9 +426,9 @@ function createPlaygroundTicket() {
       quantity: s.quantity,
       unit_price: s.unit_price,
     })),
-    hours,
+    hours: calc.hours,
     start_time: now.toISOString(),
-    end_time: new Date(now.getTime() + hours * 3600000).toISOString(),
+    end_time: new Date(now.getTime() + calc.hours * 3600000).toISOString(),
     subtotal: calc.subtotal,
     items_total: calc.itemsTotal,
     total_amount: calc.total,
@@ -382,6 +451,6 @@ function createPlaygroundTicket() {
   for (let i = 0; i < 10; i++) delete State["_pgChildHasSocks" + i];
   for (let i = 0; i < 10; i++) delete State["_pgCompanionName" + i];
 
-  showToast("Tiket " + name.trim() + " berhasil dibuat!", "success");
+  showToast("Tiket " + name + " berhasil dibuat!", "success");
   switchTab("tickets");
 }
