@@ -3,10 +3,14 @@
 // ------------------------------------------------------------------
 function renderAdminMenuMgmt() {
   if (!State.adminMenuFilter) State.adminMenuFilter = '';
-  const cats = [...new Set(DB.menuItems.map(m => m.category).filter(Boolean))];
+  const isMitra = State.currentUser?.role === 'mitra_juru_masak';
+  const menuSource = isMitra
+    ? DB.menuItems.filter(m => m.submitted_by === State.currentUser.name)
+    : DB.menuItems;
+  const cats = [...new Set(menuSource.map(m => m.category).filter(Boolean))];
   const labelMap = { coffee: 'Kopi', 'non-coffee': 'Non-Kopi', food: 'Makanan', snack: 'Snack' };
-  const pending = DB.menuItems.filter(m => m.is_approved === false);
-  const approved = DB.menuItems.filter(m => m.is_approved !== false);
+  const pending = menuSource.filter(m => m.is_approved === false);
+  const approved = menuSource.filter(m => m.is_approved !== false);
   const filtered = approved.filter(m => !State.adminMenuFilter || m.category === State.adminMenuFilter);
   const isAdmin = State.currentUser?.role === 'admin' || State.currentUser?.role === 'manager';
   return `
