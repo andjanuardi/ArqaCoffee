@@ -43,7 +43,7 @@ function renderAdminMenuMgmt() {
         </div>`).join('')}
       </div>
     </div>` : ''}
-    <div class="flex gap-2 mb-4 overflow-x-auto pb-2" style="-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+    <div class="flex gap-2 mt-4 mb-4 overflow-x-auto pb-2" style="-webkit-overflow-scrolling:touch;scrollbar-width:none;">
       <div class="category-chip ${!State.adminMenuFilter ? 'active' : ''}" onclick="State.adminMenuFilter='';render()">Semua</div>
       ${cats.map(c => `<div class="category-chip ${State.adminMenuFilter === c ? 'active' : ''}" onclick="State.adminMenuFilter='${c}';render()">${labelMap[c] || c}</div>`).join('')}
     </div>
