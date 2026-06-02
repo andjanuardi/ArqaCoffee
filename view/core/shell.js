@@ -84,6 +84,7 @@ function renderSideDrawer(role) {
     { id: 'stock', icon: 'fa-warehouse', label: 'Stok Bahan' },
     { id: 'expenses', icon: 'fa-money-bill-wave', label: 'Pengeluaran' },
     { id: 'active-orders', icon: 'fa-clipboard-list', label: 'Pesanan Aktif' },
+    { id: 'courier-finance', icon: 'fa-motorcycle', label: 'Keuangan Kurir' },
     { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
   ] : [
     { id: 'dashboard', icon: 'fa-gauge-high', label: 'Dashboard' },
