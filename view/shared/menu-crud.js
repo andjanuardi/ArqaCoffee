@@ -131,7 +131,10 @@ function addMenuItem() {
     cat = document.getElementById('add-menu-cat-custom')?.value.trim() || 'coffee';
   }
   const tax_percentage = parseFloat(document.getElementById('add-menu-tax')?.value) || 0;
-  const menuData = { id, name, description: document.getElementById('add-menu-desc')?.value || '', price, category: cat, image, is_available: true, tax_percentage };
+  const isMitra = State.currentUser?.role === 'mitra_juru_masak';
+  const menuData = { id, name, description: document.getElementById('add-menu-desc')?.value || '', price, category: cat, image, is_available: true, tax_percentage, is_approved: !isMitra };
+  if (isMitra) menuData.submitted_by = State.currentUser.name;
   DB.menuItems.push(menuData);
-  closeModal(); showToast('Menu ditambahkan', 'success'); render();
+  const msg = isMitra ? 'Menu dikirim untuk persetujuan Admin' : 'Menu ditambahkan';
+  closeModal(); showToast(msg, 'success'); render();
 }

@@ -18,7 +18,7 @@ function renderWaiterMenu() {
     { id: "food", label: "Makanan" },
     { id: "snack", label: "Snack" },
   ];
-  let items = DB.menuItems.filter((m) => m.is_available);
+  let items = DB.menuItems.filter((m) => m.is_available && m.is_approved !== false);
   if (State.selectedCategory !== "all")
     items = items.filter((m) => m.category === State.selectedCategory);
   if (State.searchQuery)
