@@ -63,14 +63,11 @@ function settleDelivery(id) {
 }
 
 function renderCashTable() {
-  const startVal = State.cashierDateStart || "";
-  const endVal = State.cashierDateEnd || "";
-  const startDate = startVal || new Date().toISOString().split('T')[0];
-  const endDate = endVal || new Date().toISOString().split('T')[0];
+  const dateVal = State.cashierReportDate || new Date().toISOString().split('T')[0];
   const orders = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || (o.payment_method !== 'cash' && o.payment_method !== 'cod') || !o.created_at) return false;
     const d = o.created_at.split('T')[0];
-    return d >= startDate && d <= endDate;
+    return d === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
   return `
@@ -105,14 +102,11 @@ function renderCashTable() {
 }
 
 function renderDigitalTable() {
-  const startVal = State.cashierDateStart || "";
-  const endVal = State.cashierDateEnd || "";
-  const startDate = startVal || new Date().toISOString().split('T')[0];
-  const endDate = endVal || new Date().toISOString().split('T')[0];
+  const dateVal = State.cashierReportDate || new Date().toISOString().split('T')[0];
   const orders = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || (o.payment_method !== 'digital' && o.payment_method !== 'qris' && o.payment_method !== 'bank_transfer') || !o.created_at) return false;
     const d = o.created_at.split('T')[0];
-    return d >= startDate && d <= endDate;
+    return d === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
   return `
@@ -148,14 +142,11 @@ function renderDigitalTable() {
 }
 
 function renderCashierReport() {
-  const startVal = State.cashierDateStart || "";
-  const endVal = State.cashierDateEnd || "";
-  const startDate = startVal || new Date().toISOString().split('T')[0];
-  const endDate = endVal || new Date().toISOString().split('T')[0];
+  const dateVal = State.cashierReportDate || new Date().toISOString().split('T')[0];
   const paidInRange = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || !o.created_at) return false;
     const d = o.created_at.split('T')[0];
-    return d >= startDate && d <= endDate;
+    return d === dateVal;
   });
   const cashInRange = paidInRange.filter(o => o.payment_method === 'cash' || o.payment_method === 'cod');
   const cashTotal = cashInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
@@ -164,16 +155,9 @@ function renderCashierReport() {
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Harian</h2>
-    <div class="flex gap-2 mb-4">
-      <div class="flex-1">
-        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Dari Tanggal</label>
-        <input type="date" id="cashier-report-start" class="input-field w-full" value="${startVal}" onchange="State.cashierDateStart=this.value;render()">
-      </div>
-      <div class="flex-1">
-        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Sampai Tanggal</label>
-        <input type="date" id="cashier-report-end" class="input-field w-full" value="${endVal}" onchange="State.cashierDateEnd=this.value;render()">
-      </div>
-      ${startVal || endVal ? '<button onclick="State.cashierDateStart=\'\';State.cashierDateEnd=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
+    <div class="mb-4">
+      <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Filter Tanggal</label>
+      <input type="date" id="cashier-report-date" class="input-field w-full" value="${dateVal}" onchange="State.cashierReportDate=this.value;render()">
     </div>
     <div class="grid grid-cols-2 gap-3 mb-5">
       <div class="stat-card cursor-pointer" onclick="State.showCashierCashTable=!State.showCashierCashTable;render()"><div class="flex items-center gap-2"><i class="fas fa-money-bill-wave" style="color:var(--success);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Bayar Tunai</span></div><div class="text-xl font-bold mt-1" style="color:var(--success)">${formatCurrency(cashTotal)}</div></div>
@@ -183,7 +167,7 @@ function renderCashierReport() {
         if (o.payment_status !== 'unpaid' || !o.created_at) return false;
         if (o.status === 'cancelled' || o.status === 'rejected') return false;
         const d = o.created_at.split('T')[0];
-        return d >= startDate && d <= endDate;
+        return d === dateVal;
       }).length}</div></div>
     </div>
     ${State.showCashierCashTable ? renderCashTable() : ''}
