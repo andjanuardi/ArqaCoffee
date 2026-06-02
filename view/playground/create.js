@@ -167,7 +167,7 @@ function renderPlaygroundCreate() {
       ${
         selectedSnacks.length > 0
           ? `
-        <div class="text-xs font-semibold mt-2 mb-1" style="color:var(--muted)">Snack</div>
+        <div class="text-xs font-semibold mt-2 mb-1" style="color:var(--muted)">Pesanan</div>
       `
           : ""
       }
@@ -266,18 +266,30 @@ function pgAdjustHours(d) {
 
 function pgIncSnack(id) {
   if (!State._pgSelectedSnacks) State._pgSelectedSnacks = [];
+  const stock = (DB.pgStockItems || []).find((x) => x.id === id);
+  if (!stock) return;
   const idx = State._pgSelectedSnacks.findIndex((s) => s.menu_item_id === id);
+  const currentQty = idx >= 0 ? State._pgSelectedSnacks[idx].quantity : 0;
+  if (currentQty >= stock.current_quantity) {
+    showModal(`
+      <div class="text-center">
+        <div class="text-4xl mb-3" style="color:var(--warning)"><i class="fas fa-exclamation-triangle"></i></div>
+        <h3 class="font-display text-lg font-bold mb-2">Stok Tidak Cukup</h3>
+        <p class="text-sm" style="color:var(--muted)">Stok <strong>${stock.name}</strong> tersisa <strong>${stock.current_quantity}</strong>. Tidak bisa menambah lagi.</p>
+        <button onclick="closeModal()" class="btn-primary w-full mt-4 text-center">Mengerti</button>
+      </div>
+    `);
+    return;
+  }
   if (idx >= 0) {
     State._pgSelectedSnacks[idx].quantity++;
   } else {
-    const s = (DB.pgStockItems || []).find((x) => x.id === id);
-    if (s)
-      State._pgSelectedSnacks.push({
-        menu_item_id: id,
-        name: s.name,
-        quantity: 1,
-        unit_price: s.price,
-      });
+    State._pgSelectedSnacks.push({
+      menu_item_id: id,
+      name: stock.name,
+      quantity: 1,
+      unit_price: stock.price,
+    });
   }
   render();
 }
@@ -336,17 +348,35 @@ function showPgSnackModal() {
 
 function pgIncSnackFromModal(id) {
   if (!State._pgSelectedSnacks) State._pgSelectedSnacks = [];
+  const stock = (DB.pgStockItems || []).find((x) => x.id === id);
+  if (!stock) return;
   const idx = State._pgSelectedSnacks.findIndex((s) => s.menu_item_id === id);
+  const currentQty = idx >= 0 ? State._pgSelectedSnacks[idx].quantity : 0;
+  if (currentQty >= stock.current_quantity) {
+    const overlay = document.querySelector(".modal-overlay");
+    if (!overlay) return;
+    const warnBg = document.createElement("div");
+    warnBg.id = "pg-stock-warning";
+    warnBg.style.cssText =
+      "position:absolute;inset:0;z-index:10;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;border-radius:16px";
+    warnBg.innerHTML = `
+      <div class="text-center p-8" style="background:var(--card);border-radius:16px;max-width:360px;width:85vw;margin:0 16px">
+        <div class="text-4xl mb-3" style="color:var(--warning)"><i class="fas fa-exclamation-triangle"></i></div>
+        <h3 class="font-display text-lg font-bold mb-2">Stok Tidak Cukup</h3>
+        <p class="text-sm" style="color:var(--muted)">Stok <strong>${stock.name}</strong> tersisa <strong>${stock.current_quantity}</strong>.</p>
+        <button onclick="document.getElementById('pg-stock-warning').remove()" class="btn-primary w-full mt-4 text-center">Mengerti</button>
+      </div>`;
+    overlay.appendChild(warnBg);
+    return;
+  }
   if (idx >= 0) {
     State._pgSelectedSnacks[idx].quantity++;
   } else {
-    const s = (DB.pgStockItems || []).find((x) => x.id === id);
-    if (!s) return;
     State._pgSelectedSnacks.push({
       menu_item_id: id,
-      name: s.name,
+      name: stock.name,
       quantity: 1,
-      unit_price: s.price,
+      unit_price: stock.price,
     });
   }
   const card = document.getElementById("pg-modal-item-" + id);
