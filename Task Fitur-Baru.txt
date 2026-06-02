@@ -30,7 +30,7 @@ Fitur pindah meja pada edit pesanan
 - Admin
 	- Kontrol Harga Ongkir Admin (Lower Rate + Per KM)
 	- Verifikasi Approval User Mitra baru (selesai)
-	- Verifikasi Approval Menu Mitra
+	- Verifikasi Approval Menu Mitra (selesai)
 	- Verifikasi Approval Kurir Baru (selesai)
 	- Kontrol Buka Tutup Layanan
 		- Tombol Tutup Manual
