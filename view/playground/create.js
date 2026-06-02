@@ -275,10 +275,10 @@ function pgToggleChildSocks(i) {
     if (!sockStock || totalChecked >= sockStock.current_quantity) {
       showModal(`
         <div class="text-center">
-          <div class="text-4xl mb-3" style="color:var(--warning)"><i class="fas fa-exclamation-triangle"></i></div>
-          <h3 class="font-display text-lg font-bold mb-2">Stok Kaos Kaki Habis</h3>
-          <p class="text-sm" style="color:var(--muted)">Maaf, stok kaos kaki sedang kosong. Silakan hubungi staf untuk pengisian ulang.</p>
-          <button onclick="closeModal()" class="btn-primary w-full mt-4 text-center">Mengerti</button>
+        <div class="text-4xl mb-3" style="color:var(--warning)"><i class="fas fa-exclamation-triangle"></i></div>
+            <h3 class="font-display text-lg font-bold mb-2">Stok Kaos Kaki Habis</h3>
+            <p class="text-sm" style="color:var(--muted)">Maaf, stok kaos kaki sedang kosong. Silakan hubungi staf untuk pengisian ulang.</p>
+            <button onclick="closeModal();render()" class="btn-primary w-full mt-4 text-center">Mengerti</button>
         </div>
       `);
       return;
@@ -300,7 +300,7 @@ function pgIncSnack(id) {
         <div class="text-4xl mb-3" style="color:var(--warning)"><i class="fas fa-exclamation-triangle"></i></div>
         <h3 class="font-display text-lg font-bold mb-2">Stok Tidak Cukup</h3>
         <p class="text-sm" style="color:var(--muted)">Stok <strong>${stock.name}</strong> tersisa <strong>${stock.current_quantity}</strong>. Tidak bisa menambah lagi.</p>
-        <button onclick="closeModal()" class="btn-primary w-full mt-4 text-center">Mengerti</button>
+        <button onclick="closeModal();render()" class="btn-primary w-full mt-4 text-center">Mengerti</button>
       </div>
     `);
     return;

@@ -13,7 +13,10 @@ function renderPlaygroundTickets() {
 
   return `
   <div class="animate-fade-up">
-    <h2 class="font-display text-xl font-bold mb-4">Tiket Aktif</h2>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-display text-xl font-bold">Tiket Aktif</h2>
+      <button onclick="switchTab('create')" class="btn-primary btn-sm flex items-center gap-1.5"><i class="fas fa-plus fa-xs"></i> Buat Tiket</button>
+    </div>
     ${tickets.length === 0 ? '<div class="text-center py-12"><i class="fas fa-ticket text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Tidak ada tiket aktif</p></div>' : ""}
     <div class="space-y-3 mb-8">
       ${tickets
