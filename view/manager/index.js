@@ -18,8 +18,6 @@ function renderManagerView() {
 }
 
 function renderManagerDashboard() {
-  const totalRev = getFinanceData().reduce((s, d) => s + d.revenue, 0);
-  const totalExp = (DB.expenses || []).reduce((s, e) => s + e.amount, 0);
   const activeOrders = DB.orders.filter(o => !['completed', 'cancelled'].includes(o.status)).length;
   const activeEmployees = DB.attendances.filter(a => !a.check_out).length;
   const lowStock = DB.stockItems.filter(s => s.current_quantity <= s.min_quantity);
@@ -38,9 +36,7 @@ function renderManagerDashboard() {
       <h2 class="font-display text-2xl font-bold mb-1">Dashboard</h2>
       <p class="text-sm" style="color:var(--muted)">Ringkasan operasional ARQA Coffee</p>
     </div>
-    <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
-      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showRevenueTable=true;State.currentTab.manager='finance';render()"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
-      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showExpenseTable=true;State.currentTab.manager='finance';render()"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.currentTab.manager='active-orders';render()"><div class="text-xs" style="color:var(--muted)">Pesanan Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--warning)">${activeOrders}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.currentTab.manager='attendance';render()"><div class="text-xs" style="color:var(--muted)">Pegawai Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--success)">${activeEmployees}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="switchTab('menu-mgmt')"><div class="text-xs" style="color:var(--muted)">Total Menu</div><div class="text-lg font-bold mt-1">${DB.menuItems.length}</div></div>
@@ -56,10 +52,8 @@ function renderManagerDashboard() {
       </div>
       <button onclick="State.currentTab.manager='stock';render()" class="text-xs font-bold mt-2 flex items-center gap-1" style="color:var(--accent)">Selengkapnya <i class="fas fa-arrow-right" style="font-size:10px"></i></button>
     </div>`})()}
-    <div class="grid md:grid-cols-2 gap-4 mb-6">
-      <div class="card"><canvas id="chart-admin-revenue" height="200"></canvas></div>
-      <div class="card">
-        <h3 class="font-semibold text-sm mb-3">Pesanan Terkini</h3>
+    <div class="card mb-6">
+      <h3 class="font-semibold text-sm mb-3">Pesanan Terkini</h3>
         <div class="space-y-2 max-h-64 overflow-y-auto">
           ${DB.orders.slice(0, 6).map(o => {
             const tableInfo = o.order_type === 'dine-in' && o.table_id ? 'Meja ' + (getTable(o.table_id)?.number || '-') : '';
@@ -77,7 +71,6 @@ function renderManagerDashboard() {
         </div>
         <button onclick="State.currentTab.manager='finance';render()" class="text-xs font-bold mt-2 flex items-center gap-1" style="color:var(--accent)">Selengkapnya <i class="fas fa-arrow-right" style="font-size:10px"></i></button>
       </div>
-    </div>
     <div class="grid md:grid-cols-2 gap-4 mb-6">
       <div class="card">
         <h3 class="font-semibold text-sm mb-3">Produk Terlaris</h3>
