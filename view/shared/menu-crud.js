@@ -93,6 +93,7 @@ function showAddMenuItemModal() {
   showModal(`
     <div>
       <h3 class="font-display text-lg font-bold mb-4">Tambah Menu</h3>
+      ${State.currentUser?.role === 'mitra_juru_masak' ? `<div class="mb-4 p-3 rounded-xl flex items-start gap-2 text-xs" style="background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.2);color:var(--warning)"><i class="fas fa-info-circle mt-0.5"></i><span>Menu baru akan dikirim ke Admin untuk persetujuan terlebih dahulu.</span></div>` : ''}
       <div class="space-y-3">
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama Item</label><input id="add-menu-name" class="input-field text-sm" placeholder="Nama menu"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Deskripsi</label><textarea id="add-menu-desc" class="input-field text-sm min-h-[60px]" placeholder="Deskripsi menu"></textarea></div>
@@ -130,6 +131,13 @@ function addMenuItem() {
     cat = document.getElementById('add-menu-cat-custom')?.value.trim() || 'coffee';
   }
   const tax_percentage = parseFloat(document.getElementById('add-menu-tax')?.value) || 0;
-  DB.menuItems.push({ id, name, description: document.getElementById('add-menu-desc')?.value || '', price, category: cat, image, is_available: true, tax_percentage });
-  closeModal(); showToast('Menu ditambahkan', 'success'); render();
+  const menuData = { id, name, description: document.getElementById('add-menu-desc')?.value || '', price, category: cat, image, is_available: true, tax_percentage };
+  if (State.currentUser?.role === 'mitra_juru_masak') {
+    if (!DB.menuApprovals) DB.menuApprovals = [];
+    DB.menuApprovals.push({ ...menuData, submitted_by: State.currentUser.name, submitted_by_id: State.currentUser.id, status: 'pending', created_at: new Date().toISOString() });
+    closeModal(); showToast('Menu dikirim untuk persetujuan Admin', 'success'); render();
+  } else {
+    DB.menuItems.push(menuData);
+    closeModal(); showToast('Menu ditambahkan', 'success'); render();
+  }
 }

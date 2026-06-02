@@ -78,6 +78,7 @@ function renderSideDrawer(role) {
     { id: 'overview', icon: 'fa-gauge-high', label: 'Overview' },
     { id: 'users', icon: 'fa-users-gear', label: 'Kelola Pengguna' },
     { id: 'menu-mgmt', icon: 'fa-utensils', label: 'Kelola Menu' },
+    { id: 'menu-approval', icon: 'fa-clipboard-check', label: 'Approval Menu' },
     { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Kelola Meja' },
     { id: 'promos', icon: 'fa-tags', label: 'Kelola Promo' },
     { id: 'finance', icon: 'fa-chart-pie', label: 'Keuangan' },
