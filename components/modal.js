@@ -22,6 +22,7 @@ function showModal(html, callback) {
 }
 
 function closeModal() {
+  stopQRScanner();
   const modal = document.getElementById('modal-overlay');
   if (modal) modal.remove();
   modalCallback = null;

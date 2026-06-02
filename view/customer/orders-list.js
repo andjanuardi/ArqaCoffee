@@ -203,6 +203,8 @@ function confirmPayOrder(id) {
   render();
 }
 
+let _qrScannerInstance = null;
+
 function changeOrderTable(orderId) {
   const o = DB.orders.find((x) => x.id === orderId);
   if (!o) return;
@@ -210,24 +212,80 @@ function changeOrderTable(orderId) {
   showModal(`
     <div>
       <h3 class="font-display text-lg font-bold mb-2 text-center">Ganti Meja</h3>
-      <p class="text-sm mb-4 text-center" style="color:var(--muted)">Pilih meja baru untuk pesanan #${o.id.slice(-5).toUpperCase()}</p>
+      <p class="text-sm mb-4 text-center" style="color:var(--muted)">Scan QR code meja yang tersedia untuk pesanan #${o.id.slice(-5).toUpperCase()}</p>
       ${currentTable ? `<div class="mb-4 p-3 rounded-xl text-center text-sm" style="background:var(--bg2)"><span style="color:var(--muted)">Meja saat ini:</span> <strong>${currentTable.number}</strong></div>` : ""}
-      <div class="grid grid-cols-4 gap-3 mb-6">
-        ${DB.tables
-          .map(
-            (t) => {
-              const isCurrent = t.id === o.table_id;
-              const isOccupied = t.status === "occupied" && !isCurrent;
-              return `<button class="card text-center py-3 text-sm font-semibold ${isOccupied ? "opacity-40 cursor-not-allowed" : ""}" onclick="${!isOccupied ? `selectNewTable('${orderId}','${t.id}')` : ""}" style="${isOccupied ? "pointer-events:none" : ""} ${isCurrent ? "border:2px solid var(--accent)" : ""}">
-            <i class="fas fa-chair mb-1" style="color:${isCurrent ? "var(--accent)" : isOccupied ? "var(--danger)" : "var(--success)"}"></i><br>${t.number}${isCurrent ? '<br><span style="font-size:9px;color:var(--accent)">Sekarang</span>' : ""}
-          </button>`;
-            },
-          )
-          .join("")}
+      <div id="qr-reader" class="qr-scanner-area mb-4 flex items-center justify-center" style="width:100%;min-height:220px;background:rgba(0,0,0,.3);border-radius:12px;overflow:hidden;position:relative">
+        <div class="qr-line"></div>
+        <i class="fas fa-qrcode text-5xl" style="color:var(--accent);opacity:.3"></i>
       </div>
+      <div class="flex gap-2 mb-4">
+        <input id="qr-manual-input" class="input-field flex-1 text-sm" placeholder="Atau masukkan kode QR manual (contoh: ARQA-T1)" onkeydown="if(event.key==='Enter')manualQRChange('${orderId}')">
+        <button onclick="manualQRChange('${orderId}')" class="btn-sm" style="background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:10px;cursor:pointer;white-space:nowrap"><i class="fas fa-arrow-right"></i></button>
+      </div>
+      <details class="mb-4">
+        <summary class="text-xs font-semibold cursor-pointer" style="color:var(--accent)">Pilih manual dari daftar meja</summary>
+        <div class="grid grid-cols-4 gap-2 mt-3">
+          ${DB.tables
+            .map(
+              (t) => {
+                const isCurrent = t.id === o.table_id;
+                const isOccupied = t.status === "occupied" && !isCurrent;
+                return `<button class="card text-center py-2 text-xs font-semibold ${isOccupied ? "opacity-40 cursor-not-allowed" : ""}" onclick="${!isOccupied ? `selectNewTable('${orderId}','${t.id}')` : ""}" style="${isOccupied ? "pointer-events:none" : ""} ${isCurrent ? "border:2px solid var(--accent)" : ""}">
+              <i class="fas fa-chair mb-1" style="color:${isCurrent ? "var(--accent)" : isOccupied ? "var(--danger)" : "var(--success)"}"></i><br>${t.number}${isCurrent ? '<br><span style="font-size:8px;color:var(--accent)">Sekarang</span>' : ""}
+            </button>`;
+              },
+            )
+            .join("")}
+        </div>
+      </details>
       <button onclick="closeModal()" class="btn-secondary w-full text-center">Batal</button>
     </div>
-  `);
+  `, () => {
+    initQRScanner(orderId);
+  });
+}
+
+function initQRScanner(orderId) {
+  const readerEl = document.getElementById('qr-reader');
+  if (!readerEl || typeof Html5Qrcode === 'undefined') return;
+  try {
+    _qrScannerInstance = new Html5Qrcode("qr-reader");
+    _qrScannerInstance.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 220, height: 220 } },
+      (decodedText) => {
+        handleQRScanResult(decodedText, orderId);
+      },
+      () => {}
+    ).catch(() => {});
+  } catch (e) {}
+}
+
+function handleQRScanResult(code, orderId) {
+  const table = DB.tables.find((t) => t.qr_code === code);
+  if (!table) {
+    showToast("QR code tidak dikenal!", "error");
+    return;
+  }
+  stopQRScanner();
+  selectNewTable(orderId, table.id);
+}
+
+function stopQRScanner() {
+  if (_qrScannerInstance) {
+    try { _qrScannerInstance.stop(); } catch (e) {}
+    try { _qrScannerInstance.clear(); } catch (e) {}
+    _qrScannerInstance = null;
+  }
+}
+
+function manualQRChange(orderId) {
+  const input = document.getElementById('qr-manual-input');
+  if (!input || !input.value.trim()) {
+    showToast("Masukkan kode QR meja", "warning");
+    return;
+  }
+  handleQRScanResult(input.value.trim(), orderId);
 }
 
 function selectNewTable(orderId, newTableId) {
