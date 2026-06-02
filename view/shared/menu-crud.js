@@ -132,12 +132,6 @@ function addMenuItem() {
   }
   const tax_percentage = parseFloat(document.getElementById('add-menu-tax')?.value) || 0;
   const menuData = { id, name, description: document.getElementById('add-menu-desc')?.value || '', price, category: cat, image, is_available: true, tax_percentage };
-  if (State.currentUser?.role === 'mitra_juru_masak') {
-    if (!DB.menuApprovals) DB.menuApprovals = [];
-    DB.menuApprovals.push({ ...menuData, submitted_by: State.currentUser.name, submitted_by_id: State.currentUser.id, status: 'pending', created_at: new Date().toISOString() });
-    closeModal(); showToast('Menu dikirim untuk persetujuan Admin', 'success'); render();
-  } else {
-    DB.menuItems.push(menuData);
-    closeModal(); showToast('Menu ditambahkan', 'success'); render();
-  }
+  DB.menuItems.push(menuData);
+  closeModal(); showToast('Menu ditambahkan', 'success'); render();
 }

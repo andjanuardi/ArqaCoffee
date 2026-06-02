@@ -16,7 +16,6 @@ function renderAdminView() {
   if (tab === 'courier-finance') return renderAdminCourierFinance();
   if (tab === 'mitra-finance') return renderAdminMitraFinance();
   if (tab === 'mitra-approval') return renderAdminMitraApproval();
-  if (tab === 'menu-approval') return renderAdminMenuApproval();
   if (tab === 'attendance') return renderAttendance();
   if (tab === 'profile') return renderGenericProfile();
   return renderAdminOverview();
@@ -279,67 +278,7 @@ function rejectMitraRegistration(id) {
   render();
 }
 
-function renderAdminMenuApproval() {
-  if (!DB.menuApprovals) DB.menuApprovals = [];
-  const pending = DB.menuApprovals.filter(r => r.status === 'pending');
-  const done = DB.menuApprovals.filter(r => r.status !== 'pending');
-  return `
-  <div class="animate-fade-up">
-    <h2 class="font-display text-xl font-bold mb-4">Approval Menu dari Mitra</h2>
-    ${pending.length > 0 ? `<div class="mb-4 p-3 rounded-xl flex items-center gap-2" style="background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.2)">
-      <i class="fas fa-clock" style="color:var(--warning)"></i>
-      <span class="text-sm font-semibold" style="color:var(--warning)">${pending.length} menu menunggu persetujuan</span>
-    </div>` : ''}
-    <div class="space-y-3 mb-6">
-      <h3 class="font-semibold text-sm">Menunggu Persetujuan</h3>
-      ${pending.length === 0 ? '<p class="text-sm text-center py-6" style="color:var(--muted)">Tidak ada menu baru dari mitra</p>' : pending.map(m => `
-      <div class="card">
-        <div class="flex gap-3 mb-3">
-          <div class="w-16 h-16 rounded-xl shrink-0 overflow-hidden" style="background:var(--bg2)"><img src="${m.image}" onerror="this.src='https://picsum.photos/seed/fallback/100/100'" style="width:100%;height:100%;object-fit:cover"></div>
-          <div class="flex-1 min-w-0">
-            <div class="font-semibold text-sm">${m.name}</div>
-            <div class="text-xs" style="color:var(--muted)">${m.category} • ${formatCurrency(m.price)}</div>
-            <div class="text-xs mt-1" style="color:var(--muted)"><i class="fas fa-user mr-1"></i>Oleh: ${m.submitted_by || 'Mitra'}</div>
-            ${m.description ? `<div class="text-xs mt-1" style="color:var(--muted)">${m.description}</div>` : ''}
-          </div>
-        </div>
-        <div class="flex gap-2">
-          <button onclick="approveMenuApproval('${m.id}')" class="btn-primary btn-sm flex-1 text-center" style="background:linear-gradient(135deg,var(--success),#1e8449)"><i class="fas fa-check mr-1"></i>Setujui</button>
-          <button onclick="rejectMenuApproval('${m.id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px;border-radius:10px;cursor:pointer;font-size:12px"><i class="fas fa-times mr-1"></i>Tolak</button>
-        </div>
-      </div>`).join('')}
-    </div>
-    ${done.length > 0 ? `
-    <details>
-      <summary class="text-xs font-semibold cursor-pointer" style="color:var(--muted)"><i class="fas fa-history mr-1"></i>Riwayat (${done.length})</summary>
-      <div class="mt-3 space-y-2">${done.map(m => `
-        <div class="card flex items-center gap-3 py-2 px-3">
-          <div class="w-8 h-8 rounded-lg shrink-0 overflow-hidden" style="background:var(--bg2)"><img src="${m.image}" onerror="this.src='https://picsum.photos/seed/fallback/50/50'" style="width:100%;height:100%;object-fit:cover"></div>
-          <div class="flex-1 min-w-0">
-            <div class="text-sm font-semibold">${m.name}</div>
-            <div class="text-xs" style="color:var(--muted)">${m.submitted_by || 'Mitra'} — ${m.status === 'approved' ? 'Disetujui' : 'Ditolak'}</div>
-          </div>
-        </div>`).join('')}</div>
-    </details>` : ''}
-  </div>`;
-}
 
-function approveMenuApproval(id) {
-  const m = DB.menuApprovals?.find(x => x.id === id);
-  if (!m) return;
-  m.status = 'approved';
-  DB.menuItems.push({ id: m.id, name: m.name, description: m.description || '', price: m.price, category: m.category, image: m.image, is_available: true, tax_percentage: m.tax_percentage || 0 });
-  showToast(`Menu "${m.name}" disetujui!`, 'success');
-  render();
-}
-
-function rejectMenuApproval(id) {
-  const m = DB.menuApprovals?.find(x => x.id === id);
-  if (!m) return;
-  m.status = 'rejected';
-  showToast(`Menu "${m.name}" ditolak`, 'info');
-  render();
-}
 
 function renderAdminOverview() {
   const totalRev = getFinanceData().reduce((s, d) => s + d.revenue, 0);
