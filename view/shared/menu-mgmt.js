@@ -32,9 +32,8 @@ function renderAdminMenuMgmt() {
           <img src="${m.image}" class="w-12 h-12 rounded-xl object-cover" onerror="this.src='https://picsum.photos/seed/${m.id}/100/100'">
           <div class="flex-1 min-w-0">
             <div class="font-semibold text-sm truncate">${m.name}</div>
-            <div class="text-xs" style="color:var(--muted)">${m.category} — ${formatCurrency(m.price)}</div>
-            <div class="text-[10px]" style="color:var(--muted)"><i class="fas fa-user mr-1"></i>${m.submitted_by || 'Mitra'}</div>
-          </div>
+          <div class="text-xs" style="color:var(--muted)">${m.category} — ${formatCurrency(m.price)}</div>
+          <div class="text-[10px]" style="color:${m.submitted_by ? '#e84393' : 'var(--accent)'}">${m.submitted_by ? `<i class="fas fa-handshake mr-1"></i>Mitra: ${m.submitted_by}` : `<i class="fas fa-check-circle mr-1" style="font-size:8px"></i>Menu ARQA`}</div>
           ${isAdmin ? `
           <div class="flex gap-2 shrink-0">
             <button onclick="event.stopPropagation();approveMenuItem('${m.id}')" class="btn-sm text-xs" style="background:linear-gradient(135deg,var(--success),#1e8449);color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer"><i class="fas fa-check mr-1"></i>Setujui</button>
@@ -56,6 +55,7 @@ function renderAdminMenuMgmt() {
         <div class="flex-1 min-w-0">
           <div class="font-semibold text-sm truncate">${m.name}</div>
           <div class="text-xs" style="color:var(--muted)">${m.category} — ${formatCurrency(m.price)}</div>
+          <div class="text-[10px]" style="color:${m.submitted_by ? '#e84393' : 'var(--accent)'}">${m.submitted_by ? `<i class="fas fa-handshake mr-1"></i>Mitra: ${m.submitted_by}` : `<i class="fas fa-check-circle mr-1" style="font-size:8px"></i>Menu ARQA`}</div>
         </div>
         <div class="flex items-center gap-2">
           <button onclick="event.stopPropagation(); toggleMenuAvail('${m.id}')" class="text-xs px-3 py-1 rounded-lg" style="background:${m.is_available ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)'};color:${m.is_available ? 'var(--success)' : 'var(--danger)'}">${m.is_available ? 'Tersedia' : 'Tidak Tersedia'}</button>
