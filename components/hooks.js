@@ -131,6 +131,36 @@ function initCharts() {
       },
       options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#f0ebe3', padding: 20 } } } },
     },
+    'chart-playground': (() => {
+      const pgStart = new Date(); pgStart.setDate(pgStart.getDate() - 6);
+      const pgEnd = new Date();
+      const dateMap = {};
+      const cursor = new Date(pgStart);
+      while (cursor <= pgEnd) {
+        dateMap[cursor.toISOString().split('T')[0]] = 0;
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      (DB.playgroundTickets || []).filter(t => t.payment_status === 'paid' && t.created_at).forEach(t => {
+        const d = t.created_at.split('T')[0];
+        if (dateMap[d] !== undefined) dateMap[d] += t.total_amount;
+      });
+      const labels = Object.keys(dateMap);
+      return {
+        type: 'bar',
+        data: {
+          labels: labels.map(d => formatDate(d).replace(/ \d{4}$/, '')),
+          datasets: [{
+            label: 'Pendapatan Playground',
+            data: labels.map(d => (dateMap[d] / 1000)),
+            backgroundColor: 'rgba(224, 122, 58, 0.6)',
+            borderColor: '#e07a3a',
+            borderWidth: 1,
+            borderRadius: 6,
+          }],
+        },
+        options: chartOptions('Ribu Rp'),
+      };
+    })(),
     'chart-expense-category': (() => {
       const periodExpenses = (DB.expenses || []).filter(e => {
         if (!e.date) return false;

@@ -3,81 +3,109 @@
 // ============================================================
 
 function renderPlaygroundFinance() {
-  const startDate =
-    State.pgFinanceStart ||
-    new Date(new Date().setDate(new Date().getDate() - 6))
-      .toISOString()
-      .split("T")[0];
-  const endDate = State.pgFinanceEnd || new Date().toISOString().split("T")[0];
-  const tickets = (DB.playgroundTickets || []).filter((t) => {
-    if (!t.created_at) return false;
-    const d = t.created_at.split("T")[0];
-    return d >= startDate && d <= endDate;
+  const dateVal = State.pgFinanceDate || new Date().toISOString().split('T')[0];
+  const paidTickets = (DB.playgroundTickets || []).filter(t => {
+    if (t.payment_status !== 'paid' || !t.created_at) return false;
+    const d = t.created_at.split('T')[0];
+    return d === dateVal;
   });
-  const paidTickets = tickets.filter((t) => t.payment_status === "paid");
-  const totalRev = paidTickets.reduce((s, t) => s + t.total_amount, 0);
-  const activeCount = (DB.playgroundTickets || []).filter(
-    (t) => t.status === "active",
-  ).length;
-  const todayStr = new Date().toISOString().split("T")[0];
-  const todayPaid = paidTickets.filter(
-    (t) => t.created_at.split("T")[0] === todayStr,
-  );
-  const todayRev = todayPaid.reduce((s, t) => s + t.total_amount, 0);
+  const cashTickets = paidTickets.filter(t => t.payment_method === 'cash');
+  const cashTotal = cashTickets.reduce((s, t) => s + t.total_amount, 0);
+  const digitalTickets = paidTickets.filter(t => t.payment_method === 'qris' || t.payment_method === 'transfer');
+  const digitalTotal = digitalTickets.reduce((s, t) => s + t.total_amount, 0);
 
   return `
   <div class="animate-fade-up">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="font-display text-xl font-bold">Laporan Playground</h2>
+    <h2 class="font-display text-xl font-bold mb-4">Laporan Harian</h2>
+    <div class="mb-4">
+      <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Filter Tanggal</label>
+      <input type="date" class="input-field w-full" value="${dateVal}" onchange="State.pgFinanceDate=this.value;render()">
     </div>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-      <div class="stat-card text-center">
-        <div class="text-xs" style="color:var(--muted)">Tiket Aktif</div>
-        <div class="text-2xl font-bold mt-1" style="color:var(--accent)">${activeCount}</div>
-      </div>
-      <div class="stat-card text-center">
-        <div class="text-xs" style="color:var(--muted)">Pendapatan Hari Ini</div>
-        <div class="text-lg font-bold mt-1" style="color:var(--success)">${formatCurrency(todayRev)}</div>
-        <div class="text-xs mt-1" style="color:var(--muted)">${todayPaid.length} transaksi</div>
-      </div>
-      <div class="stat-card text-center">
-        <div class="text-xs" style="color:var(--muted)">Total Pendapatan</div>
-        <div class="text-lg font-bold mt-1" style="color:var(--success)">${formatCurrency(totalRev)}</div>
-        <div class="text-xs mt-1" style="color:var(--muted)">${paidTickets.length} tiket</div>
-      </div>
-      <div class="stat-card text-center">
-        <div class="text-xs" style="color:var(--muted)">Total Tiket</div>
-        <div class="text-lg font-bold mt-1" style="color:var(--accent)">${tickets.length}</div>
-      </div>
+    <div class="grid grid-cols-2 gap-3 mb-5">
+      <div class="stat-card cursor-pointer" onclick="State.pgShowCashTable=!State.pgShowCashTable;render()"><div class="flex items-center gap-2"><i class="fas fa-money-bill-wave" style="color:var(--success);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Bayar Tunai</span></div><div class="text-xl font-bold mt-1" style="color:var(--success)">${formatCurrency(cashTotal)}</div></div>
+      <div class="stat-card cursor-pointer" onclick="State.pgShowDigitalTable=!State.pgShowDigitalTable;render()"><div class="flex items-center gap-2"><i class="fas fa-credit-card" style="color:var(--accent);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Bayar Digital</span></div><div class="text-xl font-bold mt-1" style="color:var(--accent)">${formatCurrency(digitalTotal)}</div></div>
+      <div class="stat-card"><div class="flex items-center gap-2"><i class="fas fa-check-circle" style="color:var(--success);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Lunas</span></div><div class="text-xl font-bold mt-1" style="color:var(--success)">${paidTickets.length}</div></div>
+      <div class="stat-card"><div class="flex items-center gap-2"><i class="fas fa-exclamation-circle" style="color:var(--danger);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Belum Bayar</span></div><div class="text-xl font-bold mt-1" style="color:var(--danger)">${(DB.playgroundTickets || []).filter(t => {
+        if (t.payment_status !== 'unpaid' || !t.created_at) return false;
+        if (t.status === 'cancelled') return false;
+        const d = t.created_at.split('T')[0];
+        return d === dateVal;
+      }).length}</div></div>
     </div>
-    <div class="flex gap-2 mb-4">
-      <div class="flex-1">
-        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Dari</label>
-        <input type="date" class="input-field w-full text-sm" value="${startDate}" onchange="State.pgFinanceStart=this.value;render()">
-      </div>
-      <div class="flex-1">
-        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Sampai</label>
-        <input type="date" class="input-field w-full text-sm" value="${endDate}" onchange="State.pgFinanceEnd=this.value;render()">
-      </div>
-    </div>
-    <div class="space-y-2">
-      ${paidTickets.length === 0 ? '<div class="text-center py-8 text-sm" style="color:var(--muted)">Belum ada transaksi</div>' : ""}
-      ${paidTickets
-        .map(
-          (t) => `
-        <div class="card flex justify-between items-center">
+    ${State.pgShowCashTable ? renderPgCashTable(dateVal) : ''}
+    ${State.pgShowDigitalTable ? renderPgDigitalTable(dateVal) : ''}
+    <div class="card mb-4">
+      <h3 class="font-semibold text-sm mb-3">Tiket Terkini</h3>
+      <div class="space-y-2 max-h-64 overflow-y-auto">
+        ${(DB.playgroundTickets || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 10).map(t => `
+        <div class="flex justify-between items-center text-sm py-2 border-b" style="border-color:var(--border)">
           <div>
-            <div class="font-semibold text-sm">${t.customer_name}</div>
-            <div class="text-xs" style="color:var(--muted)">${t.children.map((c) => c.name).join(", ")} — ${t.hours} jam</div>
-            <div class="text-xs" style="color:var(--muted)">${formatDate(t.created_at)}</div>
+            <span class="font-medium">${t.customer_name}</span>
+            <span class="badge ${t.status === 'active' ? 'badge-cooking' : t.status === 'completed' ? 'badge-completed' : 'badge-pending'} ml-2">${t.status === 'active' ? 'Aktif' : t.status === 'completed' ? 'Selesai' : 'Dibatalkan'}</span>
           </div>
-          <div class="text-right">
-            <div class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(t.total_amount)}</div>
-            <span class="text-[10px] badge ${t.payment_method === "cash" ? "badge-ready" : "badge-completed"}">${t.payment_method === "cash" ? "Tunai" : t.payment_method === "qris" ? "QRIS" : "-"}</span>
-          </div>
-        </div>`,
-        )
-        .join("")}
+          <span>${formatCurrency(t.total_amount)}</span>
+        </div>`).join('')}
+      </div>
     </div>
+    <div class="card"><canvas id="chart-playground" height="200"></canvas></div>
   </div>`;
+}
+
+function renderPgCashTable(dateVal) {
+  const tickets = (DB.playgroundTickets || []).filter(t => {
+    if (t.payment_status !== 'paid' || t.payment_method !== 'cash' || !t.created_at) return false;
+    return t.created_at.split('T')[0] === dateVal;
+  }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const total = tickets.reduce((s, t) => s + t.total_amount, 0);
+  return `
+    <div class="card mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-sm">Detail Bayar Tunai</h3>
+        <button onclick="State.pgShowCashTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Tunai</div><div class="text-base font-bold mt-1" style="color:var(--success)">${formatCurrency(total)}</div></div>
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Jumlah Tiket</div><div class="text-base font-bold mt-1">${tickets.length}</div></div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm" style="border-collapse:collapse">
+          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Pelanggan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Anak</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
+          <tbody>${tickets.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="4">Belum ada transaksi tunai</td></tr>' : tickets.map(t => {
+            const time = t.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            return `<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="padding:8px 10px;font-size:12px">${t.customer_name}</td><td style="padding:8px 10px;color:var(--muted);font-size:12px">${t.children.map(c => c.name).join(', ')}</td><td style="padding:8px 10px;text-align:right;color:var(--success);font-size:12px">${formatCurrency(t.total_amount)}</td></tr>`;
+          }).join('')}</tbody>
+          <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(total)}</td></tr></tfoot>
+        </table>
+      </div>
+    </div>`;
+}
+
+function renderPgDigitalTable(dateVal) {
+  const tickets = (DB.playgroundTickets || []).filter(t => {
+    if (t.payment_status !== 'paid' || (t.payment_method !== 'qris' && t.payment_method !== 'transfer') || !t.created_at) return false;
+    return t.created_at.split('T')[0] === dateVal;
+  }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const total = tickets.reduce((s, t) => s + t.total_amount, 0);
+  return `
+    <div class="card mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-sm">Detail Bayar Digital</h3>
+        <button onclick="State.pgShowDigitalTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Digital</div><div class="text-base font-bold mt-1" style="color:var(--accent)">${formatCurrency(total)}</div></div>
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Jumlah Tiket</div><div class="text-base font-bold mt-1">${tickets.length}</div></div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm" style="border-collapse:collapse">
+          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Pelanggan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Metode</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
+          <tbody>${tickets.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="4">Belum ada transaksi digital</td></tr>' : tickets.map(t => {
+            const time = t.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            const payLabel = t.payment_method === 'qris' ? 'QRIS' : 'Transfer';
+            return `<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="padding:8px 10px;font-size:12px">${t.customer_name}</td><td style="padding:8px 10px;color:var(--accent);font-size:12px">${payLabel}</td><td style="padding:8px 10px;text-align:right;color:var(--accent);font-size:12px">${formatCurrency(t.total_amount)}</td></tr>`;
+          }).join('')}</tbody>
+          <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(total)}</td></tr></tfoot>
+        </table>
+      </div>
+    </div>`;
 }
