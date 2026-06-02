@@ -64,12 +64,21 @@ function renderPlaygroundTickets() {
     ${
       completed.length > 0
         ? `
-    <h2 class="font-display text-lg font-bold mb-3" style="color:var(--muted)">Riwayat</h2>
+    <div class="flex items-center cursor-pointer gap-1.5" onclick="State._pgHistoryOpen=!State._pgHistoryOpen;render()" style="padding:4px 0;margin-bottom:8px">
+      <span class="text-sm font-medium" style="color:var(--muted)">Riwayat</span>
+      <span class="text-xs" style="color:var(--muted)">(${completed.length})</span>
+      <i class="fas fa-chevron-${State._pgHistoryOpen ? "up" : "down"} text-xs" style="color:var(--muted)"></i>
+    </div>
+    ${State._pgHistoryOpen ? renderPlaygroundHistory(completed) : ''}`
+        : ""
+    }
+  </div>`;
+}
+
+function renderPlaygroundHistory(completed) {
+  return `
     <div class="space-y-2">
-      ${completed
-        .slice(0, 10)
-        .map(
-          (t) => `
+      ${(completed || []).slice(0, 10).map((t) => `
         <div class="card flex items-center justify-between" onclick="showPlaygroundTicketDetail('${t.id}')" style="opacity:.7;cursor:pointer">
           <div>
             <span class="font-semibold text-sm">${t.customer_name}</span>
@@ -80,13 +89,8 @@ function renderPlaygroundTickets() {
             <div class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(t.total_amount)}</div>
             <div class="text-xs" style="color:var(--muted)">${t.payment_status === "paid" ? "Lunas" : "Belum"}</div>
           </div>
-        </div>`,
-        )
-        .join("")}
-    </div>`
-        : ""
-    }
-  </div>`;
+        </div>`).join('')}
+    </div>`;
 }
 
 // ============================================================
