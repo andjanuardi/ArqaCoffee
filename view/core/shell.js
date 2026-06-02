@@ -83,8 +83,10 @@ function renderSideDrawer(role) {
     { id: 'finance', icon: 'fa-chart-pie', label: 'Keuangan' },
     { id: 'stock', icon: 'fa-warehouse', label: 'Stok Bahan' },
     { id: 'expenses', icon: 'fa-money-bill-wave', label: 'Pengeluaran' },
-    { id: 'active-orders', icon: 'fa-clipboard-list', label: 'Pesanan Aktif' },
-    { id: 'active-playground', icon: 'fa-ticket', label: 'Tiket Aktif' },
+    { id: 'active-services', icon: 'fa-clipboard-list', label: 'Layanan Aktif', children: [
+      { id: 'active-orders', icon: 'fa-clipboard-list', label: 'Pesanan Aktif' },
+      { id: 'active-playground', icon: 'fa-ticket', label: 'Tiket Aktif' }
+    ] },
     { id: 'service-control', icon: 'fa-store', label: 'Buka Tutup Layanan' },
     { id: 'mitra-approval', icon: 'fa-user-check', label: 'Approval Mitra' },
     { id: 'courier-finance', icon: 'fa-motorcycle', label: 'Keuangan Kurir' },
@@ -99,11 +101,14 @@ function renderSideDrawer(role) {
     { id: 'finance', icon: 'fa-chart-pie', label: 'Keuangan' },
     { id: 'stock', icon: 'fa-warehouse', label: 'Stok Bahan' },
     { id: 'expenses', icon: 'fa-money-bill-wave', label: 'Pengeluaran' },
-    { id: 'active-orders', icon: 'fa-clipboard-list', label: 'Pesanan Aktif' },
-    { id: 'active-playground', icon: 'fa-ticket', label: 'Tiket Aktif' },
+    { id: 'active-services', icon: 'fa-clipboard-list', label: 'Layanan Aktif', children: [
+      { id: 'active-orders', icon: 'fa-clipboard-list', label: 'Pesanan Aktif' },
+      { id: 'active-playground', icon: 'fa-ticket', label: 'Tiket Aktif' }
+    ] },
     { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
   ];
   const active = State.currentTab[role] || items[0]?.id;
+  const svcOpen = State._activeServicesOpen;
   return `
   <div class="side-drawer ${State.sidebarOpen ? 'open' : ''}">
     <div class="px-6 py-5 border-b" style="border-color:var(--border)">
@@ -112,10 +117,28 @@ function renderSideDrawer(role) {
         <div><div class="font-semibold text-sm">${State.currentUser.name}</div><div class="text-xs" style="color:var(--muted)">${getRoleLabel(role)}</div></div>
       </div>
     </div>
-    <div class="py-3">${items.map(i => `
+    <div class="py-3">${items.map(i => {
+      if (i.children) {
+        const isActive = i.children.some(c => active === c.id);
+        return `
+      <div class="drawer-group">
+        <div class="drawer-item ${isActive ? 'active' : ''}" onclick="event.stopPropagation();State._activeServicesOpen=!State._activeServicesOpen;render()" style="cursor:pointer">
+          <i class="fas ${i.icon}"></i><span>${i.label}</span>
+          <i class="fas fa-chevron-down drawer-chevron ${svcOpen ? 'open' : ''}" style="margin-left:auto;color:var(--muted)"></i>
+        </div>
+        <div class="drawer-sub-items ${svcOpen ? 'open' : ''}">
+          ${i.children.map(c => `
+          <div class="drawer-item drawer-sub-item ${active === c.id ? 'active' : ''}" onclick="switchTab('${c.id}');toggleDrawer()">
+            <i class="fas ${c.icon}"></i><span>${c.label}</span>
+          </div>`).join('')}
+        </div>
+      </div>`;
+      }
+      return `
       <div class="drawer-item ${active === i.id ? 'active' : ''}" onclick="switchTab('${i.id}');toggleDrawer()">
         <i class="fas ${i.icon}"></i><span>${i.label}</span>
-      </div>`).join('')}
+      </div>`;
+    }).join('')}
     </div>
     <div class="absolute bottom-0 left-0 right-0 p-4 border-t" style="border-color:var(--border)">
       <button onclick="handleLogout()" class="btn-secondary w-full text-center flex items-center justify-center gap-2">

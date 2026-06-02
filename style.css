@@ -474,6 +474,30 @@
             text-align: center
         }
 
+        .drawer-chevron.open {
+            transform: rotate(180deg)
+        }
+
+        .drawer-sub-items {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .25s ease
+        }
+
+        .drawer-sub-items.open {
+            max-height: 200px
+        }
+
+        .drawer-sub-item {
+            padding-left: 56px !important;
+            font-size: 13px !important
+        }
+
+        .drawer-sub-item i {
+            width: 16px !important;
+            font-size: 12px
+        }
+
         .modal-overlay {
             position: fixed;
             inset: 0;
