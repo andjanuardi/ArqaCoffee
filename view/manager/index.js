@@ -9,6 +9,7 @@ function renderManagerView() {
   if (tab === 'stock') return renderStockManagement();
   if (tab === 'expenses') return renderExpenseManagement();
   if (tab === 'active-orders') return renderActiveOrders();
+  if (tab === 'active-playground') return renderActivePlaygroundTickets();
   if (tab === 'attendance') return renderAttendance();
   if (tab === 'promos') return renderAdminPromos();
   if (tab === 'tables-mgmt') return renderAdminTablesMgmt();

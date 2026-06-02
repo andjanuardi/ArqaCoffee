@@ -12,6 +12,7 @@ function renderAdminView() {
   if (tab === 'stock') return renderStockManagement();
   if (tab === 'expenses') return renderExpenseManagement();
   if (tab === 'active-orders') return renderActiveOrders();
+  if (tab === 'active-playground') return renderActivePlaygroundTickets();
   if (tab === 'service-control') return renderServiceControl();
   if (tab === 'courier-finance') return renderAdminCourierFinance();
   if (tab === 'mitra-finance') return renderAdminMitraFinance();

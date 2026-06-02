@@ -500,3 +500,116 @@ function renderActiveOrders() {
     </div>` : ''}
   </div>`;
 }
+
+// ============================================================
+// ACTIVE PLAYGROUND TICKETS (shared: admin + manager)
+// ============================================================
+function renderActivePlaygroundTickets() {
+  const tickets = (DB.playgroundTickets || [])
+    .filter(t => t.status === "active")
+    .sort((a, b) => new Date(a.end_time) - new Date(b.end_time));
+  const completed = (DB.playgroundTickets || [])
+    .filter(t => t.status === "completed" || t.status === "cancelled")
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const q = (State.activePlaygroundSearch || '').toLowerCase();
+  const now = Date.now();
+
+  const totalActive = tickets.length;
+  const totalChildren = tickets.reduce((s, t) => s + (t.children?.length || 0), 0);
+  const totalRevenue = tickets
+    .filter(t => t.payment_status === "paid")
+    .reduce((s, t) => s + (t.total_amount || 0), 0);
+
+  const filtered = tickets.filter(t =>
+    !q || t.customer_name?.toLowerCase().includes(q) ||
+    t.id?.toLowerCase().includes(q) ||
+    (t.children || []).some(c => c.name?.toLowerCase().includes(q))
+  );
+
+  return `
+  <div class="animate-fade-up">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="font-display text-xl font-bold">Tiket Aktif Playground</h2>
+      <span class="text-xs" style="color:var(--muted)">${totalActive} tiket</span>
+    </div>
+    <div class="grid grid-cols-3 gap-3 mb-5">
+      <div class="stat-card text-center">
+        <div class="text-lg font-bold" style="color:var(--accent)">${totalActive}</div>
+        <div class="text-[10px]" style="color:var(--muted)">Tiket Aktif</div>
+      </div>
+      <div class="stat-card text-center">
+        <div class="text-lg font-bold" style="color:#3498db">${totalChildren}</div>
+        <div class="text-[10px]" style="color:var(--muted)">Total Anak</div>
+      </div>
+      <div class="stat-card text-center">
+        <div class="text-lg font-bold" style="color:var(--success)">${formatCurrency(totalRevenue)}</div>
+        <div class="text-[10px]" style="color:var(--muted)">Pendapatan</div>
+      </div>
+    </div>
+    <div class="card mb-4" style="padding:10px">
+      <input type="text" class="input-field text-sm w-full" placeholder="Cari nama pelanggan, ID tiket, atau nama anak..." value="${State.activePlaygroundSearch || ''}" oninput="State.activePlaygroundSearch=this.value;render()">
+    </div>
+    <div class="space-y-3">
+      ${filtered.length === 0 ? '<div class="text-center py-12"><i class="fas fa-ticket text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Tidak ada tiket aktif</p></div>' : ''}
+      ${filtered.map(t => {
+        const start = new Date(t.start_time).getTime();
+        const end = new Date(t.end_time).getTime();
+        const total = end - start;
+        const remaining = end - now;
+        const elapsed = Math.max(0, Math.min(100, ((now - start) / total) * 100));
+        const isUrgent = remaining > 0 && remaining < 600000;
+        const isExpired = remaining <= 0;
+        const timeColor = isExpired ? "var(--danger)" : isUrgent ? "var(--warning)" : "var(--success)";
+        return `
+      <div class="card ${isUrgent ? "animate-breathe" : ""}" onclick="showPlaygroundTicketDetail('${t.id}')" style="cursor:pointer;${isExpired ? "border-color:var(--danger)" : isUrgent ? "border-color:var(--warning)" : ""}">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="font-bold text-sm">${t.customer_name}</span>
+            <span class="badge ${isExpired ? "badge-pending" : "badge-cooking"} ml-2">${isExpired ? "Over Time" : "Aktif"}</span>
+            <span class="badge ${t.payment_status === "paid" ? "badge-paid" : "badge-unpaid"} ml-1">${t.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span>
+          </div>
+          <span class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(t.total_amount)}</span>
+        </div>
+        <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-2" style="color:var(--muted)">
+          <span><i class="fas fa-child mr-1"></i>${(t.children || []).map(c => c.name).join(", ")}</span>
+          ${t.companion_count > 0 ? `<span><i class="fas fa-user mr-1"></i>${t.companion_count} pendamping</span>` : ""}
+          <span><i class="fas fa-clock mr-1"></i>${t.hours} jam</span>
+        </div>
+        ${t.items && t.items.length > 0 ? `<div class="text-xs mb-2" style="color:var(--muted)"><i class="fas fa-utensils mr-1"></i>${t.items.map(i => i.name + " x" + i.quantity).join(", ")}</div>` : ""}
+        <div class="time-bar-container mb-1">
+          <div class="flex justify-between text-xs mb-1" style="color:var(--muted)">
+            <span>${formatTime(new Date(t.start_time))}</span>
+            <span class="pg-remaining" data-end="${t.end_time}" data-over="${isExpired}" style="color:${timeColor};font-weight:600">${isExpired ? "-" + formatRemaining(Math.abs(remaining)) : formatRemaining(remaining)}</span>
+            <span>${formatTime(new Date(t.end_time))}</span>
+          </div>
+          <div class="time-bar-bg">
+            <div class="time-bar-fill" style="width:${Math.min(100, elapsed)}%;background:${timeColor}"></div>
+          </div>
+        </div>
+      </div>`;
+      }).join('')}
+    </div>
+    ${completed.length > 0 ? `
+    <div class="mt-6">
+      <div class="flex items-center gap-2 mb-3 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')" style="user-select:none">
+        <h3 class="font-semibold text-sm" style="color:var(--success)">Riwayat Tiket</h3>
+        <span class="text-xs" style="color:var(--muted)">${completed.length}</span>
+        <div class="text-xs transition-transform" style="color:var(--muted)"><i class="fas fa-chevron-down"></i></div>
+      </div>
+      <div class="space-y-2 hidden">
+        ${completed.slice(0, 20).map(t => `
+        <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showPlaygroundTicketDetail('${t.id}')" style="border-color:rgba(39,174,96,.2)">
+          <div class="flex justify-between items-start mb-1">
+            <div>
+              <span class="font-bold text-sm">${t.customer_name}</span>
+              <span class="badge ${t.status === "completed" ? "badge-completed" : "badge-pending"} ml-2">${t.status === "completed" ? "Selesai" : "Dibatalkan"}</span>
+              <span class="badge ${t.payment_status === "paid" ? "badge-paid" : "badge-unpaid"} ml-1">${t.payment_status === "paid" ? "Lunas" : "Belum"}</span>
+            </div>
+            <span class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(t.total_amount)}</span>
+          </div>
+          <div class="text-xs mt-1" style="color:var(--muted)">${(t.children || []).map(c => c.name).join(", ")} — ${t.hours} jam${t.cancel_reason ? ' <span style="color:var(--danger)">· ' + t.cancel_reason + '</span>' : ""}</div>
+        </div>`).join('')}
+      </div>
+    </div>` : ''}
+  </div>`;
+}

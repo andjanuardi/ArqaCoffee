@@ -84,6 +84,7 @@ function renderSideDrawer(role) {
     { id: 'stock', icon: 'fa-warehouse', label: 'Stok Bahan' },
     { id: 'expenses', icon: 'fa-money-bill-wave', label: 'Pengeluaran' },
     { id: 'active-orders', icon: 'fa-clipboard-list', label: 'Pesanan Aktif' },
+    { id: 'active-playground', icon: 'fa-ticket', label: 'Tiket Aktif' },
     { id: 'service-control', icon: 'fa-store', label: 'Buka Tutup Layanan' },
     { id: 'mitra-approval', icon: 'fa-user-check', label: 'Approval Mitra' },
     { id: 'courier-finance', icon: 'fa-motorcycle', label: 'Keuangan Kurir' },
@@ -99,6 +100,7 @@ function renderSideDrawer(role) {
     { id: 'stock', icon: 'fa-warehouse', label: 'Stok Bahan' },
     { id: 'expenses', icon: 'fa-money-bill-wave', label: 'Pengeluaran' },
     { id: 'active-orders', icon: 'fa-clipboard-list', label: 'Pesanan Aktif' },
+    { id: 'active-playground', icon: 'fa-ticket', label: 'Tiket Aktif' },
     { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
   ];
   const active = State.currentTab[role] || items[0]?.id;
