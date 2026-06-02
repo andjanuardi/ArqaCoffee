@@ -5,7 +5,7 @@ function renderMitraView() {
   const tab = State.currentTab.mitra_juru_masak || 'queue';
   if (tab === 'queue') return renderMitraQueue();
   if (tab === 'history') return renderMitraHistory();
-  if (tab === 'menu-mgmt') return renderCustomerMenu();
+  if (tab === 'menu-mgmt') return renderAdminMenuMgmt();
   if (tab === 'finance') return renderMitraFinance();
   if (tab === 'profile') return renderMitraProfile();
   return renderMitraQueue();
