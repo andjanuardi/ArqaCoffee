@@ -6,11 +6,16 @@ function renderPlaygroundTickets() {
   const tickets = (DB.playgroundTickets || [])
     .filter((t) => t.status === "active")
     .sort((a, b) => new Date(a.end_time) - new Date(b.end_time));
-  const completed = (DB.playgroundTickets || [])
+  const historyDate = State._pgHistoryDate || new Date().toISOString().split('T')[0];
+  const allCompleted = (DB.playgroundTickets || [])
     .filter((t) => t.status !== "active")
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  const completedCount = completed.filter(t => t.status === "completed").length;
-  const cancelledCount = completed.filter(t => t.status === "cancelled").length;
+  const completed = allCompleted.filter((t) => {
+    if (!t.created_at) return false;
+    return t.created_at.split('T')[0] === historyDate;
+  });
+  const completedCount = allCompleted.filter(t => t.status === "completed").length;
+  const cancelledCount = allCompleted.filter(t => t.status === "cancelled").length;
   const now = Date.now();
 
   return `
@@ -79,24 +84,23 @@ function renderPlaygroundTickets() {
         .join("")}
     </div>
 
-    ${
-      completed.length > 0
-        ? `
-    <div class="flex items-center cursor-pointer gap-1.5" onclick="State._pgHistoryOpen=!State._pgHistoryOpen;render()" style="padding:4px 0;margin-bottom:8px">
+    <div class="flex items-center gap-1.5 mb-3" style="padding:4px 0">
       <span class="text-sm font-medium" style="color:var(--muted)">Riwayat</span>
       <span class="text-xs" style="color:var(--muted)">(${completed.length})</span>
-      <i class="fas fa-chevron-${State._pgHistoryOpen ? "up" : "down"} text-xs" style="color:var(--muted)"></i>
+      <input type="date" class="input-field text-xs" style="width:fit-content;padding:4px 8px" value="${historyDate}" onchange="State._pgHistoryDate=this.value;render()">
+      <i class="fas fa-chevron-${State._pgHistoryOpen ? "up" : "down"} text-xs" style="color:var(--muted);cursor:pointer" onclick="State._pgHistoryOpen=!State._pgHistoryOpen;render()"></i>
     </div>
-    ${State._pgHistoryOpen ? renderPlaygroundHistory(completed) : ''}`
-        : ""
-    }
+    ${State._pgHistoryOpen ? renderPlaygroundHistory(completed) : ''}
   </div>`;
 }
 
 function renderPlaygroundHistory(completed) {
+  if (!completed || completed.length === 0) {
+    return '<div class="text-center py-8"><p class="text-sm" style="color:var(--muted)">Belum ada riwayat untuk tanggal ini</p></div>';
+  }
   return `
     <div class="space-y-2">
-      ${(completed || []).slice(0, 10).map((t) => `
+      ${completed.slice(0, 10).map((t) => `
         <div class="card flex items-center justify-between" onclick="showPlaygroundTicketDetail('${t.id}')" style="opacity:.7;cursor:pointer">
           <div>
             <span class="font-semibold text-sm">${t.customer_name}</span>
