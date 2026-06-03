@@ -78,7 +78,6 @@ function courierCheckOut() {
 
 function renderCourierProfile() {
   const u = State.currentUser;
-  const isOnline = State.courierStatus === "online";
   const today = new Date().toISOString().split('T')[0];
   const att = DB.attendances.find(a => a.user_id === u.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
   return `
@@ -100,22 +99,6 @@ function renderCourierProfile() {
           ${att
             ? `<button onclick="courierCheckOut()" class="btn-secondary w-full text-center" style="background:rgba(231,76,60,.1);color:var(--danger);border-color:transparent;"><i class="fas fa-sign-out-alt mr-1"></i>Check Out</button>`
             : `<button onclick="courierCheckIn()" class="btn-primary w-full text-center"><i class="fas fa-sign-in-alt mr-1"></i>Check In</button>`}
-        </div>
-        <div class="card" style="border-color:${isOnline ? 'rgba(39,174,96,.3)' : 'rgba(231,76,60,.3)'}">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:${isOnline ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)'};color:${isOnline ? 'var(--success)' : 'var(--danger)'}"><i class="fas ${isOnline ? 'fa-toggle-on' : 'fa-toggle-off'}"></i></div>
-            <div class="flex-1">
-              <div class="font-semibold text-sm" style="color:${isOnline ? 'var(--success)' : 'var(--danger)'}">${isOnline ? 'Aktif' : 'Tidak Aktif'}</div>
-              <div class="text-xs" style="color:var(--muted)">${isOnline ? 'Kamu siap menerima pesanan' : 'Kamu tidak menerima pesanan'}</div>
-            </div>
-            <button onclick="toggleCourierStatus()" class="btn-sm" style="background:${isOnline ? 'rgba(231,76,60,.12)' : 'rgba(39,174,96,.12)'};color:${isOnline ? 'var(--danger)' : 'var(--success)'};border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">
-              <i class="fas ${isOnline ? 'fa-power-off' : 'fa-play'} mr-1"></i>${isOnline ? 'Nonaktifkan' : 'Aktifkan'}
-            </button>
-          </div>
-          <div class="flex items-center justify-between text-xs px-1" style="color:var(--muted)">
-            <span>${att ? 'Check-in: ' + formatTime(att.check_in) : 'Belum check-in hari ini'}</span>
-            <span class="${isOnline ? 'badge badge-ready' : 'badge badge-pending'}">${isOnline ? 'Online' : 'Offline'}</span>
-          </div>
         </div>
         <div class="card flex items-center gap-3 cursor-pointer" onclick="handleLogout()">
           <i class="fas fa-right-from-bracket" style="color:var(--danger)"></i>
