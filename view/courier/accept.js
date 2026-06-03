@@ -37,36 +37,22 @@ function acceptDelivery(id) {
   const hasActive = DB.orders.some(o2 => o2.courier_id === State.currentUser.id && o2.status === "delivering");
   if (hasActive) { showToast("Selesaikan pengantaran aktif terlebih dahulu", "warning"); return; }
 
+  const cafe = DB.cafe.location;
+  const maxDist = 5000;
+
+  if (State.courierPosition) {
+    const dist = calcDistance(State.courierPosition.lat, State.courierPosition.lng, cafe.lat, cafe.lng);
+    return handleDistanceResult(o, id, dist);
+  }
+
   if (!navigator.geolocation) {
     showToast("Browser tidak mendukung geolokasi", "warning");
     return;
   }
 
   navigator.geolocation.getCurrentPosition(function(pos) {
-    const cafe = DB.cafe.location;
     const dist = calcDistance(pos.coords.latitude, pos.coords.longitude, cafe.lat, cafe.lng);
-    const maxDist = 5000;
-
-    if (dist > maxDist) {
-      const meter = Math.round(dist).toLocaleString('id-ID');
-      const km = (dist / 1000).toFixed(1).replace('.', ',');
-      showModal(`
-        <div class="text-center">
-          <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl" style="background:rgba(231,76,60,.1);color:var(--danger)">
-            <i class="fas fa-location-dot"></i>
-          </div>
-          <h3 class="font-display text-lg font-bold mb-2">Terlalu Jauh</h3>
-          <p class="text-sm mb-2" style="color:var(--muted)">Kamu berada</p>
-          <p class="text-2xl font-bold mb-1" style="color:var(--danger)">${meter} meter</p>
-          <p class="text-sm mb-4" style="color:var(--muted)">(${km} km) dari ARQA Coffee</p>
-          <p class="text-xs mb-4" style="color:var(--muted)">Mendekatlah ke kafe (maks 5 km) untuk mengambil pesanan.</p>
-          <button onclick="closeModal()" class="btn-primary w-full">Tutup</button>
-        </div>
-      `);
-      return;
-    }
-
-    doAcceptDelivery(o, id, dist);
+    handleDistanceResult(o, id, dist);
   }, function() {
     showModal(`
       <div class="text-center">
@@ -79,6 +65,28 @@ function acceptDelivery(id) {
       </div>
     `);
   }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+function handleDistanceResult(o, id, dist) {
+  if (dist > 5000) {
+    const meter = Math.round(dist).toLocaleString('id-ID');
+    const km = (dist / 1000).toFixed(1).replace('.', ',');
+    showModal(`
+      <div class="text-center">
+        <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl" style="background:rgba(231,76,60,.1);color:var(--danger)">
+          <i class="fas fa-location-dot"></i>
+        </div>
+        <h3 class="font-display text-lg font-bold mb-2">Terlalu Jauh</h3>
+        <p class="text-sm mb-2" style="color:var(--muted)">Kamu berada</p>
+        <p class="text-2xl font-bold mb-1" style="color:var(--danger)">${meter} meter</p>
+        <p class="text-sm mb-4" style="color:var(--muted)">(${km} km) dari ARQA Coffee</p>
+        <p class="text-xs mb-4" style="color:var(--muted)">Mendekatlah ke kafe (maks 5 km) untuk mengambil pesanan.</p>
+        <button onclick="closeModal()" class="btn-primary w-full">Tutup</button>
+      </div>
+    `);
+    return;
+  }
+  doAcceptDelivery(o, id, dist);
 }
 
 function doAcceptDelivery(o, id, dist) {

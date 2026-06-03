@@ -296,6 +296,29 @@ function initMaps() {
       doPreview(ARQA_COORDS.lat, ARQA_COORDS.lng);
     }
   }
+
+  const courierPosEl = document.getElementById('map-courier-position');
+  if (courierPosEl && !State.mapInstances['courier-position']) {
+    const cafe = DB.cafe ? DB.cafe.location : ARQA_COORDS;
+    const startPos = State.courierPosition || cafe;
+    State.courierPosition = State.courierPosition || { lat: cafe.lat, lng: cafe.lng };
+    const map = L.map(courierPosEl, { zoomControl: false, attributionControl: false }).setView([startPos.lat, startPos.lng], 14);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
+    L.marker([cafe.lat, cafe.lng], { icon: L.divIcon({ html: '<i class="fas fa-store" style="color:#e07a3a;font-size:22px"></i>', className: '', iconSize: [22, 22], iconAnchor: [11, 11] }) }).addTo(map).bindPopup('ARQA Coffee');
+    const userMarker = L.marker([State.courierPosition.lat, State.courierPosition.lng], { draggable: true, icon: L.divIcon({ html: '<i class="fas fa-motorcycle" style="color:#27ae60;font-size:24px"></i>', className: '', iconSize: [24, 24], iconAnchor: [12, 12] }) }).addTo(map).bindPopup('Posisi Anda (seret)').openPopup();
+    userMarker.on('dragend', function() {
+      const pos = userMarker.getLatLng();
+      State.courierPosition = { lat: pos.lat, lng: pos.lng };
+      updateCourierPosDisplay(pos.lat, pos.lng);
+    });
+    updateCourierPosDisplay(State.courierPosition.lat, State.courierPosition.lng);
+    map.fitBounds([[cafe.lat, cafe.lng], [State.courierPosition.lat, State.courierPosition.lng]], { padding: [50, 50], maxZoom: 15 });
+    if (cafe.lat === State.courierPosition.lat && cafe.lng === State.courierPosition.lng) {
+      map.setView([cafe.lat, cafe.lng], 15);
+    }
+    State.mapInstances['courier-position'] = map;
+    setTimeout(() => map.invalidateSize(), 200);
+  }
 }
 
 function initPlaygroundTimer() {

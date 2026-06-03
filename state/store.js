@@ -17,4 +17,5 @@ const State = {
   editingOrder: null,
   sidebarOpen: false,
   courierStatus: "offline",
+  courierPosition: null,
 };

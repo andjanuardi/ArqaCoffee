@@ -76,10 +76,46 @@ function courierCheckOut() {
   render();
 }
 
+function updateCourierPosDisplay(lat, lng) {
+  const cl = document.getElementById('courier-pos-coords');
+  const dl = document.getElementById('courier-pos-distance');
+  if (cl) cl.textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+  if (dl && DB.cafe) {
+    const d = calcDistance(lat, lng, DB.cafe.location.lat, DB.cafe.location.lng);
+    const meter = Math.round(d).toLocaleString('id-ID');
+    const km = (d / 1000).toFixed(1).replace('.', ',');
+    if (d < 1000) {
+      dl.innerHTML = '<span style="color:var(--muted)">Jarak ke kafe: </span><span style="color:var(--accent)">' + meter + ' meter</span>';
+    } else {
+      dl.innerHTML = '<span style="color:var(--muted)">Jarak ke kafe: </span><span style="color:var(--accent)">' + meter + ' m (' + km + ' km)</span>';
+    }
+  }
+}
+
+function saveCourierPosition() {
+  if (!State.courierPosition) {
+    showToast('Seret marker untuk menentukan posisi terlebih dahulu', 'warning');
+    return;
+  }
+  showToast('Posisi simulasi disimpan', 'success');
+  render();
+}
+
+function resetCourierPosition() {
+  State.courierPosition = null;
+  showToast('Kembali menggunakan posisi GPS real', 'info');
+  render();
+}
+
 function renderCourierProfile() {
+  if (State.mapInstances['courier-position']) {
+    State.mapInstances['courier-position'].remove();
+    delete State.mapInstances['courier-position'];
+  }
   const u = State.currentUser;
   const today = new Date().toISOString().split('T')[0];
   const att = DB.attendances.find(a => a.user_id === u.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
+  const cafe = DB.cafe.location;
   return `
   <div class="animate-fade-up">
     <div class="card text-center mb-4">
@@ -99,6 +135,24 @@ function renderCourierProfile() {
           ${att
             ? `<button onclick="courierCheckOut()" class="btn-secondary w-full text-center" style="background:rgba(231,76,60,.1);color:var(--danger);border-color:transparent;"><i class="fas fa-sign-out-alt mr-1"></i>Check Out</button>`
             : `<button onclick="courierCheckIn()" class="btn-primary w-full text-center"><i class="fas fa-sign-in-alt mr-1"></i>Check In</button>`}
+        </div>
+        <div class="card" style="border-color:rgba(52,152,219,.3)">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(52,152,219,.15);color:#3498db"><i class="fas fa-location-dot"></i></div>
+            <div class="flex-1">
+              <div class="font-semibold text-sm">Posisi Simulasi</div>
+              <div class="text-xs" style="color:var(--muted)">Seret marker untuk menyesuaikan posisi</div>
+            </div>
+          </div>
+          <div id="map-courier-position" style="height:220px;border-radius:12px;margin-bottom:10px;overflow:hidden"></div>
+          <div class="flex items-center justify-between text-xs mb-2 px-1" style="color:var(--muted)">
+            <span id="courier-pos-coords">Memuat...</span>
+            <span id="courier-pos-distance"></span>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="saveCourierPosition()" class="btn-primary flex-1 text-center" style="font-size:13px"><i class="fas fa-floppy-disk mr-1"></i>Simpan</button>
+            <button onclick="resetCourierPosition()" class="btn-secondary flex-1 text-center" style="font-size:13px"><i class="fas fa-rotate-left mr-1"></i>Reset GPS</button>
+          </div>
         </div>
         <div class="card flex items-center gap-3 cursor-pointer" onclick="handleLogout()">
           <i class="fas fa-right-from-bracket" style="color:var(--danger)"></i>
