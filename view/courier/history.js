@@ -38,7 +38,7 @@ function renderCourierHistory() {
       o.courier_id === State.currentUser.id &&
       (o.status === "completed" || o.status === "delivered"),
   );
-  const dateFilter = State.courierDateFilter || "";
+  const dateFilter = State.courierDateFilter || new Date().toISOString().split("T")[0];
   if (dateFilter) {
     const s = new Date(dateFilter);
     s.setHours(0, 0, 0, 0);
