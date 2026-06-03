@@ -116,10 +116,7 @@ function showAddStockModal() {
       <h3 class="font-display text-lg font-bold mb-4">Tambah Bahan Baku</h3>
       <div class="space-y-3">
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama</label><input id="new-stock-name" class="input-field text-sm" placeholder="Misal: Susu Oat"></div>
-        <div class="grid grid-cols-2 gap-3">
-          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Jumlah</label><input id="new-stock-qty" type="number" class="input-field text-sm" value="10"></div>
-          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Satuan</label><input id="new-stock-unit" class="input-field text-sm" value="kg"></div>
-        </div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Satuan</label><input id="new-stock-unit" class="input-field text-sm" value="kg"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Batas Minimum</label><input id="new-stock-min" type="number" class="input-field text-sm" value="3"></div>
       </div>
       <button onclick="addStockItem()" class="btn-primary w-full mt-4 text-center">Simpan</button>
@@ -130,6 +127,6 @@ function showAddStockModal() {
 function addStockItem() {
   const name = document.getElementById('new-stock-name')?.value;
   if (!name) { showToast('Nama bahan wajib diisi', 'warning'); return; }
-  DB.stockItems.push({ id: 's' + Date.now(), name, unit: document.getElementById('new-stock-unit')?.value || 'kg', current_quantity: parseInt(document.getElementById('new-stock-qty')?.value || '10'), min_quantity: parseInt(document.getElementById('new-stock-min')?.value || '3'), updated_at: new Date().toISOString() });
+  DB.stockItems.push({ id: 's' + Date.now(), name, unit: document.getElementById('new-stock-unit')?.value || 'kg', current_quantity: 0, min_quantity: parseInt(document.getElementById('new-stock-min')?.value || '3'), updated_at: new Date().toISOString() });
   closeModal(); showToast('Bahan baku ditambahkan', 'success'); render();
 }
