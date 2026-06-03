@@ -326,13 +326,13 @@ function showPgSnackModal() {
         <h3 class="font-display text-lg font-bold">Pilih Item</h3>
         <button onclick="closeModal();render()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
       </div>
+      <div class="card mb-2" style="padding:10px">
+        <input type="text" class="input-field text-sm w-full" placeholder="Cari item..." oninput="pgFilterModalItems(this.value)">
+      </div>
       <div class="flex gap-2 mb-3 overflow-x-auto pb-1" style="-webkit-overflow-scrolling:touch;scrollbar-width:none">
         ${categories.map(c => `
           <button onclick="State.pgModalCategory='${c}';closeModal();showPgSnackModal()" class="btn-sm px-3 py-1.5 text-xs font-semibold whitespace-nowrap" style="background:${State.pgModalCategory === c ? 'var(--accent)' : 'var(--bg2)'};color:${State.pgModalCategory === c ? '#fff' : 'var(--muted)'};border:1px solid ${State.pgModalCategory === c ? 'var(--accent)' : 'var(--border)'};border-radius:20px;cursor:pointer">${c === 'all' ? 'Semua' : c}</button>
         `).join('')}
-      </div>
-      <div class="card mb-3" style="padding:10px">
-        <input type="text" class="input-field text-sm w-full" placeholder="Cari item..." oninput="pgFilterModalItems(this.value)">
       </div>
       <div class="grid grid-cols-2 gap-3" id="pg-modal-grid" style="max-height:60vh;overflow-y:auto;padding-bottom:12px">
         ${items

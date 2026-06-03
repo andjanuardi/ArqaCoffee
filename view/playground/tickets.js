@@ -46,7 +46,7 @@ function renderPlaygroundTickets() {
           const end = new Date(t.end_time).getTime();
           const total = end - start;
           const remaining = end - now;
-          const elapsed = Math.max(0, Math.min(100, ((now - start) / total) * 100));
+          const remainingPct = Math.max(0, Math.min(100, ((end - now) / total) * 100));
           const isUrgent = remaining > 0 && remaining < 600000;
           const isExpired = remaining <= 0;
           const barColor = isExpired ? "var(--danger)" : isUrgent ? "var(--warning)" : "var(--success)";
@@ -67,12 +67,12 @@ function renderPlaygroundTickets() {
           ${t.items.length > 0 ? `<div class="text-xs mb-3" style="color:var(--muted)"><i class="fas fa-utensils mr-1"></i>${t.items.map((i) => i.name + " x" + i.quantity).join(", ")}</div>` : ""}
           <div class="time-bar-container mb-3">
             <div class="flex justify-between text-xs mb-1" style="color:var(--muted)">
-              <span>${formatTime(new Date(t.start_time))}</span>
-              <span class="pg-remaining" data-end="${t.end_time}" data-over="${isExpired}" style="color:${barColor};font-weight:600">${isExpired ? "-" + formatRemaining(Math.abs(remaining)) : formatRemaining(remaining)}</span>
               <span>${formatTime(new Date(t.end_time))}</span>
+              <span class="pg-remaining" data-end="${t.end_time}" data-over="${isExpired}" style="color:${barColor};font-weight:600">${isExpired ? "-" + formatRemaining(Math.abs(remaining)) : formatRemaining(remaining)}</span>
+              <span>${formatTime(new Date(t.start_time))}</span>
             </div>
             <div class="time-bar-bg">
-              <div class="time-bar-fill" style="width:${Math.min(100, elapsed)}%;background:${barColor}"></div>
+              <div class="time-bar-fill" style="width:${Math.min(100, remainingPct)}%;background:${barColor}"></div>
             </div>
           </div>
           <div class="flex gap-2 mb-2">
@@ -429,7 +429,7 @@ function pgConfirmExtraPayment() {
     t.pgTransactions.push({
       id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
       type: 'extra_time',
-      description: '+' + (p.hours >= 1 ? p.hours + ' jam' : '30 menit'),
+      description: '+' + p.hours + ' jam',
       amount: p.cost,
       method: p.method,
       created_at: new Date().toISOString()
@@ -487,12 +487,20 @@ function showAddTimeModal(id) {
         <p class="text-xs mt-1" style="color:var(--muted)">${t.customer_name} — ${t.hours} jam saat ini</p>
       </div>
       <label class="text-xs font-semibold mb-2 block" style="color:var(--muted)">Durasi Tambahan</label>
-      <div class="grid grid-cols-3 gap-2 mb-4">
-        ${[0.5, 1, 2].map((h, i) => `
-        <div class="pg-dur-card card text-center py-3 cursor-pointer text-sm" onclick="document.querySelectorAll('.pg-dur-card').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='#3498db';window._pgExtraDuration=${h};document.getElementById('pg-extra-cost').textContent='${formatCurrency(Math.round(h * pricePerHour))}'" style="border-color:${i === 1 ? '#3498db' : 'var(--border)'}">
-          <div class="font-bold" style="color:#3498db">${h >= 1 ? h + ' Jam' : '30 Menit'}</div>
+      <div class="grid grid-cols-4 gap-2 mb-4">
+        ${[1, 2, 3].map((h, i) => `
+        <div class="pg-dur-card card text-center py-3 cursor-pointer text-sm" onclick="document.querySelectorAll('.pg-dur-card').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='#3498db';window._pgExtraDuration=${h};window._pgExtraDurationCustom=0;document.getElementById('pg-custom-val').textContent='0';document.getElementById('pg-extra-cost').textContent='${formatCurrency(Math.round(h * pricePerHour))}'" style="border-color:${i === 0 ? '#3498db' : 'var(--border)'}">
+          <div class="font-bold" style="color:#3498db">${h} Jam</div>
           <div class="text-xs mt-1" style="color:var(--muted)">${formatCurrency(Math.round(h * pricePerHour))}</div>
         </div>`).join('')}
+        <div class="card text-center py-3" style="border-color:var(--border)">
+          <div class="text-xs mb-1" style="color:var(--muted)">Custom</div>
+          <div class="flex items-center justify-center gap-1">
+            <button onclick="var cur=window._pgExtraDurationCustom;if(cur==null||cur<0)cur=0;var v=Math.max(0,cur-1);window._pgExtraDurationCustom=v;window._pgExtraDuration=v||0;document.getElementById('pg-custom-val').textContent=v;document.querySelectorAll('.pg-dur-card').forEach(e=>e.style.borderColor='var(--border)');document.getElementById('pg-extra-cost').textContent=v<1?'Rp 0':'Rp '+(v*${pricePerHour}).toLocaleString('id-ID')" class="qty-btn" style="width:24px;height:24px;font-size:14px;padding:0;line-height:24px">−</button>
+            <span id="pg-custom-val" class="text-sm font-bold" style="min-width:20px">0</span>
+            <button onclick="var cur=window._pgExtraDurationCustom;if(cur==null||cur<0)cur=0;var v=cur+1;window._pgExtraDurationCustom=v;window._pgExtraDuration=v;document.getElementById('pg-custom-val').textContent=v;document.querySelectorAll('.pg-dur-card').forEach(e=>e.style.borderColor='var(--border)');document.getElementById('pg-extra-cost').textContent='Rp '+(v*${pricePerHour}).toLocaleString('id-ID')" class="qty-btn" style="width:24px;height:24px;font-size:14px;padding:0;line-height:24px">+</button>
+          </div>
+        </div>
       </div>
       <div class="flex justify-between items-center mb-4 py-2 px-3 rounded-xl" style="background:var(--bg2)">
         <span class="text-sm" style="color:var(--muted)">Biaya Tambahan</span>
@@ -530,7 +538,7 @@ function confirmAddTime(id, pricePerHour) {
     t.pgTransactions.push({
       id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
       type: 'extra_time',
-      description: '+' + (h >= 1 ? h + ' jam' : '30 menit'),
+      description: '+' + h + ' jam',
       amount: cost,
       method: method,
       created_at: new Date().toISOString()
