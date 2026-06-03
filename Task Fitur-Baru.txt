@@ -40,13 +40,13 @@ Fitur pindah meja pada edit pesanan
 	- Laporan keuangan dari playround
 	- Laporan Pajak
 - Admin/Manager
-	- Stok bahan - Tidak bisa edit Harga dan satuan 
+	- Stok bahan - Tidak bisa edit Harga dan satuan (selesai)
 	- Stok bahan - Nama Stok bahan pakai Harga (selesai)
 	- Stok bahan - Menambah Bahan, Hilangkan Jumlah, tambah Harga (selesai)
 	- Stok bahan - Kurangi Barang Pakai Input (selesai)
 	- Stok bahan - Menambah Stok pakai modal pilihan di catat kek pengeluaran atau tidak?
 	- Stok bahan - Menambah Stok Pakai Input (selesai)
-	- Stok bahan - Boleh hapus Kalau stok 0
+	- Stok bahan - Boleh hapus Kalau stok 0 (selesai)
 - Manager (Selesai)
 	- Laporan keuangan seperti kasir (selesai)
 	- Dashboard (selesai)
