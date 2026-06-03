@@ -40,8 +40,8 @@ function renderStockManagement() {
           <div class="flex justify-between mt-1">
             <span></span>
             <div class="flex gap-1">
-              <button onclick="adjustStock('${s.id}','in')" class="btn-sm" style="background:rgba(39,174,96,.15);color:var(--success);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-plus"></i></button>
-              <button onclick="adjustStock('${s.id}','out')" class="btn-sm" style="background:rgba(231,76,60,.15);color:var(--danger);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-minus"></i></button>
+              <button onclick="showRestockModal('${s.id}')" class="btn-sm" style="background:rgba(39,174,96,.15);color:var(--success);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-plus"></i></button>
+              <button onclick="showReduceStockModal('${s.id}')" class="btn-sm" style="background:rgba(231,76,60,.15);color:var(--danger);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-minus"></i></button>
             </div>
           </div>
         </div>`;
@@ -113,6 +113,76 @@ function adjustStock(id, type) {
   DB.stockMovements.push({ id: 'sm' + Date.now(), stock_item_id: id, user_id: State.currentUser.id, type, quantity: qty, notes: type === 'in' ? 'Restok' : 'Pemakaian', created_at: new Date().toISOString() });
   if (s.current_quantity <= s.min_quantity) notifyLowStock(s);
   showToast(`${s.name}: ${type === 'in' ? '+' + qty : '-' + qty} ${s.unit}`, 'success');
+  render();
+}
+
+function showReduceStockModal(id) {
+  const s = DB.stockItems.find(x => x.id === id);
+  if (!s) return;
+  showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-4">Kurangi Stok Bahan</h3>
+      <div class="card mb-4 text-sm">
+        <div class="flex justify-between mb-1"><span style="color:var(--muted)">Bahan</span><span class="font-semibold">${s.name}</span></div>
+        <div class="flex justify-between"><span style="color:var(--muted)">Stok saat ini</span><span class="font-semibold" style="color:var(--accent)">${s.current_quantity} ${s.unit}</span></div>
+      </div>
+      <div>
+        <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Jumlah dikurangi</label>
+        <input id="reduce-stock-qty" type="number" class="input-field text-sm" value="1" min="1" max="${s.current_quantity}">
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button onclick="closeModal()" class="btn-secondary flex-1 text-center">Batal</button>
+        <button onclick="confirmReduceStock('${s.id}')" class="btn-primary flex-1 text-center" style="background:var(--danger);border-color:var(--danger)"><i class="fas fa-minus mr-1"></i>Kurangi</button>
+      </div>
+    </div>
+  `);
+}
+
+function confirmReduceStock(id) {
+  const s = DB.stockItems.find(x => x.id === id);
+  if (!s) return;
+  const qty = parseInt(document.getElementById('reduce-stock-qty')?.value || '0');
+  if (qty <= 0) { showToast('Jumlah harus lebih dari 0', 'warning'); return; }
+  if (qty > s.current_quantity) { showToast('Stok tidak mencukupi', 'warning'); return; }
+  s.current_quantity = Math.max(0, s.current_quantity - qty);
+  DB.stockMovements.push({ id: 'sm' + Date.now(), stock_item_id: id, user_id: State.currentUser.id, type: 'out', quantity: qty, notes: 'Pemakaian', created_at: new Date().toISOString() });
+  if (s.current_quantity <= s.min_quantity) notifyLowStock(s);
+  showToast(`${s.name}: -${qty} ${s.unit}`, 'success');
+  closeModal();
+  render();
+}
+
+function showRestockModal(id) {
+  const s = DB.stockItems.find(x => x.id === id);
+  if (!s) return;
+  showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-4">Tambah Stok Bahan</h3>
+      <div class="card mb-4 text-sm">
+        <div class="flex justify-between mb-1"><span style="color:var(--muted)">Bahan</span><span class="font-semibold">${s.name}</span></div>
+        <div class="flex justify-between"><span style="color:var(--muted)">Stok saat ini</span><span class="font-semibold" style="color:var(--accent)">${s.current_quantity} ${s.unit}</span></div>
+      </div>
+      <div>
+        <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Jumlah ditambahkan</label>
+        <input id="restock-qty" type="number" class="input-field text-sm" value="5" min="1">
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button onclick="closeModal()" class="btn-secondary flex-1 text-center">Batal</button>
+        <button onclick="confirmRestock('${s.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-plus mr-1"></i>Tambah</button>
+      </div>
+    </div>
+  `);
+}
+
+function confirmRestock(id) {
+  const s = DB.stockItems.find(x => x.id === id);
+  if (!s) return;
+  const qty = parseInt(document.getElementById('restock-qty')?.value || '0');
+  if (qty <= 0) { showToast('Jumlah harus lebih dari 0', 'warning'); return; }
+  s.current_quantity = s.current_quantity + qty;
+  DB.stockMovements.push({ id: 'sm' + Date.now(), stock_item_id: id, user_id: State.currentUser.id, type: 'in', quantity: qty, notes: 'Restok', created_at: new Date().toISOString() });
+  showToast(`${s.name}: +${qty} ${s.unit}`, 'success');
+  closeModal();
   render();
 }
 
