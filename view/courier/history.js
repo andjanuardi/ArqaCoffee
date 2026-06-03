@@ -46,6 +46,9 @@ function renderCourierHistory() {
     e.setHours(23, 59, 59, 999);
     done = done.filter((o) => new Date(o.created_at) >= s && new Date(o.created_at) <= e);
   }
+  const totalSetor = done.filter(o => o.status === "delivered").reduce((s, o) => s + (o.total_amount || 0), 0);
+  const totalOngkir = done.reduce((s, o) => s + (o.shipping_cost || 0), 0);
+  const totalTransaksi = totalSetor + totalOngkir;
   done.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   return `
   <div class="animate-fade-up">
@@ -56,6 +59,20 @@ function renderCourierHistory() {
         <input type="date" id="courier-date-filter" class="input-field w-full" value="${dateFilter}" onchange="State.courierDateFilter=this.value;render()">
       </div>
       ${dateFilter ? '<button onclick="State.courierDateFilter=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
+    </div>
+    <div class="grid grid-cols-3 gap-2 mb-4">
+      <div class="stat-card text-center">
+        <div class="text-xs" style="color:var(--muted)">Total Transaksi</div>
+        <div class="text-sm font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalTransaksi)}</div>
+      </div>
+      <div class="stat-card text-center">
+        <div class="text-xs" style="color:var(--muted)">Harus Disetor</div>
+        <div class="text-sm font-bold mt-1" style="color:${totalSetor > 0 ? 'var(--danger)' : 'var(--success)'}">${formatCurrency(totalSetor)}</div>
+      </div>
+      <div class="stat-card text-center">
+        <div class="text-xs" style="color:var(--muted)">Total Pendapatan</div>
+        <div class="text-sm font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalOngkir)}</div>
+      </div>
     </div>
     <div class="space-y-2">
       ${done.length === 0 ? '<p class="text-center py-8 text-sm" style="color:var(--muted)">Belum ada riwayat</p>' : ""}
