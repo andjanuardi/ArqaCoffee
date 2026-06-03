@@ -372,6 +372,99 @@ function printPlaygroundInvoice(id) {
 }
 
 // ============================================================
+// EXTRA PAYMENT CONFIRMATION
+// ============================================================
+
+let _pgPendingPayment = null;
+
+function showPgExtraPaymentConfirm(label, amount, method) {
+  const totalStr = formatCurrency(amount);
+  if (method === "qris") {
+    const qrData = encodeURIComponent("ARQA-COFFEE:PG:" + label + ":" + amount);
+    showModal(`
+      <div class="p-6 text-center">
+        <h3 class="font-display text-xl mb-4">Pembayaran QRIS</h3>
+        <p class="text-sm" style="color:var(--muted);margin-bottom:16px">Scan kode QR di bawah untuk membayar</p>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}" alt="QRIS" class="mx-auto rounded-xl mb-4" style="max-width:200px">
+        <p class="text-lg font-semibold mb-6">Total: ${totalStr}</p>
+        <div class="flex gap-3 justify-center">
+          <button onclick="closeModal()" class="btn-secondary btn-sm">Batal</button>
+          <button onclick="closeModal();pgConfirmExtraPayment()" class="btn-primary btn-sm">Saya Sudah Bayar</button>
+        </div>
+      </div>
+    `);
+  } else if (method === "transfer") {
+    showModal(`
+      <div class="p-6">
+        <h3 class="font-display text-xl mb-4 text-center">Transfer Bank</h3>
+        <div class="card p-4 space-y-2 mb-4" style="background:var(--bg2)">
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">Bank</span><span class="font-semibold">BCA</span></div>
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">No. Rekening</span><span class="font-semibold">1234567890</span></div>
+          <div class="flex justify-between text-sm"><span style="color:var(--muted)">A/N</span><span class="font-semibold">ARQA Coffee</span></div>
+        </div>
+        <p class="text-lg font-semibold mb-6 text-center">Total: ${totalStr}</p>
+        <div class="flex gap-3 justify-center">
+          <button onclick="closeModal()" class="btn-secondary btn-sm">Batal</button>
+          <button onclick="closeModal();pgConfirmExtraPayment()" class="btn-primary btn-sm">Saya Sudah Transfer</button>
+        </div>
+      </div>
+    `);
+  }
+}
+
+function pgConfirmExtraPayment() {
+  const p = _pgPendingPayment;
+  if (!p) return;
+  _pgPendingPayment = null;
+  if (p.type === "time") {
+    const t = (DB.playgroundTickets || []).find((x) => x.id === p.id);
+    if (!t) return;
+    t.hours = (t.hours || 0) + p.hours;
+    const end = new Date(t.end_time);
+    end.setTime(end.getTime() + p.hours * 3600000);
+    t.end_time = end.toISOString();
+    t.subtotal = (t.subtotal || 0) + p.cost;
+    t.total_amount = (t.total_amount || 0) + p.cost;
+    t.pgTransactions = t.pgTransactions || [];
+    t.pgTransactions.push({
+      id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
+      type: 'extra_time',
+      description: '+' + (p.hours >= 1 ? p.hours + ' jam' : '30 menit'),
+      amount: p.cost,
+      method: p.method,
+      created_at: new Date().toISOString()
+    });
+    showToast("Waktu ditambah " + p.hours + " jam — " + formatCurrency(p.cost) + " (" + (p.method === "qris" ? "QRIS" : p.method === "transfer" ? "Transfer" : "Tunai") + ")", "success");
+    render();
+  } else if (p.type === "items") {
+    const t = (DB.playgroundTickets || []).find((x) => x.id === p.id);
+    if (!t) return;
+    let total = 0;
+    const descParts = [];
+    (p.entries || []).forEach(([itemId, qty]) => {
+      const item = (DB.pgStockItems || []).find(x => x.id === itemId);
+      if (!item) return;
+      t.items.push({ menu_item_id: itemId, name: item.name, quantity: qty, unit_price: item.price });
+      total += item.price * qty;
+      descParts.push(item.name + ' x' + qty);
+    });
+    t.items_total = (t.items_total || 0) + total;
+    t.total_amount = (t.total_amount || 0) + total;
+    t.pgTransactions = t.pgTransactions || [];
+    t.pgTransactions.push({
+      id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
+      type: 'extra_items',
+      description: descParts.join(', '),
+      amount: total,
+      method: p.method,
+      created_at: new Date().toISOString()
+    });
+    showToast("Pesanan ditambahkan — " + formatCurrency(total) + " (" + (p.method === "qris" ? "QRIS" : p.method === "transfer" ? "Transfer" : "Tunai") + ")", "success");
+    render();
+  }
+}
+
+// ============================================================
 // ADD TIME
 // ============================================================
 
@@ -425,25 +518,31 @@ function confirmAddTime(id, pricePerHour) {
   const t = (DB.playgroundTickets || []).find((x) => x.id === id);
   if (!t) return;
   const cost = Math.round(h * pricePerHour);
-  t.hours = (t.hours || 0) + h;
-  const end = new Date(t.end_time);
-  end.setTime(end.getTime() + h * 3600000);
-  t.end_time = end.toISOString();
-  t.subtotal = (t.subtotal || 0) + cost;
-  t.total_amount = (t.total_amount || 0) + cost;
   const method = window._pgExtraPayMethod || "qris";
-  t.pgTransactions = t.pgTransactions || [];
-  t.pgTransactions.push({
-    id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
-    type: 'extra_time',
-    description: '+' + (h >= 1 ? h + ' jam' : '30 menit'),
-    amount: cost,
-    method: method,
-    created_at: new Date().toISOString()
-  });
-  closeModal();
-  showToast("Waktu ditambah " + h + " jam — " + formatCurrency(cost) + " (" + (method === "qris" ? "QRIS" : method === "transfer" ? "Transfer" : "Tunai") + ")", "success");
-  render();
+  if (method === "cash") {
+    t.hours = (t.hours || 0) + h;
+    const end = new Date(t.end_time);
+    end.setTime(end.getTime() + h * 3600000);
+    t.end_time = end.toISOString();
+    t.subtotal = (t.subtotal || 0) + cost;
+    t.total_amount = (t.total_amount || 0) + cost;
+    t.pgTransactions = t.pgTransactions || [];
+    t.pgTransactions.push({
+      id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
+      type: 'extra_time',
+      description: '+' + (h >= 1 ? h + ' jam' : '30 menit'),
+      amount: cost,
+      method: method,
+      created_at: new Date().toISOString()
+    });
+    closeModal();
+    showToast("Waktu ditambah " + h + " jam — " + formatCurrency(cost) + " (Tunai)", "success");
+    render();
+  } else {
+    _pgPendingPayment = { type: "time", id, hours: h, cost, method };
+    closeModal();
+    showPgExtraPaymentConfirm("Tambah Waktu", cost, method);
+  }
 }
 
 // ============================================================
@@ -538,29 +637,39 @@ function confirmAddItems(id) {
   const entries = Object.entries(window._pgExtraItems || {}).filter(([_, q]) => q > 0);
   if (entries.length === 0) { showToast("Pilih minimal satu item", "warning"); return; }
   const method = window._pgExtraPayMethod || "qris";
-  let total = 0;
-  const descParts = [];
-  entries.forEach(([itemId, qty]) => {
-    const item = (DB.pgStockItems || []).find(x => x.id === itemId);
-    if (!item) return;
-    t.items.push({ menu_item_id: itemId, name: item.name, quantity: qty, unit_price: item.price });
-    total += item.price * qty;
-    descParts.push(item.name + ' x' + qty);
-  });
-  t.items_total = (t.items_total || 0) + total;
-  t.total_amount = (t.total_amount || 0) + total;
-  t.pgTransactions = t.pgTransactions || [];
-  t.pgTransactions.push({
-    id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
-    type: 'extra_items',
-    description: descParts.join(', '),
-    amount: total,
-    method: method,
-    created_at: new Date().toISOString()
-  });
-  closeModal();
-  showToast("Pesanan ditambahkan — " + formatCurrency(total) + " (" + (method === "qris" ? "QRIS" : method === "transfer" ? "Transfer" : "Tunai") + ")", "success");
-  render();
+  if (method === "cash") {
+    let total = 0;
+    const descParts = [];
+    entries.forEach(([itemId, qty]) => {
+      const item = (DB.pgStockItems || []).find(x => x.id === itemId);
+      if (!item) return;
+      t.items.push({ menu_item_id: itemId, name: item.name, quantity: qty, unit_price: item.price });
+      total += item.price * qty;
+      descParts.push(item.name + ' x' + qty);
+    });
+    t.items_total = (t.items_total || 0) + total;
+    t.total_amount = (t.total_amount || 0) + total;
+    t.pgTransactions = t.pgTransactions || [];
+    t.pgTransactions.push({
+      id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
+      type: 'extra_items',
+      description: descParts.join(', '),
+      amount: total,
+      method: method,
+      created_at: new Date().toISOString()
+    });
+    closeModal();
+    showToast("Pesanan ditambahkan — " + formatCurrency(total) + " (Tunai)", "success");
+    render();
+  } else {
+    const preTotal = entries.reduce((s, [itemId, qty]) => {
+      const item = (DB.pgStockItems || []).find(x => x.id === itemId);
+      return s + (item ? item.price * qty : 0);
+    }, 0);
+    _pgPendingPayment = { type: "items", id, entries, method };
+    closeModal();
+    showPgExtraPaymentConfirm("Pesanan", preTotal, method);
+  }
 }
 
 
