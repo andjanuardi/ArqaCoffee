@@ -131,6 +131,7 @@ function renderOrderSummary(total, discount, afterDiscount, shippingCost) {
   </div>`;
 }
 function renderOrderTypeSelector() {
+  const courierActive = hasActiveCourier();
   return `<div class="card mb-4">
     <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Tipe Pesanan</label>
     <div class="grid grid-cols-2 gap-3">
@@ -138,9 +139,9 @@ function renderOrderTypeSelector() {
         <i class="fas fa-utensils mb-1" style="color:var(--accent)"></i><br><span class="font-semibold">Pesan di Tempat</span>
         <div class="text-[10px] mt-1" style="color:var(--muted)">Makan di kafe</div>
       </div>
-      <div class="card text-center py-3 cursor-pointer text-sm" onclick="selectOrderType('delivery')" style="${State.orderType === "delivery" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}">
+      <div class="card text-center py-3 text-sm" style="${State.orderType === "delivery" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}${!courierActive ? "opacity:.4;cursor:not-allowed" : "cursor:pointer"}" onclick="${courierActive ? "selectOrderType('delivery')" : "showToast('Kurir sedang tidak tersedia','warning')"}">
         <i class="fas fa-motorcycle mb-1" style="color:var(--success)"></i><br><span class="font-semibold">Pesan Antar</span>
-        <div class="text-[10px] mt-1" style="color:var(--muted)">Diantar ke rumah</div>
+        <div class="text-[10px] mt-1" style="color:var(--muted)">${courierActive ? "Diantar ke rumah" : "Kurir tidak tersedia"}</div>
       </div>
     </div>
     ${State.orderType === "dine-in" && State.selectedTable

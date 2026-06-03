@@ -40,4 +40,10 @@ function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takea
             return sum + (item.unit_price * item.quantity * rate / 100);
           }, 0);
         }
+        function hasActiveCourier() {
+          const today = new Date().toISOString().split('T')[0];
+          return DB.users.some(u => u.role === 'courier' && DB.attendances.some(a =>
+            a.user_id === u.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today
+          ));
+        }
 

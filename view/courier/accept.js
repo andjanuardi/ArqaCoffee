@@ -31,6 +31,9 @@ function confirmRejectCourierOrder(orderId) {
 function acceptDelivery(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
+  const today = new Date().toISOString().split('T')[0];
+  const hasCheckedIn = DB.attendances.some(a => a.user_id === State.currentUser.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
+  if (!hasCheckedIn) { showToast("Belum check-in hari ini. Silakan check-in di profil terlebih dahulu", "warning"); return; }
   const hasActive = DB.orders.some(o2 => o2.courier_id === State.currentUser.id && o2.status === "delivering");
   if (hasActive) { showToast("Selesaikan pengantaran aktif terlebih dahulu", "warning"); return; }
   o.courier_id = State.currentUser.id;

@@ -15,6 +15,10 @@ function selectPayTiming(t) {
   render();
 }
 function selectOrderType(t) {
+  if (t === "delivery" && !hasActiveCourier()) {
+    showToast("Kurir sedang tidak tersedia. Coba lagi nanti", "warning");
+    return;
+  }
   State.orderType = t;
   if (t === "dine-in" && !State.selectedTable) {
     startQRScan();

@@ -12,6 +12,8 @@ function renderCourierView() {
 
 function renderCourierAvailable() {
   const hasActive = DB.orders.some(o => o.courier_id === State.currentUser.id && o.status === "delivering");
+  const today = new Date().toISOString().split('T')[0];
+  const hasCheckedIn = DB.attendances.some(a => a.user_id === State.currentUser.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
   const available = DB.orders.filter(
     (o) =>
       o.order_type === "delivery" &&
@@ -22,7 +24,7 @@ function renderCourierAvailable() {
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Pesanan Tersedia</h2>
     <div class="space-y-3">
-      ${hasActive ? '<div class="card text-center py-6" style="border-color:rgba(243,156,18,.2)"><i class="fas fa-route text-3xl mb-2" style="color:var(--warning)"></i><p class="text-sm font-semibold mb-1" style="color:var(--warning)">Ada Pengantaran Aktif</p><p class="text-xs" style="color:var(--muted)">Selesaikan pengantaran aktif sebelum mengambil pesanan baru</p></div>' : available.length === 0 ? '<div class="text-center py-12"><i class="fas fa-box-open text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Belum ada pesanan siap diantar</p></div>' : available
+      ${!hasCheckedIn ? '<div class="card text-center py-6" style="border-color:rgba(231,76,60,.2)"><i class="fas fa-clipboard-list text-3xl mb-2" style="color:var(--danger)"></i><p class="text-sm font-semibold mb-1" style="color:var(--danger)">Belum Check-in Hari Ini</p><p class="text-xs mb-3" style="color:var(--muted)">Lakukan check-in di profil sebelum mengambil pesanan</p><button onclick="State.currentTab.courier=\'profile\';render()" class="btn-primary text-sm px-5 py-2" style="font-size:13px"><i class="fas fa-clock mr-1"></i>Check-in Sekarang</button></div>' : hasActive ? '<div class="card text-center py-6" style="border-color:rgba(243,156,18,.2)"><i class="fas fa-route text-3xl mb-2" style="color:var(--warning)"></i><p class="text-sm font-semibold mb-1" style="color:var(--warning)">Ada Pengantaran Aktif</p><p class="text-xs" style="color:var(--muted)">Selesaikan pengantaran aktif sebelum mengambil pesanan baru</p></div>' : available.length === 0 ? '<div class="text-center py-12"><i class="fas fa-box-open text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Belum ada pesanan siap diantar</p></div>' : available
         .map(
           (o) => `
       <div class="card">

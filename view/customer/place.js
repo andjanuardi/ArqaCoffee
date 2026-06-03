@@ -2,6 +2,10 @@
 // CUSTOMER VIEW — Place Order
 // ============================================================
 function confirmPlaceOrder() {
+  if (State.orderType === "delivery" && !hasActiveCourier()) {
+    showToast("Kurir sedang tidak tersedia. Silakan coba lagi nanti", "warning");
+    return;
+  }
   if (State.orderType === "dine-in" && !State.selectedTable) {
     showToast("Silahkan memilih meja terlebih dahulu", "warning");
     startQRScan();
@@ -106,6 +110,10 @@ function handleDigitalPayment() {
 function placeOrder() {
   if (State.cart.length === 0) {
     showToast("Keranjang masih kosong", "warning");
+    return;
+  }
+  if (State.orderType === "delivery" && !hasActiveCourier()) {
+    showToast("Kurir sedang tidak tersedia. Silakan coba lagi nanti", "warning");
     return;
   }
   if (State.orderType === "dine-in" && !State.selectedTable) {
