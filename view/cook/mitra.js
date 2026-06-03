@@ -19,6 +19,9 @@ function renderMitraQueue() {
 }
 
 function renderMitraHistory() {
+  const mitraMenuIds = DB.menuItems
+    .filter(m => m.submitted_by === State.currentUser.name)
+    .map(m => m.id);
   let done = DB.orders.filter((o) => ["ready", "completed", "rejected"].includes(o.status));
   const startVal = State.mitraDateStart || "";
   const endVal = State.mitraDateEnd || "";
@@ -32,6 +35,7 @@ function renderMitraHistory() {
     e.setHours(23, 59, 59, 999);
     done = done.filter((o) => new Date(o.created_at) <= e);
   }
+  done = done.filter(o => o.items.some(i => mitraMenuIds.includes(i.menu_item_id)));
   done.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   return `
   <div class="animate-fade-up">
@@ -115,8 +119,14 @@ function showMitraOrderDetail(id) {
 }
 
 function renderMitraFinance() {
+  const mitraMenuIds = DB.menuItems
+    .filter(m => m.submitted_by === State.currentUser.name)
+    .map(m => m.id);
   const today = new Date().toISOString().split('T')[0];
-  const paidOrders = DB.orders.filter(o => o.payment_status === 'paid' && o.created_at);
+  const paidOrders = DB.orders.filter(o =>
+    o.payment_status === 'paid' && o.created_at &&
+    o.items.some(i => mitraMenuIds.includes(i.menu_item_id))
+  );
   const totalRevenue = paidOrders.reduce((s, o) => s + (o.total_amount || 0), 0);
   const totalOrders = paidOrders.length;
   const todayPaid = paidOrders.filter(o => o.created_at.split('T')[0] === today);
@@ -137,6 +147,7 @@ function renderMitraFinance() {
         ${(() => {
           const count = {};
           paidOrders.forEach(o => (o.items || []).forEach(i => {
+            if (!mitraMenuIds.includes(i.menu_item_id)) return;
             const mi = getMenuItem(i.menu_item_id);
             if (mi) count[mi.name] = (count[mi.name] || 0) + i.quantity;
           }));
