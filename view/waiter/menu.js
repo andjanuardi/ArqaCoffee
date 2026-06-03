@@ -352,17 +352,9 @@ function placeWaiterOrder() {
 
 function renderWaiterOrders() {
   let myOrders = DB.orders.filter((o) => o.user_id === State.currentUser.id);
-  const startVal = State.waiterOrderDateStart || "";
-  const endVal = State.waiterOrderDateEnd || "";
-  if (startVal) {
-    const s = new Date(startVal);
-    s.setHours(0, 0, 0, 0);
-    myOrders = myOrders.filter((o) => new Date(o.created_at) >= s);
-  }
-  if (endVal) {
-    const e = new Date(endVal);
-    e.setHours(23, 59, 59, 999);
-    myOrders = myOrders.filter((o) => new Date(o.created_at) <= e);
+  const dateFilter = State.waiterOrderDateFilter !== undefined ? State.waiterOrderDateFilter : new Date().toISOString().split('T')[0];
+  if (dateFilter) {
+    myOrders = myOrders.filter((o) => o.created_at && o.created_at.split('T')[0] === dateFilter);
   }
   myOrders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   return `
@@ -370,14 +362,10 @@ function renderWaiterOrders() {
     <h2 class="font-display text-xl font-bold mb-4">Pesanan Saya</h2>
     <div class="flex gap-2 mb-4">
       <div class="flex-1">
-        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Dari Tanggal</label>
-        <input type="date" id="waiter-order-start" class="input-field w-full" value="${startVal}" onchange="State.waiterOrderDateStart=this.value;render()">
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Filter Tanggal</label>
+        <input type="date" id="waiter-order-date" class="input-field w-full" value="${dateFilter}" onchange="State.waiterOrderDateFilter=this.value;render()">
       </div>
-      <div class="flex-1">
-        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Sampai Tanggal</label>
-        <input type="date" id="waiter-order-end" class="input-field w-full" value="${endVal}" onchange="State.waiterOrderDateEnd=this.value;render()">
-      </div>
-      ${startVal || endVal ? '<button onclick="State.waiterOrderDateStart=\'\';State.waiterOrderDateEnd=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
+      ${dateFilter ? '<button onclick="State.waiterOrderDateFilter=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
     </div>
     ${myOrders.length === 0 ? '<div class="text-center py-12"><i class="fas fa-receipt text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Belum ada pesanan</p></div>' : ""}
     <div class="space-y-3">
