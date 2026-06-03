@@ -15,7 +15,7 @@ function renderCourierActive() {
           (o) => `
       <div class="card">
         <div class="flex justify-between items-start mb-1">
-          <div><span class="font-bold">#${o.id.slice(-5).toUpperCase()}</span><span class="badge badge-delivering ml-2">Dalam Perjalanan</span></div>
+          <div><span class="font-bold">#${o.id.slice(-5).toUpperCase()}</span><span class="badge badge-delivering ml-2">Dalam Perjalanan</span>${o.payment_status === 'paid' ? '<span class="badge badge-paid ml-2">Lunas</span>' : '<span class="badge badge-unpaid ml-2">Belum Bayar</span>'}</div>
           <span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
         </div>
         <div class="text-xs mb-1" style="color:var(--muted)">${formatDate(o.created_at)} ${formatTime(o.created_at)}</div>
