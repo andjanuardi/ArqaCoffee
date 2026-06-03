@@ -10,9 +10,11 @@ function renderPlaygroundFinance() {
     return d === dateVal;
   });
   const cashTickets = paidTickets.filter(t => t.payment_method === 'cash');
-  const cashTotal = cashTickets.reduce((s, t) => s + t.total_amount, 0);
+  const cashExtra = getPgExtraTx(dateVal, 'cash');
+  const cashTotal = cashTickets.reduce((s, t) => s + t.total_amount, 0) + cashExtra.reduce((s, tx) => s + tx.amount, 0);
   const digitalTickets = paidTickets.filter(t => t.payment_method === 'qris' || t.payment_method === 'transfer');
-  const digitalTotal = digitalTickets.reduce((s, t) => s + t.total_amount, 0);
+  const digitalExtra = getPgExtraTx(dateVal, 'qris').concat(getPgExtraTx(dateVal, 'transfer'));
+  const digitalTotal = digitalTickets.reduce((s, t) => s + t.total_amount, 0) + digitalExtra.reduce((s, tx) => s + tx.amount, 0);
 
   return `
   <div class="animate-fade-up">
@@ -55,12 +57,27 @@ function renderPlaygroundFinance() {
   </div>`;
 }
 
+function getPgExtraTx(dateVal, methodFilter) {
+  const r = [];
+  (DB.playgroundTickets || []).forEach(t => {
+    (t.pgTransactions || []).forEach(tx => {
+      if (!tx.created_at || tx.created_at.split('T')[0] !== dateVal) return;
+      if (tx.method !== methodFilter) return;
+      r.push({ ...tx, _cust: t.customer_name, _kids: t.children, _ticketId: t.id, _isExtra: true });
+    });
+  });
+  return r.sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
+}
+
 function renderPgCashTable(dateVal) {
   const tickets = (DB.playgroundTickets || []).filter(t => {
     if (t.payment_status !== 'paid' || t.payment_method !== 'cash' || !t.created_at) return false;
     return t.created_at.split('T')[0] === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  const total = tickets.reduce((s, t) => s + t.total_amount, 0);
+  const extras = getPgExtraTx(dateVal, 'cash');
+  const entries = [...tickets.map(t => ({ ...t, _isExtra: false })), ...extras]
+    .sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
+  const total = tickets.reduce((s, t) => s + t.total_amount, 0) + extras.reduce((s, tx) => s + tx.amount, 0);
   return `
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
@@ -69,15 +86,30 @@ function renderPgCashTable(dateVal) {
       </div>
       <div class="grid grid-cols-2 gap-3 mb-3">
         <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Tunai</div><div class="text-base font-bold mt-1" style="color:var(--success)">${formatCurrency(total)}</div></div>
-        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Jumlah Tiket</div><div class="text-base font-bold mt-1">${tickets.length}</div></div>
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Jumlah Transaksi</div><div class="text-base font-bold mt-1">${entries.length}</div></div>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm" style="border-collapse:collapse">
-          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Pelanggan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Anak</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
-          <tbody>${tickets.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="5">Belum ada transaksi tunai</td></tr>' : tickets.map(t => {
-            const date = t.created_at?.split('T')[0] || '-';
-            const time = t.created_at?.split('T')[1]?.slice(0, 5) || '-';
-            return `<tr class="cursor-pointer hover:bg-white/5" onclick="showPlaygroundTicketDetail('${t.id}')" style="border-bottom:1px solid var(--border)"><td style="padding:8px 10px;color:var(--muted);font-size:12px">${date}</td><td style="padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="padding:8px 10px;font-size:12px">${t.customer_name}</td><td style="padding:8px 10px;color:var(--muted);font-size:12px">${t.children.map(c => c.name).join(', ')}</td><td style="padding:8px 10px;text-align:right;color:var(--success);font-size:12px">${formatCurrency(t.total_amount)}</td></tr>`;
+          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Pelanggan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Keterangan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
+          <tbody>${entries.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="5">Belum ada transaksi tunai</td></tr>' : entries.map(e => {
+            if (e._isExtra) {
+              const d = e.created_at?.split('T')[0] || '-';
+              const tm = e.created_at?.split('T')[1]?.slice(0, 5) || '-';
+              return '<tr style="border-bottom:1px solid var(--border);opacity:.65;font-style:italic">' +
+                '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + d + '</td>' +
+                '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + tm + '</td>' +
+                '<td style="padding:8px 10px;font-size:12px">' + e._cust + '</td>' +
+                '<td style="padding:8px 10px;color:var(--warning);font-size:12px">' + e.description + '</td>' +
+                '<td style="padding:8px 10px;text-align:right;color:var(--success);font-size:12px">' + formatCurrency(e.amount) + '</td></tr>';
+            }
+            const d = e.created_at?.split('T')[0] || '-';
+            const tm = e.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            return '<tr class="cursor-pointer hover:bg-white/5" onclick="showPlaygroundTicketDetail(\'' + e.id + '\')" style="border-bottom:1px solid var(--border)">' +
+              '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + d + '</td>' +
+              '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + tm + '</td>' +
+              '<td style="padding:8px 10px;font-size:12px">' + e.customer_name + '</td>' +
+              '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + (e.children || []).map(c => c.name).join(', ') + '</td>' +
+              '<td style="padding:8px 10px;text-align:right;color:var(--success);font-size:12px">' + formatCurrency(e.total_amount) + '</td></tr>';
           }).join('')}</tbody>
           <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(total)}</td></tr></tfoot>
         </table>
@@ -90,7 +122,10 @@ function renderPgDigitalTable(dateVal) {
     if (t.payment_status !== 'paid' || (t.payment_method !== 'qris' && t.payment_method !== 'transfer') || !t.created_at) return false;
     return t.created_at.split('T')[0] === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  const total = tickets.reduce((s, t) => s + t.total_amount, 0);
+  const extras = getPgExtraTx(dateVal, 'qris').concat(getPgExtraTx(dateVal, 'transfer'));
+  const entries = [...tickets.map(t => ({ ...t, _isExtra: false })), ...extras]
+    .sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
+  const total = tickets.reduce((s, t) => s + t.total_amount, 0) + extras.reduce((s, tx) => s + tx.amount, 0);
   return `
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
@@ -99,16 +134,31 @@ function renderPgDigitalTable(dateVal) {
       </div>
       <div class="grid grid-cols-2 gap-3 mb-3">
         <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Digital</div><div class="text-base font-bold mt-1" style="color:var(--accent)">${formatCurrency(total)}</div></div>
-        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Jumlah Tiket</div><div class="text-base font-bold mt-1">${tickets.length}</div></div>
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Jumlah Transaksi</div><div class="text-base font-bold mt-1">${entries.length}</div></div>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm" style="border-collapse:collapse">
-          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Pelanggan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Metode</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
-          <tbody>${tickets.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="5">Belum ada transaksi digital</td></tr>' : tickets.map(t => {
-            const date = t.created_at?.split('T')[0] || '-';
-            const time = t.created_at?.split('T')[1]?.slice(0, 5) || '-';
-            const payLabel = t.payment_method === 'qris' ? 'QRIS' : 'Transfer';
-            return `<tr class="cursor-pointer hover:bg-white/5" onclick="showPlaygroundTicketDetail('${t.id}')" style="border-bottom:1px solid var(--border)"><td style="padding:8px 10px;color:var(--muted);font-size:12px">${date}</td><td style="padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="padding:8px 10px;font-size:12px">${t.customer_name}</td><td style="padding:8px 10px;color:var(--accent);font-size:12px">${payLabel}</td><td style="padding:8px 10px;text-align:right;color:var(--accent);font-size:12px">${formatCurrency(t.total_amount)}</td></tr>`;
+          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Pelanggan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Keterangan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
+          <tbody>${entries.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="5">Belum ada transaksi digital</td></tr>' : entries.map(e => {
+            if (e._isExtra) {
+              const d = e.created_at?.split('T')[0] || '-';
+              const tm = e.created_at?.split('T')[1]?.slice(0, 5) || '-';
+              return '<tr style="border-bottom:1px solid var(--border);opacity:.65;font-style:italic">' +
+                '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + d + '</td>' +
+                '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + tm + '</td>' +
+                '<td style="padding:8px 10px;font-size:12px">' + e._cust + '</td>' +
+                '<td style="padding:8px 10px;color:var(--warning);font-size:12px">' + e.description + '</td>' +
+                '<td style="padding:8px 10px;text-align:right;color:var(--accent);font-size:12px">' + formatCurrency(e.amount) + '</td></tr>';
+            }
+            const d = e.created_at?.split('T')[0] || '-';
+            const tm = e.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            const payLabel = e.payment_method === 'qris' ? 'QRIS' : 'Transfer';
+            return '<tr class="cursor-pointer hover:bg-white/5" onclick="showPlaygroundTicketDetail(\'' + e.id + '\')" style="border-bottom:1px solid var(--border)">' +
+              '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + d + '</td>' +
+              '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + tm + '</td>' +
+              '<td style="padding:8px 10px;font-size:12px">' + e.customer_name + '</td>' +
+              '<td style="padding:8px 10px;color:var(--accent);font-size:12px">' + payLabel + '</td>' +
+              '<td style="padding:8px 10px;text-align:right;color:var(--accent);font-size:12px">' + formatCurrency(e.total_amount) + '</td></tr>';
           }).join('')}</tbody>
           <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(total)}</td></tr></tfoot>
         </table>

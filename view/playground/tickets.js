@@ -75,6 +75,10 @@ function renderPlaygroundTickets() {
               <div class="time-bar-fill" style="width:${Math.min(100, elapsed)}%;background:${barColor}"></div>
             </div>
           </div>
+          <div class="flex gap-2 mb-2">
+            <button onclick="event.stopPropagation();showAddTimeModal('${t.id}')" class="btn-sm flex-1 text-center" style="background:rgba(52,152,219,.1);color:#3498db;border:none;border-radius:10px;padding:8px"><i class="fas fa-clock mr-1"></i>+ Waktu</button>
+            <button onclick="event.stopPropagation();showAddItemsModal('${t.id}')" class="btn-sm flex-1 text-center" style="background:rgba(224,122,58,.1);color:var(--accent);border:none;border-radius:10px;padding:8px"><i class="fas fa-utensils mr-1"></i>+ Pesanan</button>
+          </div>
           <div class="flex gap-2">
             ${t.payment_status === "paid" ? `<button onclick="event.stopPropagation();confirmCompletePlaygroundTicket('${t.id}')" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-check mr-1"></i>Selesaikan</button>` : ""}
             <button onclick="event.stopPropagation();confirmCancelPlaygroundTicket('${t.id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;border-radius:10px;padding:8px"><i class="fas fa-times mr-1"></i>Batalkan</button>
@@ -365,6 +369,198 @@ function printPlaygroundInvoice(id) {
     </body></html>
   `);
   win.document.close();
+}
+
+// ============================================================
+// ADD TIME
+// ============================================================
+
+function showAddTimeModal(id) {
+  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
+  if (!t) return;
+  window._pgExtraDuration = 1;
+  window._pgExtraPayMethod = "qris";
+  const children = t.children || [];
+  const companions = t.companions || [];
+  const companionCount = t.companion_count || companions.length;
+  const pricePerHour = children.length * PG_CHILD_PRICE + companionCount * PG_COMPANION_PRICE;
+  showModal(`
+    <div>
+      <div class="text-center mb-4">
+        <div class="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl" style="background:rgba(52,152,219,.15);color:#3498db">
+          <i class="fas fa-clock"></i>
+        </div>
+        <h3 class="font-display text-lg font-bold">Tambah Waktu</h3>
+        <p class="text-xs mt-1" style="color:var(--muted)">${t.customer_name} — ${t.hours} jam saat ini</p>
+      </div>
+      <label class="text-xs font-semibold mb-2 block" style="color:var(--muted)">Durasi Tambahan</label>
+      <div class="grid grid-cols-3 gap-2 mb-4">
+        ${[0.5, 1, 2].map((h, i) => `
+        <div class="pg-dur-card card text-center py-3 cursor-pointer text-sm" onclick="document.querySelectorAll('.pg-dur-card').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='#3498db';window._pgExtraDuration=${h};document.getElementById('pg-extra-cost').textContent='${formatCurrency(Math.round(h * pricePerHour))}'" style="border-color:${i === 1 ? '#3498db' : 'var(--border)'}">
+          <div class="font-bold" style="color:#3498db">${h >= 1 ? h + ' Jam' : '30 Menit'}</div>
+          <div class="text-xs mt-1" style="color:var(--muted)">${formatCurrency(Math.round(h * pricePerHour))}</div>
+        </div>`).join('')}
+      </div>
+      <div class="flex justify-between items-center mb-4 py-2 px-3 rounded-xl" style="background:var(--bg2)">
+        <span class="text-sm" style="color:var(--muted)">Biaya Tambahan</span>
+        <span class="font-bold" style="color:var(--accent);font-size:16px" id="pg-extra-cost">${formatCurrency(Math.round(1 * pricePerHour))}</span>
+      </div>
+      <label class="text-xs font-semibold mb-2 block" style="color:var(--muted)">Metode Pembayaran</label>
+      <div class="grid grid-cols-3 gap-2 mb-4">
+        <div class="pg-pay-card card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='var(--success)';window._pgExtraPayMethod='qris'" style="border-color:var(--success)"><i class="fas fa-qrcode mb-1" style="color:var(--accent)"></i><br>QRIS</div>
+        <div class="pg-pay-card card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='var(--success)';window._pgExtraPayMethod='transfer'" style="border-color:var(--border)"><i class="fas fa-university mb-1" style="color:var(--accent)"></i><br>Transfer</div>
+        <div class="pg-pay-card card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='var(--success)';window._pgExtraPayMethod='cash'" style="border-color:var(--border)"><i class="fas fa-money-bill mb-1" style="color:var(--success)"></i><br>Tunai</div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeModal()" class="btn-secondary btn-sm flex-1 text-center">Batal</button>
+        <button onclick="confirmAddTime('${id}', ${pricePerHour})" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-check mr-1"></i>Konfirmasi</button>
+      </div>
+    </div>
+  `);
+}
+
+function confirmAddTime(id, pricePerHour) {
+  const h = window._pgExtraDuration;
+  if (!h || h <= 0) { showToast("Pilih durasi tambahan", "warning"); return; }
+  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
+  if (!t) return;
+  const cost = Math.round(h * pricePerHour);
+  t.hours = (t.hours || 0) + h;
+  const end = new Date(t.end_time);
+  end.setTime(end.getTime() + h * 3600000);
+  t.end_time = end.toISOString();
+  t.subtotal = (t.subtotal || 0) + cost;
+  t.total_amount = (t.total_amount || 0) + cost;
+  const method = window._pgExtraPayMethod || "qris";
+  t.pgTransactions = t.pgTransactions || [];
+  t.pgTransactions.push({
+    id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
+    type: 'extra_time',
+    description: '+' + (h >= 1 ? h + ' jam' : '30 menit'),
+    amount: cost,
+    method: method,
+    created_at: new Date().toISOString()
+  });
+  closeModal();
+  showToast("Waktu ditambah " + h + " jam — " + formatCurrency(cost) + " (" + (method === "qris" ? "QRIS" : method === "transfer" ? "Transfer" : "Tunai") + ")", "success");
+  render();
+}
+
+// ============================================================
+// ADD ITEMS
+// ============================================================
+
+function showAddItemsModal(id) {
+  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
+  if (!t) return;
+  window._pgExtraTicketId = id;
+  window._pgExtraItems = {};
+  window._pgExtraPayMethod = "qris";
+  window._pgExtraSearch = "";
+  showModal(`
+    <div>
+      <div class="text-center mb-3">
+        <div class="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl" style="background:rgba(224,122,58,.15);color:var(--accent)">
+          <i class="fas fa-utensils"></i>
+        </div>
+        <h3 class="font-display text-lg font-bold">Tambah Pesanan</h3>
+        <p class="text-xs mt-1" style="color:var(--muted)">${t.customer_name}</p>
+      </div>
+      <div class="card mb-3" style="padding:8px">
+        <input type="text" class="input-field text-sm w-full" placeholder="Cari makanan/minuman..." oninput="window._pgExtraSearch=this.value;document.getElementById('pg-items-modal').innerHTML=pgRenderExtraItems()">
+      </div>
+      <div id="pg-items-modal" class="space-y-1.5 max-h-48 overflow-y-auto mb-3">
+        ${pgRenderExtraItems()}
+      </div>
+      <div class="flex justify-between items-center py-2 px-3 rounded-xl mb-3" style="background:var(--bg2)">
+        <span class="text-sm" style="color:var(--muted)">Total Pesanan</span>
+        <span class="font-bold" style="color:var(--accent);font-size:16px" id="pg-items-total">Rp 0</span>
+      </div>
+      <label class="text-xs font-semibold mb-2 block" style="color:var(--muted)">Metode Pembayaran</label>
+      <div class="grid grid-cols-3 gap-2 mb-4">
+        <div class="pg-pay-card2 card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card2').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='var(--success)';window._pgExtraPayMethod='qris'" style="border-color:var(--success)"><i class="fas fa-qrcode mb-1" style="color:var(--accent)"></i><br>QRIS</div>
+        <div class="pg-pay-card2 card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card2').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='var(--success)';window._pgExtraPayMethod='transfer'" style="border-color:var(--border)"><i class="fas fa-university mb-1" style="color:var(--accent)"></i><br>Transfer</div>
+        <div class="pg-pay-card2 card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card2').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='var(--success)';window._pgExtraPayMethod='cash'" style="border-color:var(--border)"><i class="fas fa-money-bill mb-1" style="color:var(--success)"></i><br>Tunai</div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeModal()" class="btn-secondary btn-sm flex-1 text-center">Batal</button>
+        <button onclick="confirmAddItems('${id}')" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-check mr-1"></i>Konfirmasi</button>
+      </div>
+    </div>
+  `);
+}
+
+function pgRenderExtraItems() {
+  const all = (DB.pgStockItems || []).filter(s => s.category !== "Perlengkapan");
+  const q = (window._pgExtraSearch || "").toLowerCase();
+  const filtered = !q ? all : all.filter(s => s.name.toLowerCase().includes(q));
+  return filtered.map(s => {
+    const cq = window._pgExtraItems[s.id] || 0;
+    return '<div class="flex items-center justify-between py-2 px-3 rounded-xl" style="background:var(--bg2)">' +
+      '<div class="flex-1 min-w-0">' +
+      '<div class="text-sm font-medium truncate">' + s.name + '</div>' +
+      '<div class="text-xs" style="color:var(--accent)">' + formatCurrency(s.price) + '</div>' +
+      '</div>' +
+      '<div class="flex items-center gap-1.5 ml-2">' +
+      '<button onclick="pgDecExtraItem(\'' + s.id + '\')" class="qty-btn" style="width:28px;height:28px;font-size:14px">−</button>' +
+      '<span class="text-sm font-bold" style="width:20px;text-align:center;color:var(--text)">' + (cq || '-') + '</span>' +
+      '<button onclick="pgIncExtraItem(\'' + s.id + '\')" class="qty-btn" style="width:28px;height:28px;font-size:14px">+</button>' +
+      '</div></div>';
+  }).join('');
+}
+
+function pgIncExtraItem(id) {
+  window._pgExtraItems[id] = (window._pgExtraItems[id] || 0) + 1;
+  const el = document.getElementById('pg-items-modal');
+  if (el) el.innerHTML = pgRenderExtraItems();
+  pgUpdateExtraTotal();
+}
+
+function pgDecExtraItem(id) {
+  window._pgExtraItems[id] = Math.max(0, (window._pgExtraItems[id] || 0) - 1);
+  const el = document.getElementById('pg-items-modal');
+  if (el) el.innerHTML = pgRenderExtraItems();
+  pgUpdateExtraTotal();
+}
+
+function pgUpdateExtraTotal() {
+  const total = Object.entries(window._pgExtraItems || {}).reduce((s, [id, qty]) => {
+    const item = (DB.pgStockItems || []).find(x => x.id === id);
+    return s + (item ? item.price * qty : 0);
+  }, 0);
+  const el = document.getElementById('pg-items-total');
+  if (el) el.textContent = formatCurrency(total);
+}
+
+function confirmAddItems(id) {
+  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
+  if (!t) return;
+  const entries = Object.entries(window._pgExtraItems || {}).filter(([_, q]) => q > 0);
+  if (entries.length === 0) { showToast("Pilih minimal satu item", "warning"); return; }
+  const method = window._pgExtraPayMethod || "qris";
+  let total = 0;
+  const descParts = [];
+  entries.forEach(([itemId, qty]) => {
+    const item = (DB.pgStockItems || []).find(x => x.id === itemId);
+    if (!item) return;
+    t.items.push({ menu_item_id: itemId, name: item.name, quantity: qty, unit_price: item.price });
+    total += item.price * qty;
+    descParts.push(item.name + ' x' + qty);
+  });
+  t.items_total = (t.items_total || 0) + total;
+  t.total_amount = (t.total_amount || 0) + total;
+  t.pgTransactions = t.pgTransactions || [];
+  t.pgTransactions.push({
+    id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
+    type: 'extra_items',
+    description: descParts.join(', '),
+    amount: total,
+    method: method,
+    created_at: new Date().toISOString()
+  });
+  closeModal();
+  showToast("Pesanan ditambahkan — " + formatCurrency(total) + " (" + (method === "qris" ? "QRIS" : method === "transfer" ? "Transfer" : "Tunai") + ")", "success");
+  render();
 }
 
 
