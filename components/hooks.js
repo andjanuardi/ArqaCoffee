@@ -14,8 +14,11 @@ function initCharts() {
   });
   State.chartInstances = {};
 
-  const dateVal = State.financeDate || new Date().toISOString().split('T')[0];
-  const ds = typeof getFinanceData === 'function' ? getFinanceData(dateVal, dateVal) : [];
+  const startDate = State.financeStartDate || (() => {
+    const d = new Date(); d.setDate(d.getDate() - 6); return d.toISOString().split('T')[0];
+  })();
+  const endDate = State.financeEndDate || new Date().toISOString().split('T')[0];
+  const ds = typeof getFinanceData === 'function' ? getFinanceData(startDate, endDate) : [];
 
   const chartOptions = (yLabel) => ({
     responsive: true,

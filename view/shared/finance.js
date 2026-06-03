@@ -36,8 +36,9 @@ function getFinanceData(startDate, endDate) {
   return entries;
 }
 
-function setFinanceDate(dateVal) {
-  State.financeDate = dateVal;
+function setFinanceRange(startDate, endDate) {
+  State.financeStartDate = startDate;
+  State.financeEndDate = endDate;
   render();
 }
 
@@ -84,9 +85,15 @@ function showFinanceOrderDetail(orderId) {
 }
 
 function printRevenueDetail() {
-  const dateVal = State.financeDate || new Date().toISOString().split("T")[0];
-  const startDate = dateVal;
-  const endDate = dateVal;
+  const startDate =
+    State.financeStartDate ||
+    (() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 6);
+      return d.toISOString().split("T")[0];
+    })();
+  const endDate =
+    State.financeEndDate || new Date().toISOString().split("T")[0];
   const paidOrders = DB.orders.filter(
     (o) => o.payment_status === "paid" && o.created_at,
   );
@@ -146,9 +153,15 @@ function printRevenueDetail() {
 }
 
 function printExpenseDetail() {
-  const dateVal = State.financeDate || new Date().toISOString().split("T")[0];
-  const startDate = dateVal;
-  const endDate = dateVal;
+  const startDate =
+    State.financeStartDate ||
+    (() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 6);
+      return d.toISOString().split("T")[0];
+    })();
+  const endDate =
+    State.financeEndDate || new Date().toISOString().split("T")[0];
   const expenses = (DB.expenses || []).filter(
     (e) => e.date && e.date >= startDate && e.date <= endDate,
   );
@@ -192,9 +205,15 @@ function printExpenseDetail() {
 }
 
 function printAvgDetail() {
-  const dateVal = State.financeDate || new Date().toISOString().split("T")[0];
-  const startDate = dateVal;
-  const endDate = dateVal;
+  const startDate =
+    State.financeStartDate ||
+    (() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 6);
+      return d.toISOString().split("T")[0];
+    })();
+  const endDate =
+    State.financeEndDate || new Date().toISOString().split("T")[0];
   const data = getFinanceData(startDate, endDate);
   const totalRev = data.reduce((s, d) => s + d.revenue, 0);
   const dayCount = Math.max(
@@ -243,9 +262,15 @@ function printAvgDetail() {
 }
 
 function printProfitDetail() {
-  const dateVal = State.financeDate || new Date().toISOString().split("T")[0];
-  const startDate = dateVal;
-  const endDate = dateVal;
+  const startDate =
+    State.financeStartDate ||
+    (() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 6);
+      return d.toISOString().split("T")[0];
+    })();
+  const endDate =
+    State.financeEndDate || new Date().toISOString().split("T")[0];
   const data = getFinanceData(startDate, endDate);
   const totalRev = data.reduce((s, d) => s + d.revenue, 0);
   const expenses = (DB.expenses || []).filter(
@@ -301,9 +326,15 @@ function printProfitDetail() {
 }
 
 function printTransactionDetail() {
-  const dateVal = State.financeDate || new Date().toISOString().split("T")[0];
-  const startDate = dateVal;
-  const endDate = dateVal;
+  const startDate =
+    State.financeStartDate ||
+    (() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 6);
+      return d.toISOString().split("T")[0];
+    })();
+  const endDate =
+    State.financeEndDate || new Date().toISOString().split("T")[0];
   const paidOrders = DB.orders.filter(
     (o) => o.payment_status === "paid" && o.created_at,
   );
@@ -364,33 +395,43 @@ function printTransactionDetail() {
 // FINANCE REPORT
 // ------------------------------------------------------------------
 function renderFinanceReport() {
-  const dateVal = State.financeDate || new Date().toISOString().split("T")[0];
-  const startDate = dateVal;
-  const endDate = dateVal;
+  const startDate =
+    State.financeStartDate ||
+    (() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 6);
+      return d.toISOString().split("T")[0];
+    })();
+  const endDate =
+    State.financeEndDate || new Date().toISOString().split("T")[0];
   const computedSales = getFinanceData(startDate, endDate);
   const totalRev = computedSales.reduce((s, d) => s + d.revenue, 0);
 
   const filteredExpenses = (DB.expenses || []).filter((e) => {
     if (!e.date) return false;
-    return e.date === dateVal;
+    return e.date >= startDate && e.date <= endDate;
   });
   const totalExp = filteredExpenses.reduce((s, e) => s + e.amount, 0);
   const netProfit = totalRev - totalExp;
-  const dayCount = 1;
+  const dayCount = Math.max(
+    1,
+    Math.round((new Date(endDate) - new Date(startDate)) / 86400000) + 1,
+  );
 
   const paidOrders = DB.orders.filter((o) => o.payment_status === "paid");
   const periodOrders = paidOrders.filter((o) => {
     if (!o.created_at) return false;
     const d = o.created_at.split("T")[0];
-    return d === dateVal;
+    return d >= startDate && d <= endDate;
   });
 
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Keuangan</h2>
-    <div class="mb-4">
-      <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Filter Tanggal</label>
-      <input type="date" id="finance-date" class="input-field" style="max-width:260px" value="${dateVal}" onchange="setFinanceDate(this.value)">
+    <div class="flex flex-wrap items-center gap-2 mb-4">
+      <input type="date" id="finance-start" value="${startDate}" class="input-field text-sm" style="flex:1;min-width:140px" onchange="setFinanceRange(this.value,document.getElementById('finance-end').value)">
+      <span class="text-xs" style="color:var(--muted)">s/d</span>
+      <input type="date" id="finance-end" value="${endDate}" class="input-field text-sm" style="flex:1;min-width:140px" onchange="setFinanceRange(document.getElementById('finance-start').value,this.value)">
     </div>
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showRevenueTable=!State.showRevenueTable;render()"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
