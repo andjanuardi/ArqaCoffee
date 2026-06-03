@@ -55,7 +55,7 @@ function renderPlaygroundPgStock() {
                 <span class="text-xs" style="color:var(--muted)">Minimum: ${s.min_quantity} ${s.unit}</span>
                 <div class="flex gap-1">
                   <button onclick="adjustPgStock('${s.id}','in')" class="btn-sm" style="background:rgba(39,174,96,.15);color:var(--success);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-plus"></i></button>
-                  <button onclick="adjustPgStock('${s.id}','out')" class="btn-sm" style="background:rgba(231,76,60,.15);color:var(--danger);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-minus"></i></button>
+                  <button onclick="event.stopPropagation();showReducePgStockModal('${s.id}')" class="btn-sm" style="background:rgba(231,76,60,.15);color:var(--danger);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-minus"></i></button>
                 </div>
               </div>
             </div>
@@ -158,6 +158,57 @@ function adjustPgStock(id, type) {
   (DB.pgStockMovements || (DB.pgStockMovements = [])).push({ id: 'psm' + Date.now(), stock_item_id: id, user_id: State.currentUser.id, type, quantity: qty, notes: type === 'in' ? 'Restok' : 'Terjual', created_at: new Date().toISOString() });
   if (s.current_quantity <= s.min_quantity) notifyLowStock(s);
   showToast(`${s.name}: ${type === 'in' ? '+' + qty : '-' + qty} ${s.unit}`, 'success');
+  render();
+}
+
+function showReducePgStockModal(id) {
+  const s = (DB.pgStockItems || []).find(x => x.id === id);
+  if (!s) return;
+  showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-4">Kurangi Bahan</h3>
+      <div class="card mb-4" style="background:var(--bg2)">
+        <div class="flex justify-between text-sm mb-1">
+          <span style="color:var(--muted)">Item</span>
+          <span class="font-semibold">${s.name}</span>
+        </div>
+        <div class="flex justify-between text-sm mb-1">
+          <span style="color:var(--muted)">Kategori</span>
+          <span>${s.category || 'Makanan'}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span style="color:var(--muted)">Stok Saat Ini</span>
+          <span class="font-bold" style="color:${s.current_quantity <= s.min_quantity ? 'var(--danger)' : 'var(--accent)'}">${s.current_quantity} ${s.unit}</span>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Jumlah Kurangi</label>
+          <input id="reduce-pgstock-qty" type="number" class="input-field text-sm w-full" value="1" min="1" max="${s.current_quantity}">
+        </div>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+        <button id="reduce-pgstock-btn" onclick="confirmReducePgStock('${id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.15);color:var(--danger);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:10px;cursor:pointer"><i class="fas fa-minus mr-1"></i>Kurangi</button>
+      </div>
+    </div>
+  `);
+}
+
+function confirmReducePgStock(id) {
+  const s = (DB.pgStockItems || []).find(x => x.id === id);
+  if (!s) return;
+  const qty = parseInt(document.getElementById('reduce-pgstock-qty')?.value);
+  if (!qty || qty < 1) { showToast('Jumlah minimal 1', 'warning'); return; }
+  if (qty > s.current_quantity) { showToast('Jumlah melebihi stok saat ini', 'warning'); return; }
+  s.current_quantity = Math.max(0, s.current_quantity - qty);
+  (DB.pgStockMovements || (DB.pgStockMovements = [])).push({
+    id: 'psm' + Date.now(), stock_item_id: id, user_id: State.currentUser.id,
+    type: 'out', quantity: qty, notes: 'Dikurangi', created_at: new Date().toISOString()
+  });
+  if (s.current_quantity <= s.min_quantity) notifyLowStock(s);
+  closeModal();
+  showToast(`${s.name}: -${qty} ${s.unit}`, 'info');
   render();
 }
 
