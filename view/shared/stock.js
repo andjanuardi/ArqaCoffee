@@ -59,11 +59,6 @@ function showEditStockModal(id) {
       <h3 class="font-display text-lg font-bold mb-4">Edit Bahan Baku</h3>
       <div class="space-y-3">
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama</label><input id="edit-stock-name" class="input-field text-sm" value="${s.name}"></div>
-        <div class="grid grid-cols-2 gap-3">
-          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Jumlah</label><input id="edit-stock-qty" type="number" class="input-field text-sm" value="${s.current_quantity}"></div>
-          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Satuan</label><input id="edit-stock-unit" class="input-field text-sm" value="${s.unit}"></div>
-        </div>
-        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Harga Satuan</label><input id="edit-stock-price" type="number" class="input-field text-sm" value="${s.price || 0}" step="500"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Batas Minimum</label><input id="edit-stock-min" type="number" class="input-field text-sm" value="${s.min_quantity}"></div>
       </div>
       <button onclick="saveEditStock('${s.id}')" class="btn-primary w-full mt-4 text-center">Simpan</button>
@@ -77,9 +72,6 @@ function saveEditStock(id) {
   const name = document.getElementById('edit-stock-name')?.value;
   if (!name) { showToast('Nama bahan wajib diisi', 'warning'); return; }
   s.name = name;
-  s.current_quantity = parseInt(document.getElementById('edit-stock-qty')?.value || '0');
-  s.unit = document.getElementById('edit-stock-unit')?.value || 'kg';
-  s.price = parseInt(document.getElementById('edit-stock-price')?.value || '0');
   s.min_quantity = parseInt(document.getElementById('edit-stock-min')?.value || '3');
   s.updated_at = new Date().toISOString();
   closeModal(); showToast('Bahan baku diperbarui', 'success'); render();
