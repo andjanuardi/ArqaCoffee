@@ -97,7 +97,8 @@ function renderCustomerMenu() {
               if (!p || !p.is_active) return false;
               return !p.menu_ids || !p.menu_ids.length || p.menu_ids.includes(m.id);
             })();
-            const available = m.is_available !== false;
+            const mitraActive = !m.submitted_by || isMitraActive(m.submitted_by);
+            const available = (m.is_available !== false) && mitraActive;
             return `
       <div class="menu-card ${hasPromo ? 'ring-2' : ''} ${!available ? 'opacity-45' : ''}" onclick="${available ? `showMenuItem('${m.id}')` : ''}" style="${hasPromo ? '--tw-ring-color:var(--success);' : ''}${!available ? 'cursor:default;filter:grayscale(.6);' : ''}">
         <div class="relative">

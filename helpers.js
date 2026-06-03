@@ -46,4 +46,11 @@ function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takea
             a.user_id === u.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today
           ));
         }
+        function isMitraActive(mitraName) {
+          if (!mitraName) return true;
+          const today = new Date().toISOString().split('T')[0];
+          return DB.users.some(u => u.role === 'mitra_juru_masak' && u.name === mitraName && DB.attendances.some(a =>
+            a.user_id === u.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today
+          ));
+        }
 
