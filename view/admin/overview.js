@@ -36,16 +36,12 @@ function saveShippingRate() {
 
 function renderAdminCourierFinance() {
   const courierId = State.adminCourierFilterId || "";
-  const dateFilter = State.adminCourierDateFilter || "";
+  const dateFilter = State.adminCourierDateFilter || new Date().toISOString().split('T')[0];
   const couriers = DB.users.filter(u => u.role === 'courier');
   let done = DB.orders.filter(o => o.courier_id && (o.status === "completed" || o.status === "delivered"));
   if (courierId) done = done.filter(o => o.courier_id === courierId);
   if (dateFilter) {
-    const s = new Date(dateFilter);
-    s.setHours(0, 0, 0, 0);
-    const e = new Date(dateFilter);
-    e.setHours(23, 59, 59, 999);
-    done = done.filter(o => new Date(o.created_at) >= s && new Date(o.created_at) <= e);
+    done = done.filter(o => o.created_at && o.created_at.split('T')[0] === dateFilter);
   }
   const totalSetor = done.filter(o => o.status === "delivered").reduce((s, o) => s + (o.total_amount || 0), 0);
   const totalOngkir = done.reduce((s, o) => s + (o.shipping_cost || 0), 0);
@@ -93,12 +89,9 @@ function renderAdminCourierFinance() {
         </select>
       </div>
     </div>
-    <div class="flex gap-2 mb-4">
-      <div class="flex-1">
-        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tanggal</label>
-        <input type="date" id="admin-courier-date-filter" class="input-field w-full" value="${dateFilter}" onchange="State.adminCourierDateFilter=this.value;render()">
-      </div>
-      ${dateFilter ? '<button onclick="State.adminCourierDateFilter=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
+    <div class="mb-4">
+      <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tanggal</label>
+      <input type="date" id="admin-courier-date-filter" class="input-field" style="max-width:260px" value="${dateFilter}" onchange="State.adminCourierDateFilter=this.value;render()">
     </div>
     <div class="grid grid-cols-3 gap-2 mb-4">
       <div class="stat-card text-center">

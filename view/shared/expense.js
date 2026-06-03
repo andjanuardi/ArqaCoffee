@@ -16,34 +16,29 @@ const EXPENSE_ICONS = {
 function renderExpenseManagement() {
   if (!State.expenseSearch) State.expenseSearch = "";
   if (!State.expenseCategory) State.expenseCategory = "all";
-  if (!State.expenseStart) { const d = new Date(); d.setDate(d.getDate() - 30); State.expenseStart = d.toISOString().split("T")[0]; }
-  if (!State.expenseEnd) State.expenseEnd = new Date().toISOString().split("T")[0];
+  const dateFilter = State.expenseDate || new Date().toISOString().split("T")[0];
   const expenses = DB.expenses || [];
-  const now = new Date();
   const filtered = expenses.filter((e) => {
     if (!e.date) return false;
-    if (e.date < State.expenseStart || e.date > State.expenseEnd) return false;
+    if (e.date !== dateFilter) return false;
     if (State.expenseCategory !== "all" && e.category !== State.expenseCategory) return false;
     if (State.expenseSearch && !e.note?.toLowerCase().includes(State.expenseSearch.toLowerCase()) && !e.category?.toLowerCase().includes(State.expenseSearch.toLowerCase())) return false;
     return true;
   });
   const totalFiltered = filtered.reduce((s, e) => s + e.amount, 0);
-  const dayCount = Math.max(1, Math.round((new Date(State.expenseEnd) - new Date(State.expenseStart)) / 86400000) + 1);
   return `
   <div class="animate-fade-up">
     <div class="flex justify-between items-center mb-4">
       <h2 class="font-display text-xl font-bold">Pengeluaran</h2>
       <button onclick="showAddExpenseModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
     </div>
-    <div class="flex flex-wrap items-center gap-2 mb-4">
-      <input type="date" id="expense-start" value="${State.expenseStart}" class="input-field text-sm" style="flex:1;min-width:130px" onchange="State.expenseStart=this.value;render()">
-      <span class="text-xs" style="color:var(--muted)">s/d</span>
-      <input type="date" id="expense-end" value="${State.expenseEnd}" class="input-field text-sm" style="flex:1;min-width:130px" onchange="State.expenseEnd=this.value;render()">
+    <div class="mb-4">
+      <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Filter Tanggal</label>
+      <input type="date" id="expense-date" class="input-field" style="max-width:260px" value="${dateFilter}" onchange="State.expenseDate=this.value;render()">
     </div>
-    <div class="grid grid-cols-3 gap-3 mb-4">
+    <div class="grid grid-cols-2 gap-3 mb-4">
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-base font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalFiltered)}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Jumlah Transaksi</div><div class="text-base font-bold mt-1">${filtered.length}</div></div>
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Rata-rata/Hari</div><div class="text-base font-bold mt-1" style="color:var(--accent)">${formatCurrency(filtered.length ? Math.round(totalFiltered / dayCount) : 0)}</div></div>
     </div>
     <div class="card mb-4" style="padding:10px">
       <input type="text" class="input-field text-sm w-full" placeholder="Cari pengeluaran..." value="${State.expenseSearch}" oninput="State.expenseSearch=this.value;render()">
