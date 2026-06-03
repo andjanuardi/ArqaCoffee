@@ -76,7 +76,7 @@ function renderPgCashTable(dateVal) {
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const extras = getPgExtraTx(dateVal, 'cash');
   const entries = [...tickets.map(t => ({ ...t, _isExtra: false })), ...extras]
-    .sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
+    .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
   const total = tickets.reduce((s, t) => s + t.total_amount, 0) + extras.reduce((s, tx) => s + tx.amount, 0);
   return `
     <div class="card mb-4">
@@ -124,7 +124,7 @@ function renderPgDigitalTable(dateVal) {
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const extras = getPgExtraTx(dateVal, 'qris').concat(getPgExtraTx(dateVal, 'transfer'));
   const entries = [...tickets.map(t => ({ ...t, _isExtra: false })), ...extras]
-    .sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
+    .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
   const total = tickets.reduce((s, t) => s + t.total_amount, 0) + extras.reduce((s, tx) => s + tx.amount, 0);
   return `
     <div class="card mb-4">
