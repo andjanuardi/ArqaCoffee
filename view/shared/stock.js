@@ -158,6 +158,10 @@ function showRestockModal(id) {
         <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Jumlah ditambahkan</label>
         <input id="restock-qty" type="number" class="input-field text-sm" value="5" min="1">
       </div>
+      <label class="flex items-center gap-2 mt-3 text-sm cursor-pointer" style="color:var(--muted)">
+        <input type="checkbox" id="restock-as-expense" checked class="w-4 h-4" style="accent-color:var(--accent)">
+        <span><i class="fas fa-receipt mr-1"></i>Catat sebagai pengeluaran (Bahan Baku)</span>
+      </label>
       <div class="flex gap-2 mt-4">
         <button onclick="closeModal()" class="btn-secondary flex-1 text-center">Batal</button>
         <button onclick="confirmRestock('${s.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-plus mr-1"></i>Tambah</button>
@@ -173,6 +177,10 @@ function confirmRestock(id) {
   if (qty <= 0) { showToast('Jumlah harus lebih dari 0', 'warning'); return; }
   s.current_quantity = s.current_quantity + qty;
   DB.stockMovements.push({ id: 'sm' + Date.now(), stock_item_id: id, user_id: State.currentUser.id, type: 'in', quantity: qty, notes: 'Restok', created_at: new Date().toISOString() });
+  const asExpense = document.getElementById('restock-as-expense')?.checked;
+  if (asExpense && s.price) {
+    DB.expenses.push({ id: 'e' + Date.now(), date: new Date().toISOString().split('T')[0], time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }), category: 'Bahan Baku', amount: qty * s.price, note: 'Restok ' + s.name + ' (' + qty + ' ' + s.unit + ')', volume: qty, unit: s.unit, unitPrice: s.price });
+  }
   showToast(`${s.name}: +${qty} ${s.unit}`, 'success');
   closeModal();
   render();
