@@ -15,11 +15,11 @@ Dapur Mitra/Marchant, fitur control Harga dengan dapur mitra, fitur buka/tutup l
 Fitur pindah meja pada edit pesanan
 
 - Waiters (Selesai)
-	- User Baru
-	- Seperti Pelanggan Tidak Ada Pesan Antar
-	- Tidak Ada Scan, Pilih Meja Manual
-	- Absensi
-- Kurir
+	- User Baru (selesai)
+	- Seperti Pelanggan Tidak Ada Pesan Antar (selesai)
+	- Tidak Ada Scan, Pilih Meja Manual (selesai)
+	- Absensi (selesai)
+- Kurir (Selesai)
 	- Hilangkan Absesi (selesai)
 	- Ganti Absensi Jadi Status (selesai)
 	- Kurir Mendapat Order dari yang terdekat dari warung atau mitra
