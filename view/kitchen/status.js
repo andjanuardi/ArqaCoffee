@@ -5,7 +5,12 @@ function updateItemStatus(orderId, menuItemId, newStatus) {
   const o = DB.orders.find((x) => x.id === orderId);
   if (!o) return;
   const item = o.items.find((i) => i.menu_item_id === menuItemId);
-  if (item) item.status = newStatus;
+  if (item) {
+    item.status = newStatus;
+    if (State.currentUser?.role === 'mitra_juru_masak') {
+      item.claimed_by = State.currentUser.name;
+    }
+  }
 
   if (o.items.every((i) => i.status === "ready")) {
     o.status = "ready";

@@ -119,38 +119,42 @@ function showMitraOrderDetail(id) {
 }
 
 function renderMitraFinance() {
-  const mitraMenuIds = DB.menuItems
-    .filter(m => m.submitted_by === State.currentUser.name)
-    .map(m => m.id);
+  const mitraName = State.currentUser.name;
   const today = new Date().toISOString().split('T')[0];
-  const paidOrders = DB.orders.filter(o =>
-    o.payment_status === 'paid' && o.created_at &&
-    o.items.some(i => mitraMenuIds.includes(i.menu_item_id))
-  );
-  const totalRevenue = paidOrders.reduce((s, o) => s + (o.total_amount || 0), 0);
-  const totalOrders = paidOrders.length;
-  const todayPaid = paidOrders.filter(o => o.created_at.split('T')[0] === today);
-  const todayRevenue = todayPaid.reduce((s, o) => s + (o.total_amount || 0), 0);
-  const todayCount = todayPaid.length;
+  const claimItems = [];
+  DB.orders.forEach(o => {
+    if (!o.created_at) return;
+    o.items.forEach(i => {
+      if (i.claimed_by === mitraName) claimItems.push({ ...i, order: o });
+    });
+  });
+  const totalRevenue = claimItems
+    .filter(ci => ci.order.payment_status === 'paid')
+    .reduce((s, ci) => s + (ci.unit_price * ci.quantity || 0), 0);
+  const totalOrders = new Set(claimItems.map(ci => ci.order.id)).size;
+  const todayClaimed = claimItems.filter(ci => ci.order.created_at.split('T')[0] === today);
+  const todayRevenue = todayClaimed
+    .filter(ci => ci.order.payment_status === 'paid')
+    .reduce((s, ci) => s + (ci.unit_price * ci.quantity || 0), 0);
+  const todayCount = new Set(todayClaimed.map(ci => ci.order.id)).size;
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Keuangan Mitra</h2>
     <div class="grid grid-cols-2 gap-3 mb-5">
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRevenue)}</div></div>
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pesanan Lunas</div><div class="text-lg font-bold mt-1">${totalOrders}</div></div>
+      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pesanan Diproses</div><div class="text-lg font-bold mt-1">${totalOrders}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pendapatan Hari Ini</div><div class="text-lg font-bold mt-1" style="color:var(--success)">${formatCurrency(todayRevenue)}</div></div>
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pesanan Hari Ini</div><div class="text-lg font-bold mt-1">${todayCount}</div></div>
+      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Diproses Hari Ini</div><div class="text-lg font-bold mt-1">${todayCount}</div></div>
     </div>
     <div class="card mb-4">
       <h3 class="font-semibold text-sm mb-3">Menu Terlaris</h3>
       <div class="space-y-2">
         ${(() => {
           const count = {};
-          paidOrders.forEach(o => (o.items || []).forEach(i => {
-            if (!mitraMenuIds.includes(i.menu_item_id)) return;
-            const mi = getMenuItem(i.menu_item_id);
-            if (mi) count[mi.name] = (count[mi.name] || 0) + i.quantity;
-          }));
+          claimItems.forEach(ci => {
+            const mi = getMenuItem(ci.menu_item_id);
+            if (mi) count[mi.name] = (count[mi.name] || 0) + ci.quantity;
+          });
           const sorted = Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 5);
           if (!sorted.length) return '<p class="text-sm" style="color:var(--muted)">Belum ada data</p>';
           const maxQty = sorted[0][1];
