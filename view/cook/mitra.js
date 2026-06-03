@@ -112,7 +112,6 @@ function showMitraOrderDetail(id) {
 
 function renderMitraFinance() {
   const mitraName = State.currentUser.name;
-  const today = new Date().toISOString().split('T')[0];
   const claimItems = [];
   DB.orders.forEach(o => {
     if (!o.created_at) return;
@@ -138,11 +137,6 @@ function renderMitraFinance() {
     .filter(ci => ci.order.payment_status === 'paid')
     .reduce((s, ci) => s + (ci.unit_price * ci.quantity || 0), 0);
   const totalOrders = new Set(claimItems.map(ci => ci.order.id)).size;
-  const todayClaimed = claimItems.filter(ci => ci.order.created_at.split('T')[0] === today);
-  const todayRevenue = todayClaimed
-    .filter(ci => ci.order.payment_status === 'paid')
-    .reduce((s, ci) => s + (ci.unit_price * ci.quantity || 0), 0);
-  const todayCount = new Set(todayClaimed.map(ci => ci.order.id)).size;
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Keuangan Mitra</h2>
@@ -156,8 +150,6 @@ function renderMitraFinance() {
     <div class="grid grid-cols-2 gap-3 mb-5">
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRevenue)}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pesanan Diproses</div><div class="text-lg font-bold mt-1">${totalOrders}</div></div>
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pendapatan Hari Ini</div><div class="text-lg font-bold mt-1" style="color:var(--success)">${formatCurrency(todayRevenue)}</div></div>
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Diproses Hari Ini</div><div class="text-lg font-bold mt-1">${todayCount}</div></div>
     </div>
     <div class="card mb-4">
       <h3 class="font-semibold text-sm mb-3">Menu Terlaris</h3>
