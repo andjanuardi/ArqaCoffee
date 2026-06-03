@@ -11,6 +11,7 @@ function renderCourierView() {
 }
 
 function renderCourierAvailable() {
+  const hasActive = DB.orders.some(o => o.courier_id === State.currentUser.id && o.status === "delivering");
   const available = DB.orders.filter(
     (o) =>
       o.order_type === "delivery" &&
@@ -21,8 +22,7 @@ function renderCourierAvailable() {
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Pesanan Tersedia</h2>
     <div class="space-y-3">
-      ${available.length === 0 ? '<div class="text-center py-12"><i class="fas fa-box-open text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Belum ada pesanan siap diantar</p></div>' : ""}
-      ${available
+      ${hasActive ? '<div class="card text-center py-6" style="border-color:rgba(243,156,18,.2)"><i class="fas fa-route text-3xl mb-2" style="color:var(--warning)"></i><p class="text-sm font-semibold mb-1" style="color:var(--warning)">Ada Pengantaran Aktif</p><p class="text-xs" style="color:var(--muted)">Selesaikan pengantaran aktif sebelum mengambil pesanan baru</p></div>' : available.length === 0 ? '<div class="text-center py-12"><i class="fas fa-box-open text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Belum ada pesanan siap diantar</p></div>' : available
         .map(
           (o) => `
       <div class="card">

@@ -31,6 +31,8 @@ function confirmRejectCourierOrder(orderId) {
 function acceptDelivery(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
+  const hasActive = DB.orders.some(o2 => o2.courier_id === State.currentUser.id && o2.status === "delivering");
+  if (hasActive) { showToast("Selesaikan pengantaran aktif terlebih dahulu", "warning"); return; }
   o.courier_id = State.currentUser.id;
   o.status = "delivering";
   DB.courierTracking.push({
