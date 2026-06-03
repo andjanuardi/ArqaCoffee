@@ -38,17 +38,13 @@ function renderCourierHistory() {
       o.courier_id === State.currentUser.id &&
       (o.status === "completed" || o.status === "delivered"),
   );
-  const startVal = State.courierDateStart || "";
-  const endVal = State.courierDateEnd || "";
-  if (startVal) {
-    const s = new Date(startVal);
+  const dateFilter = State.courierDateFilter || "";
+  if (dateFilter) {
+    const s = new Date(dateFilter);
     s.setHours(0, 0, 0, 0);
-    done = done.filter((o) => new Date(o.created_at) >= s);
-  }
-  if (endVal) {
-    const e = new Date(endVal);
+    const e = new Date(dateFilter);
     e.setHours(23, 59, 59, 999);
-    done = done.filter((o) => new Date(o.created_at) <= e);
+    done = done.filter((o) => new Date(o.created_at) >= s && new Date(o.created_at) <= e);
   }
   done.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   return `
@@ -56,14 +52,10 @@ function renderCourierHistory() {
     <h2 class="font-display text-xl font-bold mb-4">Riwayat Pengantaran</h2>
     <div class="flex gap-2 mb-4">
       <div class="flex-1">
-        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Dari Tanggal</label>
-        <input type="date" id="courier-history-start" class="input-field w-full" value="${startVal}" onchange="State.courierDateStart=this.value;render()">
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tanggal</label>
+        <input type="date" id="courier-date-filter" class="input-field w-full" value="${dateFilter}" onchange="State.courierDateFilter=this.value;render()">
       </div>
-      <div class="flex-1">
-        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Sampai Tanggal</label>
-        <input type="date" id="courier-history-end" class="input-field w-full" value="${endVal}" onchange="State.courierDateEnd=this.value;render()">
-      </div>
-      ${startVal || endVal ? '<button onclick="State.courierDateStart=\'\';State.courierDateEnd=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
+      ${dateFilter ? '<button onclick="State.courierDateFilter=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
     </div>
     <div class="space-y-2">
       ${done.length === 0 ? '<p class="text-center py-8 text-sm" style="color:var(--muted)">Belum ada riwayat</p>' : ""}

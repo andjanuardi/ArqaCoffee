@@ -44,7 +44,7 @@ Fitur pindah meja pada edit pesanan
 	- Stok bahan - Nama Stok bahan pakai Harga (selesai)
 	- Stok bahan - Menambah Bahan, Hilangkan Jumlah, tambah Harga (selesai)
 	- Stok bahan - Kurangi Barang Pakai Input (selesai)
-	- Stok bahan - Menambah Stok pakai modal pilihan di catat kek pengeluaran atau tidak?
+	- Stok bahan - Menambah Stok pakai modal pilihan di catat kek pengeluaran atau tidak? (selesai)
 	- Stok bahan - Menambah Stok Pakai Input (selesai)
 	- Stok bahan - Boleh hapus Kalau stok 0 (selesai)
 - Manager (Selesai)
