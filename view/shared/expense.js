@@ -505,20 +505,30 @@ function renderActiveOrders() {
 // ACTIVE PLAYGROUND TICKETS (shared: admin + manager)
 // ============================================================
 function renderActivePlaygroundTickets() {
-  const tickets = (DB.playgroundTickets || [])
+  if (!State.activePlaygroundStart) {
+    const d = new Date(); d.setDate(d.getDate() - 30);
+    State.activePlaygroundStart = d.toISOString().split('T')[0];
+  }
+  if (!State.activePlaygroundEnd) State.activePlaygroundEnd = new Date().toISOString().split('T')[0];
+
+  const rawTickets = (DB.playgroundTickets || []).filter(t => {
+    if (!t.created_at) return false;
+    const d = t.created_at.split('T')[0];
+    return d >= State.activePlaygroundStart && d <= State.activePlaygroundEnd;
+  });
+
+  const tickets = rawTickets
     .filter(t => t.status === "active")
     .sort((a, b) => new Date(a.end_time) - new Date(b.end_time));
-  const completed = (DB.playgroundTickets || [])
+  const completed = rawTickets
     .filter(t => t.status === "completed" || t.status === "cancelled")
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const q = (State.activePlaygroundSearch || '').toLowerCase();
   const now = Date.now();
 
   const totalActive = tickets.length;
-  const totalChildren = tickets.reduce((s, t) => s + (t.children?.length || 0), 0);
-  const totalRevenue = tickets
-    .filter(t => t.payment_status === "paid")
-    .reduce((s, t) => s + (t.total_amount || 0), 0);
+  const totalSold = rawTickets.filter(t => t.payment_status === "paid").length;
+  const totalCancelled = rawTickets.filter(t => t.status === "cancelled").length;
 
   const filtered = tickets.filter(t =>
     !q || t.customer_name?.toLowerCase().includes(q) ||
@@ -532,19 +542,24 @@ function renderActivePlaygroundTickets() {
       <h2 class="font-display text-xl font-bold">Tiket Aktif Playground</h2>
       <span class="text-xs" style="color:var(--muted)">${totalActive} tiket</span>
     </div>
-    <div class="grid grid-cols-3 gap-3 mb-5">
+    <div class="grid grid-cols-3 gap-3 mb-3">
       <div class="stat-card text-center">
         <div class="text-lg font-bold" style="color:var(--accent)">${totalActive}</div>
         <div class="text-[10px]" style="color:var(--muted)">Tiket Aktif</div>
       </div>
       <div class="stat-card text-center">
-        <div class="text-lg font-bold" style="color:#3498db">${totalChildren}</div>
-        <div class="text-[10px]" style="color:var(--muted)">Total Anak</div>
+        <div class="text-lg font-bold" style="color:#3498db">${totalSold}</div>
+        <div class="text-[10px]" style="color:var(--muted)">Tiket Terjual</div>
       </div>
       <div class="stat-card text-center">
-        <div class="text-lg font-bold" style="color:var(--success)">${formatCurrency(totalRevenue)}</div>
-        <div class="text-[10px]" style="color:var(--muted)">Pendapatan</div>
+        <div class="text-lg font-bold" style="color:var(--danger)">${totalCancelled}</div>
+        <div class="text-[10px]" style="color:var(--muted)">Tiket Dibatalkan</div>
       </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <input type="date" value="${State.activePlaygroundStart}" class="input-field text-sm" style="flex:1;min-width:130px" onchange="State.activePlaygroundStart=this.value;render()">
+      <span class="text-xs" style="color:var(--muted)">s/d</span>
+      <input type="date" value="${State.activePlaygroundEnd}" class="input-field text-sm" style="flex:1;min-width:130px" onchange="State.activePlaygroundEnd=this.value;render()">
     </div>
     <div class="card mb-4" style="padding:10px">
       <input type="text" class="input-field text-sm w-full" placeholder="Cari nama pelanggan, ID tiket, atau nama anak..." value="${State.activePlaygroundSearch || ''}" oninput="State.activePlaygroundSearch=this.value;render()">
