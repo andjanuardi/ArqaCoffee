@@ -24,13 +24,6 @@ function renderPlaygroundFinance() {
     <div class="grid grid-cols-2 gap-3 mb-5">
       <div class="stat-card cursor-pointer" onclick="State.pgShowCashTable=!State.pgShowCashTable;render()"><div class="flex items-center gap-2"><i class="fas fa-money-bill-wave" style="color:var(--success);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Bayar Tunai</span></div><div class="text-xl font-bold mt-1" style="color:var(--success)">${formatCurrency(cashTotal)}</div></div>
       <div class="stat-card cursor-pointer" onclick="State.pgShowDigitalTable=!State.pgShowDigitalTable;render()"><div class="flex items-center gap-2"><i class="fas fa-credit-card" style="color:var(--accent);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Bayar Digital</span></div><div class="text-xl font-bold mt-1" style="color:var(--accent)">${formatCurrency(digitalTotal)}</div></div>
-      <div class="stat-card cursor-pointer" onclick="State.currentTab['playground']='tickets';render()"><div class="flex items-center gap-2"><i class="fas fa-check-circle" style="color:var(--success);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Lunas</span></div><div class="text-xl font-bold mt-1" style="color:var(--success)">${paidTickets.length}</div></div>
-      <div class="stat-card cursor-pointer" onclick="State.currentTab['playground']='tickets';render()"><div class="flex items-center gap-2"><i class="fas fa-exclamation-circle" style="color:var(--danger);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Belum Bayar</span></div><div class="text-xl font-bold mt-1" style="color:var(--danger)">${(DB.playgroundTickets || []).filter(t => {
-        if (t.payment_status !== 'unpaid' || !t.created_at) return false;
-        if (t.status === 'cancelled') return false;
-        const d = t.created_at.split('T')[0];
-        return d === dateVal;
-      }).length}</div></div>
     </div>
     ${State.pgShowCashTable ? renderPgCashTable(dateVal) : ''}
     ${State.pgShowDigitalTable ? renderPgDigitalTable(dateVal) : ''}

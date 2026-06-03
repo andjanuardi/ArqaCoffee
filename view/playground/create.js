@@ -198,31 +198,12 @@ function renderPlaygroundCreate() {
     }
 
     <div class="card mb-4">
-      <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Kapan Membayar?</label>
-      <div class="grid grid-cols-2 gap-3 mb-4">
-        <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectPayTiming('now')" style="${State._pgPayTiming !== "later" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}">
-          <i class="fas fa-bolt mb-1" style="color:var(--accent)"></i><br><span class="font-semibold">Bayar Sekarang</span>
-          <div class="text-[10px] mt-1" style="color:var(--muted)">Langsung selesai</div>
-        </div>
-        <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectPayTiming('later')" style="${State._pgPayTiming === "later" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}">
-          <i class="fas fa-clock mb-1" style="color:var(--warning)"></i><br><span class="font-semibold">Bayar Nanti</span>
-          <div class="text-[10px] mt-1" style="color:var(--muted)">Bayar di kasir</div>
-        </div>
-      </div>
-      ${
-        State._pgPayTiming !== "later"
-          ? `
       <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Metode Pembayaran</label>
       <div class="grid grid-cols-3 gap-3">
         <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectMethod('qris')" style="${(State._pgPaymentMethod || "qris") === "qris" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-qrcode mb-1" style="color:var(--accent)"></i><br>QRIS</div>
         <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectMethod('transfer')" style="${State._pgPaymentMethod === "transfer" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-university mb-1" style="color:var(--accent)"></i><br>Transfer</div>
         <div class="card text-center py-3 cursor-pointer text-sm" onclick="pgSelectMethod('cash')" style="${State._pgPaymentMethod === "cash" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}"><i class="fas fa-money-bill mb-1" style="color:var(--success)"></i><br>Tunai</div>
-      </div>`
-          : `<div class="flex items-center gap-2 p-3 rounded-xl text-xs" style="background:rgba(243,156,18,.1);color:var(--warning)">
-      <i class="fas fa-info-circle"></i>
-      <span>Tiket akan dibuat dengan status <b>Belum Bayar</b>. Silakan bayar di kasir.</span>
-    </div>`
-      }
+      </div>
     </div>
 
     <button onclick="createPlaygroundTicket()" class="btn-primary w-full text-center flex items-center justify-center gap-2">
@@ -350,7 +331,10 @@ function showPgSnackModal() {
           <button onclick="State.pgModalCategory='${c}';closeModal();showPgSnackModal()" class="btn-sm px-3 py-1.5 text-xs font-semibold whitespace-nowrap" style="background:${State.pgModalCategory === c ? 'var(--accent)' : 'var(--bg2)'};color:${State.pgModalCategory === c ? '#fff' : 'var(--muted)'};border:1px solid ${State.pgModalCategory === c ? 'var(--accent)' : 'var(--border)'};border-radius:20px;cursor:pointer">${c === 'all' ? 'Semua' : c}</button>
         `).join('')}
       </div>
-      <div class="grid grid-cols-2 gap-3" style="max-height:60vh;overflow-y:auto;padding-bottom:12px">
+      <div class="card mb-3" style="padding:10px">
+        <input type="text" class="input-field text-sm w-full" placeholder="Cari item..." oninput="pgFilterModalItems(this.value)">
+      </div>
+      <div class="grid grid-cols-2 gap-3" id="pg-modal-grid" style="max-height:60vh;overflow-y:auto;padding-bottom:12px">
         ${items
           .map((s) => {
             const inCart = selected.find((x) => x.menu_item_id === s.id);
@@ -473,13 +457,6 @@ function pgDecSnackFromModal(id) {
   }
 }
 
-function pgSelectPayTiming(t) {
-  State._pgPayTiming = t;
-  if (t === "later") State._pgPaymentMethod = "";
-  else State._pgPaymentMethod = State._pgPaymentMethod || "qris";
-  render();
-}
-
 function pgSelectMethod(val) {
   State._pgPaymentMethod = val;
   render();
@@ -524,10 +501,9 @@ function createPlaygroundTicket() {
     childSocks,
     selectedSnacks,
   );
-  const payLater = State._pgPayTiming === "later";
-  const paymentMethod = payLater ? "" : State._pgPaymentMethod || "qris";
+  const paymentMethod = State._pgPaymentMethod || "qris";
 
-  if (payLater || paymentMethod === "cash") {
+  if (paymentMethod === "cash") {
     finalizePlaygroundTicket();
     return;
   }
@@ -599,8 +575,7 @@ function finalizePlaygroundTicket() {
     childSocks,
     selectedSnacks,
   );
-  const payLater = State._pgPayTiming === "later";
-  const paymentMethod = payLater ? "" : State._pgPaymentMethod || "qris";
+  const paymentMethod = State._pgPaymentMethod || "cash";
 
   const now = new Date();
   const ticket = {
@@ -624,7 +599,7 @@ function finalizePlaygroundTicket() {
     subtotal: calc.subtotal,
     items_total: calc.itemsTotal,
     total_amount: calc.total,
-    payment_status: payLater ? "unpaid" : "paid",
+    payment_status: "paid",
     payment_method: paymentMethod,
     status: "active",
     created_at: now.toISOString(),
@@ -674,7 +649,6 @@ function finalizePlaygroundTicket() {
   State._pgCompanionCount = 0;
   State._pgHours = 1;
   State._pgSelectedSnacks = [];
-  State._pgPayTiming = "now";
   State._pgPaymentMethod = "qris";
   for (let i = 0; i < 10; i++) delete State["_pgChildName" + i];
   for (let i = 0; i < 10; i++) delete State["_pgChildHasSocks" + i];
@@ -682,4 +656,14 @@ function finalizePlaygroundTicket() {
 
   showToast("Tiket " + name + " berhasil dibuat!", "success");
   switchTab("tickets");
+}
+
+function pgFilterModalItems(q) {
+  const grid = document.getElementById('pg-modal-grid');
+  if (!grid) return;
+  const val = (q || '').toLowerCase();
+  grid.querySelectorAll('.card.text-center').forEach(card => {
+    const name = card.querySelector('.font-semibold')?.textContent?.toLowerCase() || '';
+    card.style.display = !val || name.includes(val) ? '' : 'none';
+  });
 }
