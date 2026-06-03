@@ -120,6 +120,20 @@ function renderMitraFinance() {
       if (i.claimed_by === mitraName) claimItems.push({ ...i, order: o });
     });
   });
+  const dateFilter = State.mitraFinanceDateFilter || "";
+  if (dateFilter) {
+    const s = new Date(dateFilter);
+    s.setHours(0, 0, 0, 0);
+    const e = new Date(dateFilter);
+    e.setHours(23, 59, 59, 999);
+    const filtered = [];
+    claimItems.forEach(ci => {
+      const d = new Date(ci.order.created_at);
+      if (d >= s && d <= e) filtered.push(ci);
+    });
+    claimItems.length = 0;
+    claimItems.push(...filtered);
+  }
   const totalRevenue = claimItems
     .filter(ci => ci.order.payment_status === 'paid')
     .reduce((s, ci) => s + (ci.unit_price * ci.quantity || 0), 0);
@@ -132,6 +146,13 @@ function renderMitraFinance() {
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Keuangan Mitra</h2>
+    <div class="flex gap-2 mb-4">
+      <div class="flex-1">
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tanggal</label>
+        <input type="date" id="mitra-finance-date-filter" class="input-field w-full" value="${dateFilter}" onchange="State.mitraFinanceDateFilter=this.value;render()">
+      </div>
+      ${dateFilter ? '<button onclick="State.mitraFinanceDateFilter=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
+    </div>
     <div class="grid grid-cols-2 gap-3 mb-5">
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRevenue)}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pesanan Diproses</div><div class="text-lg font-bold mt-1">${totalOrders}</div></div>
