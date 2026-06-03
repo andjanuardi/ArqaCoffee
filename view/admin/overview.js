@@ -387,11 +387,22 @@ function renderAdminOverview() {
 function isServiceClosed() {
   if (!DB.cafe) DB.cafe = {};
   if (DB.cafe.serviceStatus === 'closed') return true;
+  if (DB.cafe.specialDates) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const special = DB.cafe.specialDates.find(s => s.date === todayStr);
+    if (special) return special.closed;
+  }
   if (DB.cafe.serviceSchedule) {
     const today = new Date().getDay();
     const idx = today === 0 ? 6 : today - 1;
     const day = DB.cafe.serviceSchedule[idx];
-    if (day && !day.active) return true;
+    if (day) {
+      const now = new Date();
+      const currentMin = now.getHours() * 60 + now.getMinutes();
+      const openMin = parseInt(day.open?.split(':')[0] || 0) * 60 + parseInt(day.open?.split(':')[1] || 0);
+      const closeMin = parseInt(day.close?.split(':')[0] || 0) * 60 + parseInt(day.close?.split(':')[1] || 0);
+      if (currentMin < openMin || currentMin >= closeMin) return true;
+    }
   }
   return false;
 }
@@ -401,7 +412,7 @@ function renderServiceControl() {
   if (!DB.cafe.serviceStatus) DB.cafe.serviceStatus = 'open';
   if (!DB.cafe.serviceSchedule) {
     const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu', 'Minggu'];
-    DB.cafe.serviceSchedule = days.map((name, i) => ({ day: i, name, active: true }));
+    DB.cafe.serviceSchedule = days.map((name, i) => ({ day: i, name, open: '08:00', close: '22:00' }));
   }
   const isOpen = DB.cafe.serviceStatus === 'open';
   return `
@@ -419,30 +430,39 @@ function renderServiceControl() {
       </button>
     </div>
     <div class="card">
-      <h3 class="font-semibold text-sm mb-1"><i class="fas fa-calendar-week mr-1"></i>Jadwal Buka Otomatis</h3>
-      <p class="text-xs mb-4" style="color:var(--muted)">Atur hari apa saja layanan buka. Di luar hari ini layanan otomatis tutup.</p>
+      <h3 class="font-semibold text-sm mb-1"><i class="fas fa-clock mr-1"></i>Jam Operasional</h3>
+      <p class="text-xs mb-4" style="color:var(--muted)">Atur jam buka dan tutup otomatis setiap hari.</p>
       <div class="space-y-2 mb-4">
         ${DB.cafe.serviceSchedule.map(d => `
         <div class="flex items-center justify-between py-2 px-3 rounded-xl" style="background:var(--bg2)">
           <span class="text-sm font-medium">${d.name}</span>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" class="sr-only peer" ${d.active ? 'checked' : ''} onchange="scheduleDayToggle(${d.day}, this.checked)">
-            <div class="w-11 h-6 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" style="background:${d.active ? 'var(--success)' : 'rgba(255,255,255,.15)'}"></div>
-          </label>
+          <div class="flex items-center gap-2">
+            <input type="time" value="${d.open}" onchange="updateScheduleTime(${d.day},'open',this.value)" class="input-field text-xs" style="width:85px;padding:4px 8px">
+            <span style="color:var(--muted)">—</span>
+            <input type="time" value="${d.close}" onchange="updateScheduleTime(${d.day},'close',this.value)" class="input-field text-xs" style="width:85px;padding:4px 8px">
+          </div>
         </div>`).join('')}
       </div>
       <button onclick="saveServiceSchedule()" class="btn-primary w-full text-center"><i class="fas fa-save mr-1"></i>Simpan Jadwal</button>
     </div>
-    ${DB.cafe.serviceSchedule.some(d => !d.active) ? `
-    <div class="card mt-4" style="border-color:rgba(243,156,18,.2)">
-      <div class="flex items-start gap-3">
-        <i class="fas fa-info-circle mt-0.5" style="color:var(--warning)"></i>
-        <div>
-          <p class="text-sm font-semibold mb-1" style="color:var(--warning)">Jadwal Tidak Penuh</p>
-          <p class="text-xs" style="color:var(--muted)">Layanan akan otomatis tutup pada hari ${DB.cafe.serviceSchedule.filter(d => !d.active).map(d => d.name).join(', ')}.</p>
-        </div>
+    <div class="card mt-4">
+      <h3 class="font-semibold text-sm mb-1"><i class="fas fa-calendar-exclamation mr-1"></i>Tanggal Spesial</h3>
+      <p class="text-xs mb-4" style="color:var(--muted)">Atur pengecualian tanggal tertentu (libur nasional, acara khusus).</p>
+      <div class="space-y-2 mb-4">
+        ${(DB.cafe.specialDates || []).length === 0 ? '<p class="text-xs text-center py-4" style="color:var(--muted)">Belum ada tanggal spesial</p>' : (DB.cafe.specialDates || []).map(s => `
+        <div class="flex items-center justify-between py-2 px-3 rounded-xl" style="background:var(--bg2)">
+          <div class="flex items-center gap-3">
+            <span style="color:${s.closed ? 'var(--danger)' : 'var(--success)'}"><i class="fas ${s.closed ? 'fa-times-circle' : 'fa-check-circle'}"></i></span>
+            <div>
+              <span class="text-sm font-medium">${s.date}</span>
+              ${s.note ? `<p class="text-xs" style="color:var(--muted)">${s.note}</p>` : ''}
+            </div>
+          </div>
+          <button onclick="removeSpecialDate('${s.id}')" class="btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+        </div>`).join('')}
       </div>
-    </div>` : ''}
+      <button onclick="addSpecialDate()" class="btn-primary w-full text-center"><i class="fas fa-plus mr-1"></i>Tambah Tanggal Spesial</button>
+    </div>
   </div>`;
 }
 
@@ -454,14 +474,58 @@ function toggleServiceStatus() {
   render();
 }
 
-function scheduleDayToggle(day, checked) {
+function updateScheduleTime(day, field, value) {
   if (!DB.cafe?.serviceSchedule) return;
-  DB.cafe.serviceSchedule[day].active = checked;
+  DB.cafe.serviceSchedule[day][field] = value;
 }
 
 function saveServiceSchedule() {
   if (!DB.cafe) DB.cafe = {};
   showToast('Jadwal layanan tersimpan!', 'success');
+  render();
+}
+
+function addSpecialDate() {
+  showModal(`
+    <h3 class="font-semibold text-sm mb-4"><i class="fas fa-calendar-alt mr-1"></i>Tambah Tanggal Spesial</h3>
+    <div class="space-y-3">
+      <div>
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tanggal</label>
+        <input type="date" id="special-date-input" class="input-field w-full">
+      </div>
+      <div>
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Status</label>
+        <select id="special-date-status" class="input-field w-full">
+          <option value="closed">Tutup</option>
+          <option value="open">Buka Khusus</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Catatan (opsional)</label>
+        <input type="text" id="special-date-note" class="input-field w-full" placeholder="Misal: Libur Nasional">
+      </div>
+      <button onclick="confirmSpecialDate()" class="btn-primary w-full text-center"><i class="fas fa-check mr-1"></i>Simpan</button>
+    </div>
+  `);
+}
+
+function confirmSpecialDate() {
+  const date = document.getElementById('special-date-input')?.value;
+  const closed = document.getElementById('special-date-status')?.value === 'closed';
+  const note = document.getElementById('special-date-note')?.value || '';
+  if (!date) { showToast('Pilih tanggal terlebih dahulu', 'error'); return; }
+  if (!DB.cafe) DB.cafe = {};
+  if (!DB.cafe.specialDates) DB.cafe.specialDates = [];
+  if (DB.cafe.specialDates.some(s => s.date === date)) { showToast('Tanggal sudah ada', 'error'); return; }
+  DB.cafe.specialDates.push({ id: 'sd' + Date.now(), date, closed, note });
+  closeModal();
+  showToast('Tanggal spesial ditambahkan', 'success');
+  render();
+}
+
+function removeSpecialDate(id) {
+  if (!DB.cafe?.specialDates) return;
+  DB.cafe.specialDates = DB.cafe.specialDates.filter(s => s.id !== id);
   render();
 }
 
