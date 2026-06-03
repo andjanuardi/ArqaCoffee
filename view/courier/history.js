@@ -72,7 +72,7 @@ function renderCourierHistory() {
       </div>
       <div class="stat-card text-center">
         <div class="text-xs" style="color:var(--muted)">Total Pendapatan</div>
-        <div class="text-sm font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalOngkir)}</div>
+        <div class="text-sm font-bold mt-1" style="color:var(--success)">${formatCurrency(totalOngkir)}</div>
       </div>
     </div>
     <div class="space-y-2">
