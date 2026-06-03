@@ -34,7 +34,11 @@ function renderStockManagement() {
           </div>
           <div class="stock-bar"><div class="stock-bar-fill" style="width:${pct}%;background:${isLow ? 'var(--danger)' : 'var(--accent)'}"></div></div>
           <div class="flex justify-between mt-2">
+            <span class="text-xs" style="color:var(--accent)">${formatCurrency(s.price || 0)} / ${s.unit}</span>
             <span class="text-xs" style="color:var(--muted)">Minimum: ${s.min_quantity} ${s.unit}</span>
+          </div>
+          <div class="flex justify-between mt-1">
+            <span></span>
             <div class="flex gap-1">
               <button onclick="adjustStock('${s.id}','in')" class="btn-sm" style="background:rgba(39,174,96,.15);color:var(--success);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-plus"></i></button>
               <button onclick="adjustStock('${s.id}','out')" class="btn-sm" style="background:rgba(231,76,60,.15);color:var(--danger);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-minus"></i></button>
@@ -59,6 +63,7 @@ function showEditStockModal(id) {
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Jumlah</label><input id="edit-stock-qty" type="number" class="input-field text-sm" value="${s.current_quantity}"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Satuan</label><input id="edit-stock-unit" class="input-field text-sm" value="${s.unit}"></div>
         </div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Harga Satuan</label><input id="edit-stock-price" type="number" class="input-field text-sm" value="${s.price || 0}" step="500"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Batas Minimum</label><input id="edit-stock-min" type="number" class="input-field text-sm" value="${s.min_quantity}"></div>
       </div>
       <button onclick="saveEditStock('${s.id}')" class="btn-primary w-full mt-4 text-center">Simpan</button>
@@ -74,6 +79,7 @@ function saveEditStock(id) {
   s.name = name;
   s.current_quantity = parseInt(document.getElementById('edit-stock-qty')?.value || '0');
   s.unit = document.getElementById('edit-stock-unit')?.value || 'kg';
+  s.price = parseInt(document.getElementById('edit-stock-price')?.value || '0');
   s.min_quantity = parseInt(document.getElementById('edit-stock-min')?.value || '3');
   s.updated_at = new Date().toISOString();
   closeModal(); showToast('Bahan baku diperbarui', 'success'); render();
@@ -117,6 +123,7 @@ function showAddStockModal() {
       <div class="space-y-3">
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama</label><input id="new-stock-name" class="input-field text-sm" placeholder="Misal: Susu Oat"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Satuan</label><input id="new-stock-unit" class="input-field text-sm" value="kg"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Harga Satuan</label><input id="new-stock-price" type="number" class="input-field text-sm" value="0" step="500"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Batas Minimum</label><input id="new-stock-min" type="number" class="input-field text-sm" value="3"></div>
       </div>
       <button onclick="addStockItem()" class="btn-primary w-full mt-4 text-center">Simpan</button>
@@ -127,6 +134,6 @@ function showAddStockModal() {
 function addStockItem() {
   const name = document.getElementById('new-stock-name')?.value;
   if (!name) { showToast('Nama bahan wajib diisi', 'warning'); return; }
-  DB.stockItems.push({ id: 's' + Date.now(), name, unit: document.getElementById('new-stock-unit')?.value || 'kg', current_quantity: 0, min_quantity: parseInt(document.getElementById('new-stock-min')?.value || '3'), updated_at: new Date().toISOString() });
+  DB.stockItems.push({ id: 's' + Date.now(), name, unit: document.getElementById('new-stock-unit')?.value || 'kg', current_quantity: 0, price: parseInt(document.getElementById('new-stock-price')?.value || '0'), min_quantity: parseInt(document.getElementById('new-stock-min')?.value || '3'), updated_at: new Date().toISOString() });
   closeModal(); showToast('Bahan baku ditambahkan', 'success'); render();
 }
