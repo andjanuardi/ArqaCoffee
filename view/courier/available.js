@@ -24,7 +24,7 @@ function renderCourierAvailable() {
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Pesanan Tersedia</h2>
     <div class="space-y-3">
-      ${!hasCheckedIn ? '<div class="card text-center py-6" style="border-color:rgba(231,76,60,.2)"><i class="fas fa-clipboard-list text-3xl mb-2" style="color:var(--danger)"></i><p class="text-sm font-semibold mb-1" style="color:var(--danger)">Belum Check-in Hari Ini</p><p class="text-xs mb-3" style="color:var(--muted)">Lakukan check-in di profil sebelum mengambil pesanan</p><button onclick="State.currentTab.courier=\'profile\';render()" class="btn-primary text-sm px-5 py-2" style="font-size:13px"><i class="fas fa-clock mr-1"></i>Check-in Sekarang</button></div>' : hasActive ? '<div class="card text-center py-6" style="border-color:rgba(243,156,18,.2)"><i class="fas fa-route text-3xl mb-2" style="color:var(--warning)"></i><p class="text-sm font-semibold mb-1" style="color:var(--warning)">Ada Pengantaran Aktif</p><p class="text-xs" style="color:var(--muted)">Selesaikan pengantaran aktif sebelum mengambil pesanan baru</p></div>' : available.length === 0 ? '<div class="text-center py-12"><i class="fas fa-box-open text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Belum ada pesanan siap diantar</p></div>' : available
+      ${!hasCheckedIn ? '<div class="card text-center py-6" style="border-color:rgba(231,76,60,.2)"><i class="fas fa-clipboard-list text-3xl mb-2" style="color:var(--danger)"></i><p class="text-sm font-semibold mb-1" style="color:var(--danger)">Belum Check-in Hari Ini</p><p class="text-xs mb-3" style="color:var(--muted)">Lakukan check-in di profil sebelum mengambil pesanan</p><button onclick="State.currentTab.courier=\'profile\';render()" class="btn-primary text-sm px-5 py-2" style="font-size:13px"><i class="fas fa-clock mr-1"></i>Check-in di Profil</button></div>' : hasActive ? '<div class="card text-center py-6" style="border-color:rgba(243,156,18,.2)"><i class="fas fa-route text-3xl mb-2" style="color:var(--warning)"></i><p class="text-sm font-semibold mb-1" style="color:var(--warning)">Ada Pengantaran Aktif</p><p class="text-xs" style="color:var(--muted)">Selesaikan pengantaran aktif sebelum mengambil pesanan baru</p></div>' : available.length === 0 ? '<div class="text-center py-12"><i class="fas fa-box-open text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Belum ada pesanan siap diantar</p></div>' : available
         .map(
           (o) => `
       <div class="card">
@@ -55,6 +55,27 @@ function renderCourierAvailable() {
   </div>`;
 }
 
+function courierCheckIn() {
+  DB.attendances.push({
+    id: 'a' + Date.now(),
+    user_id: State.currentUser.id,
+    check_in: new Date().toISOString(),
+    check_out: null,
+    status: 'present',
+  });
+  showToast('Check-in berhasil', 'success');
+  render();
+}
+
+function courierCheckOut() {
+  const today = new Date().toISOString().split('T')[0];
+  const att = DB.attendances.find(a => a.user_id === State.currentUser.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
+  if (!att) { showToast('Belum check-in hari ini', 'warning'); return; }
+  att.check_out = new Date().toISOString();
+  showToast('Check-out berhasil', 'success');
+  render();
+}
+
 function renderCourierProfile() {
   const u = State.currentUser;
   const isOnline = State.courierStatus === "online";
@@ -68,6 +89,18 @@ function renderCourierProfile() {
       <p class="text-sm" style="color:var(--muted)">${u.email}</p>
       <p class="text-sm" style="color:var(--muted)">${u.phone}</p>
       <div class="mt-4 space-y-3 text-left">
+        <div class="card" style="border-color:rgba(39,174,96,.3)">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:${att ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)'};color:${att ? 'var(--success)' : 'var(--danger)'}"><i class="fas fa-clock"></i></div>
+            <div class="flex-1">
+              <div class="font-semibold text-sm" style="color:${att ? 'var(--success)' : 'var(--danger)'}">${att ? 'Sedang Bekerja' : 'Belum Check-in'}</div>
+              <div class="text-xs" style="color:var(--muted)">${att ? 'Check-in: ' + formatTime(att.check_in) : 'Lakukan check-in untuk mulai bertugas'}</div>
+            </div>
+          </div>
+          ${att
+            ? `<button onclick="courierCheckOut()" class="btn-secondary w-full text-center" style="background:rgba(231,76,60,.1);color:var(--danger);border-color:transparent;"><i class="fas fa-sign-out-alt mr-1"></i>Check Out</button>`
+            : `<button onclick="courierCheckIn()" class="btn-primary w-full text-center"><i class="fas fa-sign-in-alt mr-1"></i>Check In</button>`}
+        </div>
         <div class="card" style="border-color:${isOnline ? 'rgba(39,174,96,.3)' : 'rgba(231,76,60,.3)'}">
           <div class="flex items-center gap-3 mb-3">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:${isOnline ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)'};color:${isOnline ? 'var(--success)' : 'var(--danger)'}"><i class="fas ${isOnline ? 'fa-toggle-on' : 'fa-toggle-off'}"></i></div>
@@ -80,7 +113,7 @@ function renderCourierProfile() {
             </button>
           </div>
           <div class="flex items-center justify-between text-xs px-1" style="color:var(--muted)">
-            <span><i class="fas fa-clock mr-1"></i>${att ? 'Check-in: ' + formatTime(att.check_in) : 'Belum check-in hari ini'}</span>
+            <span>${att ? 'Check-in: ' + formatTime(att.check_in) : 'Belum check-in hari ini'}</span>
             <span class="${isOnline ? 'badge badge-ready' : 'badge badge-pending'}">${isOnline ? 'Online' : 'Offline'}</span>
           </div>
         </div>
