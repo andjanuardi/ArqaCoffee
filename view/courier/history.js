@@ -50,7 +50,11 @@ function renderCourierHistory() {
   const totalOngkir = done.reduce((s, o) => s + (o.shipping_cost || 0), 0);
   const totalSemuaAmount = done.reduce((s, o) => s + (o.total_amount || 0), 0);
   const totalTransaksi = totalSemuaAmount + totalOngkir;
-  done.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  done.sort((a, b) => {
+    if (a.status === "delivered" && b.status !== "delivered") return -1;
+    if (a.status !== "delivered" && b.status === "delivered") return 1;
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Riwayat Pengantaran</h2>
