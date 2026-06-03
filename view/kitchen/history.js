@@ -98,7 +98,6 @@ function renderKitchenHistory() {
         <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Filter Tanggal</label>
         <input type="date" id="kitchen-history-date" class="input-field w-full" value="${dateFilter}" onchange="State.kitchenDateFilter=this.value;render()">
       </div>
-      ${dateFilter ? '<button onclick="State.kitchenDateFilter=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
     </div>
     <div class="space-y-2">
       ${done.length === 0 ? '<p class="text-center py-8 text-sm" style="color:var(--muted)">Belum ada riwayat</p>' : ''}

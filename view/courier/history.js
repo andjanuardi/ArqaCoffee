@@ -63,7 +63,6 @@ function renderCourierHistory() {
         <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tanggal</label>
         <input type="date" id="courier-date-filter" class="input-field w-full" value="${dateFilter}" onchange="State.courierDateFilter=this.value;render()">
       </div>
-      ${dateFilter ? '<button onclick="State.courierDateFilter=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
     </div>
     <div class="grid grid-cols-3 gap-2 mb-4">
       <div class="stat-card text-center">

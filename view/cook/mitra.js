@@ -41,7 +41,6 @@ function renderMitraHistory() {
         <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tanggal</label>
         <input type="date" id="mitra-date-filter" class="input-field w-full" value="${dateFilter}" onchange="State.mitraDateFilter=this.value;render()">
       </div>
-      ${dateFilter ? '<button onclick="State.mitraDateFilter=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
     </div>
     <div class="space-y-2">
       ${done.length === 0 ? '<p class="text-center py-8 text-sm" style="color:var(--muted)">Belum ada riwayat</p>' : ''}
@@ -145,7 +144,6 @@ function renderMitraFinance() {
         <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tanggal</label>
         <input type="date" id="mitra-finance-date-filter" class="input-field w-full" value="${dateFilter}" onchange="State.mitraFinanceDateFilter=this.value;render()">
       </div>
-      ${dateFilter ? '<button onclick="State.mitraFinanceDateFilter=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
     </div>
     <div class="grid grid-cols-2 gap-3 mb-5">
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRevenue)}</div></div>

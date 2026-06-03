@@ -16,7 +16,6 @@ function renderCustomerOrders() {
         <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Filter Tanggal</label>
         <input type="date" id="customer-order-date" class="input-field w-full" value="${dateFilter}" onchange="State.customerOrderDateFilter=this.value;render()">
       </div>
-      ${dateFilter ? '<button onclick="State.customerOrderDateFilter=\'\';render()" class="self-end btn-sm mb-0.5" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:8px 12px;border-radius:10px;height:40px"><i class="fas fa-times"></i></button>' : ""}
     </div>
     ${myOrders.length === 0 ? '<div class="text-center py-12"><i class="fas fa-receipt text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Belum ada pesanan</p></div>' : ""}
     <div class="space-y-3">
