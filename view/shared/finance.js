@@ -365,72 +365,6 @@ function printProfitDetail() {
   w.document.close();
 }
 
-function printTransactionDetail() {
-  const startDate =
-    State.financeStartDate ||
-    (() => {
-      const d = new Date();
-      d.setDate(d.getDate() - 6);
-      return d.toISOString().split("T")[0];
-    })();
-  const endDate =
-    State.financeEndDate || new Date().toISOString().split("T")[0];
-  const paidOrders = DB.orders.filter(
-    (o) => o.payment_status === "paid" && o.created_at,
-  );
-  const orders = paidOrders.filter((o) => {
-    const d = o.created_at.split("T")[0];
-    return d >= startDate && d <= endDate;
-  });
-  const totalRev = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
-  const w = window.open("", "_blank");
-  w.document.write(`
-    <html><head><title>Detail Transaksi</title>
-    <style>
-      body{font-family:sans-serif;padding:40px;color:#222}
-      h2{margin-bottom:8px}
-      .meta{color:#666;font-size:14px;margin-bottom:24px}
-      table{width:100%;border-collapse:collapse;font-size:14px}
-      th{text-align:left;padding:8px 12px;border-bottom:2px solid #ddd;color:#666}
-      td{padding:8px 12px;border-bottom:1px solid #eee}
-      .tfoot td{border-top:2px solid #333;font-weight:bold}
-      .right{text-align:right}
-      .green{color:#27ae60}
-      .muted{color:#999}
-      .flex{display:flex;gap:24px;margin-bottom:24px}
-      .box{padding:16px 24px;background:#f5f5f5;border-radius:8px;text-align:center}
-      .box .val{font-size:20px;font-weight:bold;margin-top:4px}
-      .box .lbl{font-size:12px;color:#666}
-    </style></head><body>
-    <h2>Detail Transaksi</h2>
-    <div class="meta">Periode: ${startDate} s/d ${endDate}</div>
-    <div class="flex">
-      <div class="box"><div class="lbl">Total Transaksi</div><div class="val">${orders.length}</div></div>
-      <div class="box"><div class="lbl">Total Pendapatan</div><div class="val" style="color:#27ae60">${formatCurrency(totalRev)}</div></div>
-    </div>
-    <table>
-      <thead><tr><th>Order</th><th>Tgl</th><th>Tipe</th><th>Menu</th><th class="right">Qty</th><th class="right">Harga</th><th class="right">Subtotal</th></tr></thead>
-      <tbody>${orders
-        .flatMap((o) => {
-          const items = o.items || [];
-          if (!items.length) {
-            return `<tr><td>#${o.id.slice(-5).toUpperCase()}</td><td class="muted">${o.created_at.split("T")[0]}</td><td class="muted">${getOrderTypeName(o.order_type)}</td><td class="muted" colspan="4">-</td></tr>`;
-          }
-          return items.map((item, idx) => {
-            const mi = DB.menuItems.find((m) => m.id === item.menu_item_id);
-            const name = mi ? mi.name : "(unknown)";
-            const subtotal = (item.quantity || 0) * (item.unit_price || 0);
-            return `<tr><td>${idx === 0 ? "#" + o.id.slice(-5).toUpperCase() : ""}</td><td class="muted">${idx === 0 ? o.created_at.split("T")[0] : ""}</td><td class="muted">${idx === 0 ? getOrderTypeName(o.order_type) : ""}</td><td>${name}${item.notes ? " (" + item.notes + ")" : ""}</td><td class="right">${item.quantity}</td><td class="right muted">${formatCurrency(item.unit_price || 0)}</td><td class="right green">${formatCurrency(subtotal)}</td></tr>`;
-          });
-        })
-        .join("")}</tbody>
-      <tfoot><tr class="tfoot"><td colspan="6">Total</td><td class="right green">${formatCurrency(totalRev)}</td></tr></tfoot>
-    </table>
-    <script>window.print()<${"/"}script></body></html>
-  `);
-  w.document.close();
-}
-
 function showPendapatanModal() {
   showModal(`
 <div class="p-4">
@@ -582,12 +516,11 @@ function renderFinanceReport() {
       <span class="text-xs" style="color:var(--muted)">s/d</span>
       <input type="date" id="finance-end" value="${endDate}" class="input-field text-sm" style="flex:1;min-width:140px" onchange="setFinanceRange(document.getElementById('finance-start').value,this.value)">
     </div>
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showPendapatanModal()"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-xs" style="color:var(--muted);font-size:10px">Cafe + Playground</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(combinedRev)}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showExpenseTable=!State.showExpenseTable;render()"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showAvgTable=!State.showAvgTable;render()"><div class="text-xs" style="color:var(--muted)">Rata-rata/Hari</div><div class="text-lg font-bold mt-1">${formatCurrency(Math.round(combinedRev / dayCount))}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showProfitTable=!State.showProfitTable;render()"><div class="text-xs" style="color:var(--muted)">Laba Bersih</div><div class="text-lg font-bold mt-1" style="color:${netProfit >= 0 ? "var(--success)" : "var(--danger)"}">${formatCurrency(netProfit)}</div></div>
-      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showTransactionTable=!State.showTransactionTable;render()"><div class="text-xs" style="color:var(--muted)">Transaksi</div><div class="text-lg font-bold mt-1">${periodOrders.length}</div></div>
     </div>
     ${
       State.showRevenueTable
@@ -797,44 +730,7 @@ function renderFinanceReport() {
     </div>`
         : ""
     }
-    ${
-      State.showTransactionTable
-        ? `
-    <div class="card mb-4">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-sm">Detail Transaksi</h3>
-        <button onclick="State.showTransactionTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
-      </div>
-      <div class="grid grid-cols-2 gap-3 mb-3">
-        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Transaksi</div><div class="text-base font-bold mt-1" style="color:var(--accent)">${periodOrders.length}</div></div>
-        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-base font-bold mt-1" style="color:var(--success)">${formatCurrency(totalRev)}</div></div>
-      </div>
-      <div class="overflow-x-auto max-h-96 overflow-y-auto">
-        <table class="w-full text-sm" style="border-collapse:collapse">
-          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Order</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tgl</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tipe</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Menu</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Qty</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Harga</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Subtotal</th></tr></thead>
-          <tbody>${periodOrders
-            .flatMap((o) => {
-              const items = o.items || [];
-              if (!items.length) {
-                return `<tr><td style="border-bottom:1px solid var(--border);padding:8px 10px;font-weight:500">#${o.id.slice(-5).toUpperCase()}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${o.created_at?.split("T")[0] || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${getOrderTypeName(o.order_type)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)" colspan="4">-</td></tr>`;
-              }
-              return items.map((item, idx) => {
-                const mi = DB.menuItems.find((m) => m.id === item.menu_item_id);
-                const name = mi ? mi.name : "(unknown)";
-                const subtotal = (item.quantity || 0) * (item.unit_price || 0);
-                return `<tr><td style="border-bottom:1px solid var(--border);padding:8px 10px;font-weight:500">${idx === 0 ? "#" + o.id.slice(-5).toUpperCase() : ""}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${idx === 0 ? o.created_at?.split("T")[0] || "-" : ""}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${idx === 0 ? getOrderTypeName(o.order_type) : ""}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px">${name}${item.notes ? '<br><span style="font-size:11px;color:var(--muted)">' + item.notes + "</span>" : ""}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right">${item.quantity}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--muted)">${formatCurrency(item.unit_price || 0)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(subtotal)}</td></tr>`;
-              });
-            })
-            .join("")}</tbody>
-          <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)" colspan="6">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(totalRev)}</td></tr></tfoot>
-        </table>
-      </div>
-      <div class="mt-3">
-        <button onclick="printTransactionDetail()" class="btn-sm btn-secondary" style="padding:4px 12px;font-size:11px"><i class="fas fa-print mr-1"></i>Cetak</button>
-      </div>
-    </div>`
-        : ""
-    }
+
     <div class="grid md:grid-cols-2 gap-4 mb-4">
       <div class="card"><canvas id="chart-finance-detail" height="200"></canvas></div>
       <div class="card">
