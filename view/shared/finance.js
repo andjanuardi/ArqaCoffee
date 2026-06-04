@@ -99,11 +99,12 @@ function printRevenueDetail() {
   const title = isPlayground ? 'Detail Pendapatan Playground' : 'Detail Pendapatan Cafe';
   const headerLabel = isPlayground ? 'Pendapatan Playground' : 'Detail Pendapatan Cafe';
 
-  let filtered, totalRev;
+  let filtered, totalRev, ticketCount;
 
   if (isPlayground) {
-    filtered = getPlaygroundPeriodOrders(startDate, endDate);
-    totalRev = filtered.reduce((s, t) => s + (t.total_amount || 0), 0);
+    filtered = getPlaygroundPeriodEntries(startDate, endDate);
+    totalRev = filtered.reduce((s, e) => s + (e.total_amount || 0), 0);
+    ticketCount = filtered.filter((e) => !e._isExtra).length;
   } else {
     const paidOrders = DB.orders.filter(
       (o) => o.payment_status === "paid" && o.created_at,
@@ -116,12 +117,20 @@ function printRevenueDetail() {
   }
 
   const rows = isPlayground
-    ? filtered.map((t) => {
-        const date = t.created_at?.split("T")[0] || "";
-        const time = t.created_at?.split("T")[1]?.slice(0, 5) || "-";
-        const kidList = (t.children || []).map(c => c.name).join(", ");
-        const durasi = t.hours ? t.hours + " jam" : "-";
-        return `<tr><td>${formatDate(date)}</td><td class="muted">${time}</td><td>${t.customer_name || "-"}</td><td class="muted">${kidList || "-"}</td><td class="muted">${durasi}</td><td class="right green">${formatCurrency(t.total_amount || 0)}</td></tr>`;
+    ? filtered.map((e) => {
+        const date = e.created_at?.split("T")[0] || "";
+        const time = e.created_at?.split("T")[1]?.slice(0, 5) || "-";
+        if (e._isExtra) {
+          const methodBadge = getPgMethodBadge(e._paymentMethod);
+          return `<tr style="opacity:.65;font-style:italic"><td>${formatDate(date)}</td><td class="muted">${time}</td><td>${e.customer_name || "-"} <em style="color:#999;font-size:10px">(Extra)</em> ${methodBadge}</td><td class="muted" style="color:#e67e22">${e._desc || "-"}</td><td class="right green">${formatCurrency(e.total_amount || 0)}</td></tr>`;
+        }
+        const kidList = (e.children || []).map(c => c.name).join(", ");
+        const durasi = e.hours ? e.hours + " jam" : "-";
+        const keterangan = durasi + (kidList ? " (" + kidList + ")" : "");
+        const methodBadge = getPgMethodBadge(e._paymentMethod);
+        const statusLabel = e.status === "active" ? "Aktif" : "Selesai";
+        const statusColor = statusLabel === "Aktif" ? "#f39c12" : "#27ae60";
+        return `<tr><td>${formatDate(date)}</td><td class="muted">${time}</td><td>${e.customer_name || "-"} <span style="font-size:10px;color:${statusColor}">${statusLabel}</span> ${methodBadge}</td><td class="muted">${keterangan}</td><td class="right green">${formatCurrency(e.total_amount || 0)}</td></tr>`;
       }).join("")
     : filtered
         .map((o) => {
@@ -141,9 +150,9 @@ function printRevenueDetail() {
         .join("");
 
   const headerCols = isPlayground
-    ? '<th>Tanggal</th><th>Jam</th><th>Pelanggan</th><th>Anak</th><th>Durasi</th><th class="right">Pendapatan</th>'
+    ? '<th>Tanggal</th><th>Jam</th><th>Pelanggan</th><th>Keterangan</th><th class="right">Total</th>'
     : '<th>Tanggal</th><th>Jam</th><th>Order</th><th>Menu</th><th class="right">Pendapatan</th>';
-  const footColspan = isPlayground ? '5' : '4';
+  const footColspan = isPlayground ? '4' : '4';
 
   const w = window.open("", "_blank");
   w.document.write(`
@@ -168,7 +177,7 @@ function printRevenueDetail() {
     <div class="meta">Periode: ${startDate} s/d ${endDate}</div>
     <div class="flex">
       <div class="box"><div class="lbl">Total Pendapatan</div><div class="val">${formatCurrency(totalRev)}</div></div>
-      <div class="box"><div class="lbl">Total Transaksi</div><div class="val">${filtered.length}</div></div>
+      <div class="box"><div class="lbl">Total Transaksi</div><div class="val">${isPlayground ? ticketCount : filtered.length}</div></div>
     </div>
     <table>
       <thead><tr>${headerCols}</tr></thead>
@@ -450,6 +459,35 @@ function getPlaygroundPeriodOrders(startDate, endDate) {
   });
 }
 
+function getPlaygroundPeriodEntries(startDate, endDate) {
+  const entries = [];
+  const tickets = getPlaygroundPeriodOrders(startDate, endDate);
+  tickets.forEach((t) => {
+    entries.push({ ...t, _isExtra: false, _paymentMethod: t.payment_method });
+    (t.pgTransactions || []).forEach((tx) => {
+      if (!tx.created_at) return;
+      const d = tx.created_at.split("T")[0];
+      if (d >= startDate && d <= endDate) {
+        entries.push({
+          _isExtra: true,
+          _paymentMethod: tx.method,
+          _parentCust: t.customer_name,
+          _desc: tx.description,
+          created_at: tx.created_at,
+          total_amount: tx.amount,
+          customer_name: t.customer_name,
+        });
+      }
+    });
+  });
+  return entries.sort((a, b) => (a.created_at || "").localeCompare(b.created_at || ""));
+}
+
+function getPgMethodBadge(method) {
+  if (method === "cash") return '<span style="color:var(--success);font-size:10px">Tunai</span>';
+  return '<span style="color:var(--accent);font-size:10px">Digital</span>';
+}
+
 // ------------------------------------------------------------------
 // FINANCE REPORT
 // ------------------------------------------------------------------
@@ -465,6 +503,10 @@ function renderFinanceReport() {
     State.financeEndDate || new Date().toISOString().split("T")[0];
   const computedSales = getFinanceData(startDate, endDate);
   const totalRev = computedSales.reduce((s, d) => s + d.revenue, 0);
+  const pgRevEntries = getPlaygroundPeriodEntries(startDate, endDate);
+  const pgTotalRev = pgRevEntries.reduce((s, e) => s + (e.total_amount || 0), 0);
+  const pgTicketCount = pgRevEntries.filter((e) => !e._isExtra).length;
+  const combinedRev = totalRev + pgTotalRev;
 
   const filteredExpenses = (DB.expenses || []).filter((e) => {
     if (!e.date) return false;
@@ -493,7 +535,7 @@ function renderFinanceReport() {
       <input type="date" id="finance-end" value="${endDate}" class="input-field text-sm" style="flex:1;min-width:140px" onchange="setFinanceRange(document.getElementById('finance-start').value,this.value)">
     </div>
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
-      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showPendapatanModal()"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
+      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showPendapatanModal()"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-xs" style="color:var(--muted);font-size:10px">Cafe + Playground</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(combinedRev)}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showExpenseTable=!State.showExpenseTable;render()"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showAvgTable=!State.showAvgTable;render()"><div class="text-xs" style="color:var(--muted)">Rata-rata/Hari</div><div class="text-lg font-bold mt-1">${formatCurrency(Math.round(totalRev / dayCount))}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showProfitTable=!State.showProfitTable;render()"><div class="text-xs" style="color:var(--muted)">Laba Bersih</div><div class="text-lg font-bold mt-1" style="color:${netProfit >= 0 ? "var(--success)" : "var(--danger)"}">${formatCurrency(netProfit)}</div></div>
@@ -504,8 +546,9 @@ function renderFinanceReport() {
         ? (() => {
           const isPlayground = State._showPendapatan === 'playground';
           if (isPlayground) {
-            const pgOrders = getPlaygroundPeriodOrders(startDate, endDate);
-            const pgTotalRev = pgOrders.reduce((s, t) => s + (t.total_amount || 0), 0);
+            const pgEntries = getPlaygroundPeriodEntries(startDate, endDate);
+            const pgTotalRev = pgEntries.reduce((s, e) => s + (e.total_amount || 0), 0);
+            const pgTicketCount = pgEntries.filter((e) => !e._isExtra).length;
             return `
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
@@ -514,23 +557,29 @@ function renderFinanceReport() {
       </div>
       <div class="grid grid-cols-2 gap-3 mb-3">
         <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-base font-bold mt-1" style="color:var(--accent)">${formatCurrency(pgTotalRev)}</div></div>
-        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Transaksi</div><div class="text-base font-bold mt-1">${pgOrders.length}</div></div>
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Transaksi</div><div class="text-base font-bold mt-1">${pgTicketCount}</div></div>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm" style="border-collapse:collapse">
-          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Pelanggan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Anak</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Durasi</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Status</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Pendapatan</th></tr></thead>
-          <tbody>${pgOrders
-            .map((t) => {
-              const date = t.created_at?.split("T")[0] || "";
-              const time = t.created_at?.split("T")[1]?.slice(0, 5) || "-";
-              const kidList = (t.children || []).map(c => c.name).join(", ");
-              const durasi = t.hours ? t.hours + " jam" : "-";
-              const statusBadge = t.status === "active" ? "badge-cooking" : t.status === "completed" ? "badge-completed" : "badge-pending";
-              const statusLabel = t.status === "active" ? "Aktif" : t.status === "completed" ? "Selesai" : "Dibatalkan";
-              return `<tr><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;font-size:12px">${t.customer_name || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${kidList || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${durasi}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px"><span class="badge ${statusBadge}" style="font-size:10px">${statusLabel}</span></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(t.total_amount || 0)}</td></tr>`;
+          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Pelanggan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Keterangan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
+          <tbody>${pgEntries
+            .map((e) => {
+              const date = e.created_at?.split("T")[0] || "";
+              const time = e.created_at?.split("T")[1]?.slice(0, 5) || "-";
+              if (e._isExtra) {
+                const methodBadge = getPgMethodBadge(e._paymentMethod);
+                return `<tr style="border-bottom:1px solid var(--border);opacity:.65;font-style:italic"><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;font-size:12px">${e.customer_name || "-"} <em style="color:var(--muted);font-size:10px">(Extra)</em> ${methodBadge}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--warning);font-size:12px">${e._desc || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(e.total_amount || 0)}</td></tr>`;
+              }
+              const kidList = (e.children || []).map(c => c.name).join(", ");
+              const durasi = e.hours ? e.hours + " jam" : "-";
+              const keterangan = durasi + (kidList ? " (" + kidList + ")" : "");
+              const statusLabel = e.status === "active" ? "Aktif" : "Selesai";
+              const statusColor = statusLabel === "Aktif" ? "var(--warning)" : "var(--success)";
+              const methodBadge = getPgMethodBadge(e._paymentMethod);
+              return `<tr class="cursor-pointer hover:bg-white/5" style="border-bottom:1px solid var(--border)" onclick="showPlaygroundTicketDetail('${e.id}')"><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;font-size:12px">${e.customer_name || "-"} <span style="color:${statusColor};font-size:10px">${statusLabel}</span> ${methodBadge}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${keterangan}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(e.total_amount || 0)}</td></tr>`;
             })
             .join("")}</tbody>
-          <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)" colspan="6">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(pgTotalRev)}</td></tr></tfoot>
+          <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)" colspan="4">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(pgTotalRev)}</td></tr></tfoot>
         </table>
       </div>
       <div class="mt-3">

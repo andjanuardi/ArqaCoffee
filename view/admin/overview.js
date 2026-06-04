@@ -281,6 +281,10 @@ function rejectMitraRegistration(id) {
 
 function renderAdminOverview() {
   const totalRev = getFinanceData().reduce((s, d) => s + d.revenue, 0);
+  const pgTotalRev = (DB.playgroundTickets || [])
+    .filter(t => t.payment_status === "paid")
+    .reduce((s, t) => s + (t.total_amount || 0), 0);
+  const combinedRev = totalRev + pgTotalRev;
   const totalExp = (DB.expenses || []).reduce((s, e) => s + e.amount, 0);
   const activeOrders = DB.orders.filter(o => !['completed', 'cancelled'].includes(o.status)).length;
   const pegawai = DB.users.filter(u => u.role !== 'customer').length;
@@ -300,7 +304,7 @@ function renderAdminOverview() {
       <p class="text-sm" style="color:var(--muted)">Kontrol penuh seluruh operasional ARQA Coffee</p>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
-      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.currentTab.admin='finance';showPendapatanModal()"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
+      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.currentTab.admin='finance';showPendapatanModal()"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-xs" style="color:var(--muted);font-size:10px">Cafe + Playground</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(combinedRev)}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showExpenseTable=true;State.currentTab.admin='finance';render()"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.currentTab.admin='active-orders';render()"><div class="text-xs" style="color:var(--muted)">Pesanan Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--warning)">${activeOrders}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.currentTab.admin='attendance';render()"><div class="text-xs" style="color:var(--muted)">Pegawai Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--success)">${pegawai}</div></div>
