@@ -176,7 +176,6 @@ function renderMitraFinance() {
 
 function renderMitraProfile() {
   const u = State.currentUser;
-  const isActive = State.mitraStatus !== "offline";
   const today = new Date().toISOString().split('T')[0];
   const att = DB.attendances.find(a => a.user_id === u.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
   return `
@@ -187,22 +186,6 @@ function renderMitraProfile() {
       <p class="text-sm" style="color:var(--muted)">${u.email}</p>
       <p class="text-sm" style="color:var(--muted)">${u.phone}</p>
       <div class="mt-4 space-y-3 text-left">
-        <div class="card" style="border-color:${isActive ? 'rgba(39,174,96,.3)' : 'rgba(231,76,60,.3)'}">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:${isActive ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)'};color:${isActive ? 'var(--success)' : 'var(--danger)'}"><i class="fas ${isActive ? 'fa-toggle-on' : 'fa-toggle-off'}"></i></div>
-            <div class="flex-1">
-              <div class="font-semibold text-sm" style="color:${isActive ? 'var(--success)' : 'var(--danger)'}">${isActive ? 'Aktif' : 'Tidak Aktif'}</div>
-              <div class="text-xs" style="color:var(--muted)">${isActive ? 'Kamu siap menerima pesanan' : 'Kamu tidak menerima pesanan'}</div>
-            </div>
-            <button onclick="toggleMitraStatus()" class="btn-sm" style="background:${isActive ? 'rgba(231,76,60,.12)' : 'rgba(39,174,96,.12)'};color:${isActive ? 'var(--danger)' : 'var(--success)'};border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">
-              <i class="fas ${isActive ? 'fa-power-off' : 'fa-play'} mr-1"></i>${isActive ? 'Nonaktifkan' : 'Aktifkan'}
-            </button>
-          </div>
-          <div class="flex items-center justify-between text-xs px-1" style="color:var(--muted)">
-            <span><i class="fas fa-clock mr-1"></i>${att ? 'Check-in: ' + formatTime(att.check_in) : 'Belum check-in hari ini'}</span>
-            <span class="${isActive ? 'badge badge-ready' : 'badge badge-pending'}">${isActive ? 'Online' : 'Offline'}</span>
-          </div>
-        </div>
         <div class="card" style="border-color:${att ? 'rgba(39,174,96,.3)' : 'rgba(231,76,60,.3)'}">
           <div class="flex items-center gap-3 mb-2">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:${att ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)'};color:${att ? 'var(--success)' : 'var(--danger)'}"><i class="fas fa-clock"></i></div>
@@ -223,12 +206,6 @@ function renderMitraProfile() {
       </div>
     </div>
   </div>`;
-}
-
-function toggleMitraStatus() {
-  State.mitraStatus = State.mitraStatus === "online" ? "offline" : "online";
-  showToast(State.mitraStatus === "online" ? 'Kamu sekarang Aktif — siap menerima pesanan' : 'Kamu sekarang Tidak Aktif', State.mitraStatus === "online" ? 'success' : 'info');
-  render();
 }
 
 function mitraCheckIn() {
