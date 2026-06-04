@@ -30,7 +30,7 @@ function renderPlaygroundPgStock() {
   <div class="animate-fade-up">
     <div class="flex justify-between items-center mb-4">
       <h2 class="font-display text-xl font-bold">Stok Item Include${State.currentUser?.role === "playground" ? "" : " Playground"}</h2>
-      <button onclick="showAddPgStockModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
+      ${['admin', 'manager'].includes(State.currentUser?.role) ? '<button onclick="showAddPgStockModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>' : ''}
     </div>
     <div class="card mb-4" style="padding:10px">
       <input type="text" class="input-field text-sm w-full" placeholder="Cari item..." value="${State.pgStockSearch}" oninput="State.pgStockSearch=this.value;render()">
@@ -67,8 +67,9 @@ function renderPlaygroundPgStock() {
                     <div class="text-sm font-bold" style="color:${isLow ? "var(--danger)" : "var(--accent)"}">${s.current_quantity} ${s.unit}</div>
                     <div class="text-xs" style="color:var(--muted)">${formatCurrency(s.price || 0)}</div>
                   </div>
+                  ${['admin', 'manager'].includes(State.currentUser?.role) ? `
                   <button onclick="showEditPgStockModal('${s.id}')" class="btn-sm" style="background:rgba(224,122,58,.12);color:var(--accent);border:none;padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-pen"></i></button>
-                  <button onclick="deletePgStockItem('${s.id}')" class="btn-sm" style="background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-trash"></i></button>
+                  <button onclick="deletePgStockItem('${s.id}')" class="btn-sm" style="background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-trash"></i></button>` : ''}
                 </div>
               </div>
               <div class="stock-bar"><div class="stock-bar-fill" style="width:${pct}%;background:${isLow ? "var(--danger)" : "var(--accent)"}"></div></div>
@@ -240,7 +241,7 @@ function showRestockPgStockModal(id) {
         </div>
         <label class="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" id="restock-pgstock-expense" checked>
-          <span class="text-sm" style="color:var(--muted)">Catat sebagai pengeluaran (Bahan Baku)</span>
+          <span class="text-sm" style="color:var(--muted)">Catat sebagai pengeluaran (Item Include)</span>
         </label>
       </div>
       <div class="flex gap-2 mt-4">
@@ -279,7 +280,8 @@ function confirmRestockPgStock(id) {
         hour: "2-digit",
         minute: "2-digit",
       }),
-      category: "Bahan Baku",
+      category: "Item Include",
+      source: "Playground",
       amount: qty * s.price,
       note: "Restok " + s.name + " (" + qty + " " + s.unit + ")",
       volume: qty,

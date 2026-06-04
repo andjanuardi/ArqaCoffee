@@ -1,13 +1,15 @@
 // ------------------------------------------------------------------
 // EXPENSE MANAGEMENT (shared: admin + manager)
 // ------------------------------------------------------------------
-const EXPENSE_CATS = ["Operasional", "Gaji", "Lainnya"];
+const EXPENSE_CATS = ["Stok", "Operasional", "Gaji", "Lainnya"];
 const EXPENSE_COLORS = {
+  Stok: "#2ecc71",
   Operasional: "#1abc9c",
   Gaji: "#e74c3c",
   Lainnya: "#f39c12",
 };
 const EXPENSE_ICONS = {
+  Stok: "fa-warehouse",
   Operasional: "fa-bolt",
   Gaji: "fa-hand-holding-dollar",
   Lainnya: "fa-receipt",
@@ -21,7 +23,11 @@ function renderExpenseManagement() {
   const filtered = expenses.filter((e) => {
     if (!e.date) return false;
     if (e.date !== dateFilter) return false;
-    if (State.expenseCategory !== "all" && e.category !== State.expenseCategory) return false;
+    if (State.expenseCategory !== "all") {
+      if (State.expenseCategory === "Stok") {
+        if (e.category !== "Bahan Baku" && e.category !== "Item Include") return false;
+      } else if (e.category !== State.expenseCategory) return false;
+    }
     if (State.expenseSearch && !e.note?.toLowerCase().includes(State.expenseSearch.toLowerCase()) && !e.category?.toLowerCase().includes(State.expenseSearch.toLowerCase())) return false;
     return true;
   });
@@ -73,9 +79,10 @@ function renderExpenseManagement() {
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="text-xs font-semibold px-2 py-0.5 rounded-full" style="background:${color}22;color:${color}">${e.category}</span>
+                  ${e.source ? `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${e.source === 'Cafe' ? 'rgba(224,122,58,.15)' : 'rgba(155,89,182,.15)'};color:${e.source === 'Cafe' ? 'var(--accent)' : '#9b59b6'}">${e.source}</span>` : ''}
                   <span class="text-xs" style="color:var(--muted)">${e.date || "-"}${e.time ? " " + e.time : ""}</span>
                 </div>
-                <div class="text-sm font-semibold mt-1" style="color:var(--success)">${formatCurrency(e.amount)}${e.volume && e.unitPrice ? ` <span class="text-xs font-normal" style="color:var(--muted)">(${e.volume} ${e.unit || "unit"} x ${formatCurrency(e.unitPrice)})</span>` : ""}</div>
+                <div class="text-sm font-semibold mt-1" style="color:var(--danger)">${formatCurrency(e.amount)}${e.volume && e.unitPrice ? ` <span class="text-xs font-normal" style="color:var(--muted)">(${e.volume} ${e.unit || "unit"} x ${formatCurrency(e.unitPrice)})</span>` : ""}</div>
                 <div class="text-xs mt-0.5 truncate" style="color:var(--muted)">${e.note || "-"}</div>
               </div>
             </div>
