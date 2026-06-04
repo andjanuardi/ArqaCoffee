@@ -314,6 +314,7 @@ function renderManagerFinanceDigitalTable(dateVal) {
 
 function renderManagerDashboard() {
   const activeOrders = DB.orders.filter(o => !['completed', 'cancelled'].includes(o.status)).length;
+  const activePgTickets = (DB.playgroundTickets || []).filter(t => t.status === 'active').length;
   const activeEmployees = DB.attendances.filter(a => !a.check_out).length;
   const lowStock = DB.stockItems.filter(s => s.current_quantity <= s.min_quantity);
   const prodCount = {};
@@ -332,20 +333,59 @@ function renderManagerDashboard() {
       <p class="text-sm" style="color:var(--muted)">Ringkasan operasional ARQA Coffee</p>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.currentTab.manager='active-orders';render()"><div class="text-xs" style="color:var(--muted)">Pesanan Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--warning)">${activeOrders}</div></div>
+      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showActiveLayananModal('manager')"><div class="text-xs" style="color:var(--muted)">Layanan Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--warning)">${activeOrders + activePgTickets}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.currentTab.manager='attendance';render()"><div class="text-xs" style="color:var(--muted)">Pegawai Aktif</div><div class="text-lg font-bold mt-1" style="color:var(--success)">${activeEmployees}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="switchTab('menu-mgmt')"><div class="text-xs" style="color:var(--muted)">Total Menu</div><div class="text-lg font-bold mt-1">${DB.menuItems.length}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="switchTab('users')"><div class="text-xs" style="color:var(--muted)">Pengguna</div><div class="text-lg font-bold mt-1">${DB.users.length}</div></div>
     </div>
     ${(() => {
-      if (!lowStock.length) return '';
+      const lowPgStock = (DB.pgStockItems || []).filter(s => s.current_quantity <= s.min_quantity);
+      const allLow = [
+        ...lowStock.map(s => ({ ...s, source: 'Cafe' })),
+        ...lowPgStock.map(s => ({ ...s, source: 'Playground' })),
+      ];
+      if (!allLow.length) return '';
       return `
     <div class="card mb-4" style="border-color:rgba(231,76,60,.3)">
       <h3 class="font-semibold text-sm mb-2" style="color:var(--danger)"><i class="fas fa-exclamation-triangle mr-1"></i>Peringatan Stok Rendah</h3>
       <div class="space-y-2">
-        ${lowStock.map(s => `<div class="flex justify-between text-sm"><span>${s.name}</span><span style="color:var(--danger)">${s.current_quantity} / ${s.min_quantity} ${s.unit}</span></div>`).join('')}
+        ${allLow.map(s => `<div class="flex justify-between text-sm"><span>${s.name} <span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${s.source === 'Cafe' ? 'rgba(224,122,58,.15)' : 'rgba(142,68,173,.15)'};color:${s.source === 'Cafe' ? 'var(--accent)' : '#8e44ad'}">${s.source}</span></span><span style="color:var(--danger)">${s.current_quantity} / ${s.min_quantity} ${s.unit}</span></div>`).join('')}
       </div>
-      <button onclick="State.currentTab.manager='stock';render()" class="text-xs font-bold mt-2 flex items-center gap-1" style="color:var(--accent)">Selengkapnya <i class="fas fa-arrow-right" style="font-size:10px"></i></button>
+      <button onclick="showPilihStokModal()" class="text-xs font-bold mt-2 flex items-center gap-1" style="color:var(--accent)">Selengkapnya <i class="fas fa-arrow-right" style="font-size:10px"></i></button>
+    </div>`})()}
+    ${(() => {
+      const now = Date.now();
+      const overtimeTickets = (DB.playgroundTickets || [])
+        .filter(t => t.status === 'active' && new Date(t.end_time).getTime() <= now);
+      if (!overtimeTickets.length) return '';
+      return `
+    <div class="card mb-4" style="border-color:rgba(231,76,60,.3)">
+      <h3 class="font-semibold text-sm mb-2" style="color:var(--danger)"><i class="fas fa-hourglass-end mr-1"></i>Peringatan Over Time</h3>
+      <div class="space-y-3">
+        ${overtimeTickets.map(t => {
+          const start = new Date(t.start_time).getTime();
+          const end = new Date(t.end_time).getTime();
+          const total = end - start;
+          const elapsed = Math.min(100, ((now - start) / total) * 100);
+          const overdue = Math.round((now - end) / 60000);
+          const h = Math.floor(overdue / 60), m = overdue % 60;
+          return `
+        <div>
+          <div class="flex justify-between text-sm mb-1">
+            <span>${t.customer_name} <span class="text-[10px] px-1.5 py-0.5 rounded" style="background:rgba(142,68,173,.15);color:#8e44ad">${(t.children || []).length} anak</span></span>
+            <span style="color:var(--danger)">−${h}j ${m}m</span>
+          </div>
+          <div class="time-bar-bg" style="height:6px">
+            <div class="time-bar-fill" style="width:${elapsed}%;background:var(--danger)"></div>
+          </div>
+          <div class="flex justify-between text-[10px] mt-0.5" style="color:var(--muted)">
+            <span>${formatTime(new Date(t.start_time))}</span>
+            <span>${formatTime(new Date(t.end_time))}</span>
+          </div>
+        </div>`;
+        }).join('')}
+      </div>
+      <button onclick="State.currentTab.manager='active-playground';render()" class="text-xs font-bold mt-2 flex items-center gap-1" style="color:var(--accent)">Selengkapnya <i class="fas fa-arrow-right" style="font-size:10px"></i></button>
     </div>`})()}
     <div class="card mb-6">
       <h3 class="font-semibold text-sm mb-3">Pesanan Terkini</h3>

@@ -323,18 +323,43 @@ function initMaps() {
 
 function initPlaygroundTimer() {
   if (window._pgTimerInterval) { clearInterval(window._pgTimerInterval); window._pgTimerInterval = null; }
-  if (State.currentTab?.playground !== 'tickets') return;
+  const tab = State.currentTab;
+  if (tab?.playground !== 'tickets' && tab?.admin !== 'active-playground' && tab?.manager !== 'active-playground') return;
   window._pgTimerInterval = setInterval(() => {
     document.querySelectorAll('.pg-remaining').forEach(el => {
       const end = new Date(el.dataset.end).getTime();
-      const isOver = el.dataset.over === 'true';
+      const start = el.dataset.start ? new Date(el.dataset.start).getTime() : null;
       const now = Date.now();
       const remaining = end - now;
-      if (isOver) {
-        el.textContent = remaining <= 0 ? 'Habis' : '-' + formatRemaining(Math.abs(remaining));
-      } else {
-        el.textContent = remaining <= 0 ? 'Habis' : formatRemaining(remaining);
+      const total = start ? end - start : 0;
+      const isExpired = remaining <= 0;
+      const isUrgent = !isExpired && remaining < 600000;
+      const timeColor = isExpired ? "var(--danger)" : isUrgent ? "var(--warning)" : "var(--success)";
+
+      el.textContent = isExpired ? "-" + formatRemaining(Math.abs(remaining)) : formatRemaining(remaining);
+      el.style.color = timeColor;
+      el.dataset.over = isExpired ? 'true' : 'false';
+
+      const card = el.closest('.card');
+      if (!card) return;
+
+      const fill = card.querySelector('.time-bar-fill');
+      if (fill && start && total > 0) {
+        fill.style.width = Math.min(100, ((now - start) / total) * 100) + '%';
+        fill.style.background = timeColor;
       }
+
+      const badge = card.querySelector('.badge.ml-2');
+      if (badge) {
+        badge.textContent = isExpired ? "Over Time" : "Aktif";
+        badge.className = 'badge ' + (isExpired ? 'badge-pending' : 'badge-cooking') + ' ml-2';
+      }
+
+      if (isExpired) card.style.borderColor = "var(--danger)";
+      else if (isUrgent) card.style.borderColor = "var(--warning)";
+      else card.style.borderColor = "";
+
+      card.classList.toggle('animate-breathe', isUrgent);
     });
   }, 1000);
 }

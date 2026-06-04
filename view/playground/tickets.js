@@ -68,7 +68,7 @@ function renderPlaygroundTickets() {
           <div class="time-bar-container mb-3">
             <div class="flex justify-between text-xs mb-1" style="color:var(--muted)">
               <span>${formatTime(new Date(t.end_time))}</span>
-              <span class="pg-remaining" data-end="${t.end_time}" data-over="${isExpired}" style="color:${barColor};font-weight:600">${isExpired ? "-" + formatRemaining(Math.abs(remaining)) : formatRemaining(remaining)}</span>
+              <span class="pg-remaining" data-start="${t.start_time}" data-end="${t.end_time}" data-over="${isExpired}" style="color:${barColor};font-weight:600">${isExpired ? "-" + formatRemaining(Math.abs(remaining)) : formatRemaining(remaining)}</span>
               <span>${formatTime(new Date(t.start_time))}</span>
             </div>
             <div class="time-bar-bg">
@@ -108,8 +108,8 @@ function renderPlaygroundHistory(completed) {
         <div class="card flex items-center justify-between" onclick="showPlaygroundTicketDetail('${t.id}')" style="opacity:.7;cursor:pointer">
           <div>
             <span class="font-semibold text-sm">${t.customer_name}</span>
-            <span class="badge ${t.status === "completed" ? "badge-completed" : "badge-pending"} ml-2">${t.status === "completed" ? "Selesai" : "Dibatalkan"}</span>
-            <div class="text-xs mt-1" style="color:var(--muted)">${t.children.map((c) => c.name).join(", ")} — ${t.hours} jam${t.cancel_reason ? ' <span style="color:var(--danger)">· ' + t.cancel_reason + '</span>' : ""}</div>
+            <span class="badge ${t.status === "completed" ? "badge-completed" : "badge-pending"} ml-2">${t.status === "completed" ? "Selesai" : "Dibatalkan"}</span>${t.was_overtime ? '<span class="badge badge-pending ml-1" style="background:rgba(231,76,60,.15);color:var(--danger)">Over Time</span>' : ''}
+            <div class="text-xs mt-1" style="color:var(--muted)">${t.children.map((c) => c.name).join(", ")} — ${t.hours} jam${t.cancel_reason ? ' <span style="color:var(--danger)">· ' + t.cancel_reason + '</span>' : ''}${t.was_overtime && t.overtime_minutes ? ' <span style="color:var(--danger)">· +' + Math.floor(t.overtime_minutes / 60) + 'j ' + (t.overtime_minutes % 60) + 'm overtime</span>' : ''}</div>
           </div>
           <div class="text-right">
             <div class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(t.total_amount)}</div>
@@ -150,6 +150,12 @@ function completePlaygroundTicket(id) {
   const t = (DB.playgroundTickets || []).find((x) => x.id === id);
   if (!t) return;
   t.status = "completed";
+  const now = Date.now();
+  const end = new Date(t.end_time).getTime();
+  t.was_overtime = end <= now;
+  if (t.was_overtime) {
+    t.overtime_minutes = Math.round((now - end) / 60000);
+  }
   showToast("Tiket " + t.customer_name + " selesai", "success");
   render();
 }

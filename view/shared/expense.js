@@ -596,7 +596,7 @@ function renderActivePlaygroundTickets() {
         <div class="time-bar-container mb-1">
           <div class="flex justify-between text-xs mb-1" style="color:var(--muted)">
             <span>${formatTime(new Date(t.start_time))}</span>
-            <span class="pg-remaining" data-end="${t.end_time}" data-over="${isExpired}" style="color:${timeColor};font-weight:600">${isExpired ? "-" + formatRemaining(Math.abs(remaining)) : formatRemaining(remaining)}</span>
+            <span class="pg-remaining" data-start="${t.start_time}" data-end="${t.end_time}" data-over="${isExpired}" style="color:${timeColor};font-weight:600">${isExpired ? "-" + formatRemaining(Math.abs(remaining)) : formatRemaining(remaining)}</span>
             <span>${formatTime(new Date(t.end_time))}</span>
           </div>
           <div class="time-bar-bg">
@@ -619,12 +619,12 @@ function renderActivePlaygroundTickets() {
           <div class="flex justify-between items-start mb-1">
             <div>
               <span class="font-bold text-sm">${t.customer_name}</span>
-              <span class="badge ${t.status === "completed" ? "badge-completed" : "badge-pending"} ml-2">${t.status === "completed" ? "Selesai" : "Dibatalkan"}</span>
+              <span class="badge ${t.status === "completed" ? "badge-completed" : "badge-pending"} ml-2">${t.status === "completed" ? "Selesai" : "Dibatalkan"}</span>${t.was_overtime ? '<span class="badge badge-pending ml-1" style="background:rgba(231,76,60,.15);color:var(--danger)">Over Time</span>' : ''}
               <span class="badge ${t.payment_status === "paid" ? "badge-paid" : "badge-unpaid"} ml-1">${t.payment_status === "paid" ? "Lunas" : "Belum"}</span>
             </div>
             <span class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(t.total_amount)}</span>
           </div>
-          <div class="text-xs mt-1" style="color:var(--muted)">${(t.children || []).map(c => c.name).join(", ")} — ${t.hours} jam${t.cancel_reason ? ' <span style="color:var(--danger)">· ' + t.cancel_reason + '</span>' : ""}</div>
+          <div class="text-xs mt-1" style="color:var(--muted)">${(t.children || []).map(c => c.name).join(", ")} — ${t.hours} jam${t.cancel_reason ? ' <span style="color:var(--danger)">· ' + t.cancel_reason + '</span>' : ''}${t.was_overtime && t.overtime_minutes ? ' <span style="color:var(--danger)">· +' + Math.floor(t.overtime_minutes / 60) + 'j ' + (t.overtime_minutes % 60) + 'm overtime</span>' : ''}</div>
         </div>`).join('')}
       </div>
     </div>` : ''}
