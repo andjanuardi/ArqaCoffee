@@ -85,3 +85,19 @@ Fitur pindah meja pada edit pesanan
 	- Buat buat tombol baru "Ingin Jadi Mitra Kami?" (selesai)
 	- Keluar Form dengan pilihan kurir atau mitra (selesai)
 	- jika selesai muncul pemberitahuan untuk menunggu approval dari admin, jika berhasil approval akan di email/ di hubungi (selesai)
+
+
+	tambahan dari ari
+
+filter tanggal cuma 1 wither pelanggan done
+simulasi jarak kurir ambil orderan antara kurir cafe ( berapa km ) done
+kurir harus selesaikan orderan baru bisa ambil orderan lagi done
+warna pendapatan warna hijau done
+list riwayat urutkan dari yang belum setor kurir done
+semua filter tanggal harus di set hari ni default nya tidak ada tombol x done
+kalau kurir tidak aktif tidak bisa mendaptkan orderan done
+kalau mitra dalam keadaan tutup .. menu yang di kelola sndiri tidak aktif atau tidak bisa di pesan done
+pelanggan tidak bisa pesan orderan kalau tidak ada yang aktif kurir terdekat done
+
+
+jarak antara kurir dan pelanggan 
