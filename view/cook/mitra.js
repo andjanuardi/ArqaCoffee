@@ -203,6 +203,18 @@ function renderMitraProfile() {
             <span class="${isActive ? 'badge badge-ready' : 'badge badge-pending'}">${isActive ? 'Online' : 'Offline'}</span>
           </div>
         </div>
+        <div class="card" style="border-color:${att ? 'rgba(39,174,96,.3)' : 'rgba(231,76,60,.3)'}">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:${att ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)'};color:${att ? 'var(--success)' : 'var(--danger)'}"><i class="fas fa-clock"></i></div>
+            <div class="flex-1">
+              <div class="font-semibold text-sm" style="color:${att ? 'var(--success)' : 'var(--danger)'}">${att ? 'Sedang Bekerja' : 'Belum Check-in'}</div>
+              <div class="text-xs" style="color:var(--muted)">${att ? 'Check-in: ' + formatTime(att.check_in) : 'Lakukan check-in agar menu tersedia untuk pelanggan'}</div>
+            </div>
+          </div>
+          ${att
+            ? `<button onclick="mitraCheckOut()" class="btn-secondary w-full text-center" style="background:rgba(231,76,60,.1);color:var(--danger);border-color:transparent;"><i class="fas fa-sign-out-alt mr-1"></i>Check Out</button>`
+            : `<button onclick="mitraCheckIn()" class="btn-primary w-full text-center"><i class="fas fa-sign-in-alt mr-1"></i>Check In</button>`}
+        </div>
         <div class="card flex items-center gap-3 cursor-pointer" onclick="handleLogout()">
           <i class="fas fa-right-from-bracket" style="color:var(--danger)"></i>
           <span class="text-sm flex-1">Keluar dari Akun</span>
@@ -216,5 +228,26 @@ function renderMitraProfile() {
 function toggleMitraStatus() {
   State.mitraStatus = State.mitraStatus === "online" ? "offline" : "online";
   showToast(State.mitraStatus === "online" ? 'Kamu sekarang Aktif — siap menerima pesanan' : 'Kamu sekarang Tidak Aktif', State.mitraStatus === "online" ? 'success' : 'info');
+  render();
+}
+
+function mitraCheckIn() {
+  DB.attendances.push({
+    id: 'a' + Date.now(),
+    user_id: State.currentUser.id,
+    check_in: new Date().toISOString(),
+    check_out: null,
+    status: 'present',
+  });
+  showToast('Check-in berhasil — menu kamu sekarang tersedia untuk pelanggan', 'success');
+  render();
+}
+
+function mitraCheckOut() {
+  const today = new Date().toISOString().split('T')[0];
+  const att = DB.attendances.find(a => a.user_id === State.currentUser.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
+  if (!att) { showToast('Belum check-in hari ini', 'warning'); return; }
+  att.check_out = new Date().toISOString();
+  showToast('Check-out berhasil', 'success');
   render();
 }
