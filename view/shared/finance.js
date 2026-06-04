@@ -94,17 +94,60 @@ function printRevenueDetail() {
     })();
   const endDate =
     State.financeEndDate || new Date().toISOString().split("T")[0];
-  const paidOrders = DB.orders.filter(
-    (o) => o.payment_status === "paid" && o.created_at,
-  );
-  const filtered = paidOrders.filter((o) => {
-    const d = o.created_at.split("T")[0];
-    return d >= startDate && d <= endDate;
-  });
-  const totalRev = filtered.reduce((s, o) => s + (o.total_amount || 0), 0);
+
+  const isPlayground = State._showPendapatan === 'playground';
+  const title = isPlayground ? 'Detail Pendapatan Playground' : 'Detail Pendapatan Cafe';
+  const headerLabel = isPlayground ? 'Pendapatan Playground' : 'Detail Pendapatan Cafe';
+
+  let filtered, totalRev;
+
+  if (isPlayground) {
+    filtered = getPlaygroundPeriodOrders(startDate, endDate);
+    totalRev = filtered.reduce((s, t) => s + (t.total_amount || 0), 0);
+  } else {
+    const paidOrders = DB.orders.filter(
+      (o) => o.payment_status === "paid" && o.created_at,
+    );
+    filtered = paidOrders.filter((o) => {
+      const d = o.created_at.split("T")[0];
+      return d >= startDate && d <= endDate;
+    });
+    totalRev = filtered.reduce((s, o) => s + (o.total_amount || 0), 0);
+  }
+
+  const rows = isPlayground
+    ? filtered.map((t) => {
+        const date = t.created_at?.split("T")[0] || "";
+        const time = t.created_at?.split("T")[1]?.slice(0, 5) || "-";
+        const kidList = (t.children || []).map(c => c.name).join(", ");
+        const durasi = t.hours ? t.hours + " jam" : "-";
+        return `<tr><td>${formatDate(date)}</td><td class="muted">${time}</td><td>${t.customer_name || "-"}</td><td class="muted">${kidList || "-"}</td><td class="muted">${durasi}</td><td class="right green">${formatCurrency(t.total_amount || 0)}</td></tr>`;
+      }).join("")
+    : filtered
+        .map((o) => {
+          const date = o.created_at?.split("T")[0] || "";
+          const time = o.created_at?.split("T")[1]?.slice(0, 5) || "-";
+          const menuCount = {};
+          (o.items || []).forEach((item) => {
+            const mi = DB.menuItems.find((m) => m.id === item.menu_item_id);
+            if (mi)
+              menuCount[mi.name] = (menuCount[mi.name] || 0) + item.quantity;
+          });
+          const menuList = Object.entries(menuCount)
+            .map(([name, qty]) => name + " x" + qty)
+            .join(", ");
+          return `<tr><td>${formatDate(date)}</td><td class="muted">${time}</td><td class="muted">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})<br><span style="font-size:10px;color:${o.payment_method === "cash" || o.payment_method === "cod" ? "#27ae60" : "#e07a3a"}">${o.payment_method === "cash" || o.payment_method === "cod" ? "Tunai" : "Digital"}</span></td><td class="muted">${menuList || "-"}</td><td class="right green">${formatCurrency(o.total_amount || 0)}</td></tr>`;
+        })
+        .join("");
+
+  const headerCols = isPlayground
+    ? '<th>Tanggal</th><th>Jam</th><th>Pelanggan</th><th>Anak</th><th>Durasi</th><th class="right">Pendapatan</th>'
+    : '<th>Tanggal</th><th>Jam</th><th>Order</th><th>Menu</th><th class="right">Pendapatan</th>';
+  const footColspan = isPlayground ? '5' : '4';
+
   const w = window.open("", "_blank");
   w.document.write(`
-    <html><head><title>Detail Pendapatan</title>
+    <html><head><title>${title}</title>
     <style>
       body{font-family:sans-serif;padding:40px;color:#222}
       h2{margin-bottom:8px}
@@ -121,31 +164,16 @@ function printRevenueDetail() {
       .box .val{font-size:20px;font-weight:bold;margin-top:4px}
       .box .lbl{font-size:12px;color:#666}
     </style></head><body>
-    <h2>Detail Pendapatan</h2>
+    <h2>${headerLabel}</h2>
     <div class="meta">Periode: ${startDate} s/d ${endDate}</div>
     <div class="flex">
       <div class="box"><div class="lbl">Total Pendapatan</div><div class="val">${formatCurrency(totalRev)}</div></div>
       <div class="box"><div class="lbl">Total Transaksi</div><div class="val">${filtered.length}</div></div>
     </div>
     <table>
-      <thead><tr><th>Tanggal</th><th>Jam</th><th>Order</th><th>Menu</th><th class="right">Pendapatan</th></tr></thead>
-      <tbody>${filtered
-        .map((o) => {
-          const date = o.created_at?.split("T")[0] || "";
-          const time = o.created_at?.split("T")[1]?.slice(0, 5) || "-";
-          const menuCount = {};
-          (o.items || []).forEach((item) => {
-            const mi = DB.menuItems.find((m) => m.id === item.menu_item_id);
-            if (mi)
-              menuCount[mi.name] = (menuCount[mi.name] || 0) + item.quantity;
-          });
-          const menuList = Object.entries(menuCount)
-            .map(([name, qty]) => name + " x" + qty)
-            .join(", ");
-          return `<tr><td>${formatDate(date)}</td><td class="muted">${time}</td><td class="muted">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})<br><span style="font-size:10px;color:${o.payment_method === "cash" || o.payment_method === "cod" ? "#27ae60" : "#e07a3a"}">${o.payment_method === "cash" || o.payment_method === "cod" ? "Tunai" : "Digital"}</span></td><td class="muted">${menuList || "-"}</td><td class="right green">${formatCurrency(o.total_amount || 0)}</td></tr>`;
-        })
-        .join("")}</tbody>
-      <tfoot><tr class="tfoot"><td colspan="4">Total</td><td class="right green">${formatCurrency(totalRev)}</td></tr></tfoot>
+      <thead><tr>${headerCols}</tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr class="tfoot"><td colspan="${footColspan}">Total</td><td class="right green">${formatCurrency(totalRev)}</td></tr></tfoot>
     </table>
     <script>window.print()<${"/"}script></body></html>
   `);
@@ -391,6 +419,37 @@ function printTransactionDetail() {
   w.document.close();
 }
 
+function showPendapatanModal() {
+  showModal(`
+<div class="p-4">
+  <h3 class="font-display text-lg font-bold mb-4 text-center">Pilih Sumber Pendapatan</h3>
+  <div class="flex gap-4">
+    <div class="flex-1 stat-card cursor-pointer text-center p-4" onclick="State._showPendapatan='cafe';State.showRevenueTable=true;closeModal();render()">
+      <div class="text-3xl mb-2">☕</div>
+      <div class="font-semibold">Pendapatan Cafe</div>
+      <div class="text-xs mt-1" style="color:var(--muted)">Pesanan makanan &amp; minuman</div>
+    </div>
+    <div class="flex-1 stat-card cursor-pointer text-center p-4" onclick="State._showPendapatan='playground';State.showRevenueTable=true;closeModal();render()">
+      <div class="text-3xl mb-2">🎠</div>
+      <div class="font-semibold">Pendapatan Playground</div>
+      <div class="text-xs mt-1" style="color:var(--muted)">Tiket bermain anak</div>
+    </div>
+  </div>
+  <div class="mt-4 text-center">
+    <button onclick="closeModal()" class="btn-secondary text-sm">Tutup</button>
+  </div>
+</div>
+  `);
+}
+
+function getPlaygroundPeriodOrders(startDate, endDate) {
+  return (DB.playgroundTickets || []).filter((t) => {
+    if (t.payment_status !== "paid" || !t.created_at) return false;
+    const d = t.created_at.split("T")[0];
+    return d >= startDate && d <= endDate;
+  });
+}
+
 // ------------------------------------------------------------------
 // FINANCE REPORT
 // ------------------------------------------------------------------
@@ -434,7 +493,7 @@ function renderFinanceReport() {
       <input type="date" id="finance-end" value="${endDate}" class="input-field text-sm" style="flex:1;min-width:140px" onchange="setFinanceRange(document.getElementById('finance-start').value,this.value)">
     </div>
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
-      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showRevenueTable=!State.showRevenueTable;render()"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
+      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showPendapatanModal()"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showExpenseTable=!State.showExpenseTable;render()"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showAvgTable=!State.showAvgTable;render()"><div class="text-xs" style="color:var(--muted)">Rata-rata/Hari</div><div class="text-lg font-bold mt-1">${formatCurrency(Math.round(totalRev / dayCount))}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showProfitTable=!State.showProfitTable;render()"><div class="text-xs" style="color:var(--muted)">Laba Bersih</div><div class="text-lg font-bold mt-1" style="color:${netProfit >= 0 ? "var(--success)" : "var(--danger)"}">${formatCurrency(netProfit)}</div></div>
@@ -442,11 +501,48 @@ function renderFinanceReport() {
     </div>
     ${
       State.showRevenueTable
-        ? `
+        ? (() => {
+          const isPlayground = State._showPendapatan === 'playground';
+          if (isPlayground) {
+            const pgOrders = getPlaygroundPeriodOrders(startDate, endDate);
+            const pgTotalRev = pgOrders.reduce((s, t) => s + (t.total_amount || 0), 0);
+            return `
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-sm">Detail Pendapatan</h3>
-        <button onclick="State.showRevenueTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+        <h3 class="font-semibold text-sm">Detail Pendapatan Playground</h3>
+        <button onclick="State.showRevenueTable=false;State._showPendapatan=null;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-base font-bold mt-1" style="color:var(--accent)">${formatCurrency(pgTotalRev)}</div></div>
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Transaksi</div><div class="text-base font-bold mt-1">${pgOrders.length}</div></div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm" style="border-collapse:collapse">
+          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Pelanggan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Anak</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Durasi</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Status</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Pendapatan</th></tr></thead>
+          <tbody>${pgOrders
+            .map((t) => {
+              const date = t.created_at?.split("T")[0] || "";
+              const time = t.created_at?.split("T")[1]?.slice(0, 5) || "-";
+              const kidList = (t.children || []).map(c => c.name).join(", ");
+              const durasi = t.hours ? t.hours + " jam" : "-";
+              const statusBadge = t.status === "active" ? "badge-cooking" : t.status === "completed" ? "badge-completed" : "badge-pending";
+              const statusLabel = t.status === "active" ? "Aktif" : t.status === "completed" ? "Selesai" : "Dibatalkan";
+              return `<tr><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;font-size:12px">${t.customer_name || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${kidList || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${durasi}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px"><span class="badge ${statusBadge}" style="font-size:10px">${statusLabel}</span></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(t.total_amount || 0)}</td></tr>`;
+            })
+            .join("")}</tbody>
+          <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)" colspan="6">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(pgTotalRev)}</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="mt-3">
+        <button onclick="printRevenueDetail()" class="btn-sm btn-secondary" style="padding:4px 12px;font-size:11px"><i class="fas fa-print mr-1"></i>Cetak</button>
+      </div>
+    </div>`;
+          }
+          return `
+    <div class="card mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-sm">Detail Pendapatan Cafe</h3>
+        <button onclick="State.showRevenueTable=false;State._showPendapatan=null;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
       </div>
       <div class="grid grid-cols-2 gap-3 mb-3">
         <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-base font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
@@ -479,7 +575,8 @@ function renderFinanceReport() {
       <div class="mt-3">
         <button onclick="printRevenueDetail()" class="btn-sm btn-secondary" style="padding:4px 12px;font-size:11px"><i class="fas fa-print mr-1"></i>Cetak</button>
       </div>
-    </div>`
+    </div>`;
+        })()
         : ""
     }
     ${
