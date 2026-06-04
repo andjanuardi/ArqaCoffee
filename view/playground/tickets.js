@@ -46,7 +46,7 @@ function renderPlaygroundTickets() {
           const end = new Date(t.end_time).getTime();
           const total = end - start;
           const remaining = end - now;
-          const remainingPct = Math.max(0, Math.min(100, ((end - now) / total) * 100));
+          const elapsed = Math.max(0, Math.min(100, ((now - start) / total) * 100));
           const isUrgent = remaining > 0 && remaining < 600000;
           const isExpired = remaining <= 0;
           const barColor = isExpired ? "var(--danger)" : isUrgent ? "var(--warning)" : "var(--success)";
@@ -67,12 +67,12 @@ function renderPlaygroundTickets() {
           ${t.items.length > 0 ? `<div class="text-xs mb-3" style="color:var(--muted)"><i class="fas fa-utensils mr-1"></i>${t.items.map((i) => i.name + " x" + i.quantity).join(", ")}</div>` : ""}
           <div class="time-bar-container mb-3">
             <div class="flex justify-between text-xs mb-1" style="color:var(--muted)">
-              <span>${formatTime(new Date(t.end_time))}</span>
-              <span class="pg-remaining" data-start="${t.start_time}" data-end="${t.end_time}" data-over="${isExpired}" style="color:${barColor};font-weight:600">${isExpired ? "-" + formatRemaining(Math.abs(remaining)) : formatRemaining(remaining)}</span>
               <span>${formatTime(new Date(t.start_time))}</span>
+              <span class="pg-remaining" data-start="${t.start_time}" data-end="${t.end_time}" data-over="${isExpired}" style="color:${barColor};font-weight:600">${isExpired ? "-" + formatRemaining(Math.abs(remaining)) : formatRemaining(remaining)}</span>
+              <span>${formatTime(new Date(t.end_time))}</span>
             </div>
             <div class="time-bar-bg">
-              <div class="time-bar-fill" style="width:${Math.min(100, remainingPct)}%;background:${barColor}"></div>
+              <div class="time-bar-fill" style="width:${Math.min(100, elapsed)}%;background:${barColor}"></div>
             </div>
           </div>
           <div class="flex gap-2 mb-2">
