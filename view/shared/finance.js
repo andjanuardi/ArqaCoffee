@@ -672,7 +672,9 @@ function renderFinanceReport() {
       <div class="overflow-x-auto">
         <table class="w-full text-sm" style="border-collapse:collapse">
           <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Kategori</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Keterangan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Jumlah</th></tr></thead>
-          <tbody>${filteredExpenses
+          <tbody>${[...filteredExpenses]
+            .sort((a, b) => (b.date + (b.time || ""))
+              .localeCompare(a.date + (a.time || "")))
             .map(
               (e) => `
             <tr><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${e.date || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${e.time || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px">${e.category}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${e.note || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--danger)">${formatCurrency(e.amount)}</td></tr>
