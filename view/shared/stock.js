@@ -12,7 +12,7 @@ function renderStockManagement() {
   return `
   <div class="animate-fade-up">
     <div class="flex justify-between items-center mb-4">
-      <h2 class="font-display text-xl font-bold">Stok Bahan Baku</h2>
+      <h2 class="font-display text-xl font-bold">Stok Bahan Baku Cafe</h2>
       <button onclick="showAddStockModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
     </div>
     <div class="card mb-4" style="padding:10px">
