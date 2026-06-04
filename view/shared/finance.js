@@ -311,7 +311,7 @@ function printProfitDetail() {
     })();
   const endDate =
     State.financeEndDate || new Date().toISOString().split("T")[0];
-  const data = getFinanceData(startDate, endDate);
+  const data = getCombinedDailyRevenue(startDate, endDate);
   const totalRev = data.reduce((s, d) => s + d.revenue, 0);
   const expenses = (DB.expenses || []).filter(
     (e) => e.date && e.date >= startDate && e.date <= endDate,
@@ -517,6 +517,25 @@ function getMergedDailyEntries(startDate, endDate) {
   return merged;
 }
 
+function getCombinedDailyRevenue(startDate, endDate) {
+  const cafeData = getFinanceData(startDate, endDate);
+  const cafeByDate = {};
+  cafeData.forEach(d => { cafeByDate[d.date] = d.revenue; });
+  const pgEntries = getPlaygroundPeriodEntries(startDate, endDate);
+  const pgByDate = {};
+  pgEntries.forEach(e => {
+    const d = e.created_at?.split("T")[0] || "";
+    pgByDate[d] = (pgByDate[d] || 0) + (e.total_amount || 0);
+  });
+  const allDates = new Set([...Object.keys(cafeByDate), ...Object.keys(pgByDate)]);
+  const merged = [];
+  [...allDates].sort().forEach(date => {
+    merged.push({ date, revenue: (cafeByDate[date] || 0) + (pgByDate[date] || 0) });
+  });
+  if (!merged.length) merged.push({ date: startDate, revenue: 0 });
+  return merged;
+}
+
 // ------------------------------------------------------------------
 // FINANCE REPORT
 // ------------------------------------------------------------------
@@ -542,7 +561,7 @@ function renderFinanceReport() {
     return e.date >= startDate && e.date <= endDate;
   });
   const totalExp = filteredExpenses.reduce((s, e) => s + e.amount, 0);
-  const netProfit = totalRev - totalExp;
+  const netProfit = combinedRev - totalExp;
   const dayCount = Math.max(
     1,
     Math.round((new Date(endDate) - new Date(startDate)) / 86400000) + 1,
@@ -748,20 +767,20 @@ function renderFinanceReport() {
         <button onclick="State.showProfitTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
       </div>
       <div class="grid grid-cols-3 gap-3 mb-3">
-        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pendapatan</div><div class="text-base font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRev)}</div></div>
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pendapatan</div><div class="text-base font-bold mt-1" style="color:var(--accent)">${formatCurrency(combinedRev)}</div></div>
         <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pengeluaran</div><div class="text-base font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
         <div class="stat-card" style="border-color:${netProfit >= 0 ? "rgba(39,174,96,.4)" : "rgba(231,76,60,.4)"}"><div class="text-xs" style="color:var(--muted)">Laba Bersih</div><div class="text-base font-bold mt-1" style="color:${netProfit >= 0 ? "var(--success)" : "var(--danger)"}">${formatCurrency(netProfit)}</div></div>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm" style="border-collapse:collapse">
           <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Pendapatan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Pengeluaran</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Laba</th></tr></thead>
-          <tbody>${(() => {
+           <tbody>${(() => {
             const expByDate = {};
             filteredExpenses.forEach((e) => {
               if (!expByDate[e.date]) expByDate[e.date] = 0;
               expByDate[e.date] += e.amount;
             });
-            return computedSales
+            return getCombinedDailyRevenue(startDate, endDate)
               .map((d) => {
                 const exp = expByDate[d.date] || 0;
                 const profit = d.revenue - exp;
