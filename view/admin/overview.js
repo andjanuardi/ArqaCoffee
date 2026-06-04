@@ -10,6 +10,7 @@ function renderAdminView() {
   if (tab === 'promos') return renderAdminPromos();
   if (tab === 'finance') return renderFinanceReport();
   if (tab === 'stock') return renderStockManagement();
+  if (tab === 'pg-stock') return renderPlaygroundPgStock();
   if (tab === 'expenses') return renderExpenseManagement();
   if (tab === 'active-orders') return renderActiveOrders();
   if (tab === 'active-playground') return renderActivePlaygroundTickets();

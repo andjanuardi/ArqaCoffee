@@ -7,6 +7,7 @@ function renderManagerView() {
   if (tab === 'report') return renderManagerReport();
   if (tab === 'finance') return renderManagerFinance();
   if (tab === 'stock') return renderStockManagement();
+  if (tab === 'pg-stock') return renderPlaygroundPgStock();
   if (tab === 'expenses') return renderExpenseManagement();
   if (tab === 'active-orders') return renderActiveOrders();
   if (tab === 'active-playground') return renderActivePlaygroundTickets();

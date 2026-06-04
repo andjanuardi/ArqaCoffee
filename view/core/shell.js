@@ -86,7 +86,10 @@ function renderSideDrawer(role) {
       { id: 'mitra-finance', icon: 'fa-handshake', label: 'Keuangan Mitra' },
       { id: 'courier-finance', icon: 'fa-motorcycle', label: 'Keuangan Kurir' },
     ] },
-    { id: 'stock', icon: 'fa-warehouse', label: 'Stok Bahan' },
+    { id: 'stock-group', icon: 'fa-warehouse', label: 'Stok', children: [
+      { id: 'stock', icon: 'fa-mug-saucer', label: 'Stok Cafe' },
+      { id: 'pg-stock', icon: 'fa-box-open', label: 'Stok Playground' },
+    ] },
     { id: 'active-services', icon: 'fa-clipboard-list', label: 'Layanan Aktif', children: [
       { id: 'active-orders', icon: 'fa-clipboard-list', label: 'Pesanan Aktif' },
       { id: 'active-playground', icon: 'fa-ticket', label: 'Tiket Aktif' }
@@ -101,7 +104,10 @@ function renderSideDrawer(role) {
     { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Kelola Meja' },
     { id: 'promos', icon: 'fa-tags', label: 'Kelola Promo' },
     { id: 'finance', icon: 'fa-chart-pie', label: 'Keuangan' },
-    { id: 'stock', icon: 'fa-warehouse', label: 'Stok Bahan' },
+    { id: 'stock-group', icon: 'fa-warehouse', label: 'Stok', children: [
+      { id: 'stock', icon: 'fa-mug-saucer', label: 'Stok Cafe' },
+      { id: 'pg-stock', icon: 'fa-box-open', label: 'Stok Playground' },
+    ] },
     { id: 'expenses', icon: 'fa-money-bill-wave', label: 'Pengeluaran' },
     { id: 'active-services', icon: 'fa-clipboard-list', label: 'Layanan Aktif', children: [
       { id: 'active-orders', icon: 'fa-clipboard-list', label: 'Pesanan Aktif' },
