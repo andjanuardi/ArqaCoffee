@@ -101,3 +101,10 @@ pelanggan tidak bisa pesan orderan kalau tidak ada yang aktif kurir terdekat don
 
 
 jarak antara kurir dan pelanggan 
+
+
+
+
+
+pelanggan bayar nanti, ketika bayar sekarang, modal pilih metode pembayaran tidak ada
+pada kasir ketika bayar sekarang, tombol bayar digital tidak ada modal metode pembayaran
