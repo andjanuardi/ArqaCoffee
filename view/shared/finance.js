@@ -251,7 +251,7 @@ function printAvgDetail() {
     })();
   const endDate =
     State.financeEndDate || new Date().toISOString().split("T")[0];
-  const data = getFinanceData(startDate, endDate);
+  const data = getMergedDailyEntries(startDate, endDate);
   const totalRev = data.reduce((s, d) => s + d.revenue, 0);
   const dayCount = Math.max(
     1,
@@ -282,16 +282,19 @@ function printAvgDetail() {
       <div class="box"><div class="lbl">Total Pendapatan</div><div class="val">${formatCurrency(totalRev)}</div></div>
     </div>
     <table>
-      <thead><tr><th>Tanggal</th><th class="right">Pendapatan</th><th class="right">Rata-rata Kumulatif</th></tr></thead>
+      <thead><tr><th>Tanggal</th><th>Sumber</th><th class="right">Pendapatan</th><th class="right">Rata-rata Kumulatif</th></tr></thead>
       <tbody>${data
         .map((d, i) => {
           const cumAvg = Math.round(
             data.slice(0, i + 1).reduce((s, x) => s + x.revenue, 0) / (i + 1),
           );
-          return `<tr><td>${formatDate(d.date)}</td><td class="right green">${formatCurrency(d.revenue)}</td><td class="right">${formatCurrency(cumAvg)}</td></tr>`;
+          const tag = d.source === "playground"
+            ? '<span style="color:#8e44ad;font-size:12px">Playground</span>'
+            : '<span style="color:#27ae60;font-size:12px">Cafe</span>';
+          return `<tr><td>${formatDate(d.date)}</td><td>${tag}</td><td class="right green">${formatCurrency(d.revenue)}</td><td class="right">${formatCurrency(cumAvg)}</td></tr>`;
         })
         .join("")}</tbody>
-      <tfoot><tr class="tfoot"><td>Total</td><td class="right green">${formatCurrency(totalRev)}</td><td class="right">${formatCurrency(Math.round(totalRev / dayCount))}</td></tr></tfoot>
+      <tfoot><tr class="tfoot"><td>Total</td><td></td><td class="right green">${formatCurrency(totalRev)}</td><td class="right">${formatCurrency(Math.round(totalRev / dayCount))}</td></tr></tfoot>
     </table>
     <script>window.print()<${"/"}script></body></html>
   `);
@@ -480,12 +483,38 @@ function getPlaygroundPeriodEntries(startDate, endDate) {
       }
     });
   });
-  return entries.sort((a, b) => (a.created_at || "").localeCompare(b.created_at || ""));
+  return entries.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
 }
 
 function getPgMethodBadge(method) {
   if (method === "cash") return '<span style="color:var(--success);font-size:10px">Tunai</span>';
   return '<span style="color:var(--accent);font-size:10px">Digital</span>';
+}
+
+function getMergedDailyEntries(startDate, endDate) {
+  const cafeData = getFinanceData(startDate, endDate);
+  const cafeByDate = {};
+  cafeData.forEach(d => { cafeByDate[d.date] = d.revenue; });
+
+  const pgEntries = getPlaygroundPeriodEntries(startDate, endDate);
+  const pgByDate = {};
+  pgEntries.forEach(e => {
+    const d = e.created_at?.split("T")[0] || "";
+    pgByDate[d] = (pgByDate[d] || 0) + (e.total_amount || 0);
+  });
+
+  const allDates = new Set([...Object.keys(cafeByDate), ...Object.keys(pgByDate)]);
+  const merged = [];
+  [...allDates].sort().forEach(date => {
+    if (cafeByDate[date] !== undefined) {
+      merged.push({ date, source: "cafe", revenue: cafeByDate[date] });
+    }
+    if (pgByDate[date] !== undefined) {
+      merged.push({ date, source: "playground", revenue: pgByDate[date] });
+    }
+  });
+  if (!merged.length) merged.push({ date: startDate, source: "cafe", revenue: 0 });
+  return merged;
 }
 
 // ------------------------------------------------------------------
@@ -537,7 +566,7 @@ function renderFinanceReport() {
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showPendapatanModal()"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-xs" style="color:var(--muted);font-size:10px">Cafe + Playground</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(combinedRev)}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showExpenseTable=!State.showExpenseTable;render()"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-lg font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalExp)}</div></div>
-      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showAvgTable=!State.showAvgTable;render()"><div class="text-xs" style="color:var(--muted)">Rata-rata/Hari</div><div class="text-lg font-bold mt-1">${formatCurrency(Math.round(totalRev / dayCount))}</div></div>
+      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showAvgTable=!State.showAvgTable;render()"><div class="text-xs" style="color:var(--muted)">Rata-rata/Hari</div><div class="text-lg font-bold mt-1">${formatCurrency(Math.round(combinedRev / dayCount))}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showProfitTable=!State.showProfitTable;render()"><div class="text-xs" style="color:var(--muted)">Laba Bersih</div><div class="text-lg font-bold mt-1" style="color:${netProfit >= 0 ? "var(--success)" : "var(--danger)"}">${formatCurrency(netProfit)}</div></div>
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showTransactionTable=!State.showTransactionTable;render()"><div class="text-xs" style="color:var(--muted)">Transaksi</div><div class="text-lg font-bold mt-1">${periodOrders.length}</div></div>
     </div>
@@ -667,25 +696,39 @@ function renderFinanceReport() {
         <h3 class="font-semibold text-sm">Detail Rata-rata per Hari</h3>
         <button onclick="State.showAvgTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
       </div>
-      <div class="grid grid-cols-2 gap-3 mb-3">
-        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Rata-rata/Hari</div><div class="text-base font-bold mt-1" style="color:var(--accent)">${formatCurrency(Math.round(totalRev / dayCount))}</div></div>
-        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Hari</div><div class="text-base font-bold mt-1">${dayCount} hari</div></div>
+      <div class="flex gap-3 mb-3">
+        <div class="stat-card flex-1 text-center p-4">
+          <div class="text-xs mb-2" style="color:var(--muted)">Rata-rata Cafe</div>
+          <div class="text-base font-bold" style="color:var(--accent)">${formatCurrency(Math.round(totalRev / dayCount))}</div>
+        </div>
+        <div class="stat-card flex-1 text-center p-4">
+          <div class="text-xs mb-2" style="color:var(--muted)">Rata-rata Playground</div>
+          <div class="text-base font-bold" style="color:#8e44ad">${formatCurrency(Math.round(pgTotalRev / dayCount))}</div>
+        </div>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm" style="border-collapse:collapse">
-          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Pendapatan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Rata-rata Kumulatif</th></tr></thead>
-          <tbody>${computedSales
-            .map((d, i) => {
-              const cumAvg = Math.round(
-                computedSales
-                  .slice(0, i + 1)
-                  .reduce((s, x) => s + x.revenue, 0) /
-                  (i + 1),
-              );
-              return `<tr><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(d.date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(d.revenue)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--muted)">${formatCurrency(cumAvg)}</td></tr>`;
-            })
-            .join("")}</tbody>
-          <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--success)">${formatCurrency(totalRev)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(Math.round(totalRev / dayCount))}</td></tr></tfoot>
+          <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Sumber</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Pendapatan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Rata-rata Kumulatif</th></tr></thead>
+          <tbody>${
+            (() => {
+              const merged = getMergedDailyEntries(startDate, endDate);
+              return merged
+                .map((d, i) => {
+                  const cumAvg = Math.round(
+                    merged
+                      .slice(0, i + 1)
+                      .reduce((s, x) => s + x.revenue, 0) /
+                      (i + 1),
+                  );
+                  const tag = d.source === "playground"
+                    ? '<span style="color:#8e44ad;font-size:10px">Playground</span>'
+                    : '<span style="color:var(--accent);font-size:10px">Cafe</span>';
+                  return `<tr><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(d.date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;font-size:12px">${tag}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(d.revenue)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--muted)">${formatCurrency(cumAvg)}</td></tr>`;
+                })
+                .join("");
+            })()
+          }</tbody>
+          <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--success)">${formatCurrency(combinedRev)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(Math.round(combinedRev / dayCount))}</td></tr></tfoot>
         </table>
       </div>
       <div class="mt-3">
