@@ -531,6 +531,7 @@ function renderActivePlaygroundTickets() {
   const totalActive = tickets.length;
   const totalSold = rawTickets.filter(t => t.payment_status === "paid").length;
   const totalCancelled = rawTickets.filter(t => t.status === "cancelled").length;
+  const overtimeCount = tickets.filter(t => new Date(t.end_time).getTime() <= now).length;
 
   const filtered = tickets.filter(t =>
     !q || t.customer_name?.toLowerCase().includes(q) ||
@@ -544,7 +545,7 @@ function renderActivePlaygroundTickets() {
       <h2 class="font-display text-xl font-bold">Tiket Aktif Playground</h2>
       <span class="text-xs" style="color:var(--muted)">${totalActive} tiket</span>
     </div>
-    <div class="grid grid-cols-3 gap-3 mb-3">
+    <div class="grid grid-cols-4 gap-3 mb-3">
       <div class="stat-card text-center">
         <div class="text-lg font-bold" style="color:var(--accent)">${totalActive}</div>
         <div class="text-[10px]" style="color:var(--muted)">Tiket Aktif</div>
@@ -556,6 +557,10 @@ function renderActivePlaygroundTickets() {
       <div class="stat-card text-center">
         <div class="text-lg font-bold" style="color:var(--danger)">${totalCancelled}</div>
         <div class="text-[10px]" style="color:var(--muted)">Tiket Dibatalkan</div>
+      </div>
+      <div class="stat-card text-center">
+        <div class="text-lg font-bold" style="color:var(--danger)">${overtimeCount}</div>
+        <div class="text-[10px]" style="color:var(--muted)">Over Time</div>
       </div>
     </div>
     <div class="flex flex-wrap items-center gap-2 mb-3">

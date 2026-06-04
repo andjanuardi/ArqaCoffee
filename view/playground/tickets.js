@@ -17,6 +17,7 @@ function renderPlaygroundTickets() {
   const completedCount = allCompleted.filter(t => t.status === "completed").length;
   const cancelledCount = allCompleted.filter(t => t.status === "cancelled").length;
   const now = Date.now();
+  const overtimeCount = tickets.filter(t => new Date(t.end_time).getTime() <= now).length;
 
   return `
   <div class="animate-fade-up">
@@ -24,7 +25,7 @@ function renderPlaygroundTickets() {
       <h2 class="font-display text-xl font-bold">Tiket Aktif</h2>
       <button onclick="switchTab('create')" class="btn-primary btn-sm flex items-center gap-1.5"><i class="fas fa-plus fa-xs"></i> Buat Tiket</button>
     </div>
-    <div class="grid grid-cols-3 gap-3 mb-5">
+    <div class="grid grid-cols-4 gap-3 mb-5">
       <div class="stat-card text-center" style="cursor:default">
         <div class="text-lg font-bold" style="color:var(--accent)">${tickets.length}</div>
         <div class="text-[10px]" style="color:var(--muted)">Tiket Aktif</div>
@@ -36,6 +37,10 @@ function renderPlaygroundTickets() {
       <div class="stat-card text-center" style="cursor:default">
         <div class="text-lg font-bold" style="color:var(--danger)">${cancelledCount}</div>
         <div class="text-[10px]" style="color:var(--muted)">Tiket Dibatalkan</div>
+      </div>
+      <div class="stat-card text-center" style="cursor:default">
+        <div class="text-lg font-bold" style="color:var(--danger)">${overtimeCount}</div>
+        <div class="text-[10px]" style="color:var(--muted)">Over Time</div>
       </div>
     </div>
     ${tickets.length === 0 ? '<div class="text-center py-12"><i class="fas fa-ticket text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Tidak ada tiket aktif</p></div>' : ""}
