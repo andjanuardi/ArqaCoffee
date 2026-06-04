@@ -20,13 +20,26 @@ function renderCourierAvailable() {
       o.status === "ready" &&
       (!o.courier_id || o.courier_id === State.currentUser.id),
   );
+
+  function getCafeToCustDist(o) {
+    if (!o.delivery_location || !o.delivery_location.lat) return null;
+    const cafe = DB.cafe.location;
+    const d = calcDistance(cafe.lat, cafe.lng, o.delivery_location.lat, o.delivery_location.lng);
+    const meter = Math.round(d).toLocaleString('id-ID');
+    const km = (d / 1000).toFixed(1).replace('.', ',');
+    if (d < 1000) return meter + ' meter';
+    return meter + ' m (' + km + ' km)';
+  }
+
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Pesanan Tersedia</h2>
     <div class="space-y-3">
       ${!hasCheckedIn ? '<div class="card text-center py-6" style="border-color:rgba(231,76,60,.2)"><i class="fas fa-clipboard-list text-3xl mb-2" style="color:var(--danger)"></i><p class="text-sm font-semibold mb-1" style="color:var(--danger)">Belum Check-in Hari Ini</p><p class="text-xs mb-3" style="color:var(--muted)">Lakukan check-in di profil sebelum mengambil pesanan</p><button onclick="State.currentTab.courier=\'profile\';render()" class="btn-primary text-sm px-5 py-2" style="font-size:13px"><i class="fas fa-clock mr-1"></i>Check-in di Profil</button></div>' : hasActive ? '<div class="card text-center py-6" style="border-color:rgba(243,156,18,.2)"><i class="fas fa-route text-3xl mb-2" style="color:var(--warning)"></i><p class="text-sm font-semibold mb-1" style="color:var(--warning)">Ada Pengantaran Aktif</p><p class="text-xs" style="color:var(--muted)">Selesaikan pengantaran aktif sebelum mengambil pesanan baru</p></div>' : available.length === 0 ? '<div class="text-center py-12"><i class="fas fa-box-open text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Belum ada pesanan siap diantar</p></div>' : available
         .map(
-          (o) => `
+          (o) => {
+          const distStr = getCafeToCustDist(o);
+          return `
       <div class="card">
         <div class="flex justify-between items-start mb-1">
           <div>
@@ -41,6 +54,7 @@ function renderCourierAvailable() {
         <div class="text-sm mb-1"><i class="fas fa-map-marker-alt mr-1" style="color:var(--accent)"></i>${o.delivery_address}</div>
         ${o.delivery_detail ? `<div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-info-circle mr-1"></i>${o.delivery_detail}</div>` : ""}
         ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="text-xs mb-1" style="color:var(--accent)"><i class="fas fa-truck mr-1"></i>Ongkos Kirim: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ""}
+        ${distStr ? `<div class="text-xs mb-2" style="color:var(--accent)"><i class="fas fa-store mr-1"></i>Cafe → Pelanggan: ${distStr}</div>` : ''}
         <div class="text-xs mb-3" style="color:var(--muted)">${o.items
           .map((i) => {
             const mi = getMenuItem(i.menu_item_id);
@@ -51,8 +65,8 @@ function renderCourierAvailable() {
           <button onclick="rejectCourierOrder('${o.id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:10px;border-radius:10px;font-size:13px;font-weight:600"><i class="fas fa-times mr-1"></i>Tolak</button>
           <button onclick="acceptDelivery('${o.id}')" class="btn-primary flex-1 text-center">Ambil Pesanan</button>
         </div>
-      </div>`,
-        )
+      </div>`;
+        })
         .join("")}
     </div>
   </div>`;
