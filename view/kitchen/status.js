@@ -12,10 +12,11 @@ function updateItemStatus(orderId, menuItemId, newStatus) {
     }
   }
 
-  if (o.items.every((i) => i.status === "ready")) {
+  const activeItems = o.items.filter((i) => i.status !== "rejected");
+  if (activeItems.length > 0 && activeItems.every((i) => i.status === "ready")) {
     o.status = "ready";
     notifyStatusChange(o, 'ready');
-  } else if (o.items.some((i) => i.status === "cooking")) {
+  } else if (activeItems.some((i) => i.status === "cooking")) {
     o.status = "cooking";
   }
   showToast(`Status diupdate: ${getStatusLabel(newStatus)}`, "success");

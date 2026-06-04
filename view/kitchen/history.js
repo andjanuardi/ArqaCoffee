@@ -63,22 +63,52 @@ function confirmRejectKitchenOrder(orderId) {
     return;
   }
 
-  o.status = "rejected";
-  o.reject_reason = reason;
-
-  if (o.order_type === "dine-in" && o.table_id) {
-    const hasOtherOrders = DB.orders.some(
-      (x) => x.id !== orderId && x.table_id === o.table_id &&
-        x.status !== "completed" && x.status !== "cancelled" && x.status !== "rejected"
-    );
-    if (!hasOtherOrders) {
-      const t = getTable(o.table_id);
-      if (t) t.status = "available";
+  // Reject only items belonging to the rejecting role
+  const isMitraReject = State.currentUser?.role === 'mitra_juru_masak';
+  const rejectedIds = [];
+  const remaining = [];
+  o.items.forEach(i => {
+    const mi = getMenuItem(i.menu_item_id);
+    if (!mi) return;
+    const isMitraItem = !!mi.submitted_by;
+    const shouldReject = isMitraReject ? isMitraItem : !isMitraItem;
+    if (shouldReject) {
+      i.status = "rejected";
+      rejectedIds.push(mi.name);
+    } else {
+      remaining.push(i);
     }
+  });
+
+  if (remaining.length === 0) {
+    // All items rejected → full order rejection
+    o.status = "rejected";
+    o.reject_reason = reason;
+
+    if (o.order_type === "dine-in" && o.table_id) {
+      const hasOtherOrders = DB.orders.some(
+        (x) => x.id !== orderId && x.table_id === o.table_id &&
+          x.status !== "completed" && x.status !== "cancelled" && x.status !== "rejected"
+      );
+      if (!hasOtherOrders) {
+        const t = getTable(o.table_id);
+        if (t) t.status = "available";
+      }
+    }
+
+    notifyRejected(o, reason);
+    showToast(`Pesanan #${o.id.slice(-5).toUpperCase()} ditolak: ${reason}`, "info");
+  } else {
+    // Some items remain (e.g. mitra items) → keep order active
+    o.reject_reason = reason;
+    const newTotal = remaining.reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
+    const newTax = Math.round(calcItemTax(remaining));
+    o.total_amount = newTotal + newTax + (o.shipping_cost || 0);
+
+    notifyRejected(o, reason, rejectedIds);
+    showToast(`${rejectedIds.join(', ')} ditolak — item mitra tetap diproses`, "info");
   }
 
-  notifyRejected(o, reason);
-  showToast(`Pesanan #${o.id.slice(-5).toUpperCase()} ditolak: ${reason}`, "info");
   closeModal();
   render();
 }

@@ -17,7 +17,7 @@ function renderKitchenQueue(itemFilterFn) {
   active.forEach((o) => {
     o.items.forEach((i) => {
       const mi = getMenuItem(i.menu_item_id);
-      if (mi && i.status !== "ready" && (!itemFilterFn || itemFilterFn(i, mi, o)))
+      if (mi && i.status !== "ready" && i.status !== "rejected" && (!itemFilterFn || itemFilterFn(i, mi, o)))
         allItems.push({
           ...i,
           menu_item: mi,

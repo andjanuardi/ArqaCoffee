@@ -103,7 +103,7 @@ function editCashierOrder(id) {
     return;
   }
 
-  State.cashierCart = o.items.map((i) => {
+  State.cashierCart = o.items.filter(i => i.status !== "rejected").map((i) => {
     const m = getMenuItem(i.menu_item_id);
     return {
       menu_item_id: i.menu_item_id,

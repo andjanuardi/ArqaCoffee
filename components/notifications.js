@@ -183,16 +183,27 @@ function notifyPayment(order, method) {
   });
 }
 
-function notifyRejected(order, reason) {
+function notifyRejected(order, reason, rejectedNames) {
   var shortId = '#' + order.id.slice(-5).toUpperCase();
-  addNotification({
-    title: 'Pesanan Ditolak',
-    message: shortId + ' — Alasan: ' + reason,
-    type: 'warning',
-    icon: 'fa-ban',
-    targetRoles: ['customer', 'cashier', 'admin', 'manager'],
-    relatedOrderId: order.id,
-  });
+  if (rejectedNames && rejectedNames.length > 0) {
+    addNotification({
+      title: 'Beberapa Item Ditolak',
+      message: shortId + ' — ' + rejectedNames.join(', ') + ' ditolak. ' + reason,
+      type: 'warning',
+      icon: 'fa-ban',
+      targetRoles: ['customer', 'cashier', 'admin', 'manager'],
+      relatedOrderId: order.id,
+    });
+  } else {
+    addNotification({
+      title: 'Pesanan Ditolak',
+      message: shortId + ' — Alasan: ' + reason,
+      type: 'warning',
+      icon: 'fa-ban',
+      targetRoles: ['customer', 'cashier', 'admin', 'manager'],
+      relatedOrderId: order.id,
+    });
+  }
 }
 
 function notifyDeliveryTaken(order, courierName) {

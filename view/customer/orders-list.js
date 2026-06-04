@@ -61,6 +61,8 @@ function renderCustomerOrders() {
 function showOrderDetail(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
+  const activeItems = o.items.filter(i => i.status !== "rejected");
+  const hasRejected = o.items.some(i => i.status === "rejected");
   showModal(`
     <div>
       <div class="flex justify-between items-start mb-4">
@@ -74,24 +76,25 @@ function showOrderDetail(id) {
       </div>
       ${o.status === "rejected" && o.reject_reason ? `<div class="card mb-4 text-sm" style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2)"><i class="fas fa-ban mr-1" style="color:var(--danger)"></i><strong>Pesanan Ditolak:</strong> ${o.reject_reason}</div>` : ""}
       ${o.status === "cancelled" && o.reject_reason ? `<div class="card mb-4 text-sm" style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2)"><i class="fas fa-ban mr-1" style="color:var(--danger)"></i><strong>Pesanan Dibatalkan:</strong> ${o.reject_reason}</div>` : ""}
+      ${hasRejected && o.status !== "rejected" && o.reject_reason ? `<div class="card mb-4 text-sm" style="background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.2)"><i class="fas fa-ban mr-1" style="color:var(--warning)"></i><strong>Beberapa Item Ditolak:</strong> ${o.reject_reason}</div>` : ""}
       <div class="space-y-2 mb-4">
         ${o.items
           .map((i) => {
             const mi = getMenuItem(i.menu_item_id);
-            return mi
-              ? `
-        <div class="flex justify-between text-sm">
-          <span>${mi.name} x${i.quantity} ${i.notes ? '<span style="color:var(--muted)">(' + i.notes + ")</span>" : ""}</span>
-          <span>${formatCurrency(i.unit_price * i.quantity)}</span>
-        </div>`
-              : "";
+            if (!mi) return "";
+            const rejected = i.status === "rejected";
+            return `
+        <div class="flex justify-between text-sm ${rejected ? 'opacity-50' : ''}">
+          <span>${mi.name} x${i.quantity} ${i.notes ? '<span style="color:var(--muted)">(' + i.notes + ")</span>" : ""} ${rejected ? '<span style="color:var(--danger);font-size:10px"><i class="fas fa-ban mr-1"></i>Ditolak</span>' : ""}</span>
+          <span style="${rejected ? 'text-decoration:line-through;color:var(--danger)' : ''}">${formatCurrency(i.unit_price * i.quantity)}</span>
+        </div>`;
           })
           .join("")}
       </div>
       <div class="border-t pt-3" style="border-color:var(--border)">
         ${o.promo_discount ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
         ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-truck mr-1"></i>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ""}
-        <div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(o.items)))}</span></div>
+        <div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(activeItems)))}</span></div>
         <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
         <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "qris" ? "QRIS" : o.payment_method === "bank_transfer" ? "Transfer Bank" : o.payment_method === "cod" ? "COD" : o.payment_method === "" ? "Bayar Nanti" : "Tunai"}</span></div>
         ${!(o.order_type === "delivery" && o.payment_method === "cod") ? `<div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}">${o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>` : ""}
@@ -109,6 +112,7 @@ function showOrderDetail(id) {
 function printInvoice(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
+  const activeItems = o.items.filter(i => i.status !== "rejected");
   const win = window.open('', '_blank');
   const statusLabel = o.payment_status === 'paid' ? 'Lunas' : 'Belum Bayar';
   win.document.write(`
@@ -135,14 +139,14 @@ function printInvoice(id) {
         <p>${new Date(o.created_at).toLocaleString('id-ID')}</p>
       </div>
       <div class="divider"></div>
-      ${o.items.map(i => {
+      ${activeItems.map(i => {
         const mi = getMenuItem(i.menu_item_id);
         return `<div class="item"><span>${mi ? mi.name : 'Item'} x${i.quantity}</span><span>${formatCurrency(i.unit_price * i.quantity)}</span></div>`;
       }).join('')}
       <div class="divider"></div>
       <div class="totals">
         <div><span>Subtotal</span><span>${formatCurrency(o.total_amount)}</span></div>
-        <div><span>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(o.items)))}</span></div>
+        <div><span>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(activeItems)))}</span></div>
         ${o.shipping_cost && o.shipping_cost > 0 ? `<div><span>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ''}
         <div style="font-weight:bold;font-size:15px"><span>Total</span><span>${formatCurrency(o.total_amount)}</span></div>
         <div style="margin-top:8px"><span>Pembayaran</span><span>${o.payment_method === 'qris' ? 'QRIS' : o.payment_method === 'bank_transfer' ? 'Transfer Bank' : o.payment_method === 'cod' ? 'COD' : o.payment_method === '' ? 'Bayar Nanti' : 'Tunai'}</span></div>
