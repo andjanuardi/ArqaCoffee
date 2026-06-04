@@ -114,7 +114,7 @@ function showCourierOrderDetail(id) {
         ${o.delivery_detail ? `<div class="text-xs mt-1" style="color:var(--muted)"><i class="fas fa-info-circle mr-1"></i>${o.delivery_detail}</div>` : ""}
       </div>
       <div class="space-y-2 mb-4">
-        ${o.items
+        ${o.items.filter(i => i.status !== "rejected")
           .map((i) => {
             const mi = getMenuItem(i.menu_item_id);
             return mi
