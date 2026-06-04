@@ -30,7 +30,7 @@ function renderPlaygroundPgStock() {
   <div class="animate-fade-up">
     <div class="flex justify-between items-center mb-4">
       <h2 class="font-display text-xl font-bold">Stok Item Include${State.currentUser?.role === "playground" ? "" : " Playground"}</h2>
-      ${['admin', 'manager'].includes(State.currentUser?.role) ? '<button onclick="showAddPgStockModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>' : ''}
+      ${['admin', 'manager', 'playground'].includes(State.currentUser?.role) ? '<button onclick="showAddPgStockModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>' : ''}
     </div>
     <div class="card mb-4" style="padding:10px">
       <input type="text" class="input-field text-sm w-full" placeholder="Cari item..." value="${State.pgStockSearch}" oninput="State.pgStockSearch=this.value;render()">
@@ -67,7 +67,7 @@ function renderPlaygroundPgStock() {
                     <div class="text-sm font-bold" style="color:${isLow ? "var(--danger)" : "var(--accent)"}">${s.current_quantity} ${s.unit}</div>
                     <div class="text-xs" style="color:var(--muted)">${formatCurrency(s.price || 0)}</div>
                   </div>
-                  ${['admin', 'manager'].includes(State.currentUser?.role) ? `
+                  ${['admin', 'manager', 'playground'].includes(State.currentUser?.role) ? `
                   <button onclick="showEditPgStockModal('${s.id}')" class="btn-sm" style="background:rgba(224,122,58,.12);color:var(--accent);border:none;padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-pen"></i></button>
                   <button onclick="deletePgStockItem('${s.id}')" class="btn-sm" style="background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-trash"></i></button>` : ''}
                 </div>
@@ -170,6 +170,10 @@ function saveEditPgStock(id) {
 function deletePgStockItem(id) {
   const s = (DB.pgStockItems || []).find((x) => x.id === id);
   if (!s) return;
+  if (s.current_quantity > 0) {
+    showToast('Item masih memiliki stok, tidak dapat dihapus', 'warning');
+    return;
+  }
   showModal(`
     <div>
       <h3 class="font-display text-lg font-bold mb-4">Konfirmasi Hapus</h3>
@@ -369,9 +373,9 @@ function showAddPgStockModal() {
             <option value="Perlengkapan">Perlengkapan</option>
           </select>
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Jumlah</label><input id="new-pgstock-qty" type="number" class="input-field text-sm" value="10"></div>
-          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Satuan</label><input id="new-pgstock-unit" class="input-field text-sm" value="pcs"></div>
+        <div>
+          <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Satuan</label>
+          <input id="new-pgstock-unit" class="input-field text-sm" value="pcs">
         </div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Harga</label><input id="new-pgstock-price" type="number" class="input-field text-sm" value="5000" step="500"></div>
         <div>
@@ -412,9 +416,7 @@ function addPgStockItem() {
     category:
       document.getElementById("new-pgstock-category")?.value || "Makanan",
     unit: document.getElementById("new-pgstock-unit")?.value || "pcs",
-    current_quantity: parseInt(
-      document.getElementById("new-pgstock-qty")?.value || "10",
-    ),
+    current_quantity: 0,
     price: parseInt(document.getElementById("new-pgstock-price")?.value || "0"),
     image,
     min_quantity: parseInt(
