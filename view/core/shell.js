@@ -80,17 +80,19 @@ function renderSideDrawer(role) {
     { id: 'menu-mgmt', icon: 'fa-utensils', label: 'Kelola Menu' },
     { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Kelola Meja' },
     { id: 'promos', icon: 'fa-tags', label: 'Kelola Promo' },
-    { id: 'finance', icon: 'fa-chart-pie', label: 'Keuangan' },
+    { id: 'financial', icon: 'fa-coins', label: 'Finansial', children: [
+      { id: 'finance', icon: 'fa-chart-pie', label: 'Keuangan' },
+      { id: 'expenses', icon: 'fa-money-bill-wave', label: 'Pengeluaran' },
+      { id: 'mitra-finance', icon: 'fa-handshake', label: 'Keuangan Mitra' },
+      { id: 'courier-finance', icon: 'fa-motorcycle', label: 'Keuangan Kurir' },
+    ] },
     { id: 'stock', icon: 'fa-warehouse', label: 'Stok Bahan' },
-    { id: 'expenses', icon: 'fa-money-bill-wave', label: 'Pengeluaran' },
     { id: 'active-services', icon: 'fa-clipboard-list', label: 'Layanan Aktif', children: [
       { id: 'active-orders', icon: 'fa-clipboard-list', label: 'Pesanan Aktif' },
       { id: 'active-playground', icon: 'fa-ticket', label: 'Tiket Aktif' }
     ] },
     { id: 'service-control', icon: 'fa-store', label: 'Buka Tutup Layanan' },
     { id: 'mitra-approval', icon: 'fa-user-check', label: 'Approval Mitra' },
-    { id: 'courier-finance', icon: 'fa-motorcycle', label: 'Keuangan Kurir' },
-    { id: 'mitra-finance', icon: 'fa-handshake', label: 'Keuangan Mitra' },
     { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
   ] : [
     { id: 'dashboard', icon: 'fa-gauge-high', label: 'Dashboard' },
@@ -108,7 +110,6 @@ function renderSideDrawer(role) {
     { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
   ];
   const active = State.currentTab[role] || items[0]?.id;
-  const svcOpen = State._activeServicesOpen;
   return `
   <div class="side-drawer ${State.sidebarOpen ? 'open' : ''}">
     <div class="px-6 py-5 border-b" style="border-color:var(--border)">
@@ -120,13 +121,15 @@ function renderSideDrawer(role) {
     <div class="py-3">${items.map(i => {
       if (i.children) {
         const isActive = i.children.some(c => active === c.id);
+        const openKey = '_' + i.id + 'Open';
+        const isOpen = State[openKey];
         return `
       <div class="drawer-group">
-        <div class="drawer-item ${isActive ? 'active' : ''}" onclick="event.stopPropagation();State._activeServicesOpen=!State._activeServicesOpen;render()" style="cursor:pointer">
+        <div class="drawer-item ${isActive ? 'active' : ''}" onclick="event.stopPropagation();State['${openKey}']=!State['${openKey}'];render()" style="cursor:pointer">
           <i class="fas ${i.icon}"></i><span>${i.label}</span>
-          <i class="fas fa-chevron-down drawer-chevron ${svcOpen ? 'open' : ''}" style="margin-left:auto;color:var(--muted)"></i>
+          <i class="fas fa-chevron-down drawer-chevron ${isOpen ? 'open' : ''}" style="margin-left:auto;color:var(--muted)"></i>
         </div>
-        <div class="drawer-sub-items ${svcOpen ? 'open' : ''}">
+        <div class="drawer-sub-items ${isOpen ? 'open' : ''}">
           ${i.children.map(c => `
           <div class="drawer-item drawer-sub-item ${active === c.id ? 'active' : ''}" onclick="switchTab('${c.id}');toggleDrawer()">
             <i class="fas ${c.icon}"></i><span>${c.label}</span>
