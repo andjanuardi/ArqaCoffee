@@ -55,12 +55,17 @@ function renderCourierAvailable() {
         ${o.delivery_detail ? `<div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-info-circle mr-1"></i>${o.delivery_detail}</div>` : ""}
         ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="text-xs mb-1" style="color:var(--accent)"><i class="fas fa-truck mr-1"></i>Ongkos Kirim: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ""}
         ${distStr ? `<div class="text-xs mb-2" style="color:var(--accent)"><i class="fas fa-store mr-1"></i>Cafe → Pelanggan: ${distStr}</div>` : ''}
-        <div class="text-xs mb-3" style="color:var(--muted)">${o.items.filter(i => i.status !== "rejected")
+        <div class="space-y-1 mb-3">${o.items.filter(i => i.status !== "rejected")
           .map((i) => {
             const mi = getMenuItem(i.menu_item_id);
-            return mi ? mi.name + " x" + i.quantity : "";
+            if (!mi) return "";
+            const isMitra = !!mi.submitted_by;
+            const badge = isMitra
+              ? `<span class="text-[10px] px-2 py-0.5 rounded font-medium" style="background:rgba(232,67,147,.15);color:#e84393"><i class="fas fa-handshake mr-0.5"></i>Mitra: ${mi.submitted_by}</span>`
+              : `<span class="text-[10px] px-2 py-0.5 rounded font-medium" style="background:rgba(224,122,58,.15);color:var(--accent)"><i class="fas fa-store mr-0.5"></i>Arqa Coffee</span>`;
+            return `<div class="flex items-center gap-2 text-xs" style="color:var(--muted)"><span>${mi.name} x${i.quantity}</span>${badge}</div>`;
           })
-          .join(", ")}</div>
+          .join("")}</div>
         <div class="flex gap-2">
           <button onclick="rejectCourierOrder('${o.id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:10px;border-radius:10px;font-size:13px;font-weight:600"><i class="fas fa-times mr-1"></i>Tolak</button>
           <button onclick="acceptDelivery('${o.id}')" class="btn-primary flex-1 text-center">Ambil Pesanan</button>
