@@ -47,6 +47,7 @@ function renderPlaygroundTickets() {
           const total = end - start;
           const remaining = end - now;
           const elapsed = Math.max(0, Math.min(100, ((now - start) / total) * 100));
+          const remainingPct = Math.max(0, Math.min(100, (remaining / total) * 100));
           const isUrgent = remaining > 0 && remaining < 600000;
           const isExpired = remaining <= 0;
           const barColor = isExpired ? "var(--danger)" : isUrgent ? "var(--warning)" : "var(--success)";
@@ -72,7 +73,7 @@ function renderPlaygroundTickets() {
               <span>${formatTime(new Date(t.end_time))}</span>
             </div>
             <div class="time-bar-bg">
-              <div class="time-bar-fill" style="width:${Math.min(100, elapsed)}%;background:${barColor}"></div>
+              <div class="time-bar-fill" style="width:${remainingPct}%;background:${barColor}"></div>
             </div>
           </div>
           <div class="flex gap-2 mb-2">

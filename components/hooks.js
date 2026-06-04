@@ -345,7 +345,7 @@ function initPlaygroundTimer() {
 
       const fill = card.querySelector('.time-bar-fill');
       if (fill && start && total > 0) {
-        fill.style.width = Math.min(100, ((now - start) / total) * 100) + '%';
+        fill.style.width = Math.max(0, Math.min(100, ((end - now) / total) * 100)) + '%';
         fill.style.background = timeColor;
       }
 
