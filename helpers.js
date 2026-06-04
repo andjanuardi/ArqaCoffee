@@ -4,7 +4,7 @@ function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takea
             return m[s] || s
         }
         function getStatusBadge(s) {
-            const m = { pending: 'badge-pending', cooking: 'badge-cooking', ready: 'badge-ready', delivering: 'badge-delivering', delivered: 'badge-delivering', completed: 'badge-completed', cancelled: 'badge-pending', rejected: 'badge-pending' };
+            const m = { pending: 'badge-pending', cooking: 'badge-cooking', ready: 'badge-ready', delivering: 'badge-delivering', delivered: 'badge-delivering', completed: 'badge-completed', cancelled: 'badge-pending', rejected: 'badge-rejected' };
             return m[s] || 'badge-pending'
         }
         function formatCurrency(n) { return 'Rp ' + n.toLocaleString('id-ID') }

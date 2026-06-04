@@ -200,6 +200,11 @@
             color: var(--success)
         }
 
+        .badge-rejected {
+            background: rgba(231, 76, 60, .15);
+            color: var(--danger)
+        }
+
         .badge-unpaid {
             background: rgba(231, 76, 60, .15);
             color: var(--danger)
