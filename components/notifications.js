@@ -2,6 +2,17 @@
 // NOTIFICATION SYSTEM
 // ============================================================
 
+function sendBrowserNotification(title, body) {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "granted") {
+    new Notification(title, { body: body });
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then(function(p) {
+      if (p === "granted") new Notification(title, { body: body });
+    });
+  }
+}
+
 function addNotification(opts) {
   const n = {
     id: 'n' + Date.now() + Math.random().toString(36).slice(2, 6),
@@ -15,6 +26,10 @@ function addNotification(opts) {
     timestamp: new Date().toISOString()
   };
   State.notifications.unshift(n);
+  var role = State.currentUser?.role;
+  if (role && n.targetRoles.includes(role)) {
+    sendBrowserNotification(n.title, n.message);
+  }
 }
 
 function getRoleNotifications() {
