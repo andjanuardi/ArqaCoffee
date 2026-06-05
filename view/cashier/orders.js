@@ -138,7 +138,7 @@ function renderCashierOrders() {
       <div class="card flex justify-between items-center py-3 cursor-pointer hover:scale-[1.02] transition-transform" onclick="showCashierOrderDetail('${o.id}')">
         <div class="text-sm">
           <span class="font-bold">#${o.id.slice(-5).toUpperCase()}</span> 
-          <span style="color:${o.status === "rejected" || o.status === "cancelled" ? "var(--danger)" : "var(--muted)"}">— ${getOrderTypeName(o.order_type)}${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}</span>
+          <span style="color:${o.status === "rejected" || o.status === "cancelled" ? "var(--danger)" : "var(--muted)"}">— ${getOrderTypeName(o.order_type)}${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}${o.waiter_id && getUser(o.waiter_id) ? ' <span style="font-size:10px;color:var(--accent)"><i class="fas fa-user-tie"></i> ' + getUser(o.waiter_id).name + '</span>' : ''}${o.courier_id && getUser(o.courier_id) ? ' <span style="font-size:10px;color:var(--accent)"><i class="fas fa-motorcycle"></i> ' + getUser(o.courier_id).name + '</span>' : ''}</span>
           ${o.status === "rejected" ? '<span class="badge badge-danger ml-2">Ditolak</span>' : ""}${o.status === "cancelled" ? '<span class="badge badge-danger ml-2">Dibatalkan</span>' : ""}
         </div>
         <span class="font-semibold text-sm" style="color:${o.status === "rejected" || o.status === "cancelled" ? "var(--danger)" : "var(--success)"}">${formatCurrency(o.total_amount)}</span>
@@ -228,6 +228,7 @@ function showCashierOrderDetail(id) {
     <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}
     ${t ? " — Meja " + t.number : ""}
     ${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}
+    ${o.waiter_id && getUser(o.waiter_id) ? '<br><span style="font-size:10px;color:var(--accent)"><i class="fas fa-user-tie"></i> ' + getUser(o.waiter_id).name + '</span>' : ''}${o.courier_id && getUser(o.courier_id) ? ' <span style="font-size:10px;color:var(--accent)"><i class="fas fa-motorcycle"></i> ' + getUser(o.courier_id).name + '</span>' : ''}
     ${o.delivery_address ? "<br>" + o.delivery_address : ""}
   </div>
   ${(o.status === "rejected" || o.status === "cancelled") && o.reject_reason ? `<div class="card mb-4 text-sm" style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2)"><i class="fas fa-ban mr-1" style="color:var(--danger)"></i><strong>${o.status === "cancelled" ? "Alasan Pembatalan:" : "Alasan Penolakan:"}</strong> ${o.reject_reason}</div>` : ""}
