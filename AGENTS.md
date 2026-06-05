@@ -169,7 +169,7 @@ All defined in admin.js, callable from manager.js: `renderFinanceReport`, `rende
 - `showToast(msg, type)` where type: success|warning|error|info. Auto-dismiss 3.5s.
 
 ## Important behavior notes
-- `DB.dailySales` and `DB.expenses` are static seed data — never updated at runtime. Revenue reports use `DB.orders` directly.
+- `DB.dailySales` is static seed data — never updated at runtime. `DB.expenses` is updated at runtime (stock restock, manual entry, courier ongkir). Revenue reports use `DB.orders` directly.
 - Delivery location picker stores coordinates in `State.deliveryLocation` but actual saving uses a placeholder.
 - `renderStockManagement()` sorts items by depletion ratio ascending.
 - `updateItemStatus()` checks if ALL order items are "ready" to set order status to "ready".

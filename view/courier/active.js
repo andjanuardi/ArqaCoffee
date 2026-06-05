@@ -24,6 +24,7 @@ function renderCourierActive() {
         <div class="text-sm mb-1"><i class="fas fa-map-marker-alt mr-1" style="color:var(--accent)"></i>${o.delivery_address}</div>
         ${o.delivery_detail ? `<div class="text-xs mb-2" style="color:var(--muted)"><i class="fas fa-info-circle mr-1"></i>${o.delivery_detail}</div>` : ""}
         ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="text-xs mb-2" style="color:var(--accent)"><i class="fas fa-truck mr-1"></i>Ongkos Kirim: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ""}
+        ${o.payment_status === "paid" && o.shipping_cost > 0 ? `<div class="text-xs mb-2" style="color:var(--success)"><i class="fas fa-hand-holding-dollar mr-1"></i>Ongkir dari kasir: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ""}
         <div id="map-courier-${o.id}" class="mb-3" style="height:200px;border-radius:12px"></div>
         <div class="flex gap-2">
           <button onclick="simulateMove('${o.id}')" class="btn-secondary btn-sm flex-1 text-center"><i class="fas fa-location-arrow mr-1"></i>Update</button>
@@ -74,9 +75,20 @@ function completeDelivery(id) {
     showToast("Pesanan terkirim — setorkan uang ke kasir", "success");
   } else {
     o.status = "completed";
+    o.ongkir_status = "unpaid";
     if (o.payment_method === "cod" || o.payment_method === "") o.payment_status = "paid";
+    if (o.shipping_cost > 0) {
+      var custName = o.customer_name || (getUser(o.user_id)?.name || '');
+      DB.expenses.push({
+        id: 'e' + Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        category: 'Operasional',
+        amount: o.shipping_cost,
+        note: 'Ongkir kurir #' + o.id.slice(-5).toUpperCase() + (custName ? ' — ' + custName : ''),
+      });
+    }
     notifyDeliveryCompleted(o);
-    showToast("Pengantaran selesai!", "success");
+    showToast("Pengantaran selesai! Ongkir " + formatCurrency(o.shipping_cost) + " dari kasir — jangan lupa ambil ongkir", "info");
   }
   render();
 }

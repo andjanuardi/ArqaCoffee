@@ -130,6 +130,34 @@ function renderCashierOrders() {
         })
         .join("")}
     </div>
+    <h3 class="font-semibold text-sm mb-3 mt-6">Ongkir Kurir</h3>
+    <div class="space-y-3 mb-6">
+      ${(() => {
+        const ongkirOrders = DB.orders.filter(o =>
+          o.ongkir_status === "unpaid" && o.courier_id && o.shipping_cost > 0 && o.status === "completed"
+        );
+        if (ongkirOrders.length === 0) return '<p class="text-sm text-center py-4" style="color:var(--muted)">Tidak ada ongkir yang perlu dibayar</p>';
+        return ongkirOrders.map(o => {
+          const kurir = getUser(o.courier_id);
+          return `
+        <div class="card" style="border-color:rgba(241,196,15,.3)">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
+              <span class="badge badge-completed" style="font-size:9px">Selesai</span>
+            </div>
+            <span class="font-bold" style="color:var(--warning)">${formatCurrency(o.shipping_cost)}</span>
+          </div>
+          <div class="flex items-center gap-3 text-[11px] mb-2" style="color:var(--muted)">
+            <span><i class="fas fa-user mr-1" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</span>
+            <span><i class="fas fa-motorcycle mr-1" style="color:var(--accent)"></i>${kurir ? kurir.name : '—'}</span>
+          </div>
+          <div class="text-xs mb-2" style="color:var(--muted)">${formatDate(o.created_at)} ${formatTime(o.created_at)}</div>
+          <button onclick="payOngkir('${o.id}')" class="btn-primary btn-sm w-full text-center"><i class="fas fa-hand-holding-dollar mr-1"></i>Bayar Ongkir ${formatCurrency(o.shipping_cost)}</button>
+        </div>`;
+        }).join('');
+      })()}
+    </div>
     <h3 class="font-semibold text-sm mb-3">Selesai Hari Ini</h3>
     <div class="space-y-2">
       ${completed

@@ -103,6 +103,23 @@ function cashierSettleDineIn(id) {
   render();
 }
 
+function payOngkir(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  o.ongkir_status = "paid";
+  const kurir = getUser(o.courier_id);
+  addNotification({
+    title: 'Ongkir Dibayar',
+    message: '#' + o.id.slice(-5).toUpperCase() + ' — Ongkir ' + formatCurrency(o.shipping_cost) + ' sudah dibayar, silakan konfirmasi',
+    type: 'payment',
+    icon: 'fa-hand-holding-dollar',
+    targetRoles: ['courier'],
+    relatedOrderId: o.id,
+  });
+  showToast("Ongkir " + formatCurrency(o.shipping_cost) + " dibayarkan ke " + (kurir ? kurir.name : 'kurir'), "success");
+  render();
+}
+
 function renderCashTable() {
   const dateVal = State.cashierReportDate || new Date().toISOString().split('T')[0];
   const orders = DB.orders.filter(o => {
