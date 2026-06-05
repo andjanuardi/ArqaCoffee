@@ -124,7 +124,7 @@ function renderSideDrawer(role) {
         <div><div class="font-semibold text-sm">${State.currentUser.name}</div><div class="text-xs" style="color:var(--muted)">${getRoleLabel(role)}</div></div>
       </div>
     </div>
-    <div class="py-3">${items.map(i => {
+    <div style="flex:1;overflow-y:auto;padding:8px 0">${items.map(i => {
       if (i.children) {
         const isActive = i.children.some(c => active === c.id);
         const openKey = '_' + i.id + 'Open';
@@ -149,7 +149,7 @@ function renderSideDrawer(role) {
       </div>`;
     }).join('')}
     </div>
-    <div class="absolute bottom-0 left-0 right-0 p-4 border-t" style="border-color:var(--border)">
+    <div class="p-4 border-t" style="border-color:var(--border)">
       <button onclick="handleLogout()" class="btn-secondary w-full text-center flex items-center justify-center gap-2">
         <i class="fas fa-right-from-bracket"></i> Keluar
       </button>
