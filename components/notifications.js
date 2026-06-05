@@ -182,9 +182,10 @@ function notifyStatusChange(order, newStatus) {
   var label = getStatusLabel(newStatus);
   var roles = [];
   if (newStatus === 'cooking') roles = ['customer', 'cashier', 'admin', 'manager'];
-  else if (newStatus === 'ready') roles = ['customer', 'cashier', 'admin', 'manager'];
+  else if (newStatus === 'ready') roles = ['customer', 'cashier', 'admin', 'manager', 'waiter'];
   else if (newStatus === 'delivering') roles = ['customer', 'cashier', 'courier', 'admin', 'manager'];
-  else if (newStatus === 'completed') roles = ['customer', 'cashier', 'courier', 'admin', 'manager'];
+  else if (newStatus === 'delivered') roles = ['customer', 'cashier', 'admin', 'manager', 'waiter'];
+  else if (newStatus === 'completed') roles = ['customer', 'cashier', 'courier', 'admin', 'manager', 'waiter'];
   else roles = ['customer', 'cashier', 'admin', 'manager'];
   addNotification({
     title: 'Status Pesanan',

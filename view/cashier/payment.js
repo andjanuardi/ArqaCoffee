@@ -82,6 +82,27 @@ function settleDelivery(id) {
   render();
 }
 
+function cashierSettleDineIn(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  o.status = "completed";
+  o.payment_status = "paid";
+  o.payment_method = "cash";
+  if (o.table_id) {
+    const hasOther = DB.orders.some(x =>
+      x.table_id === o.table_id && x.id !== o.id &&
+      !['completed', 'cancelled', 'rejected'].includes(x.status)
+    );
+    if (!hasOther) {
+      const t = getTable(o.table_id);
+      if (t) t.status = 'available';
+    }
+  }
+  notifyPayment(o, 'Setoran Waiter');
+  showToast(`Setoran diterima — Pesanan #${o.id.slice(-5).toUpperCase()} selesai, meja dikosongkan`, "success");
+  render();
+}
+
 function renderCashTable() {
   const dateVal = State.cashierReportDate || new Date().toISOString().split('T')[0];
   const orders = DB.orders.filter(o => {

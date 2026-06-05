@@ -318,6 +318,7 @@ function placeWaiterOrder() {
   const order = {
     id: genId(),
     user_id: State.currentUser.id,
+    waiter_id: State.currentUser.id,
     table_id: State.selectedTable,
     order_type: "dine-in",
     status: "pending",
@@ -351,7 +352,12 @@ function placeWaiterOrder() {
 }
 
 function renderWaiterOrders() {
-  let myOrders = DB.orders.filter((o) => o.user_id === State.currentUser.id);
+  let myOrders = DB.orders.filter(function(o) {
+    if (o.user_id === State.currentUser.id) return true;
+    if (o.waiter_id === State.currentUser.id) return true;
+    if (o.order_type === 'dine-in' && ['ready', 'delivered'].includes(o.status)) return true;
+    return false;
+  });
   const dateFilter = State.waiterOrderDateFilter !== undefined ? State.waiterOrderDateFilter : new Date().toISOString().split('T')[0];
   if (dateFilter) {
     myOrders = myOrders.filter((o) => o.created_at && o.created_at.split('T')[0] === dateFilter);
@@ -395,7 +401,11 @@ function renderWaiterOrders() {
               })
               .join(", ")}
           </div>
-          ${o.status === "pending" ? `<div class="mt-3 flex justify-end"><button onclick="event.stopPropagation();cancelOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded-lg" style="color:var(--danger);background:rgba(231,76,60,.1)">Batal Pesanan</button></div>` : ""}
+          <div class="mt-3 flex justify-end gap-2">
+            ${o.status === "pending" ? `<button onclick="event.stopPropagation();cancelOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded-lg" style="color:var(--danger);background:rgba(231,76,60,.1)">Batal Pesanan</button>` : ""}
+            ${o.status === "ready" && o.order_type === "dine-in" ? `<button onclick="event.stopPropagation();serveWaiterOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded-lg" style="color:#fff;background:var(--accent)"><i class="fas fa-utensils mr-1"></i>Antarkan</button>` : ""}
+            ${o.status === "delivered" && o.order_type === "dine-in" && o.payment_status === "paid" ? `<button onclick="event.stopPropagation();completeWaiterOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded-lg" style="color:#fff;background:var(--success)"><i class="fas fa-check mr-1"></i>Selesaikan</button>` : ""}
+          </div>
         </div>`;
         })
         .join("")}
@@ -405,4 +415,33 @@ function renderWaiterOrders() {
 
 function renderWaiterProfile() {
   return renderGenericProfile();
+}
+
+function serveWaiterOrder(orderId) {
+  const o = DB.orders.find(x => x.id === orderId);
+  if (!o || o.order_type !== 'dine-in') return;
+  o.waiter_id = State.currentUser.id;
+  o.status = 'delivered';
+  notifyStatusChange(o, 'delivered');
+  showToast('Pesanan telah diantarkan ke meja', 'success');
+  render();
+}
+
+function completeWaiterOrder(orderId) {
+  const o = DB.orders.find(x => x.id === orderId);
+  if (!o || o.order_type !== 'dine-in') return;
+  o.status = 'completed';
+  if (o.table_id) {
+    const hasOther = DB.orders.some(x =>
+      x.table_id === o.table_id && x.id !== o.id &&
+      !['completed', 'cancelled', 'rejected'].includes(x.status)
+    );
+    if (!hasOther) {
+      const t = getTable(o.table_id);
+      if (t) t.status = 'available';
+    }
+  }
+  notifyStatusChange(o, 'completed');
+  showToast('Pesanan selesai, meja telah dikosongkan', 'success');
+  render();
 }

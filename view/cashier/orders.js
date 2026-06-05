@@ -62,7 +62,7 @@ function renderCashierView() {
 
 function renderCashierOrders() {
   const pending = DB.orders.filter((o) =>
-    ["pending", "cooking", "ready", "delivered"].includes(o.status),
+    ["pending", "cooking", "ready", "delivering", "delivered"].includes(o.status),
   );
   const completed = DB.orders
     .filter((o) => o.status === "completed" || o.status === "rejected" || o.status === "cancelled")
@@ -96,7 +96,7 @@ function renderCashierOrders() {
             <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
           </div>
           <div class="text-xs mb-2" style="color:var(--muted)">
-            <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}${t ? " — Meja " + t.number : ""}${o.order_type === "dine-in" && o.status !== "completed" && o.status !== "cancelled" && o.status !== "rejected" ? ` <button onclick="event.stopPropagation();changeOrderTable('${o.id}')" class="text-xs ml-1 inline-flex items-center" style="color:var(--accent)"><i class="fas fa-pen"></i></button>` : ""}${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}
+            <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}${t ? " — Meja " + t.number : ""}${o.order_type === "dine-in" && o.status !== "completed" && o.status !== "cancelled" && o.status !== "rejected" ? ` <button onclick="event.stopPropagation();changeOrderTable('${o.id}')" class="text-xs ml-1 inline-flex items-center" style="color:var(--accent)"><i class="fas fa-pen"></i></button>` : ""}${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}${o.waiter_id && getUser(o.waiter_id) ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-user-tie"></i> ' + getUser(o.waiter_id).name + '</span>' : ''}${o.courier_id && getUser(o.courier_id) ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-motorcycle"></i> ' + getUser(o.courier_id).name + '</span>' : ''}
           </div>
           <div class="text-xs mb-3">${o.items
             .map((i) => {
@@ -122,7 +122,8 @@ function renderCashierOrders() {
               ${o.status === "pending" && o.accepted ? `<span class="badge" style="background:rgba(46,204,113,.15);color:var(--success)">Diterima</span>` : ""}
               ${o.status === "ready" && o.payment_status === "unpaid" ? `<button onclick="showPaymentModal('${o.id}')" class="btn-primary btn-sm">Bayar</button>` : ""}
               ${o.status === "ready" && o.payment_status === "paid" ? `<button onclick="updateOrderStatus('${o.id}','completed')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
-              ${o.status === "delivered" && o.payment_status === "unpaid" ? `<button onclick="settleDelivery('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#3498db,#2980b9)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran</button>` : ""}
+              ${o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery" ? `<button onclick="settleDelivery('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#3498db,#2980b9)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran</button>` : ""}
+              ${o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "dine-in" ? `<button onclick="cashierSettleDineIn('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#27ae60,#1e8449)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran Waiter</button>` : ""}
             </div>
           </div>
         </div>`;
@@ -365,7 +366,7 @@ function renderCashierPayment() {
           <div><span class="font-bold">#${o.id.slice(-5).toUpperCase()}</span><span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span></div>
           <span class="font-bold text-lg" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
         </div>
-        <div class="flex items-center gap-3 text-[11px] mb-2" style="color:var(--muted)"><span><i class="far fa-clock mr-1"></i>${oTime}</span>${oTable ? `<span><i class="fas fa-chair mr-1"></i>Meja ${oTable.number}</span>` : ''}${o.order_type === 'delivery' ? '<span><i class="fas fa-truck mr-1"></i>Delivery</span>' : ''}${o.customer_name ? '<span><i class="fas fa-user mr-1"></i>' + o.customer_name + '</span>' : ''}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? '<span style="font-size:10px;color:var(--accent)">' + getUser(o.user_id).email + '</span>' : ''}</div>
+        <div class="flex items-center gap-3 text-[11px] mb-2" style="color:var(--muted)"><span><i class="far fa-clock mr-1"></i>${oTime}</span>${oTable ? `<span><i class="fas fa-chair mr-1"></i>Meja ${oTable.number}</span>` : ''}${o.order_type === 'delivery' ? '<span><i class="fas fa-truck mr-1"></i>Delivery</span>' : ''}${o.customer_name ? '<span><i class="fas fa-user mr-1"></i>' + o.customer_name + '</span>' : ''}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? '<span style="font-size:10px;color:var(--accent)">' + getUser(o.user_id).email + '</span>' : ''}${o.waiter_id && getUser(o.waiter_id) ? '<span style="font-size:10px;color:var(--accent)"><i class="fas fa-user-tie"></i> ' + getUser(o.waiter_id).name + '</span>' : ''}${o.courier_id && getUser(o.courier_id) ? '<span style="font-size:10px;color:var(--accent)"><i class="fas fa-motorcycle"></i> ' + getUser(o.courier_id).name + '</span>' : ''}</div>
         <div class="text-xs mb-3" style="color:var(--muted)">${o.items
           .map((i) => {
             const mi = getMenuItem(i.menu_item_id);
