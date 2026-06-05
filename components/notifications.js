@@ -44,6 +44,7 @@ function addNotification(opts) {
   var role = State.currentUser?.role;
   if (role && n.targetRoles.includes(role)) {
     sendBrowserNotification(n.title, n.message);
+    showToast(n.title + ' — ' + n.message, 'info');
   }
 }
 

@@ -1,6 +1,7 @@
 // ============================================================
 // CUSTOMER VIEW — Chat
 // ============================================================
+var _chatPollInterval = null;
 function getOrderChatUnreadCount(orderId) {
   const o = DB.orders.find(x => x.id === orderId);
   if (!o || !o.messages || !o.messages.length) return 0;
@@ -13,6 +14,29 @@ function getOrderChatUnreadCount(orderId) {
     return o.messages.filter(m => m.sender_id !== myId && m.sender_id === o.user_id && new Date(m.timestamp).getTime() > lastRead).length;
   }
   return 0;
+}
+
+function closeChatModal() {
+  clearInterval(_chatPollInterval);
+  _chatPollInterval = null;
+  closeModal();
+}
+
+function renderChatMessages(orderId, currentUserId) {
+  const o = DB.orders.find(x => x.id === orderId);
+  if (!o) return '';
+  if (!o.messages) o.messages = [];
+  if (o.messages.length === 0) return '<p class="text-center text-sm mt-10" style="color:var(--muted)">Mulai percakapan...</p>';
+  return o.messages.map(function(m) {
+    var imgClass = m.image ? 'p-1' : 'px-4 py-2';
+    var timeClass = m.image ? 'px-2 pb-1' : '';
+    var imgHtml = m.image ? '<img src="' + m.image + '" class="w-full rounded-xl object-cover cursor-pointer" style="max-height:200px" onclick="window.open(this.src)">' : m.text;
+    return '<div class="flex ' + (m.sender_id === currentUserId ? 'justify-end' : 'justify-start') + '">' +
+      '<div class="max-w-[80%] rounded-2xl ' + imgClass + ' text-sm" style="background:' + (m.sender_id === currentUserId ? 'var(--accent)' : 'var(--bg2)') + ';color:' + (m.sender_id === currentUserId ? '#fff' : 'inherit') + '">' +
+      imgHtml +
+      '<div class="text-[10px] mt-1 text-right ' + timeClass + '" style="opacity:0.7">' + formatTime(m.timestamp) + '</div>' +
+      '</div></div>';
+  }).join('');
 }
 
 function openChatModal(orderId) {
@@ -30,29 +54,18 @@ function openChatModal(orderId) {
 
   render();
 
-  const currentUserId = State.currentUser.id;
+  var currentUserId = State.currentUser.id;
+  var lastMsgCount = o.messages.length;
 
   showModal(
     `
     <div class="flex flex-col" style="height: 60vh;">
       <div class="flex justify-between items-center mb-4 pb-3 border-b" style="border-color:var(--border)">
         <h3 class="font-display text-lg font-bold">Chat ${State.currentUser.role === "courier" ? "Pelanggan" : "Kurir"}</h3>
-        <button onclick="closeModal()" class="text-xl" style="color:var(--muted)"><i class="fas fa-times"></i></button>
+        <button onclick="closeChatModal()" class="text-xl" style="color:var(--muted)"><i class="fas fa-times"></i></button>
       </div>
       <div id="chat-messages" class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2" style="-webkit-overflow-scrolling:touch;">
-        ${o.messages.length === 0 ? '<p class="text-center text-sm mt-10" style="color:var(--muted)">Mulai percakapan...</p>' : ""}
-        ${o.messages
-          .map(
-            (m) => `
-          <div class="flex ${m.sender_id === currentUserId ? "justify-end" : "justify-start"}">
-            <div class="max-w-[80%] rounded-2xl ${m.image ? "p-1" : "px-4 py-2"} text-sm" style="background:${m.sender_id === currentUserId ? "var(--accent)" : "var(--bg2)"}; color:${m.sender_id === currentUserId ? "#fff" : "inherit"}">
-              ${m.image ? `<img src="${m.image}" class="w-full rounded-xl object-cover cursor-pointer" style="max-height:200px" onclick="window.open(this.src)">` : m.text}
-              <div class="text-[10px] mt-1 text-right ${m.image ? "px-2 pb-1" : ""}" style="opacity:0.7">${formatTime(m.timestamp)}</div>
-            </div>
-          </div>
-        `,
-          )
-          .join("")}
+        ${renderChatMessages(orderId, currentUserId)}
       </div>
       <div class="flex gap-2 items-center">
         <input type="file" id="chat-image-input" accept="image/*" onchange="sendChatImage('${orderId}')" style="display:none">
@@ -62,12 +75,27 @@ function openChatModal(orderId) {
       </div>
     </div>
   `,
-    () => {
-      setTimeout(() => {
-        const el = document.getElementById("chat-messages");
+    function() {
+      setTimeout(function() {
+        var el = document.getElementById("chat-messages");
         if (el) el.scrollTop = el.scrollHeight;
-        document.getElementById("chat-input")?.focus();
+        var input = document.getElementById("chat-input");
+        if (input) input.focus();
       }, 100);
+
+      clearInterval(_chatPollInterval);
+      _chatPollInterval = setInterval(function() {
+        var container = document.getElementById("chat-messages");
+        if (!container) { clearInterval(_chatPollInterval); _chatPollInterval = null; return; }
+        var order = DB.orders.find(function(x) { return x.id === orderId; });
+        if (!order) { clearInterval(_chatPollInterval); _chatPollInterval = null; return; }
+        if (!order.messages) order.messages = [];
+        if (order.messages.length !== lastMsgCount) {
+          lastMsgCount = order.messages.length;
+          container.innerHTML = renderChatMessages(orderId, State.currentUser.id);
+          container.scrollTop = container.scrollHeight;
+        }
+      }, 2000);
     },
   );
 }
