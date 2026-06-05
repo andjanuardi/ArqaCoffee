@@ -119,6 +119,16 @@ function confirmOngkir(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
   o.ongkir_status = "confirmed";
+  if (o.shipping_cost > 0) {
+    var custName = o.customer_name || (getUser(o.user_id)?.name || '');
+    DB.expenses.push({
+      id: 'e' + Date.now(),
+      date: new Date().toISOString().split('T')[0],
+      category: 'Operasional',
+      amount: o.shipping_cost,
+      note: 'Ongkir kurir #' + o.id.slice(-5).toUpperCase() + (custName ? ' — ' + custName : ''),
+    });
+  }
   addNotification({
     title: 'Ongkir Dikonfirmasi',
     message: '#' + o.id.slice(-5).toUpperCase() + ' — Kurir telah menerima ongkir ' + formatCurrency(o.shipping_cost),

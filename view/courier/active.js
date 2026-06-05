@@ -77,16 +77,6 @@ function completeDelivery(id) {
     o.status = "completed";
     o.ongkir_status = "unpaid";
     if (o.payment_method === "cod" || o.payment_method === "") o.payment_status = "paid";
-    if (o.shipping_cost > 0) {
-      var custName = o.customer_name || (getUser(o.user_id)?.name || '');
-      DB.expenses.push({
-        id: 'e' + Date.now(),
-        date: new Date().toISOString().split('T')[0],
-        category: 'Operasional',
-        amount: o.shipping_cost,
-        note: 'Ongkir kurir #' + o.id.slice(-5).toUpperCase() + (custName ? ' — ' + custName : ''),
-      });
-    }
     notifyDeliveryCompleted(o);
     showToast("Pengantaran selesai! Ongkir " + formatCurrency(o.shipping_cost) + " dari kasir — jangan lupa ambil ongkir", "info");
   }
