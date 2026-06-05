@@ -118,6 +118,7 @@ function showCustomerRegisterModal() {
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama Lengkap</label><input id="reg-name" class="input-field text-sm" placeholder="Nama Anda"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Email</label><input id="reg-email" type="email" class="input-field text-sm" placeholder="email@example.com"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Password</label><input id="reg-pass" type="password" class="input-field text-sm" placeholder="Min. 6 karakter"></div>
+        <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Konfirmasi Password</label><input id="reg-pass-confirm" type="password" class="input-field text-sm" placeholder="Ulangi password"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nomor Telepon</label><input id="reg-phone" class="input-field text-sm" placeholder="08xxxxxxxxxx"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Alamat</label><textarea id="reg-address" class="input-field text-sm min-h-[80px]" placeholder="Alamat lengkap"></textarea></div>
       </div>
@@ -130,12 +131,19 @@ function registerCustomer() {
   const name = document.getElementById('reg-name')?.value;
   const email = document.getElementById('reg-email')?.value;
   const pass = document.getElementById('reg-pass')?.value;
-  const phone = document.getElementById('reg-phone')?.value;
+  const phone = document.getElementById('reg-phone')?.value?.trim();
   const address = document.getElementById('reg-address')?.value;
   if (!name || !name.trim() || !email || !email.trim()) { showToast('Nama dan email wajib diisi', 'warning'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { showToast('Format email tidak valid', 'warning'); return; }
   if (DB.users.find(u => u.email === email.trim())) { showToast('Email sudah terdaftar', 'error'); return; }
+  if (pass && pass.length < 6) { showToast('Password minimal 6 karakter', 'warning'); return; }
+  if (pass !== document.getElementById('reg-pass-confirm')?.value) { showToast('Konfirmasi password tidak cocok', 'warning'); return; }
+  if (phone) {
+    const phoneClean = phone.replace(/[\s\-]/g, '');
+    if (!/^(\+62|62|0)8[1-9][0-9]{6,11}$/.test(phoneClean)) { showToast('Nomor telepon tidak valid. Gunakan format Indonesia (08xx atau +628xx)', 'warning'); return; }
+  }
   if (isServiceClosed()) { closeModal(); showServiceClosedPopup(); return; }
-  const u = { id: 'u' + Date.now(), name: name.trim(), email: email.trim(), password: pass || 'password123', role: 'customer', phone: phone?.trim() || '', address: address?.trim() || '', avatar: name.trim()[0].toUpperCase() };
+  const u = { id: 'u' + Date.now(), name: name.trim(), email: email.trim(), password: pass || 'password123', role: 'customer', phone: phone || '', address: address?.trim() || '', avatar: name.trim()[0].toUpperCase() };
   DB.users.push(u);
   State.currentUser = u;
   State.currentView = 'main';

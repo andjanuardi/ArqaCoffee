@@ -179,7 +179,10 @@ Klik kartu pesanan untuk melihat detail lengkap yang menampilkan:
 
 - Klik card pesanan untuk melihat detail
 - Jika status masih **belum dibayar**, klik **"Bayar Sekarang"**
-- Pembayaran via QRIS
+- Akan muncul 3 pilihan metode pembayaran:
+  - **QRIS** — scan kode QR untuk membayar
+  - **Transfer Bank** — transfer ke rekening BCA (1234567890 a.n. ARQA Coffee)
+  - **Tunai** — bayar langsung (konfirmasi instan)
 - **Tidak tersedia** untuk pesanan **Ditolak** atau **Dibatalkan**
 
 **Lacak Kurir** (untuk pesan antar yang sedang **Diantar**):
@@ -217,19 +220,12 @@ Klik tab **Profil** (icon orang) di bagian bawah.
 
 ### Skenario 1: Makan di Tempat — Bayar Sekarang
 
-**QRIS / Transfer Bank:**
 ```
 Pilih Menu → Tambah ke Keranjang → Pilih Meja (scan QR) →
-Konfirmasi → Lihat QR/No. Rekening → Bayar →
-Pesanan Diproses Koki → Siap → Selesai
-```
-
-**Tunai:**
-```
-Pilih Menu → Tambah ke Keranjang → Pilih Meja (scan QR) →
-Konfirmasi → Pesanan dibuat (Belum Bayar) →
-Kasir Terima → Langsung Lunas →
-Pesanan Diproses Koki → Siap → Selesai
+Pilih metode: QRIS / Transfer / Tunai →
+  QRIS/Transfer → Lihat QR/No. Rekening → Bayar
+  Tunai        → Pesanan langsung lunas
+→ Pesanan Diproses Koki → Siap → Selesai
 ```
 
 ### Skenario 2: Makan di Tempat — Bayar Nanti
