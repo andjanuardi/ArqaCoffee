@@ -67,7 +67,7 @@ function completeDelivery(id) {
       message: '#' + o.id.slice(-5).toUpperCase() + ' — menunggu setoran dari kurir',
       type: 'delivery',
       icon: 'fa-hand-holding-dollar',
-      targetRoles: ['cashier'],
+      targetRoles: ['cashier', 'admin', 'manager'],
       relatedOrderId: o.id
     });
     notifyDeliveryCompleted(o);

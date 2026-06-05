@@ -1,6 +1,20 @@
 // ============================================================
 // NOTIFICATION SYSTEM
 // ============================================================
+const NOTIF_KEY = 'arqa_notifications';
+
+function loadNotifications() {
+  try {
+    const raw = localStorage.getItem(NOTIF_KEY);
+    if (raw) State.notifications = JSON.parse(raw);
+  } catch (e) {}
+}
+
+function saveNotifications() {
+  try {
+    localStorage.setItem(NOTIF_KEY, JSON.stringify(State.notifications));
+  } catch (e) {}
+}
 
 function sendBrowserNotification(title, body) {
   if (!("Notification" in window)) return;
@@ -26,6 +40,7 @@ function addNotification(opts) {
     timestamp: new Date().toISOString()
   };
   State.notifications.unshift(n);
+  saveNotifications();
   var role = State.currentUser?.role;
   if (role && n.targetRoles.includes(role)) {
     sendBrowserNotification(n.title, n.message);
@@ -79,12 +94,14 @@ function markAsRead(notifId) {
   if (!role) return;
   var n = State.notifications.find(function(x) { return x.id === notifId; });
   if (n) n.read[role] = true;
+  saveNotifications();
 }
 
 function markAllAsRead() {
   const role = State.currentUser?.role;
   if (!role) return;
   getRoleNotifications().forEach(function(n) { n.read[role] = true; });
+  saveNotifications();
 }
 
 function getNotifColor(type) {

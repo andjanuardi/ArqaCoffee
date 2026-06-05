@@ -13,7 +13,7 @@ function acceptCashierOrder(id) {
     message: '#' + o.id.slice(-5).toUpperCase() + ' — diterima, menunggu dapur',
     type: 'order',
     icon: 'fa-check-circle',
-    targetRoles: ['kitchen'],
+    targetRoles: ['kitchen', 'customer', 'admin', 'manager'],
     relatedOrderId: o.id
   });
   showToast(

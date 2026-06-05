@@ -86,7 +86,7 @@ function confirmCancelOrder(id) {
     message: '#' + o.id.slice(-5).toUpperCase() + ' dibatalkan oleh pelanggan: ' + reason,
     type: 'warning',
     icon: 'fa-ban',
-    targetRoles: ['cashier', 'kitchen', 'admin', 'manager'],
+    targetRoles: ['cashier', 'admin', 'manager'],
     relatedOrderId: o.id
   });
   showToast("Pesanan berhasil dibatalkan", "success");

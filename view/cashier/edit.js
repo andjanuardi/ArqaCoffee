@@ -83,7 +83,7 @@ function confirmCancelCashierOrder(id) {
       message: '#' + o.id.slice(-5).toUpperCase() + ' — Pesanan Anda dibatalkan oleh kasir. Alasan: ' + reason,
       type: 'order',
       icon: 'fa-ban',
-      targetRoles: ['customer'],
+      targetRoles: ['customer', 'admin', 'manager'],
       relatedOrderId: o.id
     });
   }
