@@ -86,6 +86,7 @@ function quickLogin(role) {
     State.currentUser = u;
     State.currentView = 'main';
     State.currentTab[role] = getDefaultTab(role);
+    sessionStorage.setItem('arqa_session', JSON.stringify({ userId: u.id, currentTab: State.currentTab }));
     render();
     showToast(`Selamat datang, ${u.name}!`, 'success');
   }
@@ -100,6 +101,7 @@ function handleLogin() {
     State.currentUser = u;
     State.currentView = 'main';
     State.currentTab[u.role] = getDefaultTab(u.role);
+    sessionStorage.setItem('arqa_session', JSON.stringify({ userId: u.id, currentTab: State.currentTab }));
     render();
     showToast(`Selamat datang, ${u.name}!`, 'success');
   } else showToast('Email atau password salah', 'error');
@@ -148,6 +150,7 @@ function registerCustomer() {
   State.currentUser = u;
   State.currentView = 'main';
   State.currentTab.customer = 'menu';
+  sessionStorage.setItem('arqa_session', JSON.stringify({ userId: u.id, currentTab: State.currentTab }));
   closeModal();
   render();
   showToast('Akun berhasil dibuat, selamat datang!', 'success');

@@ -160,6 +160,7 @@ function renderSideDrawer(role) {
 function toggleDrawer() { State.sidebarOpen = !State.sidebarOpen; render(); }
 function switchTab(id) { State.currentTab[State.currentUser.role] = id; render(); }
 function handleLogout() {
+  sessionStorage.removeItem('arqa_session');
   State.currentUser = null;
   State.currentView = 'login';
   State.cart = [];
