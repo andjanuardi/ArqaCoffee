@@ -108,3 +108,45 @@ jarak antara kurir dan pelanggan
 
 pelanggan bayar nanti, ketika bayar sekarang, modal pilih metode pembayaran tidak ada
 pada kasir ketika bayar sekarang, tombol bayar digital tidak ada modal metode pembayaran
+
+Pengaturan
+	- Kelola Meja
+	- Kelola Pengguan
+	- Kelola Buka Tutup Layanan
+	- Pengaturan Tarif
+		- Pengaturan tarif kurir per-transaksi
+			- Kontrol harga ongkos kirim (pindahkan dari halaman keuangan kurir), Tambahkan 			  form input atur tarif jasa aplikasi (opsi : % atau Rp.2000).
+		- Pengaturan tarif mitra per-transaksi
+			- Tambahkan form input atur tarif jasa aplikasi (opsi : % atau Rp.2000).
+		- Pengaturan tarif pelanggan per-transaksi (jika menggunakan aplikasi)
+			- Tambahkan form input atur tarif jasa aplikasi (opsi : % atau Rp.1000).
+
+Menu sidebar
+	- Pindahkan posisi dropdown "Layanan aktif" setelah Overview
+
+Profil
+	- Bisa edit profil pada seluruh role
+
+Bug buka tutup layanan
+	- pada jam oprasional yang sudah diatur untuk tutup otomatis, toko masih ber-status buka.
+	- jika toko buka diluar jam oprasional, karna tombol buka manual, maka buat keterangan "Buka Di Luar Jam Operasioanl" (begitu juga sebaliknya)
+	- ada 4 status layanan opreasional
+		- buka di dalam jam opreasional
+		- buka di luar jam opreasional
+		- tutup di dalam jam opreasional
+		- tutup di luar jam opreasional
+
+Profil
+	- hiangkan card induk profil
+	- Data Profil
+		- bisa edit profil (termaksud ubah password)
+	- Presensi
+		- tambahkan tombol absen geospasial pada posisi di atas keluar akun profil, lalu tampilkan modal absen geospasial check in
+
+Validasi input data daftar mitra dan kurir baru
+
+pindahkan posisi animasi toss ke bagian atas tengah
+
+tambahkan toss "pendaftaran berhasil" saat daftar & masuk di klik
+
+jika approval diterima admin, maka default password "12345 d/s"

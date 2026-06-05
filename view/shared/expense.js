@@ -87,7 +87,7 @@ function renderExpenseManagement() {
               </div>
             </div>
             <div class="flex items-center gap-1 shrink-0">
-              ${e.category !== "Bahan Baku" && e.category !== "Item Include" ? `<button onclick="event.stopPropagation();showEditExpenseModal('${e.id}')" class="btn-sm" style="background:rgba(224,122,58,.12);color:var(--accent);border:none;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:12px"><i class="fas fa-pen"></i></button>` : ''}
+              ${e.category !== "Bahan Baku" && e.category !== "Item Include" && !(e.category === "Operasional" && e.note && e.note.startsWith("Ongkir kurir")) ? `<button onclick="event.stopPropagation();showEditExpenseModal('${e.id}')" class="btn-sm" style="background:rgba(224,122,58,.12);color:var(--accent);border:none;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:12px"><i class="fas fa-pen"></i></button>` : ''}
               <button onclick="event.stopPropagation();deleteExpense('${e.id}')" class="btn-sm" style="background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:12px"><i class="fas fa-trash"></i></button>
             </div>
           </div>
