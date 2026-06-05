@@ -75,7 +75,7 @@ function renderCourierHistory() {
         <div class="text-sm font-bold mt-1" style="color:${totalSetor > 0 ? 'var(--danger)' : 'var(--success)'}">${formatCurrency(totalSetor)}</div>
       </div>
       <div class="stat-card text-center">
-        <div class="text-xs" style="color:var(--muted)">Belum Diambil</div>
+        <div class="text-xs" style="color:var(--muted)">Ongkir Pesanan</div>
         <div class="text-sm font-bold mt-1" style="color:${totalOngkirBelum > 0 ? 'var(--warning)' : 'var(--success)'}">${totalOngkirBelum > 0 ? formatCurrency(totalOngkirBelum) : 'Rp 0'}</div>
       </div>
       <div class="stat-card text-center">
