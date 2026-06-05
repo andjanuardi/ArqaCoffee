@@ -26,9 +26,23 @@ function showPaymentModal(id) {
         ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mt-1" style="color:var(--accent)"><span><i class="fas fa-truck mr-1"></i>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ""}
         <div class="flex justify-between text-xs mt-1" style="color:var(--accent)"><span><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(o.items)))}</span></div>
       </div>
-      <div class="flex gap-2 mb-3">
-        <button onclick="closeModal();processPayment('${o.id}')" class="btn-primary flex-1 text-center py-3"><i class="fas fa-wallet mr-2"></i>Digital</button>
-        <button onclick="closeModal();processCashPayment('${o.id}')" class="btn-secondary flex-1 text-center py-3" style="background:rgba(39,174,96,.1);border-color:rgba(39,174,96,.3);color:var(--success)"><i class="fas fa-money-bill-wave mr-2"></i>Tunai</button>
+      <div class="text-center mb-4">
+        <div class="text-sm" style="color:var(--muted)">Total Pembayaran</div>
+        <div class="font-bold text-xl" style="color:var(--accent)">${formatCurrency(o.total_amount)}</div>
+      </div>
+      <div class="grid grid-cols-3 gap-3 mb-3">
+        <div class="card text-center py-4 cursor-pointer" onclick="closeModal();processQRISPayment('${o.id}')" style="border-color:var(--accent)">
+          <i class="fas fa-qrcode text-xl mb-2" style="color:var(--accent)"></i>
+          <div class="text-sm font-semibold">QRIS</div>
+        </div>
+        <div class="card text-center py-4 cursor-pointer" onclick="closeModal();processTransferPayment('${o.id}')">
+          <i class="fas fa-university text-xl mb-2" style="color:var(--accent)"></i>
+          <div class="text-sm font-semibold">Transfer</div>
+        </div>
+        <div class="card text-center py-4 cursor-pointer" onclick="closeModal();processCashPayment('${o.id}')">
+          <i class="fas fa-money-bill text-xl mb-2" style="color:var(--success)"></i>
+          <div class="text-sm font-semibold">Tunai</div>
+        </div>
       </div>
       <button onclick="closeModal();printCashierInvoice('${o.id}')" class="btn-sm w-full text-center" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:10px"><i class="fas fa-print mr-1"></i>Cetak Invoice</button>
     </div>

@@ -165,6 +165,33 @@ function payOrder(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
   closeModal();
+  const totalStr = formatCurrency(o.total_amount);
+  showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-1 text-center">Pilih Pembayaran</h3>
+      <p class="text-xs text-center mb-4" style="color:var(--muted)">Total: <strong>${totalStr}</strong></p>
+      <div class="grid grid-cols-3 gap-3 mb-4">
+        <div class="card text-center py-4 cursor-pointer" onclick="closeModal();payQRIS('${o.id}')" style="border-color:var(--accent)">
+          <i class="fas fa-qrcode text-xl mb-2" style="color:var(--accent)"></i>
+          <div class="text-sm font-semibold">QRIS</div>
+        </div>
+        <div class="card text-center py-4 cursor-pointer" onclick="closeModal();payTransfer('${o.id}')">
+          <i class="fas fa-university text-xl mb-2" style="color:var(--accent)"></i>
+          <div class="text-sm font-semibold">Transfer</div>
+        </div>
+        <div class="card text-center py-4 cursor-pointer" onclick="confirmPayOrder('${o.id}','cash')">
+          <i class="fas fa-money-bill text-xl mb-2" style="color:var(--success)"></i>
+          <div class="text-sm font-semibold">Tunai</div>
+        </div>
+      </div>
+      <button onclick="closeModal()" class="btn-secondary w-full text-center">Batal</button>
+    </div>
+  `);
+}
+
+function payQRIS(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
   const data = encodeURIComponent("ARQA-COFFEE:PAY:" + o.id.slice(-6) + ":" + o.total_amount);
   showModal(`
     <div>
@@ -179,19 +206,41 @@ function payOrder(id) {
       </div>
       <div class="flex gap-2">
         <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Tutup</button>
-        <button onclick="confirmPayOrder('${o.id}')" class="btn-primary btn-sm flex-1 text-center">Saya Sudah Bayar</button>
+        <button onclick="confirmPayOrder('${o.id}','qris')" class="btn-primary btn-sm flex-1 text-center">Saya Sudah Bayar</button>
       </div>
     </div>
   `);
 }
 
-function confirmPayOrder(id) {
+function payTransfer(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-2 text-center">Transfer Bank</h3>
+      <p class="text-xs text-center mb-4" style="color:var(--muted)">Transfer ke rekening berikut</p>
+      <div class="card mb-4 space-y-3">
+        <div class="flex justify-between text-sm"><span style="color:var(--muted)">Bank</span><span class="font-semibold">BCA</span></div>
+        <div class="flex justify-between text-sm"><span style="color:var(--muted)">No. Rekening</span><span class="font-semibold">1234567890</span></div>
+        <div class="flex justify-between text-sm"><span style="color:var(--muted)">Atas Nama</span><span class="font-semibold">ARQA Coffee</span></div>
+        <div class="flex justify-between text-sm pt-2 border-t" style="border-color:var(--border)"><span style="color:var(--muted)">Total Transfer</span><span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+        <button onclick="confirmPayOrder('${o.id}','bank_transfer')" class="btn-primary btn-sm flex-1 text-center">Saya Sudah Transfer</button>
+      </div>
+    </div>
+  `);
+}
+
+function confirmPayOrder(id, method) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
   o.payment_status = "paid";
-  o.payment_method = "qris";
+  o.payment_method = method || "qris";
   closeModal();
-  showToast("Pembayaran berhasil!", "success");
+  const label = method === "qris" ? "QRIS" : method === "bank_transfer" ? "Transfer" : "Tunai";
+  showToast("Pembayaran " + label + " berhasil!", "success");
   render();
 }
 

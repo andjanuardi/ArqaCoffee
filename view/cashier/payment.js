@@ -35,6 +35,26 @@ function processPayment(id) {
   );
   render();
 }
+function processQRISPayment(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  o.payment_status = "paid";
+  o.payment_method = "qris";
+  notifyPayment(o, 'QRIS');
+  showToast(`Pembayaran #${o.id.slice(-5).toUpperCase()} berhasil (QRIS)`, "success");
+  render();
+}
+
+function processTransferPayment(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  o.payment_status = "paid";
+  o.payment_method = "bank_transfer";
+  notifyPayment(o, 'Transfer');
+  showToast(`Pembayaran #${o.id.slice(-5).toUpperCase()} berhasil (Transfer)`, "success");
+  render();
+}
+
 function processCashPayment(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
