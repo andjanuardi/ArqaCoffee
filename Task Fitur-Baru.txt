@@ -143,7 +143,7 @@ Profil
 	- Presensi
 		- tambahkan tombol absen geospasial pada posisi di atas keluar akun profil, lalu tampilkan modal absen geospasial check in (selesai)
 
-Validasi input data daftar mitra dan kurir baru
+Validasi input data daftar mitra dan kurir baru (Selesai)
 
 pindahkan posisi animasi toss ke bagian atas tengah (selesai)
 
