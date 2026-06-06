@@ -128,20 +128,20 @@ Profil
 	- Bisa edit profil pada seluruh role (selesai)
 
 Bug buka tutup layanan
-	- pada jam oprasional yang sudah diatur untuk tutup otomatis, toko masih ber-status buka.
-	- jika toko buka diluar jam oprasional, karna tombol buka manual, maka buat keterangan "Buka Di Luar Jam Operasioanl" (begitu juga sebaliknya)
-	- ada 4 status layanan opreasional
-		- buka di dalam jam opreasional
-		- buka di luar jam opreasional
-		- tutup di dalam jam opreasional
-		- tutup di luar jam opreasional
+	- pada jam oprasional yang sudah diatur untuk tutup otomatis, toko masih ber-status buka. (selesai)
+	- jika toko buka diluar jam oprasional, karna tombol buka manual, maka buat keterangan "Buka Di Luar Jam Operasioanl" (begitu juga sebaliknya) (selesai)
+	- ada 4 status layanan opreasional (selesai)
+		- buka di dalam jam opreasional (selesai)
+		- buka di luar jam opreasional (selesai)
+		- tutup di dalam jam opreasional (selesai)
+		- tutup di luar jam opreasional (selesai)
 
 Profil
 	- hiangkan card induk profil
-	- Data Profil
-		- bisa edit profil (termaksud ubah password)
+	- Data Profil  (selesai)
+		- bisa edit profil (termaksud ubah password) (selesai)
 	- Presensi
-		- tambahkan tombol absen geospasial pada posisi di atas keluar akun profil, lalu tampilkan modal absen geospasial check in
+		- tambahkan tombol absen geospasial pada posisi di atas keluar akun profil, lalu tampilkan modal absen geospasial check in (selesai)
 
 Validasi input data daftar mitra dan kurir baru
 
@@ -149,4 +149,4 @@ pindahkan posisi animasi toss ke bagian atas tengah
 
 tambahkan toss "pendaftaran berhasil" saat daftar & masuk di klik
 
-jika approval diterima admin, maka default password "12345 d/s" 
+jika approval diterima admin, maka default password "12345 d/s"  (selesai)
