@@ -423,7 +423,7 @@ function renderServiceControl() {
   const statusColor = isEffOpen ? 'var(--success)' : 'var(--danger)';
   const statusBg = isEffOpen ? 'rgba(39,174,96,.12)' : 'rgba(231,76,60,.12)';
   const statusBorder = isEffOpen ? 'rgba(39,174,96,.3)' : 'rgba(231,76,60,.3)';
-  const statusLabel = isEffOpen ? 'BUKA' : 'TUTUP';
+  const statusLabel = isEffOpen ? 'Buka di jam operasional' : 'Tutup di jam operasional';
   const isAutoClosed = !isEffOpen && !isManualClosed;
   const statusDesc = isEffOpen
     ? 'Layanan beroperasi sesuai jadwal'
