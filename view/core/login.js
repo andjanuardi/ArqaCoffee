@@ -232,7 +232,12 @@ function submitMitraRegistration() {
   if (!_selectedMitraRole) { showToast('Pilih peran mitra terlebih dahulu', 'warning'); return; }
   if (!name) { showToast('Nama wajib diisi', 'warning'); return; }
   if (!email) { showToast('Email wajib diisi', 'warning'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Format email tidak valid', 'warning'); return; }
   if (DB.users.find(u => u.email === email)) { showToast('Email sudah terdaftar sebagai pengguna', 'error'); return; }
+  if (phone) {
+    const phoneClean = phone.replace(/[\s\-]/g, '');
+    if (!/^(\+62|62|0)8[1-9][0-9]{6,11}$/.test(phoneClean)) { showToast('Nomor telepon tidak valid. Gunakan format Indonesia (08xx atau +628xx)', 'warning'); return; }
+  }
   if (!DB.mitraRegistrations) DB.mitraRegistrations = [];
   DB.mitraRegistrations.push({
     id: 'mr' + Date.now(),
