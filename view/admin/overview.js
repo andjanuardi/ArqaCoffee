@@ -463,7 +463,7 @@ function renderServiceControl() {
     btnIcon = 'fa-store-slash';
     btnLabel = 'Tutup Manual';
   } else if (isManualClosed) {
-    statusLabel = 'Tutup di jam operasional';
+    statusLabel = 'Tutup di luar jam operasional';
     statusIcon = 'fa-store-slash';
     statusColor = 'var(--danger)';
     statusBg = 'rgba(231,76,60,.12)';
