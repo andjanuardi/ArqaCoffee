@@ -15,6 +15,9 @@ function renderAdminView() {
   if (tab === 'active-orders') return renderActiveOrders();
   if (tab === 'active-playground') return renderActivePlaygroundTickets();
   if (tab === 'service-control') return renderServiceControl();
+  if (tab === 'tarif-kurir') return renderTarifKurir();
+  if (tab === 'tarif-mitra') return renderTarifMitra();
+  if (tab === 'tarif-pelanggan') return renderTarifPelanggan();
   if (tab === 'courier-finance') return renderAdminCourierFinance();
   if (tab === 'mitra-finance') return renderAdminMitraFinance();
   if (tab === 'mitra-approval') return renderAdminMitraApproval();
@@ -624,6 +627,146 @@ function showPilihStokModal() {
   </div>
 </div>
   `);
+}
+
+// ============================================================
+// PENGATURAN TARIF
+// ============================================================
+function saveTarifKurir() {
+  if (!DB.cafe) DB.cafe = {};
+  if (!DB.cafe.rates) DB.cafe.rates = {};
+  if (!DB.cafe.rates.courier) DB.cafe.rates.courier = { shipping: { rate_per_km: 3000, min: 5000, max: 50000 }, service_fee: { type: 'percent', value: 5 } };
+  const min = parseInt(document.getElementById('tarif-kurir-min')?.value);
+  const rate = parseInt(document.getElementById('tarif-kurir-rate')?.value);
+  const feeType = document.getElementById('tarif-kurir-fee-type')?.value;
+  const feeValue = parseInt(document.getElementById('tarif-kurir-fee-value')?.value);
+  if (!min || !rate || min < 0 || rate < 0 || feeValue < 0) { showToast('Nilai tidak valid', 'warning'); return; }
+  DB.cafe.rates.courier.shipping.min = min;
+  DB.cafe.rates.courier.shipping.rate_per_km = rate;
+  DB.cafe.rates.courier.service_fee.type = feeType;
+  DB.cafe.rates.courier.service_fee.value = feeValue;
+  // Also update legacy shipping for backward compat
+  DB.cafe.shipping = DB.cafe.shipping || {};
+  DB.cafe.shipping.min = min;
+  DB.cafe.shipping.rate_per_km = rate;
+  showToast('Tarif kurir diperbarui!', 'success');
+  render();
+}
+
+function saveTarifMitra() {
+  if (!DB.cafe) DB.cafe = {};
+  if (!DB.cafe.rates) DB.cafe.rates = {};
+  if (!DB.cafe.rates.mitra) DB.cafe.rates.mitra = { service_fee: { type: 'percent', value: 5 } };
+  const feeType = document.getElementById('tarif-mitra-fee-type')?.value;
+  const feeValue = parseInt(document.getElementById('tarif-mitra-fee-value')?.value);
+  if (feeValue < 0) { showToast('Nilai tidak valid', 'warning'); return; }
+  DB.cafe.rates.mitra.service_fee.type = feeType;
+  DB.cafe.rates.mitra.service_fee.value = feeValue;
+  showToast('Tarif mitra diperbarui!', 'success');
+  render();
+}
+
+function saveTarifPelanggan() {
+  if (!DB.cafe) DB.cafe = {};
+  if (!DB.cafe.rates) DB.cafe.rates = {};
+  if (!DB.cafe.rates.customer) DB.cafe.rates.customer = { service_fee: { type: 'fixed', value: 1000 } };
+  const feeType = document.getElementById('tarif-pelanggan-fee-type')?.value;
+  const feeValue = parseInt(document.getElementById('tarif-pelanggan-fee-value')?.value);
+  if (feeValue < 0) { showToast('Nilai tidak valid', 'warning'); return; }
+  DB.cafe.rates.customer.service_fee.type = feeType;
+  DB.cafe.rates.customer.service_fee.value = feeValue;
+  showToast('Tarif pelanggan diperbarui!', 'success');
+  render();
+}
+
+function renderTarifKurir() {
+  const cfg = DB.cafe?.rates?.courier || { shipping: { rate_per_km: 3000, min: 5000, max: 50000 }, service_fee: { type: 'percent', value: 5 } };
+  return `
+  <div class="animate-fade-up">
+    <h2 class="font-display text-xl font-bold mb-4">Tarif Kurir Per-Transaksi</h2>
+    <div class="card mb-4">
+      <div class="font-semibold text-sm mb-3" style="color:var(--accent)"><i class="fas fa-truck mr-1"></i>Ongkos Kirim</div>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div>
+          <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tarif Dasar (Min)</label>
+          <input type="number" id="tarif-kurir-min" class="input-field text-sm" value="${cfg.shipping.min}" min="0" step="500">
+        </div>
+        <div>
+          <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tarif Per KM</label>
+          <input type="number" id="tarif-kurir-rate" class="input-field text-sm" value="${cfg.shipping.rate_per_km}" min="0" step="500">
+        </div>
+      </div>
+      <div class="text-xs p-2 rounded-lg mb-4" style="background:var(--bg2);color:var(--muted)">
+        <i class="fas fa-info-circle mr-1"></i>
+        Ongkir = Jarak (km) × Tarif Per KM. Minimal ${formatCurrency(cfg.shipping.min)}, maksimal ${formatCurrency(cfg.shipping.max)}.
+      </div>
+      <div class="font-semibold text-sm mb-3" style="color:var(--accent)"><i class="fas fa-percent mr-1"></i>Jasa Aplikasi</div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tipe</label>
+          <select id="tarif-kurir-fee-type" class="input-field text-sm">
+            <option value="percent" ${cfg.service_fee.type === 'percent' ? 'selected' : ''}>Persentase (%)</option>
+            <option value="fixed" ${cfg.service_fee.type === 'fixed' ? 'selected' : ''}>Nominal Tetap (Rp)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Nilai</label>
+          <input type="number" id="tarif-kurir-fee-value" class="input-field text-sm" value="${cfg.service_fee.value}" min="0">
+        </div>
+      </div>
+      <button onclick="saveTarifKurir()" class="btn-primary text-sm"><i class="fas fa-save mr-1"></i>Simpan</button>
+    </div>
+  </div>`;
+}
+
+function renderTarifMitra() {
+  const cfg = DB.cafe?.rates?.mitra || { service_fee: { type: 'percent', value: 5 } };
+  return `
+  <div class="animate-fade-up">
+    <h2 class="font-display text-xl font-bold mb-4">Tarif Mitra Per-Transaksi</h2>
+    <div class="card mb-4">
+      <div class="font-semibold text-sm mb-3" style="color:var(--accent)"><i class="fas fa-percent mr-1"></i>Jasa Aplikasi</div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tipe</label>
+          <select id="tarif-mitra-fee-type" class="input-field text-sm">
+            <option value="percent" ${cfg.service_fee.type === 'percent' ? 'selected' : ''}>Persentase (%)</option>
+            <option value="fixed" ${cfg.service_fee.type === 'fixed' ? 'selected' : ''}>Nominal Tetap (Rp)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Nilai</label>
+          <input type="number" id="tarif-mitra-fee-value" class="input-field text-sm" value="${cfg.service_fee.value}" min="0">
+        </div>
+      </div>
+      <button onclick="saveTarifMitra()" class="btn-primary text-sm"><i class="fas fa-save mr-1"></i>Simpan</button>
+    </div>
+  </div>`;
+}
+
+function renderTarifPelanggan() {
+  const cfg = DB.cafe?.rates?.customer || { service_fee: { type: 'fixed', value: 1000 } };
+  return `
+  <div class="animate-fade-up">
+    <h2 class="font-display text-xl font-bold mb-4">Tarif Pelanggan Per-Transaksi</h2>
+    <div class="card mb-4">
+      <div class="font-semibold text-sm mb-3" style="color:var(--accent)"><i class="fas fa-percent mr-1"></i>Jasa Aplikasi</div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tipe</label>
+          <select id="tarif-pelanggan-fee-type" class="input-field text-sm">
+            <option value="percent" ${cfg.service_fee.type === 'percent' ? 'selected' : ''}>Persentase (%)</option>
+            <option value="fixed" ${cfg.service_fee.type === 'fixed' ? 'selected' : ''}>Nominal Tetap (Rp)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Nilai</label>
+          <input type="number" id="tarif-pelanggan-fee-value" class="input-field text-sm" value="${cfg.service_fee.value}" min="0">
+        </div>
+      </div>
+      <button onclick="saveTarifPelanggan()" class="btn-primary text-sm"><i class="fas fa-save mr-1"></i>Simpan</button>
+    </div>
+  </div>`;
 }
 
 function showActiveLayananModal(role = 'admin') {

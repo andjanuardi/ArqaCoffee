@@ -695,6 +695,11 @@ const DB =
       cafe: {
         location: { lat: 2.458461, lng: 96.3766943 },
         shipping: { rate_per_km: 3000, min: 5000, max: 50000 },
+        rates: {
+          courier: { shipping: { rate_per_km: 3000, min: 5000, max: 50000 }, service_fee: { type: 'percent', value: 5 } },
+          mitra: { service_fee: { type: 'percent', value: 5 } },
+          customer: { service_fee: { type: 'fixed', value: 1000 } },
+        },
       },
       promos: [
         {
@@ -813,6 +818,16 @@ if (!localStorage.getItem(STORAGE_KEY)) saveDB();
 // Migration: ensure shipping config exists in cafe
 if (DB.cafe && !DB.cafe.shipping) {
   DB.cafe.shipping = { rate_per_km: 3000, min: 5000, max: 50000 };
+  saveDB();
+}
+
+// Migration: ensure rates config exists in cafe
+if (DB.cafe && !DB.cafe.rates) {
+  DB.cafe.rates = {
+    courier: { shipping: { rate_per_km: 3000, min: 5000, max: 50000 }, service_fee: { type: 'percent', value: 5 } },
+    mitra: { service_fee: { type: 'percent', value: 5 } },
+    customer: { service_fee: { type: 'fixed', value: 1000 } },
+  };
   saveDB();
 }
 
