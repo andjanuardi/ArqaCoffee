@@ -149,4 +149,4 @@ pindahkan posisi animasi toss ke bagian atas tengah
 
 tambahkan toss "pendaftaran berhasil" saat daftar & masuk di klik
 
-jika approval diterima admin, maka default password "12345 d/s"
+jika approval diterima admin, maka default password "12345 d/s" (selesai)

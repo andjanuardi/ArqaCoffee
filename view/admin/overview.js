@@ -264,7 +264,7 @@ function approveMitraRegistration(id) {
   const r = DB.mitraRegistrations?.find(x => x.id === id);
   if (!r) return;
   r.status = 'approved';
-  const pwd = 'password123';
+  const pwd = '123456';
   DB.users.push({ id: 'u' + Date.now(), name: r.name, email: r.email, password: pwd, role: r.role, phone: r.phone || '', address: r.address || '', avatar: r.name[0].toUpperCase() });
   showToast(`${r.name} disetujui sebagai ${r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}!`, 'success');
   render();
