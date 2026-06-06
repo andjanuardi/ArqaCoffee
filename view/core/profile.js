@@ -17,6 +17,7 @@ function renderGenericProfile() {
     if (State.mapInstances[k]) { State.mapInstances[k].remove(); delete State.mapInstances[k]; }
   });
   const u = State.currentUser;
+  const showAbsen = u.role !== 'admin';
   return `
   <div class="animate-fade-up">
     <div class="card text-center mb-4">
@@ -30,11 +31,12 @@ function renderGenericProfile() {
           <span class="text-sm flex-1">Edit Profil</span>
           <i class="fas fa-chevron-right" style="color:var(--muted);font-size:12px"></i>
         </div>
+        ${showAbsen ? `
         <div class="card flex items-center gap-3 cursor-pointer" onclick="showGeoAttendanceModal()">
           <i class="fas fa-location-dot" style="color:#3498db"></i>
           <span class="text-sm flex-1">Absen Geospasial</span>
           <i class="fas fa-chevron-right" style="color:var(--muted);font-size:12px"></i>
-        </div>
+        </div>` : ''}
         <div class="card flex items-center gap-3 cursor-pointer" onclick="handleLogout()">
           <i class="fas fa-right-from-bracket" style="color:var(--danger)"></i>
           <span class="text-sm flex-1">Keluar dari Akun</span>
