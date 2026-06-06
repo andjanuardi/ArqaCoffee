@@ -177,6 +177,11 @@ function renderCourierProfile() {
             <button onclick="resetCourierPosition()" class="btn-secondary flex-1 text-center" style="font-size:13px"><i class="fas fa-rotate-left mr-1"></i>Reset GPS</button>
           </div>
         </div>
+        <div class="card flex items-center gap-3 cursor-pointer" onclick="showEditProfileModal()">
+          <i class="fas fa-pen-to-square" style="color:var(--accent)"></i>
+          <span class="text-sm flex-1">Edit Profil</span>
+          <i class="fas fa-chevron-right" style="color:var(--muted);font-size:12px"></i>
+        </div>
         <div class="card flex items-center gap-3 cursor-pointer" onclick="handleLogout()">
           <i class="fas fa-right-from-bracket" style="color:var(--danger)"></i>
           <span class="text-sm flex-1">Keluar dari Akun</span>

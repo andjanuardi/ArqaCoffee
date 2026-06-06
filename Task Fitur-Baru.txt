@@ -113,19 +113,19 @@ Pengaturan
 	- Kelola Meja
 	- Kelola Pengguan
 	- Kelola Buka Tutup Layanan
-	- Pengaturan Tarif
-		- Pengaturan tarif kurir per-transaksi
-			- Kontrol harga ongkos kirim (pindahkan dari halaman keuangan kurir), Tambahkan 			  form input atur tarif jasa aplikasi (opsi : % atau Rp.2000).
-		- Pengaturan tarif mitra per-transaksi
-			- Tambahkan form input atur tarif jasa aplikasi (opsi : % atau Rp.2000).
-		- Pengaturan tarif pelanggan per-transaksi (jika menggunakan aplikasi)
-			- Tambahkan form input atur tarif jasa aplikasi (opsi : % atau Rp.1000).
+	- Pengaturan Tarif 	(selesai)
+		- Pengaturan tarif kurir per-transaksi 	(selesai)
+			- Kontrol harga ongkos kirim (pindahkan dari halaman keuangan kurir), Tambahkan (selesai)			  form input atur tarif jasa aplikasi (opsi : % atau Rp.2000).
+		- Pengaturan tarif mitra per-transaksi (selesai)
+			- Tambahkan form input atur tarif jasa aplikasi (opsi : % atau Rp.2000). (selesai)
+		- Pengaturan tarif pelanggan per-transaksi (jika menggunakan aplikasi) (selesai)
+			- Tambahkan form input atur tarif jasa aplikasi (opsi : % atau Rp.1000). (selesai)
 
 Menu sidebar
-	- Pindahkan posisi dropdown "Layanan aktif" setelah Overview
+	- Pindahkan posisi dropdown "Layanan aktif" setelah Overview (selesai)
 
 Profil
-	- Bisa edit profil pada seluruh role
+	- Bisa edit profil pada seluruh role (selesai)
 
 Bug buka tutup layanan
 	- pada jam oprasional yang sudah diatur untuk tutup otomatis, toko masih ber-status buka.
@@ -149,4 +149,4 @@ pindahkan posisi animasi toss ke bagian atas tengah
 
 tambahkan toss "pendaftaran berhasil" saat daftar & masuk di klik
 
-jika approval diterima admin, maka default password "12345 d/s" (selesai)
+jika approval diterima admin, maka default password "12345 d/s" 

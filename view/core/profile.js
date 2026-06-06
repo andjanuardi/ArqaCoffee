@@ -29,6 +29,11 @@ function renderGenericProfile() {
       <p class="text-sm" style="color:var(--muted)">${u.phone}</p>
       <div class="mt-4 space-y-3 text-left">
         ${isStaff ? renderGeoAttendanceCard(u, att) : ''}
+        <div class="card flex items-center gap-3 cursor-pointer" onclick="showEditProfileModal()">
+          <i class="fas fa-pen-to-square" style="color:var(--accent)"></i>
+          <span class="text-sm flex-1">Edit Profil</span>
+          <i class="fas fa-chevron-right" style="color:var(--muted);font-size:12px"></i>
+        </div>
         <div class="card flex items-center gap-3 cursor-pointer" onclick="handleLogout()">
           <i class="fas fa-right-from-bracket" style="color:var(--danger)"></i>
           <span class="text-sm flex-1">Keluar dari Akun</span>
@@ -125,4 +130,68 @@ function staffCheckOut() {
     showToast('Check-out berhasil (tanpa lokasi)', 'success');
     render();
   }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+// ============================================================
+// EDIT PROFILE
+// ============================================================
+function showEditProfileModal() {
+  const u = State.currentUser;
+  showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-4">Edit Profil</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama</label>
+          <input id="edit-profile-name" class="input-field text-sm" value="${u.name}">
+        </div>
+        <div>
+          <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Email</label>
+          <input id="edit-profile-email" class="input-field text-sm" value="${u.email}">
+        </div>
+        <div>
+          <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Telepon</label>
+          <input id="edit-profile-phone" class="input-field text-sm" value="${u.phone || ''}">
+        </div>
+        <div>
+          <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Alamat</label>
+          <textarea id="edit-profile-address" class="input-field text-sm" rows="2">${u.address || ''}</textarea>
+        </div>
+        <hr style="border-color:var(--border);margin:12px 0">
+        <div>
+          <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Password Baru <span class="text-[10px]" style="color:var(--muted)">(kosongkan jika tidak diubah)</span></label>
+          <input id="edit-profile-pass" type="password" class="input-field text-sm" placeholder="Password baru">
+        </div>
+        <div>
+          <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Konfirmasi Password Baru</label>
+          <input id="edit-profile-pass-confirm" type="password" class="input-field text-sm" placeholder="Ulangi password baru">
+        </div>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+        <button onclick="saveEditProfile()" class="btn-primary flex-1 text-center">Simpan</button>
+      </div>
+    </div>
+  `);
+}
+
+function saveEditProfile() {
+  const u = State.currentUser;
+  const name = document.getElementById('edit-profile-name')?.value?.trim();
+  const email = document.getElementById('edit-profile-email')?.value?.trim();
+  const phone = document.getElementById('edit-profile-phone')?.value?.trim();
+  const address = document.getElementById('edit-profile-address')?.value?.trim();
+  const pass = document.getElementById('edit-profile-pass')?.value;
+  const passConfirm = document.getElementById('edit-profile-pass-confirm')?.value;
+  if (!name || !email) { showToast('Nama dan email wajib diisi', 'warning'); return; }
+  if (pass && pass !== passConfirm) { showToast('Konfirmasi password tidak cocok', 'warning'); return; }
+  u.name = name;
+  u.email = email;
+  u.phone = phone;
+  u.address = address;
+  u.avatar = name[0].toUpperCase();
+  if (pass) u.password = pass;
+  closeModal();
+  showToast('Profil berhasil diperbarui', 'success');
+  render();
 }

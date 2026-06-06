@@ -198,6 +198,11 @@ function renderMitraProfile() {
             ? `<button onclick="mitraCheckOut()" class="btn-secondary w-full text-center" style="background:rgba(231,76,60,.1);color:var(--danger);border-color:transparent;"><i class="fas fa-sign-out-alt mr-1"></i>Check Out</button>`
             : `<button onclick="mitraCheckIn()" class="btn-primary w-full text-center"><i class="fas fa-sign-in-alt mr-1"></i>Check In</button>`}
         </div>
+        <div class="card flex items-center gap-3 cursor-pointer" onclick="showEditProfileModal()">
+          <i class="fas fa-pen-to-square" style="color:var(--accent)"></i>
+          <span class="text-sm flex-1">Edit Profil</span>
+          <i class="fas fa-chevron-right" style="color:var(--muted);font-size:12px"></i>
+        </div>
         <div class="card flex items-center gap-3 cursor-pointer" onclick="handleLogout()">
           <i class="fas fa-right-from-bracket" style="color:var(--danger)"></i>
           <span class="text-sm flex-1">Keluar dari Akun</span>

@@ -11,6 +11,9 @@ function renderCustomerProfile() {
       <p class="text-sm" style="color:var(--muted)">${u.email}</p>
       <p class="text-sm" style="color:var(--muted)">${u.phone}</p>
     </div>
+    <div class="card mb-3 flex items-center gap-3 cursor-pointer" onclick="showEditProfileModal()">
+      <i class="fas fa-pen-to-square" style="color:var(--accent)"></i><span class="text-sm flex-1">Edit Profil</span><i class="fas fa-chevron-right" style="color:var(--muted);font-size:12px"></i>
+    </div>
     <div class="card mb-3 flex items-center gap-3 cursor-pointer" onclick="switchTab('menu');State.selectedTable=null;State.orderType='dine-in'">
       <i class="fas fa-qrcode" style="color:var(--accent)"></i><span class="text-sm flex-1">Scan QR Meja</span><i class="fas fa-chevron-right" style="color:var(--muted);font-size:12px"></i>
     </div>
