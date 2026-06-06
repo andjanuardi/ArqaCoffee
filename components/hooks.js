@@ -367,12 +367,18 @@ function initPlaygroundTimer() {
 
 function initServiceStatusTimer() {
   if (window._sst) { clearInterval(window._sst); }
+
+  const tab = State.currentTab;
+  if (tab?.admin === 'service-control') {
+    window._sstKey = isServiceClosed() ? 'closed' : 'open';
+  }
+
   window._sst = setInterval(() => {
     const tab = State.currentTab;
     if (tab?.admin !== 'service-control') return;
     const prev = window._sstKey;
     const cur = isServiceClosed() ? 'closed' : 'open';
-    if (prev && prev !== cur) { render(); }
+    if (prev !== undefined && prev !== cur) { render(); }
     window._sstKey = cur;
-  }, 30000);
+  }, 15000);
 }
