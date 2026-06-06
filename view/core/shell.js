@@ -86,11 +86,7 @@ function renderSideDrawer(role) {
       { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Kelola Meja' },
       { id: 'users', icon: 'fa-users-gear', label: 'Kelola Pengguna' },
       { id: 'service-control', icon: 'fa-store', label: 'Buka Tutup Layanan' },
-    ] },
-    { id: 'tarif-group', icon: 'fa-sliders', label: 'Pengaturan Tarif', children: [
-      { id: 'tarif-kurir', icon: 'fa-motorcycle', label: 'Tarif Kurir Per-Transaksi' },
-      { id: 'tarif-mitra', icon: 'fa-handshake', label: 'Tarif Mitra Per-Transaksi' },
-      { id: 'tarif-pelanggan', icon: 'fa-user', label: 'Tarif Pelanggan Per-Transaksi' },
+      { id: 'tarif-group', icon: 'fa-sliders', label: 'Pengaturan Tarif' },
     ] },
     { id: 'financial', icon: 'fa-coins', label: 'Finansial', children: [
       { id: 'finance', icon: 'fa-chart-pie', label: 'Keuangan' },

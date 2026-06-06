@@ -147,13 +147,9 @@ function registerCustomer() {
   if (isServiceClosed()) { closeModal(); showServiceClosedPopup(); return; }
   const u = { id: 'u' + Date.now(), name: name.trim(), email: email.trim(), password: pass || 'password123', role: 'customer', phone: phone || '', address: address?.trim() || '', avatar: name.trim()[0].toUpperCase() };
   DB.users.push(u);
-  State.currentUser = u;
-  State.currentView = 'main';
-  State.currentTab.customer = 'menu';
-  sessionStorage.setItem('arqa_session', JSON.stringify({ userId: u.id, currentTab: State.currentTab }));
   closeModal();
   render();
-  showToast('Akun berhasil dibuat, selamat datang!', 'success');
+  showToast('Pendaftaran berhasil! Silahkan login', 'success');
 }
 
 function showForgotPasswordModal() {

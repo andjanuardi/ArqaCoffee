@@ -15,9 +15,7 @@ function renderAdminView() {
   if (tab === 'active-orders') return renderActiveOrders();
   if (tab === 'active-playground') return renderActivePlaygroundTickets();
   if (tab === 'service-control') return renderServiceControl();
-  if (tab === 'tarif-kurir') return renderTarifKurir();
-  if (tab === 'tarif-mitra') return renderTarifMitra();
-  if (tab === 'tarif-pelanggan') return renderTarifPelanggan();
+  if (tab === 'tarif-group') return renderPengaturanTarif();
   if (tab === 'courier-finance') return renderAdminCourierFinance();
   if (tab === 'mitra-finance') return renderAdminMitraFinance();
   if (tab === 'mitra-approval') return renderAdminMitraApproval();
@@ -824,6 +822,18 @@ function renderTarifPelanggan() {
         </div>
       </div>
       <button onclick="saveTarifPelanggan()" class="btn-primary text-sm"><i class="fas fa-save mr-1"></i>Simpan</button>
+    </div>
+  </div>`;
+}
+
+function renderPengaturanTarif() {
+  return `
+  <div class="animate-fade-up">
+    <h2 class="font-display text-xl font-bold mb-4">Pengaturan Tarif</h2>
+    <div class="space-y-4">
+      ${renderTarifKurir()}
+      ${renderTarifMitra()}
+      ${renderTarifPelanggan()}
     </div>
   </div>`;
 }
