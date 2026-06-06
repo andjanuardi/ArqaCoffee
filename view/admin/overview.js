@@ -415,19 +415,53 @@ function renderServiceControl() {
     const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu', 'Minggu'];
     DB.cafe.serviceSchedule = days.map((name, i) => ({ day: i, name, open: '08:00', close: '22:00' }));
   }
-  const isOpen = DB.cafe.serviceStatus === 'open';
+
+  const isEffOpen = !isServiceClosed();
+  const isManualClosed = DB.cafe.serviceStatus === 'closed';
+
+  const statusIcon = isEffOpen ? 'fa-store' : 'fa-store-slash';
+  const statusColor = isEffOpen ? 'var(--success)' : 'var(--danger)';
+  const statusBg = isEffOpen ? 'rgba(39,174,96,.12)' : 'rgba(231,76,60,.12)';
+  const statusBorder = isEffOpen ? 'rgba(39,174,96,.3)' : 'rgba(231,76,60,.3)';
+  const statusLabel = isEffOpen ? 'BUKA' : 'TUTUP';
+  const isAutoClosed = !isEffOpen && !isManualClosed;
+  const statusDesc = isEffOpen
+    ? 'Layanan beroperasi sesuai jadwal'
+    : (isManualClosed ? 'Layanan ditutup manual' : 'Layanan otomatis tutup — di luar jam operasional');
+
+  const btnIcon = isEffOpen ? 'fa-store-slash' : 'fa-store';
+  const btnLabel = isAutoClosed ? 'Buka Paksa' : isEffOpen ? 'Tutup Manual' : 'Buka Manual';
+
+  const now = new Date();
+  const curMin = now.getHours() * 60 + now.getMinutes();
+  const dayIdx = now.getDay() === 0 ? 6 : now.getDay() - 1;
+  const todaySched = DB.cafe.serviceSchedule?.[dayIdx];
+  let nextInfo = '';
+  if (todaySched) {
+    const openMin = parseInt(todaySched.open?.split(':')[0] || 0) * 60 + parseInt(todaySched.open?.split(':')[1] || 0);
+    const closeMin = parseInt(todaySched.close?.split(':')[0] || 0) * 60 + parseInt(todaySched.close?.split(':')[1] || 0);
+    if (isEffOpen && closeMin > curMin) {
+      const diff = closeMin - curMin;
+      nextInfo = `Tutup otomatis pukul ${todaySched.close} (${Math.floor(diff/60)}j ${diff%60}m lagi)`;
+    } else if (!isEffOpen && openMin > curMin) {
+      const diff = openMin - curMin;
+      nextInfo = `Buka otomatis pukul ${todaySched.open} (${Math.floor(diff/60)}j ${diff%60}m lagi)`;
+    }
+  }
+
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-1">Kontrol Buka Tutup Layanan</h2>
     <p class="text-sm mb-5" style="color:var(--muted)">Atur jadwal operasional ARQA Coffee</p>
-    <div class="card mb-5 text-center py-8" style="border:2px solid ${isOpen ? 'rgba(39,174,96,.3)' : 'rgba(231,76,60,.3)'}">
-      <div class="w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center text-4xl" style="background:${isOpen ? 'rgba(39,174,96,.12)' : 'rgba(231,76,60,.12)'};color:${isOpen ? 'var(--success)' : 'var(--danger)'}">
-        <i class="fas ${isOpen ? 'fa-store' : 'fa-store-slash'}"></i>
+    <div class="card mb-5 text-center py-8" style="border:2px solid ${statusBorder}">
+      <div class="w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center text-4xl" style="background:${statusBg};color:${statusColor}">
+        <i class="fas ${statusIcon}"></i>
       </div>
-      <div class="text-2xl font-bold mb-1" style="color:${isOpen ? 'var(--success)' : 'var(--danger)'}">${isOpen ? 'BUKA' : 'TUTUP'}</div>
-      <p class="text-sm mb-4" style="color:var(--muted)">Layanan sedang ${isOpen ? 'beroperasi' : 'tidak beroperasi'}</p>
-      <button onclick="toggleServiceStatus()" class="btn-sm font-semibold" style="background:${isOpen ? 'rgba(231,76,60,.1)' : 'rgba(39,174,96,.1)'};color:${isOpen ? 'var(--danger)' : 'var(--success)'};border:1px solid ${isOpen ? 'rgba(231,76,60,.2)' : 'rgba(39,174,96,.2)'};padding:10px 24px;border-radius:12px;cursor:pointer">
-        <i class="fas ${isOpen ? 'fa-store-slash' : 'fa-store'} mr-1"></i>${isOpen ? 'Tutup Manual' : 'Buka Manual'}
+      <div class="text-2xl font-bold mb-1" style="color:${statusColor}">${statusLabel}</div>
+      <p class="text-sm mb-1" style="color:var(--muted)">${statusDesc}</p>
+      ${nextInfo ? `<p class="text-xs font-medium mb-4" style="color:var(--accent)"><i class="fas fa-clock mr-1"></i>${nextInfo}</p>` : '<p class="mb-4"></p>'}
+      <button onclick="toggleServiceStatus()" class="btn-sm font-semibold" style="background:${statusBg};color:${statusColor};border:1px solid ${statusBorder};padding:10px 24px;border-radius:12px;cursor:pointer">
+        <i class="fas ${btnIcon} mr-1"></i>${btnLabel}
       </button>
     </div>
     <div class="card">

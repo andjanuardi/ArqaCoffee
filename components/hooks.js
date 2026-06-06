@@ -6,6 +6,7 @@ function afterRender() {
   initMaps();
   initPromoCarousel();
   initPlaygroundTimer();
+  initServiceStatusTimer();
 }
 
 function initCharts() {
@@ -362,4 +363,16 @@ function initPlaygroundTimer() {
       card.classList.toggle('animate-breathe', isUrgent);
     });
   }, 1000);
+}
+
+function initServiceStatusTimer() {
+  if (window._sst) { clearInterval(window._sst); }
+  window._sst = setInterval(() => {
+    const tab = State.currentTab;
+    if (tab?.admin !== 'service-control') return;
+    const prev = window._sstKey;
+    const cur = isServiceClosed() ? 'closed' : 'open';
+    if (prev && prev !== cur) { render(); }
+    window._sstKey = cur;
+  }, 30000);
 }
