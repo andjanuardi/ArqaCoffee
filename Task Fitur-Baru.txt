@@ -145,8 +145,8 @@ Profil
 
 Validasi input data daftar mitra dan kurir baru
 
-pindahkan posisi animasi toss ke bagian atas tengah
+pindahkan posisi animasi toss ke bagian atas tengah (selesai)
 
-tambahkan toss "pendaftaran berhasil" saat daftar & masuk di klik
+tambahkan toss "pendaftaran berhasil" saat daftar & masuk di klik (Selesai)
 
 jika approval diterima admin, maka default password "12345 d/s"  (selesai)
