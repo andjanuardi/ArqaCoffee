@@ -388,6 +388,7 @@ function renderAdminOverview() {
 function isServiceClosed() {
   if (!DB.cafe) DB.cafe = {};
   if (DB.cafe.serviceStatus === 'closed') return true;
+  if (DB.cafe.serviceStatus === 'force_open') return false;
   if (DB.cafe.specialDates) {
     const todayStr = new Date().toISOString().split('T')[0];
     const special = DB.cafe.specialDates.find(s => s.date === todayStr);
@@ -408,6 +409,28 @@ function isServiceClosed() {
   return false;
 }
 
+function isWithinScheduleHours() {
+  if (!DB.cafe) DB.cafe = {};
+  if (DB.cafe.specialDates) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const special = DB.cafe.specialDates.find(s => s.date === todayStr);
+    if (special) return !special.closed;
+  }
+  if (DB.cafe.serviceSchedule) {
+    const today = new Date().getDay();
+    const idx = today === 0 ? 6 : today - 1;
+    const day = DB.cafe.serviceSchedule[idx];
+    if (day) {
+      const now = new Date();
+      const cur = now.getHours() * 60 + now.getMinutes();
+      const open = parseInt(day.open?.split(':')[0] || 0) * 60 + parseInt(day.open?.split(':')[1] || 0);
+      const close = parseInt(day.close?.split(':')[0] || 0) * 60 + parseInt(day.close?.split(':')[1] || 0);
+      return cur >= open && cur < close;
+    }
+  }
+  return true;
+}
+
 function renderServiceControl() {
   if (!DB.cafe) DB.cafe = {};
   if (!DB.cafe.serviceStatus) DB.cafe.serviceStatus = 'open';
@@ -416,21 +439,50 @@ function renderServiceControl() {
     DB.cafe.serviceSchedule = days.map((name, i) => ({ day: i, name, open: '08:00', close: '22:00' }));
   }
 
-  const isEffOpen = !isServiceClosed();
+  const inSchedule = isWithinScheduleHours();
+  const isForceOpen = DB.cafe.serviceStatus === 'force_open';
   const isManualClosed = DB.cafe.serviceStatus === 'closed';
+  const isEffOpen = isForceOpen || (!isManualClosed && inSchedule);
 
-  const statusIcon = isEffOpen ? 'fa-store' : 'fa-store-slash';
-  const statusColor = isEffOpen ? 'var(--success)' : 'var(--danger)';
-  const statusBg = isEffOpen ? 'rgba(39,174,96,.12)' : 'rgba(231,76,60,.12)';
-  const statusBorder = isEffOpen ? 'rgba(39,174,96,.3)' : 'rgba(231,76,60,.3)';
-  const statusLabel = isEffOpen ? 'Buka di jam operasional' : 'Tutup di jam operasional';
-  const isAutoClosed = !isEffOpen && !isManualClosed;
-  const statusDesc = isEffOpen
-    ? 'Layanan beroperasi sesuai jadwal'
-    : (isManualClosed ? 'Layanan ditutup manual' : 'Layanan otomatis tutup — di luar jam operasional');
+  let statusLabel, statusIcon, statusColor, statusBg, statusBorder, statusDesc, btnIcon, btnLabel;
 
-  const btnIcon = isEffOpen ? 'fa-store-slash' : 'fa-store';
-  const btnLabel = isAutoClosed ? 'Buka Paksa' : isEffOpen ? 'Tutup Manual' : 'Buka Manual';
+  if (isForceOpen) {
+    statusLabel = 'Buka di luar jam operasional';
+    statusIcon = 'fa-store';
+    statusColor = 'var(--warning)';
+    statusBg = 'rgba(243,156,18,.12)';
+    statusBorder = 'rgba(243,156,18,.3)';
+    statusDesc = 'Layanan dipaksa buka di luar jam operasional';
+    btnIcon = 'fa-store-slash';
+    btnLabel = 'Tutup Manual';
+  } else if (isEffOpen) {
+    statusLabel = 'Buka di jam operasional';
+    statusIcon = 'fa-store';
+    statusColor = 'var(--success)';
+    statusBg = 'rgba(39,174,96,.12)';
+    statusBorder = 'rgba(39,174,96,.3)';
+    statusDesc = 'Layanan beroperasi sesuai jadwal';
+    btnIcon = 'fa-store-slash';
+    btnLabel = 'Tutup Manual';
+  } else if (isManualClosed) {
+    statusLabel = 'Tutup di jam operasional';
+    statusIcon = 'fa-store-slash';
+    statusColor = 'var(--danger)';
+    statusBg = 'rgba(231,76,60,.12)';
+    statusBorder = 'rgba(231,76,60,.3)';
+    statusDesc = 'Layanan ditutup manual';
+    btnIcon = 'fa-store';
+    btnLabel = 'Buka Manual';
+  } else {
+    statusLabel = 'Tutup di jam operasional';
+    statusIcon = 'fa-store-slash';
+    statusColor = 'var(--danger)';
+    statusBg = 'rgba(231,76,60,.12)';
+    statusBorder = 'rgba(231,76,60,.3)';
+    statusDesc = 'Layanan otomatis tutup — di luar jam operasional';
+    btnIcon = 'fa-store';
+    btnLabel = 'Buka Paksa';
+  }
 
   const now = new Date();
   const curMin = now.getHours() * 60 + now.getMinutes();
@@ -503,9 +555,22 @@ function renderServiceControl() {
 
 function toggleServiceStatus() {
   if (!DB.cafe) DB.cafe = {};
-  DB.cafe.serviceStatus = DB.cafe.serviceStatus === 'open' ? 'closed' : 'open';
-  const label = DB.cafe.serviceStatus === 'open' ? 'Layanan dibuka' : 'Layanan ditutup';
-  showToast(label, DB.cafe.serviceStatus === 'open' ? 'success' : 'warning');
+  if (DB.cafe.serviceStatus === 'force_open') {
+    DB.cafe.serviceStatus = 'closed';
+    showToast('Layanan ditutup', 'warning');
+  } else if (DB.cafe.serviceStatus === 'closed') {
+    DB.cafe.serviceStatus = 'open';
+    showToast('Layanan dikembalikan ke mode otomatis', 'info');
+  } else {
+    const inSchedule = isWithinScheduleHours();
+    if (inSchedule) {
+      DB.cafe.serviceStatus = 'closed';
+      showToast('Layanan ditutup', 'warning');
+    } else {
+      DB.cafe.serviceStatus = 'force_open';
+      showToast('Layanan dipaksa buka', 'success');
+    }
+  }
   render();
 }
 
