@@ -9,7 +9,7 @@ function renderKitchenView() {
   return renderKitchenQueue((i, mi) => !mi.submitted_by);
 }
 
-function renderKitchenQueue(itemFilterFn) {
+function renderKitchenQueue(itemFilterFn, renderExtraFn) {
   const active = DB.orders.filter((o) =>
     o.accepted === true && ["pending", "cooking", "ready"].includes(o.status),
   );
@@ -21,6 +21,7 @@ function renderKitchenQueue(itemFilterFn) {
         allItems.push({
           ...i,
           menu_item: mi,
+          _order: o,
           orderId: o.id,
           orderType: o.order_type,
           tableId: o.table_id,
@@ -60,6 +61,7 @@ function renderKitchenQueue(itemFilterFn) {
           <div class="flex justify-between items-center">
             <div>
               <div class="font-semibold">${i.menu_item.name} <span style="color:var(--accent)">x${i.quantity}</span></div>
+              ${renderExtraFn ? renderExtraFn(i, i.menu_item, i._order) : ''}
               <div class="text-xs mt-1" style="color:var(--muted)">${formatCurrency(i.unitPrice * i.quantity)}</div>
               ${i.notes ? `<div class="text-xs mt-1" style="color:var(--warning)"><i class="fas fa-note-sticky mr-1"></i>${i.notes}</div>` : ""}
             </div>

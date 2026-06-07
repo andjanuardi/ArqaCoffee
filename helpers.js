@@ -53,6 +53,12 @@ function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takea
           if (cfg.type === 'percent') return Math.round(shippingCost * cfg.value / 100);
           return cfg.value;
         }
+        function calcMitraFee(total) {
+          const cfg = DB.cafe?.rates?.mitra?.service_fee;
+          if (!cfg || !cfg.value || !total) return 0;
+          if (cfg.type === 'percent') return Math.round(total * cfg.value / 100);
+          return cfg.value;
+        }
         function hasActiveCourier() {
           const today = new Date().toISOString().split('T')[0];
           return DB.users.some(u => u.role === 'courier' && DB.attendances.some(a =>

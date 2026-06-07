@@ -15,7 +15,14 @@ function renderMitraQueue() {
   const mitraMenuIds = DB.menuItems
     .filter(m => m.submitted_by === State.currentUser.name)
     .map(m => m.id);
-  return renderKitchenQueue((i, mi, o) => mitraMenuIds.includes(mi.id));
+  return renderKitchenQueue(
+    (i, mi, o) => mitraMenuIds.includes(mi.id),
+    (i, mi, o) => {
+      const subtotal = i.unit_price * i.quantity;
+      const fee = calcMitraFee(subtotal);
+      return fee > 0 ? `<div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-hand-holding-dollar mr-1"></i>Jasa Aplikasi: <b style="color:var(--danger)">-${formatCurrency(fee)}</b></div>` : '';
+    },
+  );
 }
 
 function renderMitraHistory() {
