@@ -26,8 +26,8 @@ function renderMitraQueue() {
         <i class="fas fa-fire-burner text-3xl mb-2" style="color:var(--danger)"></i>
         <p class="text-sm font-semibold mb-1" style="color:var(--danger)">Belum Check-in Hari Ini</p>
         <p class="text-xs mb-3" style="color:var(--muted)">Lakukan check-in di profil sebelum melihat antrian</p>
-        <button onclick="State.currentTab.mitra_juru_masak='profile';render()" class="btn-primary text-sm px-5 py-2" style="font-size:13px">
-          <i class="fas fa-clock mr-1"></i>Check-in di Profil
+        <button onclick="mitraCheckIn()" class="btn-primary text-sm px-5 py-2" style="font-size:13px">
+          <i class="fas fa-clock mr-1"></i>Check-in
         </button>
       </div>
     </div>`;

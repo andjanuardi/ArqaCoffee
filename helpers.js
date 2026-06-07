@@ -59,6 +59,13 @@ function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takea
           if (cfg.type === 'percent') return Math.round(total * cfg.value / 100);
           return cfg.value;
         }
+        function isCheckedIn() {
+          const today = new Date().toISOString().split('T')[0];
+          return DB.attendances.some(a =>
+            a.user_id === State.currentUser.id && !a.check_out &&
+            new Date(a.check_in).toISOString().split('T')[0] === today
+          );
+        }
         function hasActiveCourier() {
           const today = new Date().toISOString().split('T')[0];
           return DB.users.some(u => u.role === 'courier' && DB.attendances.some(a =>

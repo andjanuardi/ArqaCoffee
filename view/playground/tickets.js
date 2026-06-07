@@ -3,6 +3,19 @@
 // ============================================================
 
 function renderPlaygroundTickets() {
+  if (!isCheckedIn()) {
+    return `
+    <div class="animate-fade-up">
+      <div class="card text-center py-6" style="border-color:rgba(231,76,60,.2)">
+        <i class="fas fa-ticket text-3xl mb-2" style="color:var(--danger)"></i>
+        <p class="text-sm font-semibold mb-1" style="color:var(--danger)">Belum Check-in Hari Ini</p>
+        <p class="text-xs mb-3" style="color:var(--muted)">Lakukan check-in di profil sebelum mengelola tiket</p>
+        <button onclick="showGeoAttendanceModal()" class="btn-primary text-sm px-5 py-2" style="font-size:13px">
+          <i class="fas fa-clock mr-1"></i>Check-in
+        </button>
+      </div>
+    </div>`;
+  }
   const tickets = (DB.playgroundTickets || [])
     .filter((t) => t.status === "active")
     .sort((a, b) => new Date(a.end_time) - new Date(b.end_time));

@@ -149,15 +149,7 @@ function initModalCheckinMap() {
     map.fitBounds([[ARQA_COORDS.lat, ARQA_COORDS.lng], [lat, lng]], { padding: [40, 40], maxZoom: 16 });
     setTimeout(function() { map.invalidateSize(); }, 200);
   };
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      function(pos) { mkMarker(pos.coords.latitude, pos.coords.longitude); },
-      function() { mkMarker(ARQA_COORDS.lat, ARQA_COORDS.lng); },
-      { enableHighAccuracy: true, timeout: 5000 }
-    );
-  } else {
-    mkMarker(ARQA_COORDS.lat, ARQA_COORDS.lng);
-  }
+  mkMarker(ARQA_COORDS.lat, ARQA_COORDS.lng);
 }
 
 function modalCheckIn() {
