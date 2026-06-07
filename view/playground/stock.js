@@ -279,7 +279,7 @@ function confirmRestockPgStock(id) {
     if (!DB.expenses) DB.expenses = [];
     DB.expenses.push({
       id: "e" + Date.now(),
-      date: new Date().toISOString().split("T")[0],
+      date: new Date().toLocaleDateString('sv-SE'),
       time: new Date().toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",

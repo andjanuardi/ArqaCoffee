@@ -147,7 +147,7 @@ function renderCashierOrders() {
     <div class="space-y-3 mb-6">
       ${(() => {
         const ongkirOrders = DB.orders.filter(o =>
-          o.ongkir_status !== "confirmed" && o.courier_id && o.shipping_cost > 0 && o.status === "completed"
+          o.ongkir_status !== "confirmed" && o.courier_id && o.shipping_cost > 0 && o.status === "completed" && o.payment_method !== "cod"
         );
         if (ongkirOrders.length === 0) return '<p class="text-sm text-center py-4" style="color:var(--muted)">Tidak ada ongkir yang perlu dibayar</p>';
         return ongkirOrders.map(o => {

@@ -93,7 +93,7 @@ function printRevenueDetail() {
       return d.toISOString().split("T")[0];
     })();
   const endDate =
-    State.financeEndDate || new Date().toISOString().split("T")[0];
+    State.financeEndDate || new Date().toLocaleDateString('sv-SE');
 
   const isPlayground = State._showPendapatan === 'playground';
   const title = isPlayground ? 'Detail Pendapatan Playground' : 'Detail Pendapatan Cafe';
@@ -198,7 +198,7 @@ function printExpenseDetail() {
       return d.toISOString().split("T")[0];
     })();
   const endDate =
-    State.financeEndDate || new Date().toISOString().split("T")[0];
+    State.financeEndDate || new Date().toLocaleDateString('sv-SE');
   const expenses = (DB.expenses || []).filter(
     (e) => e.date && e.date >= startDate && e.date <= endDate,
   );
@@ -233,7 +233,7 @@ function printExpenseDetail() {
     </div>
     <table>
       <thead><tr><th>Tanggal</th><th>Jam</th><th>Kategori</th><th>Keterangan</th><th class="right">Jumlah</th></tr></thead>
-      <tbody>${expenses.map((e) => `<tr><td>${e.date}</td><td class="muted">${e.time || "-"}</td><td>${e.category}</td><td>${e.note || "-"}</td><td class="right red">${formatCurrency(e.amount)}</td></tr>`).join("")}</tbody>
+      <tbody>${expenses.map((e) => `<tr><td>${e.date}</td><td class="muted">${e.time || "-"}</td><td>${e.category}</td><td>${e.note && e.note.startsWith('Ongkir kurir') ? `[${e.paymentMethod === 'cod' ? 'Tunai/COD' : 'Digital'}] ` : ''}${e.note || "-"}</td><td class="right red">${formatCurrency(e.amount)}</td></tr>`).join("")}</tbody>
       <tfoot><tr class="tfoot"><td colspan="4">Total</td><td class="right red">${formatCurrency(totalExp)}</td></tr></tfoot>
     </table>
     <script>window.print()<${"/"}script></body></html>
@@ -250,7 +250,7 @@ function printAvgDetail() {
       return d.toISOString().split("T")[0];
     })();
   const endDate =
-    State.financeEndDate || new Date().toISOString().split("T")[0];
+    State.financeEndDate || new Date().toLocaleDateString('sv-SE');
   const data = getMergedDailyEntries(startDate, endDate);
   const totalRev = data.reduce((s, d) => s + d.revenue, 0);
   const dayCount = Math.max(
@@ -310,7 +310,7 @@ function printProfitDetail() {
       return d.toISOString().split("T")[0];
     })();
   const endDate =
-    State.financeEndDate || new Date().toISOString().split("T")[0];
+    State.financeEndDate || new Date().toLocaleDateString('sv-SE');
   const data = getCombinedDailyRevenue(startDate, endDate);
   const totalRev = data.reduce((s, d) => s + d.revenue, 0);
   const expenses = (DB.expenses || []).filter(
@@ -482,7 +482,7 @@ function renderFinanceReport() {
       return d.toISOString().split("T")[0];
     })();
   const endDate =
-    State.financeEndDate || new Date().toISOString().split("T")[0];
+    State.financeEndDate || new Date().toLocaleDateString('sv-SE');
   const computedSales = getFinanceData(startDate, endDate);
   const totalRev = computedSales.reduce((s, d) => s + d.revenue, 0);
   const pgRevEntries = getPlaygroundPeriodEntries(startDate, endDate);
@@ -629,7 +629,7 @@ function renderFinanceReport() {
               .localeCompare(a.date + (a.time || "")))
             .map(
               (e) => `
-            <tr><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${e.date || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${e.time || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px">${e.category}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${e.note || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--danger)">${formatCurrency(e.amount)}</td></tr>
+            <tr><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${e.date || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${e.time || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px">${e.category}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${e.note && e.note.startsWith('Ongkir kurir') ? `<div class="flex items-center gap-1 flex-wrap mb-1"><span style="background:rgba(52,152,219,.15);color:#3498db;font-size:10px;padding:1px 6px;border-radius:4px;white-space:nowrap"><i class="fas fa-truck mr-0.5"></i>Delivery</span><span style="background:${e.paymentMethod === 'cod' ? 'rgba(39,174,96,.15);color:#27ae60' : 'rgba(155,89,182,.15);color:#9b59b6'};font-size:10px;padding:1px 6px;border-radius:4px;white-space:nowrap"><i class="fas ${e.paymentMethod === 'cod' ? 'fa-money-bill' : 'fa-wallet'} mr-0.5"></i>${e.paymentMethod === 'cod' ? 'Tunai/COD' : 'Digital'}</span></div>` : ''}${e.note || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--danger)">${formatCurrency(e.amount)}</td></tr>
           `,
             )
             .join("")}</tbody>

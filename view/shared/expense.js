@@ -18,7 +18,8 @@ const EXPENSE_ICONS = {
 function renderExpenseManagement() {
   if (!State.expenseSearch) State.expenseSearch = "";
   if (!State.expenseCategory) State.expenseCategory = "all";
-  const dateFilter = State.expenseDate || new Date().toISOString().split("T")[0];
+  if (!State.expenseDate) State.expenseDate = new Date().toLocaleDateString('sv-SE');
+  const dateFilter = State.expenseDate;
   const expenses = DB.expenses || [];
   const filtered = expenses.filter((e) => {
     if (!e.date) return false;
@@ -43,7 +44,7 @@ function renderExpenseManagement() {
       <input type="date" id="expense-date" class="input-field" style="max-width:260px" value="${dateFilter}" onchange="State.expenseDate=this.value;render()">
     </div>
     <div class="grid grid-cols-2 gap-3 mb-4">
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-base font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalFiltered)}</div></div>
+      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showExpenseTable=true;State.currentTab.${State.currentUser.role}='finance';render()"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-base font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalFiltered)}</div></div>
       <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Jumlah Transaksi</div><div class="text-base font-bold mt-1">${filtered.length}</div></div>
     </div>
     <div class="card mb-4" style="padding:10px">
@@ -80,6 +81,10 @@ function renderExpenseManagement() {
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="text-xs font-semibold px-2 py-0.5 rounded-full" style="background:${color}22;color:${color}">${e.category}</span>
                   ${e.source ? `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${e.source === 'Cafe' ? 'rgba(224,122,58,.15)' : 'rgba(155,89,182,.15)'};color:${e.source === 'Cafe' ? 'var(--accent)' : '#9b59b6'}">${e.source}</span>` : ''}
+                  ${e.note && e.note.startsWith('Ongkir kurir') ? `
+                    <span class="text-[10px] px-1.5 py-0.5 rounded" style="background:rgba(52,152,219,.15);color:#3498db"><i class="fas fa-truck mr-0.5"></i>Delivery</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${e.paymentMethod === 'cod' ? 'rgba(39,174,96,.15);color:#27ae60' : 'rgba(155,89,182,.15);color:#9b59b6'};white-space:nowrap"><i class="fas ${e.paymentMethod === 'cod' ? 'fa-money-bill' : 'fa-wallet'} mr-0.5"></i>${e.paymentMethod === 'cod' ? 'Tunai/COD' : 'Digital'}</span>
+                  ` : ''}
                   <span class="text-xs" style="color:var(--muted)">${e.date || "-"}${e.time ? " " + e.time : ""}</span>
                 </div>
                 <div class="text-sm font-semibold mt-1" style="color:var(--danger)">${formatCurrency(e.amount)}${e.volume && e.unitPrice ? ` <span class="text-xs font-normal" style="color:var(--muted)">(${e.volume} ${e.unit || "unit"} x ${formatCurrency(e.unitPrice)})</span>` : ""}</div>
@@ -107,7 +112,7 @@ function showAddExpenseModal() {
       <div class="space-y-3">
         <div>
           <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Tanggal</label>
-          <input id="new-expense-date" type="date" class="input-field text-sm w-full" value="${new Date().toISOString().split("T")[0]}">
+          <input id="new-expense-date" type="date" class="input-field text-sm w-full" value="${new Date().toLocaleDateString('sv-SE')}">
         </div>
         <div>
           <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Jam</label>
@@ -115,7 +120,7 @@ function showAddExpenseModal() {
         </div>
         <div>
           <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kategori</label>
-          <select id="new-expense-cat" class="input-field text-sm w-full">${EXPENSE_CATS.map((c) => `<option value="${c}">${c}</option>`).join("")}</select>
+          <select id="new-expense-cat" class="input-field text-sm w-full"><option value="" disabled selected>Silahkan Pilih Katagori</option>${EXPENSE_CATS.map((c) => `<option value="${c}">${c}</option>`).join("")}</select>
         </div>
         <div class="grid grid-cols-3 gap-2">
           <div>

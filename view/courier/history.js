@@ -59,7 +59,7 @@ function renderCourierHistory() {
       o.courier_id === State.currentUser.id &&
       (o.status === "completed" || o.status === "delivered"),
   );
-  const dateFilter = State.courierDateFilter || new Date().toISOString().split("T")[0];
+  const dateFilter = State.courierDateFilter || new Date().toLocaleDateString('sv-SE');
   if (dateFilter) {
     const s = new Date(dateFilter);
     s.setHours(0, 0, 0, 0);
@@ -168,9 +168,13 @@ function confirmOngkir(id) {
     DB.expenses.push({
       id: 'e' + Date.now(),
       date: new Date().toISOString().split('T')[0],
+      time: new Date().toTimeString().slice(0, 5),
       category: 'Operasional',
       amount: o.shipping_cost - calcCourierFee(o.shipping_cost),
       note: 'Ongkir kurir #' + o.id.slice(-5).toUpperCase() + (custName ? ' — ' + custName : ''),
+      source: 'Cafe',
+      orderType: 'delivery',
+      paymentMethod: 'digital',
     });
   }
   addNotification({

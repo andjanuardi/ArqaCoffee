@@ -74,6 +74,21 @@ function settleDelivery(id) {
   o.status = "completed";
   o.payment_status = "paid";
   o.payment_method = "cod";
+  if (o.shipping_cost > 0) {
+    const kurir = getUser(o.courier_id);
+    const netOngkir = o.shipping_cost - calcCourierFee(o.shipping_cost);
+    DB.expenses.push({
+      id: "e" + Date.now(),
+      date: new Date().toLocaleDateString('sv-SE'),
+      time: new Date().toTimeString().slice(0, 5),
+      category: "Operasional",
+      amount: netOngkir,
+      note: "Ongkir kurir — #" + o.id.slice(-5).toUpperCase() + " — " + (kurir ? kurir.name : "—"),
+      source: "Cafe",
+      orderType: "delivery",
+      paymentMethod: "cod",
+    });
+  }
   notifyPayment(o, 'COD (Setoran Kurir)');
   showToast(
     `Setoran diterima — Pesanan #${o.id.slice(-5).toUpperCase()} selesai`,
