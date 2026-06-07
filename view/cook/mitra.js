@@ -12,6 +12,26 @@ function renderMitraView() {
 }
 
 function renderMitraQueue() {
+  const today = new Date().toISOString().split('T')[0];
+  const hasCheckedIn = DB.attendances.some(
+    a => a.user_id === State.currentUser.id
+      && !a.check_out
+      && new Date(a.check_in).toISOString().split('T')[0] === today
+  );
+  if (!hasCheckedIn) {
+    return `
+    <div class="animate-fade-up">
+      <h2 class="font-display text-xl font-bold mb-4">Antrian Dapur</h2>
+      <div class="card text-center py-6" style="border-color:rgba(231,76,60,.2)">
+        <i class="fas fa-fire-burner text-3xl mb-2" style="color:var(--danger)"></i>
+        <p class="text-sm font-semibold mb-1" style="color:var(--danger)">Belum Check-in Hari Ini</p>
+        <p class="text-xs mb-3" style="color:var(--muted)">Lakukan check-in di profil sebelum melihat antrian</p>
+        <button onclick="State.currentTab.mitra_juru_masak='profile';render()" class="btn-primary text-sm px-5 py-2" style="font-size:13px">
+          <i class="fas fa-clock mr-1"></i>Check-in di Profil
+        </button>
+      </div>
+    </div>`;
+  }
   const mitraMenuIds = DB.menuItems
     .filter(m => m.submitted_by === State.currentUser.name)
     .map(m => m.id);
