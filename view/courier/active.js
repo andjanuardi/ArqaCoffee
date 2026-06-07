@@ -27,7 +27,7 @@ function renderCourierActive() {
         ${o.payment_status === "paid" && o.shipping_cost > 0 ? `<div class="text-xs mb-2" style="color:var(--success)"><i class="fas fa-hand-holding-dollar mr-1"></i>Ongkir dari kasir: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ""}
         <div id="map-courier-${o.id}" class="mb-3" style="height:200px;border-radius:12px"></div>
         <div class="flex gap-2">
-          <button onclick="simulateMove('${o.id}')" class="btn-secondary btn-sm flex-1 text-center"><i class="fas fa-location-arrow mr-1"></i>Update</button>
+          <button onclick="openNavigation('${o.id}')" class="btn-secondary btn-sm flex-1 text-center"><i class="fas fa-map-signs mr-1"></i>Navigasi</button>
           <button onclick="openChatModal('${o.id}')" class="btn-secondary btn-sm flex-1 text-center" style="background:rgba(224,122,58,.1);color:var(--accent);border-color:transparent;position:relative"><i class="fas fa-comment-alt mr-1"></i>Chat${getOrderChatUnreadCount(o.id) > 0 ? `<span class="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style="background:var(--danger);color:#fff">${getOrderChatUnreadCount(o.id)}</span>` : ""}</button>
           <button onclick="completeDelivery('${o.id}')" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-check mr-1"></i>Selesai</button>
         </div>
@@ -38,24 +38,21 @@ function renderCourierActive() {
   </div>`;
 }
 
-function simulateMove(orderId) {
-  const tracks = DB.courierTracking.filter((t) => t.order_id === orderId);
-  if (tracks.length > 0) {
-    const last = tracks[tracks.length - 1];
-    const newLat = last.latitude + (Math.random() - 0.5) * 0.005;
-    const newLng = last.longitude + (Math.random() - 0.5) * 0.005;
-    DB.courierTracking.push({
-      id: "ct" + Date.now(),
-      order_id: orderId,
-      courier_id: State.currentUser.id,
-      latitude: newLat,
-      longitude: newLng,
-      recorded_at: new Date().toISOString(),
-    });
+function openNavigation(orderId) {
+  const o = DB.orders.find(x => x.id === orderId);
+  if (!o) return;
+  if (!o.delivery_location || !o.delivery_location.lat) {
+    showToast("Lokasi pelanggan tidak tersedia", "error");
+    return;
   }
-  showToast("Lokasi diupdate", "info");
-  render();
-  setTimeout(() => initCourierMap(orderId), 300);
+  const courierPos = State.courierPosition || DB.cafe?.location;
+  if (!courierPos) {
+    showToast("Posisi kurir tidak diketahui", "error");
+    return;
+  }
+  const origin = `${courierPos.lat},${courierPos.lng}`;
+  const dest = `${o.delivery_location.lat},${o.delivery_location.lng}`;
+  window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=driving`, '_blank');
 }
 
 function completeDelivery(id) {
