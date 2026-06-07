@@ -83,6 +83,10 @@ function renderMitraHistory() {
 function showMitraOrderDetail(id) {
   const o = DB.orders.find(x => x.id === id); if (!o) return;
   const t = o.table_id ? getTable(o.table_id) : null;
+  const itemsSubtotal = o.items.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
+  const tax = calcItemTax(o.items);
+  const biayaLayanan = calcMitraFee(itemsSubtotal);
+  const pembayaranMitra = Math.max(0, itemsSubtotal - tax - biayaLayanan);
   showModal(`
 <div>
   <div class="flex justify-between items-start mb-4">
@@ -108,7 +112,10 @@ function showMitraOrderDetail(id) {
     }).join('')}
   </div>
   <div class="border-t pt-3" style="border-color:var(--border)">
-    <div class="flex justify-between font-bold text-sm"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
+    <div class="flex justify-between text-xs mb-1"><span style="color:var(--muted)">Subtotal Menu</span><span style="color:var(--muted)">${formatCurrency(itemsSubtotal)}</span></div>
+    ${tax > 0 ? `<div class="flex justify-between text-xs mb-1"><span style="color:var(--muted)"><i class="fas fa-receipt mr-1"></i>Pajak</span><span style="color:var(--muted)">${formatCurrency(tax)}</span></div>` : ''}
+    ${biayaLayanan > 0 ? `<div class="flex justify-between text-xs mb-1"><span style="color:var(--muted)"><i class="fas fa-hand-holding-dollar mr-1"></i>Biaya Layanan</span><span style="color:var(--muted)">${formatCurrency(biayaLayanan)}</span></div>` : ''}
+    <div class="flex justify-between font-bold text-sm mt-2"><span>Total Pembayaran</span><span style="color:var(--accent)">${formatCurrency(pembayaranMitra)}</span></div>
     <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Waktu</span><span>${formatTime(o.created_at)}</span></div>
   </div>
   <button onclick="closeModal()" class="btn-secondary w-full mt-4 text-center">Tutup</button>
