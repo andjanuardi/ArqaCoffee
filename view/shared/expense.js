@@ -9,21 +9,30 @@ const EXPENSE_COLORS = {
   Lainnya: "#f39c12",
 };
 const EXPENSE_ICONS = {
-  Stok: "fa-warehouse",
+  Stok: "fa-box",
   Operasional: "fa-bolt",
-  Gaji: "fa-hand-holding-dollar",
+  Gaji: "fa-wallet",
   Lainnya: "fa-receipt",
 };
 
 function renderExpenseManagement() {
+  const isAdmin = State.currentUser?.role === 'admin';
   if (!State.expenseSearch) State.expenseSearch = "";
   if (!State.expenseCategory) State.expenseCategory = "all";
-  if (!State.expenseDate) State.expenseDate = new Date().toLocaleDateString('sv-SE');
-  const dateFilter = State.expenseDate;
+  if (isAdmin) {
+    if (!State.expenseStart) State.expenseStart = new Date().toLocaleDateString('sv-SE');
+    if (!State.expenseEnd) State.expenseEnd = new Date().toLocaleDateString('sv-SE');
+  } else {
+    if (!State.expenseDate) State.expenseDate = new Date().toLocaleDateString('sv-SE');
+  }
   const expenses = DB.expenses || [];
   const filtered = expenses.filter((e) => {
     if (!e.date) return false;
-    if (e.date !== dateFilter) return false;
+    if (isAdmin) {
+      if (e.date < State.expenseStart || e.date > State.expenseEnd) return false;
+    } else {
+      if (e.date !== State.expenseDate) return false;
+    }
     if (State.expenseCategory !== "all") {
       if (State.expenseCategory === "Stok") {
         if (e.category !== "Bahan Baku" && e.category !== "Item Include") return false;
@@ -40,8 +49,15 @@ function renderExpenseManagement() {
       <button onclick="showAddExpenseModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
     </div>
     <div class="mb-4">
-      <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Filter Tanggal</label>
-      <input type="date" id="expense-date" class="input-field" style="max-width:260px" value="${dateFilter}" onchange="State.expenseDate=this.value;render()">
+      <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">${isAdmin ? 'Filter Rentang Tanggal' : 'Filter Tanggal'}</label>
+      ${isAdmin ? `
+      <div class="flex items-center gap-2 flex-wrap">
+        <input type="date" id="expense-start" class="input-field" style="flex:1;min-width:130px" value="${State.expenseStart}" onchange="State.expenseStart=this.value;render()">
+        <span class="text-xs" style="color:var(--muted)">s/d</span>
+        <input type="date" id="expense-end" class="input-field" style="flex:1;min-width:130px" value="${State.expenseEnd}" onchange="State.expenseEnd=this.value;render()">
+      </div>` : `
+      <input type="date" id="expense-date" class="input-field" style="max-width:260px" value="${State.expenseDate}" onchange="State.expenseDate=this.value;render()">`
+      }
     </div>
     <div class="grid grid-cols-2 gap-3 mb-4">
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showExpenseTable=true;State.currentTab.${State.currentUser.role}='finance';render()"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-base font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalFiltered)}</div></div>

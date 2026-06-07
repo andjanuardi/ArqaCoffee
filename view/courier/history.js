@@ -164,14 +164,14 @@ function confirmOngkir(id) {
   if (!o) return;
   o.ongkir_status = "confirmed";
   if (o.shipping_cost > 0) {
-    var custName = o.customer_name || (getUser(o.user_id)?.name || '');
+    var kurir = getUser(o.courier_id);
     DB.expenses.push({
       id: 'e' + Date.now(),
       date: new Date().toLocaleDateString('sv-SE'),
       time: new Date().toTimeString().slice(0, 5),
       category: 'Operasional',
       amount: o.shipping_cost - calcCourierFee(o.shipping_cost),
-      note: 'Ongkir kurir #' + o.id.slice(-5).toUpperCase() + (custName ? ' — ' + custName : ''),
+      note: 'Ongkir kurir #' + o.id.slice(-5).toUpperCase() + ' — ' + (kurir ? kurir.name : 'Kurir'),
       source: 'Cafe',
       orderType: 'delivery',
       paymentMethod: 'digital',

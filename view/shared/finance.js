@@ -233,7 +233,7 @@ function printExpenseDetail() {
     </div>
     <table>
       <thead><tr><th>Tanggal</th><th>Jam</th><th>Kategori</th><th>Keterangan</th><th class="right">Jumlah</th></tr></thead>
-      <tbody>${expenses.map((e) => `<tr><td>${e.date}</td><td class="muted">${e.time || "-"}</td><td>${e.category}</td><td>${e.note && e.note.startsWith('Ongkir kurir') ? `[${e.paymentMethod === 'cod' ? 'Tunai/COD' : 'Digital'}] ` : ''}${e.note || "-"}</td><td class="right red">${formatCurrency(e.amount)}</td></tr>`).join("")}</tbody>
+      <tbody>${expenses.map((e) => `<tr><td>${e.date}</td><td class="muted">${e.time || "-"}</td><td>${e.category}</td><td>${e.note && e.note.startsWith('Ongkir kurir') ? `[${e.paymentMethod === 'cod' ? 'Tunai/COD' : 'Digital'}] Ongkir Kurir` : (e.note || "-")}</td><td class="right red">${formatCurrency(e.amount)}</td></tr>`).join("")}</tbody>
       <tfoot><tr class="tfoot"><td colspan="4">Total</td><td class="right red">${formatCurrency(totalExp)}</td></tr></tfoot>
     </table>
     <script>window.print()<${"/"}script></body></html>
@@ -471,6 +471,40 @@ function getCombinedDailyRevenue(startDate, endDate) {
 }
 
 // ------------------------------------------------------------------
+// EXPENSE DETAIL MODAL
+// ------------------------------------------------------------------
+function showExpenseDetail(id) {
+  const e = DB.expenses.find(x => x.id === id);
+  if (!e) return;
+  const color = EXPENSE_COLORS[e.category] || "var(--muted)";
+  const icon = EXPENSE_ICONS[e.category] || "fa-receipt";
+  showModal(`
+<div style="max-width:420px">
+  <h3 class="font-display text-lg font-bold mb-4">Detail Pengeluaran</h3>
+  <div class="flex items-center gap-3 mb-4 p-3 rounded-xl" style="background:${color}15">
+    <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background:${color}22;color:${color}">
+      <i class="fas ${icon} text-xl"></i>
+    </div>
+    <div>
+      <div class="text-sm font-semibold">${e.category}</div>
+      <div class="text-2xl font-bold" style="color:var(--danger)">${formatCurrency(e.amount)}</div>
+    </div>
+  </div>
+  <div class="space-y-2 text-sm">
+    <div class="flex justify-between"><span style="color:var(--muted)">Tanggal</span><span>${e.date || "-"}${e.time ? " " + e.time : ""}</span></div>
+    <div class="flex justify-between"><span style="color:var(--muted)">Keterangan</span><span>${e.note || "-"}</span></div>
+    ${e.volume && e.unitPrice ? `<div class="flex justify-between"><span style="color:var(--muted)">Volume</span><span>${e.volume} ${e.unit || "unit"} x ${formatCurrency(e.unitPrice)}</span></div>` : ""}
+    ${e.source ? `<div class="flex justify-between"><span style="color:var(--muted)">Sumber</span><span>${e.source}</span></div>` : ""}
+    ${e.note && e.note.startsWith('Ongkir kurir') ? `
+    <div class="flex justify-between"><span style="color:var(--muted)">Metode Bayar</span><span>${e.paymentMethod === 'cod' ? 'Tunai/COD' : 'Digital'}</span></div>
+    <div class="flex justify-between"><span style="color:var(--muted)">Jenis</span><span><span class="text-[10px] px-1.5 py-0.5 rounded" style="background:rgba(52,152,219,.15);color:#3498db"><i class="fas fa-truck mr-0.5"></i>Delivery</span></span></div>` : ""}
+  </div>
+  <button onclick="closeModal()" class="btn-primary w-full mt-4 text-center">Tutup</button>
+</div>
+  `);
+}
+
+// ------------------------------------------------------------------
 // FINANCE REPORT
 // ------------------------------------------------------------------
 function renderFinanceReport() {
@@ -629,7 +663,7 @@ function renderFinanceReport() {
               .localeCompare(a.date + (a.time || "")))
             .map(
               (e) => `
-            <tr><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${e.date || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${e.time || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px">${e.category}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${e.note && e.note.startsWith('Ongkir kurir') ? `<div class="flex items-center gap-1 flex-wrap mb-1"><span style="background:rgba(52,152,219,.15);color:#3498db;font-size:10px;padding:1px 6px;border-radius:4px;white-space:nowrap"><i class="fas fa-truck mr-0.5"></i>Delivery</span><span style="background:${e.paymentMethod === 'cod' ? 'rgba(39,174,96,.15);color:#27ae60' : 'rgba(155,89,182,.15);color:#9b59b6'};font-size:10px;padding:1px 6px;border-radius:4px;white-space:nowrap"><i class="fas ${e.paymentMethod === 'cod' ? 'fa-money-bill' : 'fa-wallet'} mr-0.5"></i>${e.paymentMethod === 'cod' ? 'Tunai/COD' : 'Digital'}</span></div>` : ''}${e.note || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--danger)">${formatCurrency(e.amount)}</td></tr>
+            <tr class="cursor-pointer hover:bg-white/5" onclick="showExpenseDetail('${e.id}')"><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${e.date || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${e.time || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px">${e.category}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted)">${e.note && e.note.startsWith('Ongkir kurir') ? `<div class="flex items-center gap-1 flex-wrap mb-1"><span style="background:rgba(52,152,219,.15);color:#3498db;font-size:10px;padding:1px 6px;border-radius:4px;white-space:nowrap"><i class="fas fa-truck mr-0.5"></i>Delivery</span><span style="background:${e.paymentMethod === 'cod' ? 'rgba(39,174,96,.15);color:#27ae60' : 'rgba(155,89,182,.15);color:#9b59b6'};font-size:10px;padding:1px 6px;border-radius:4px;white-space:nowrap"><i class="fas ${e.paymentMethod === 'cod' ? 'fa-money-bill' : 'fa-wallet'} mr-0.5"></i>${e.paymentMethod === 'cod' ? 'Tunai/COD' : 'Digital'}</span></div><span style="color:var(--muted)">Ongkir Kurir</span>` : (e.note || "-")}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--danger)">${formatCurrency(e.amount)}</td></tr>
           `,
             )
             .join("")}</tbody>
