@@ -9,6 +9,7 @@ function initCourierMap(orderId) {
       State.mapInstances[orderId].remove();
     } catch (e) {}
   }
+  const o = DB.orders.find(x => x.id === orderId);
   const tracks = DB.courierTracking.filter((t) => t.order_id === orderId);
   const last =
     tracks.length > 0
@@ -19,7 +20,9 @@ function initCourierMap(orderId) {
     "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
     { maxZoom: 20, attribution: "Google" },
   ).addTo(map);
-  L.marker([last.latitude, last.longitude])
+  L.marker([last.latitude, last.longitude], {
+    icon: L.divIcon({ html: '<i class="fas fa-motorcycle" style="color:#e07a3a;font-size:24px"></i>', className: '', iconSize: [24, 24], iconAnchor: [12, 12] })
+  })
     .addTo(map)
     .bindPopup("Posisi Kurir")
     .openPopup();
@@ -28,6 +31,24 @@ function initCourierMap(orderId) {
     L.polyline(polyline, { color: "#e07a3a", weight: 3, opacity: 0.8 }).addTo(
       map,
     );
+  }
+  if (o && o.delivery_location && o.delivery_location.lat) {
+    L.marker([o.delivery_location.lat, o.delivery_location.lng], {
+      icon: L.divIcon({ html: '<i class="fas fa-map-marker-alt" style="color:#e74c3c;font-size:24px"></i>', className: '', iconSize: [24, 24], iconAnchor: [12, 24] })
+    })
+      .addTo(map)
+      .bindPopup("Lokasi Pelanggan");
+    if (tracks.length <= 1) {
+      L.polyline(
+        [[last.latitude, last.longitude], [o.delivery_location.lat, o.delivery_location.lng]],
+        { color: "#e07a3a", weight: 2, opacity: 0.6, dashArray: "8, 8" }
+      ).addTo(map);
+    }
+    const bounds = L.latLngBounds(
+      [last.latitude, last.longitude],
+      [o.delivery_location.lat, o.delivery_location.lng]
+    );
+    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 19 });
   }
   State.mapInstances[orderId] = map;
 }
@@ -159,7 +180,7 @@ function showCourierOrderDetail(id) {
         <div class="mb-1"><i class="fas fa-map-marker-alt mr-2" style="color:var(--accent)"></i>${o.delivery_address}</div>
         ${o.delivery_detail ? `<div class="text-xs mt-1" style="color:var(--muted)"><i class="fas fa-info-circle mr-1"></i>${o.delivery_detail}</div>` : ""}
       </div>
-      <div class="space-y-2 mb-4">
+      <div class="space-y-2 mb-2">
         ${o.items.filter(i => i.status !== "rejected")
           .map((i) => {
             const mi = getMenuItem(i.menu_item_id);
@@ -172,13 +193,21 @@ function showCourierOrderDetail(id) {
           })
           .join("")}
       </div>
-      <div class="border-t pt-3" style="border-color:var(--border)">
-        ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-truck mr-1"></i>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ""}
+      ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-truck mr-1"></i>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ""}
+      <div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span>Metode Pembayaran</span><span>${o.payment_method === 'qris' ? 'QRIS' : o.payment_method === 'bank_transfer' ? 'Transfer Bank' : o.payment_method === 'digital' ? 'Digital' : o.payment_method === "" ? 'Bayar Nanti (COD)' : 'Tunai/COD'}</span></div>
+      <div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.status === "delivered" ? "badge-unpaid" : o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}" ${o.status === "delivered" ? 'style="background:rgba(241,196,15,.15);color:#f1c40f"' : ""}>${o.status === "delivered" ? "Belum Setor" : o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>
+      <div class="border-t pt-3 mt-3" style="border-color:var(--border)">
         ${o.shipping_cost > 0 && o.ongkir_status ? `<div class="flex justify-between text-xs mb-1" style="color:${o.ongkir_status === "confirmed" ? "var(--success)" : o.ongkir_status === "paid" ? "#3498db" : "#f1c40f"}"><span><i class="fas fa-hand-holding-dollar mr-1"></i>Status Ongkir</span><span>${o.ongkir_status === "unpaid" ? "Belum Diambil" : o.ongkir_status === "paid" ? "Siap Diambil" : "Sudah Diterima"}</span></div>` : ""}
-        <div class="flex justify-between font-bold"><span>Total Pendapatan</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
-        <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Metode Pembayaran</span><span>${o.payment_method === 'qris' ? 'QRIS' : o.payment_method === 'bank_transfer' ? 'Transfer Bank' : o.payment_method === 'digital' ? 'Digital' : o.payment_method === "" ? 'Bayar Nanti (COD)' : 'Tunai/COD'}</span></div>
-        <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.status === "delivered" ? "badge-unpaid" : o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}" ${o.status === "delivered" ? 'style="background:rgba(241,196,15,.15);color:#f1c40f"' : ""}>${o.status === "delivered" ? "Belum Setor" : o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>
-        <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Waktu Selesai</span><span>${formatTime(o.created_at)}</span></div>
+        ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span><i class="fas fa-hand-holding-dollar mr-1"></i>Jasa Aplikasi</span><span style="color:var(--danger)">-${formatCurrency(calcCourierFee(o.shipping_cost))}</span></div>
+        <div class="flex justify-between text-xs mb-2 pb-2" style="border-bottom:1px dashed var(--border);color:var(--success)"><span><i class="fas fa-wallet mr-1"></i>Pendapatan Ongkir</span><span>${formatCurrency(o.shipping_cost - calcCourierFee(o.shipping_cost))}</span></div>` : ""}
+        <div class="flex justify-between text-xs" style="color:var(--muted)"><span>Waktu Selesai</span><span>${formatTime(o.created_at)}</span></div>
+        ${o.delivery_location && o.delivery_location.lat ? (function() {
+          const d = calcDistance(DB.cafe.location.lat, DB.cafe.location.lng, o.delivery_location.lat, o.delivery_location.lng);
+          const meter = Math.round(d).toLocaleString('id-ID');
+          const km = (d / 1000).toFixed(1).replace('.', ',');
+          const label = d < 1000 ? meter + ' meter' : meter + ' m (' + km + ' km)';
+          return `<div class="flex justify-between text-xs mt-1" style="color:var(--accent)"><span><i class="fas fa-store mr-1"></i>Cafe → Pelanggan</span><span>${label}</span></div>`;
+        })() : ""}
       </div>
       <button onclick="closeModal()" class="btn-secondary w-full mt-4 text-center">Tutup</button>
     </div>

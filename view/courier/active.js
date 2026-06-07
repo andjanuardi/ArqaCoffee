@@ -28,14 +28,36 @@ function renderCourierActive() {
           <span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
         </div>
         <div class="text-xs mb-1" style="color:var(--muted)">${formatDate(o.created_at)} ${formatTime(o.created_at)}</div>
-        <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-user mr-1" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</div>
-        <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-phone mr-1" style="color:var(--accent)"></i>${o.customer_phone || (getUser(o.user_id)?.phone || '—')}</div>
-        <div class="text-sm mb-1"><i class="fas fa-map-marker-alt mr-1" style="color:var(--accent)"></i>${o.delivery_address}</div>
-        ${o.delivery_detail ? `<div class="text-xs mb-2" style="color:var(--muted)"><i class="fas fa-info-circle mr-1"></i>${o.delivery_detail}</div>` : ""}
-        ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="text-xs mb-2" style="color:var(--accent)"><i class="fas fa-truck mr-1"></i>Ongkos Kirim: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ""}
-        ${(() => { const fee = calcCourierFee(o.shipping_cost); return fee > 0 ? `<div class="text-xs mb-2" style="color:var(--muted)"><i class="fas fa-hand-holding-dollar mr-1"></i>Jasa Aplikasi: <b style="color:var(--danger)">-${formatCurrency(fee)}</b></div>` : ''; })()}
-        ${o.payment_status === "paid" && o.shipping_cost > 0 ? `<div class="text-xs mb-2" style="color:var(--success)"><i class="fas fa-hand-holding-dollar mr-1"></i>Ongkir dari kasir: <b>${formatCurrency((o.shipping_cost || 0) - calcCourierFee(o.shipping_cost))}</b></div>` : ""}
-        ${(() => { const d = getCafeToCustDist(o); return d ? `<div class="text-xs mb-2" style="color:var(--accent)"><i class="fas fa-store mr-1"></i>Cafe → Pelanggan: ${d}</div>` : ''; })()}
+        <div class="p-3 rounded-xl mb-3" style="background:var(--bg2)">
+          <div class="text-xs font-semibold mb-2" style="color:var(--muted)"><i class="fas fa-user-circle mr-1"></i>Informasi Pelanggan</div>
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2 text-xs"><div class="w-6 text-center"><i class="fas fa-user" style="color:var(--accent)"></i></div><span>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</span></div>
+            <div class="flex items-center gap-2 text-xs"><div class="w-6 text-center"><i class="fas fa-phone" style="color:var(--accent)"></i></div><span>${o.customer_phone || (getUser(o.user_id)?.phone || '—')}</span></div>
+            <div class="flex items-center gap-2 text-xs"><div class="w-6 text-center"><i class="fas fa-map-marker-alt" style="color:var(--accent)"></i></div><span>${o.delivery_address}</span></div>
+            ${o.delivery_detail ? `<div class="flex items-center gap-2 text-xs"><div class="w-6 text-center"><i class="fas fa-info-circle" style="color:var(--accent)"></i></div><span>${o.delivery_detail}</span></div>` : ""}
+          </div>
+        </div>
+        <div class="p-3 rounded-xl mb-3" style="background:var(--bg2)">
+          <div class="text-xs font-semibold mb-2" style="color:var(--muted)"><i class="fas fa-receipt mr-1"></i>Rincian Pesanan</div>
+          ${o.items.filter(i => i.status !== "rejected").map(i => {
+            const mi = getMenuItem(i.menu_item_id);
+            return mi ? `<div class="flex justify-between text-xs mb-1"><span>${mi.name} x${i.quantity}</span><span>${formatCurrency(i.unit_price * i.quantity)}</span></div>` : '';
+          }).join('')}
+          <div class="border-t pt-2 mt-2" style="border-color:var(--border)">
+            <div class="flex justify-between text-xs mb-1"><span style="color:var(--muted)">Subtotal</span><span>${formatCurrency(o.items.reduce((s, i) => s + i.unit_price * i.quantity, 0))}</span></div>
+            ${o.promo_discount > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ''}
+            <div class="flex justify-between text-xs mb-1"><span style="color:var(--muted)"><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(o.items)))}</span></div>
+            ${o.service_fee > 0 ? `<div class="flex justify-between text-xs mb-1"><span style="color:var(--muted)"><i class="fas fa-hand-holding-dollar mr-1"></i>Biaya Layanan</span><span>${formatCurrency(o.service_fee)}</span></div>` : ''}
+            ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1"><span style="color:var(--muted)"><i class="fas fa-truck mr-1"></i>Ongkos Kirim</span><span style="color:var(--accent)">${formatCurrency(o.shipping_cost)}</span></div>` : ""}
+            <div class="flex justify-between font-bold text-sm mt-1"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
+          </div>
+        </div>
+        <div class="p-3 rounded-xl mb-3" style="background:var(--bg2)">
+          <div class="text-xs font-semibold mb-2" style="color:var(--muted)"><i class="fas fa-truck mr-1"></i>Biaya Pengiriman</div>
+          ${(() => { const fee = calcCourierFee(o.shipping_cost); return fee > 0 ? `<div class="flex justify-between text-xs mb-1"><span style="color:var(--muted)">Jasa Aplikasi</span><span style="color:var(--danger)">-${formatCurrency(fee)}</span></div>` : ''; })()}
+          ${o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1"><span style="color:var(--muted)">Pendapatan Ongkir</span><span style="color:var(--success)">${formatCurrency((o.shipping_cost || 0) - calcCourierFee(o.shipping_cost))}</span></div>` : ""}
+          ${(() => { const d = getCafeToCustDist(o); return d ? `<div class="flex justify-between text-xs"><span style="color:var(--muted)">Cafe → Pelanggan</span><span style="color:var(--accent)">${d}</span></div>` : ''; })()}
+        </div>
         <div id="map-courier-${o.id}" class="mb-3" style="height:200px;border-radius:12px"></div>
         <div class="flex gap-2">
           <button onclick="openNavigation('${o.id}')" class="btn-secondary btn-sm flex-1 text-center"><i class="fas fa-map-signs mr-1"></i>Navigasi</button>

@@ -235,7 +235,7 @@ function initCharts() {
 function initMaps() {
   DB.orders.filter(o => o.status === 'delivering' && o.courier_id === State.currentUser.id).forEach(o => {
     const el = document.getElementById(`map-courier-${o.id}`);
-    if (el && !State.mapInstances[o.id]) {
+    if (el) {
       initCourierMap(o.id);
     }
   });
