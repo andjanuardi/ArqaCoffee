@@ -19,10 +19,10 @@ function saveNotifications() {
 function sendBrowserNotification(title, body) {
   if (!("Notification" in window)) return;
   if (Notification.permission === "granted") {
-    new Notification(title, { body: body });
+    try { new Notification(title, { body: body }); } catch (e) {}
   } else if (Notification.permission !== "denied") {
     Notification.requestPermission().then(function(p) {
-      if (p === "granted") new Notification(title, { body: body });
+      if (p === "granted") { try { new Notification(title, { body: body }); } catch (e) {} }
     });
   }
 }
