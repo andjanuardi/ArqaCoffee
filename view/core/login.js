@@ -80,7 +80,6 @@ function showServiceClosedPopup() {
 }
 
 function quickLogin(role) {
-  if (role === 'customer' && isServiceClosed()) { showServiceClosedPopup(); return; }
   const u = DB.users.find(u => u.role === role);
   if (u) {
     State.currentUser = u;
@@ -97,7 +96,6 @@ function handleLogin() {
   const p = document.getElementById('login-pass').value;
   const u = DB.users.find(u => u.email === e && u.password === p);
   if (u) {
-    if (u.role === 'customer' && isServiceClosed()) { showServiceClosedPopup(); return; }
     State.currentUser = u;
     State.currentView = 'main';
     State.currentTab[u.role] = getDefaultTab(u.role);

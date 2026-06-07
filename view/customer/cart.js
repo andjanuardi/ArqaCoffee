@@ -42,6 +42,7 @@ function showMenuItem(id) {
 }
 
 function addToCart(id) {
+  if (isServiceClosed()) { closeModal(); showServiceClosedPopup(); return; }
   const m = getMenuItem(id);
   if (!m) return;
   const notes = document.getElementById("item-notes")?.value || "";
