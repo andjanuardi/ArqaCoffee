@@ -118,7 +118,7 @@ Pengaturan
 			- Kontrol harga ongkos kirim (pindahkan dari halaman keuangan kurir), Tambahkan (selesai)			  form input atur tarif jasa aplikasi (opsi : % atau Rp.2000).
 		- Pengaturan tarif mitra per-transaksi (selesai)
 			- Tambahkan form input atur tarif jasa aplikasi (opsi : % atau Rp.2000). (selesai)
-		- Pengaturan tarif pelanggan per-transaksi (jika menggunakan aplikasi) (selesai)
+		- Pengaturan tarif pelanggan per-transaksi (jika menggunakan aplikasi) (selesai) (upadate invoice)
 			- Tambahkan form input atur tarif jasa aplikasi (opsi : % atau Rp.1000). (selesai)
 
 Menu sidebar
@@ -150,3 +150,21 @@ pindahkan posisi animasi toss ke bagian atas tengah (selesai)
 tambahkan toss "pendaftaran berhasil" saat daftar & masuk di klik (selesai)
 
 jika approval diterima admin, maka default password "12345 d/s"  (selesai)
+
+
+Review (penambahan)
+	Pelanggan
+		- update invoice (selesai)
+	
+	Kasir
+		- update informasi Pesanan tersedia
+
+Pesan di Tempat
+Makan di kafe
+
+Pesan Antar
+Diantar ke rumah
+Alamat Pengiriman
+￼
+
+
