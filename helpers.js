@@ -40,6 +40,13 @@ function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takea
             return sum + (item.unit_price * item.quantity * rate / 100);
           }, 0);
         }
+        function calcCustomerFee(subtotal, orderType) {
+          if (orderType !== 'delivery') return 0;
+          const cfg = DB.cafe?.rates?.customer?.service_fee;
+          if (!cfg || !cfg.value) return 0;
+          if (cfg.type === 'percent') return Math.round(subtotal * cfg.value / 100);
+          return cfg.value;
+        }
         function hasActiveCourier() {
           const today = new Date().toISOString().split('T')[0];
           return DB.users.some(u => u.role === 'courier' && DB.attendances.some(a =>

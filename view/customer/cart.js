@@ -119,15 +119,16 @@ function renderPromoBanner(activePromo) {
     <button onclick="State.activePromoId=null;render()" class="text-xs underline" style="color:var(--muted)">Batalkan</button>
   </div>`;
 }
-function renderOrderSummary(total, discount, afterDiscount, shippingCost) {
+function renderOrderSummary(total, discount, afterDiscount, shippingCost, serviceFee) {
   const tax = Math.round(calcItemTax(State.cart));
   return `<div class="card mb-4">
     <div class="flex justify-between mb-2 text-sm"><span style="color:var(--muted)">Subtotal</span><span>${formatCurrency(total)}</span></div>
     ${discount > 0 ? `<div class="flex justify-between mb-2 text-sm"><span style="color:var(--success)"><i class="fas fa-tag mr-1"></i>Diskon</span><span style="color:var(--success)">-${formatCurrency(discount)}</span></div>` : ""}
     <div class="flex justify-between mb-2 text-sm"><span style="color:var(--muted)">Pajak</span><span>${formatCurrency(tax)}</span></div>
+    ${serviceFee > 0 ? `<div class="flex justify-between mb-2 text-sm"><span style="color:var(--muted)">Biaya Layanan</span><span>${formatCurrency(serviceFee)}</span></div>` : ""}
     ${shippingCost > 0 ? `<div class="flex justify-between mb-2 text-sm"><span style="color:var(--muted)">Ongkos Kirim</span><span>${formatCurrency(shippingCost)}</span></div>` : ""}
     <div class="border-t pt-2 mt-2" style="border-color:var(--border)">
-      <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(afterDiscount + tax + shippingCost)}</span></div>
+      <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(afterDiscount + tax + shippingCost + serviceFee)}</span></div>
     </div>
   </div>`;
 }
@@ -219,12 +220,13 @@ function renderCustomerCart() {
   const afterDiscount = total - discount;
   const shippingCost = State.orderType === "delivery" && State.deliveryLocation
     ? calcShippingCost(State.deliveryLocation.lat, State.deliveryLocation.lng) : 0;
+  const serviceFee = calcCustomerFee(total, State.orderType);
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Keranjang Anda</h2>
     ${renderCartItems(State.cart, activePromo)}
     ${activePromo ? renderPromoBanner(activePromo) : ""}
-    ${renderOrderSummary(total, discount, afterDiscount, shippingCost)}
+    ${renderOrderSummary(total, discount, afterDiscount, shippingCost, serviceFee)}
     ${renderOrderTypeSelector()}
     ${State.orderType === "delivery" ? renderDeliveryAddress() : ""}
     ${renderPaymentTiming()}

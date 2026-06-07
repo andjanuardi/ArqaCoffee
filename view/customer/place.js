@@ -17,7 +17,8 @@ function confirmPlaceOrder() {
   const tax = Math.round(calcItemTax(State.cart));
   const shippingCost = State.orderType === "delivery" && State.deliveryLocation
     ? calcShippingCost(State.deliveryLocation.lat, State.deliveryLocation.lng) : 0;
-  const grandTotal = afterDiscount + tax + shippingCost;
+  const serviceFee = calcCustomerFee(total, State.orderType);
+  const grandTotal = afterDiscount + tax + shippingCost + serviceFee;
   const itemsList = State.cart.map(c =>
     `${c.menu_item.name} x${c.quantity} = ${formatCurrency(c.unit_price * c.quantity)}`
   ).join('</div><div class="text-sm" style="color:var(--muted)">');
@@ -38,6 +39,7 @@ function confirmPlaceOrder() {
           <div class="flex justify-between text-sm"><span style="color:var(--muted)">Subtotal</span><span>${formatCurrency(total)}</span></div>
           ${discount > 0 ? `<div class="flex justify-between text-sm"><span style="color:var(--success)"><i class="fas fa-tag mr-1"></i>Diskon ${activePromo ? activePromo.title : ''}</span><span style="color:var(--success)">-${formatCurrency(discount)}</span></div>` : ''}
           <div class="flex justify-between text-sm"><span style="color:var(--muted)">Pajak</span><span>${formatCurrency(tax)}</span></div>
+          ${serviceFee > 0 ? `<div class="flex justify-between text-sm"><span style="color:var(--muted)">Biaya Layanan</span><span>${formatCurrency(serviceFee)}</span></div>` : ''}
           ${shippingCost > 0 ? `<div class="flex justify-between text-sm"><span style="color:var(--muted)">Ongkos Kirim</span><span>${formatCurrency(shippingCost)}</span></div>` : ''}
           <div class="flex justify-between font-bold mt-1"><span>Total</span><span style="color:var(--accent)">${formatCurrency(grandTotal)}</span></div>
         </div>
@@ -66,7 +68,8 @@ function handleDigitalPayment() {
   const tax = Math.round(calcItemTax(State.cart));
   const shippingCost = State.orderType === "delivery" && State.deliveryLocation
     ? calcShippingCost(State.deliveryLocation.lat, State.deliveryLocation.lng) : 0;
-  const grandTotal = afterDiscount + tax + shippingCost;
+  const serviceFee = calcCustomerFee(total, State.orderType);
+  const grandTotal = afterDiscount + tax + shippingCost + serviceFee;
 
   if (selectedPayment === "qris") {
     const data = encodeURIComponent("ARQA-COFFEE:PAY:" + genId().slice(-6) + ":" + grandTotal);
@@ -136,7 +139,8 @@ function placeOrder() {
   const tax = Math.round(calcItemTax(State.cart));
   const shippingCost = State.orderType === "delivery" && State.deliveryLocation
     ? calcShippingCost(State.deliveryLocation.lat, State.deliveryLocation.lng) : 0;
-  const grandTotal = afterDiscount + tax + shippingCost;
+  const serviceFee = calcCustomerFee(total, State.orderType);
+  const grandTotal = afterDiscount + tax + shippingCost + serviceFee;
 
   if (State.orderType === "dine-in" && State.payTiming === "later") {
     const existingOrder = DB.orders.find(
@@ -186,6 +190,7 @@ function placeOrder() {
     status: "pending",
     total_amount: grandTotal,
     shipping_cost: shippingCost,
+    service_fee: serviceFee,
     payment_method: State.payTiming === "later" ? (State.orderType === "delivery" ? "cod" : "") : selectedPayment,
     payment_status:
       State.payTiming === "later"

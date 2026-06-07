@@ -137,7 +137,7 @@ Bug buka tutup layanan
 		- tutup di luar jam opreasional (selesai)
 
 Profil
-	- hiangkan card induk profil
+	- hiangkan card induk profil 
 	- Data Profil  (selesai)
 		- bisa edit profil (termaksud ubah password) (selesai)
 	- Presensi
