@@ -26,12 +26,12 @@ function renderAdminView() {
 
 function renderAdminCourierFinance() {
   const courierId = State.adminCourierFilterId || "";
-  const dateFilter = State.adminCourierDateFilter || new Date().toISOString().split('T')[0];
+  const dateFilter = State.adminCourierDateFilter || new Date().toLocaleDateString('sv-SE');
   const couriers = DB.users.filter(u => u.role === 'courier');
   let done = DB.orders.filter(o => o.courier_id && (o.status === "completed" || o.status === "delivered"));
   if (courierId) done = done.filter(o => o.courier_id === courierId);
   if (dateFilter) {
-    done = done.filter(o => o.created_at && o.created_at.split('T')[0] === dateFilter);
+    done = done.filter(o => o.created_at && new Date(o.created_at).toLocaleDateString('sv-SE') === dateFilter);
   }
   const totalSetor = done.filter(o => o.status === "delivered").reduce((s, o) => s + (o.total_amount || 0), 0);
   const totalOngkir = done.reduce((s, o) => s + (o.shipping_cost || 0), 0);
@@ -89,10 +89,10 @@ function renderAdminCourierFinance() {
 }
 
 function renderAdminMitraFinance() {
-  if (!State.adminMitraDate) State.adminMitraDate = new Date().toISOString().split('T')[0];
+  if (!State.adminMitraDate) State.adminMitraDate = new Date().toLocaleDateString('sv-SE');
   const dateVal = State.adminMitraDate;
   const mitraUsers = DB.users.filter(u => u.role === 'mitra_juru_masak');
-  const mitraOrders = DB.orders.filter(o => o.created_at && o.created_at.split('T')[0] === dateVal && o.items.some(i => i.claimed_by));
+  const mitraOrders = DB.orders.filter(o => o.created_at && new Date(o.created_at).toLocaleDateString('sv-SE') === dateVal && o.items.some(i => i.claimed_by));
   const mitraStats = mitraUsers.map(m => {
     const items = [];
     let revenue = 0;
@@ -388,7 +388,7 @@ function isServiceClosed() {
   if (DB.cafe.serviceStatus === 'closed') return true;
   if (DB.cafe.serviceStatus === 'force_open') return false;
   if (DB.cafe.specialDates) {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toLocaleDateString('sv-SE');
     const special = DB.cafe.specialDates.find(s => s.date === todayStr);
     if (special) return special.closed;
   }
@@ -410,7 +410,7 @@ function isServiceClosed() {
 function isWithinScheduleHours() {
   if (!DB.cafe) DB.cafe = {};
   if (DB.cafe.specialDates) {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toLocaleDateString('sv-SE');
     const special = DB.cafe.specialDates.find(s => s.date === todayStr);
     if (special) return !special.closed;
   }

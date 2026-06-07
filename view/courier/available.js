@@ -12,8 +12,8 @@ function renderCourierView() {
 
 function renderCourierAvailable() {
   const hasActive = DB.orders.some(o => o.courier_id === State.currentUser.id && o.status === "delivering");
-  const today = new Date().toISOString().split('T')[0];
-  const hasCheckedIn = DB.attendances.some(a => a.user_id === State.currentUser.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
+  const today = new Date().toLocaleDateString('sv-SE');
+  const hasCheckedIn = DB.attendances.some(a => a.user_id === State.currentUser.id && !a.check_out && new Date(a.check_in).toLocaleDateString('sv-SE') === today);
   const available = DB.orders.filter(
     (o) =>
       o.order_type === "delivery" &&
@@ -92,8 +92,8 @@ function courierCheckIn() {
 }
 
 function courierCheckOut() {
-  const today = new Date().toISOString().split('T')[0];
-  const att = DB.attendances.find(a => a.user_id === State.currentUser.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
+  const today = new Date().toLocaleDateString('sv-SE');
+  const att = DB.attendances.find(a => a.user_id === State.currentUser.id && !a.check_out && new Date(a.check_in).toLocaleDateString('sv-SE') === today);
   if (!att) { showToast('Belum check-in hari ini', 'warning'); return; }
   att.check_out = new Date().toISOString();
   showToast('Check-out berhasil', 'success');
@@ -137,8 +137,8 @@ function renderCourierProfile() {
     delete State.mapInstances['courier-position'];
   }
   const u = State.currentUser;
-  const today = new Date().toISOString().split('T')[0];
-  const att = DB.attendances.find(a => a.user_id === u.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
+  const today = new Date().toLocaleDateString('sv-SE');
+  const att = DB.attendances.find(a => a.user_id === u.id && !a.check_out && new Date(a.check_in).toLocaleDateString('sv-SE') === today);
   const cafe = DB.cafe.location;
   return `
   <div class="animate-fade-up">

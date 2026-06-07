@@ -349,13 +349,13 @@ function showActiveOrderDetail(orderId) {
 function renderActiveOrders() {
   if (!State.activeOrderStart) {
     const d = new Date(); d.setDate(d.getDate() - 30);
-    State.activeOrderStart = d.toISOString().split('T')[0];
+    State.activeOrderStart = d.toLocaleDateString('sv-SE');
   }
-  if (!State.activeOrderEnd) State.activeOrderEnd = new Date().toISOString().split('T')[0];
+  if (!State.activeOrderEnd) State.activeOrderEnd = new Date().toLocaleDateString('sv-SE');
   const raw = DB.orders.filter(o => !['completed', 'cancelled', 'rejected'].includes(o.status));
   const dateFiltered = raw.filter(o => {
     if (!o.created_at) return false;
-    const d = o.created_at.split('T')[0];
+    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d >= State.activeOrderStart && d <= State.activeOrderEnd;
   });
   const countByStatus = {
@@ -376,13 +376,13 @@ function renderActiveOrders() {
   const cancelled = DB.orders.filter(o =>
     ['cancelled', 'rejected'].includes(o.status) && o.created_at
   ).filter(o => {
-    const d = o.created_at.split('T')[0];
+    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d >= State.activeOrderStart && d <= State.activeOrderEnd;
   }).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
   const history = DB.orders.filter(o =>
     o.status === 'completed' && o.created_at
   ).filter(o => {
-    const d = o.created_at.split('T')[0];
+    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d >= State.activeOrderStart && d <= State.activeOrderEnd;
   }).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
   return `
@@ -514,13 +514,13 @@ function renderActiveOrders() {
 function renderActivePlaygroundTickets() {
   if (!State.activePlaygroundStart) {
     const d = new Date(); d.setDate(d.getDate() - 30);
-    State.activePlaygroundStart = d.toISOString().split('T')[0];
+    State.activePlaygroundStart = d.toLocaleDateString('sv-SE');
   }
-  if (!State.activePlaygroundEnd) State.activePlaygroundEnd = new Date().toISOString().split('T')[0];
+  if (!State.activePlaygroundEnd) State.activePlaygroundEnd = new Date().toLocaleDateString('sv-SE');
 
   const rawTickets = (DB.playgroundTickets || []).filter(t => {
     if (!t.created_at) return false;
-    const d = t.created_at.split('T')[0];
+    const d = new Date(t.created_at).toLocaleDateString('sv-SE');
     return d >= State.activePlaygroundStart && d <= State.activePlaygroundEnd;
   });
 

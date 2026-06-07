@@ -179,7 +179,7 @@ function confirmRestock(id) {
   DB.stockMovements.push({ id: 'sm' + Date.now(), stock_item_id: id, user_id: State.currentUser.id, type: 'in', quantity: qty, notes: 'Restok', created_at: new Date().toISOString() });
   const asExpense = document.getElementById('restock-as-expense')?.checked;
   if (asExpense && s.price) {
-    DB.expenses.push({ id: 'e' + Date.now(), date: new Date().toISOString().split('T')[0], time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }), category: 'Bahan Baku', source: 'Cafe', amount: qty * s.price, note: 'Restok ' + s.name + ' (' + qty + ' ' + s.unit + ')', volume: qty, unit: s.unit, unitPrice: s.price });
+    DB.expenses.push({ id: 'e' + Date.now(), date: new Date().toLocaleDateString('sv-SE'), time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }), category: 'Bahan Baku', source: 'Cafe', amount: qty * s.price, note: 'Restok ' + s.name + ' (' + qty + ' ' + s.unit + ')', volume: qty, unit: s.unit, unitPrice: s.price });
   }
   showToast(`${s.name}: +${qty} ${s.unit}`, 'success');
   closeModal();

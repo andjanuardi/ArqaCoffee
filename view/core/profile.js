@@ -83,8 +83,8 @@ function renderGeoAttendanceCard(u, att) {
 
 function showGeoAttendanceModal() {
   const u = State.currentUser;
-  const today = new Date().toISOString().split('T')[0];
-  const att = DB.attendances.find(a => a.user_id === u.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
+  const today = new Date().toLocaleDateString('sv-SE');
+  const att = DB.attendances.find(a => a.user_id === u.id && !a.check_out && new Date(a.check_in).toLocaleDateString('sv-SE') === today);
   if (att) {
     showModal(`
       <div class="text-center">
@@ -204,8 +204,8 @@ function staffCheckIn() {
 }
 
 function staffCheckOut() {
-  const today = new Date().toISOString().split('T')[0];
-  const att = DB.attendances.find(a => a.user_id === State.currentUser.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
+  const today = new Date().toLocaleDateString('sv-SE');
+  const att = DB.attendances.find(a => a.user_id === State.currentUser.id && !a.check_out && new Date(a.check_in).toLocaleDateString('sv-SE') === today);
   if (!att) { showToast('Belum check-in hari ini', 'warning'); return; }
   var role = State.currentUser.role;
   if (!navigator.geolocation) {

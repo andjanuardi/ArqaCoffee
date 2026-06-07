@@ -11,17 +11,17 @@ function getFinanceData(startDate, endDate) {
     const end = new Date();
     const start = new Date();
     start.setDate(start.getDate() - 6);
-    startDate = start.toISOString().split("T")[0];
-    endDate = end.toISOString().split("T")[0];
+    startDate = start.toLocaleDateString('sv-SE');
+    endDate = end.toLocaleDateString('sv-SE');
   }
   const filtered = paidOrders.filter((o) => {
     if (!o.created_at) return false;
-    const d = o.created_at.split("T")[0];
+    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d >= startDate && d <= endDate;
   });
   const grouped = {};
   filtered.forEach((o) => {
-    const dateKey = o.created_at.split("T")[0];
+    const dateKey = new Date(o.created_at).toLocaleDateString('sv-SE');
     if (!grouped[dateKey])
       grouped[dateKey] = { date: dateKey, revenue: 0, orders: 0 };
     grouped[dateKey].revenue += o.total_amount || 0;
@@ -90,7 +90,7 @@ function printRevenueDetail() {
     (() => {
       const d = new Date();
       d.setDate(d.getDate() - 6);
-      return d.toISOString().split("T")[0];
+      return d.toLocaleDateString('sv-SE');
     })();
   const endDate =
     State.financeEndDate || new Date().toLocaleDateString('sv-SE');
@@ -110,7 +110,7 @@ function printRevenueDetail() {
       (o) => o.payment_status === "paid" && o.created_at,
     );
     filtered = paidOrders.filter((o) => {
-      const d = o.created_at.split("T")[0];
+      const d = new Date(o.created_at).toLocaleDateString('sv-SE');
       return d >= startDate && d <= endDate;
     });
     totalRev = filtered.reduce((s, o) => s + (o.total_amount || 0), 0);
@@ -118,8 +118,8 @@ function printRevenueDetail() {
 
   const rows = isPlayground
     ? filtered.map((e) => {
-        const date = e.created_at?.split("T")[0] || "";
-        const time = e.created_at?.split("T")[1]?.slice(0, 5) || "-";
+        const date = e.created_at ? new Date(e.created_at).toLocaleDateString('sv-SE') : "";
+        const time = e.created_at ? new Date(e.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : "-";
         if (e._isExtra) {
           const methodBadge = getPgMethodBadge(e._paymentMethod);
           return `<tr style="opacity:.65;font-style:italic"><td>${formatDate(date)}</td><td class="muted">${time}</td><td>${e.customer_name || "-"} <em style="color:#999;font-size:10px">(Extra)</em> ${methodBadge}</td><td class="muted" style="color:#e67e22">${e._desc || "-"}</td><td class="right green">${formatCurrency(e.total_amount || 0)}</td></tr>`;
@@ -134,8 +134,8 @@ function printRevenueDetail() {
       }).join("")
     : filtered
         .map((o) => {
-          const date = o.created_at?.split("T")[0] || "";
-          const time = o.created_at?.split("T")[1]?.slice(0, 5) || "-";
+          const date = o.created_at ? new Date(o.created_at).toLocaleDateString('sv-SE') : "";
+          const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : "-";
           const menuCount = {};
           (o.items || []).forEach((item) => {
             const mi = DB.menuItems.find((m) => m.id === item.menu_item_id);
@@ -195,7 +195,7 @@ function printExpenseDetail() {
     (() => {
       const d = new Date();
       d.setDate(d.getDate() - 6);
-      return d.toISOString().split("T")[0];
+      return d.toLocaleDateString('sv-SE');
     })();
   const endDate =
     State.financeEndDate || new Date().toLocaleDateString('sv-SE');
@@ -247,7 +247,7 @@ function printAvgDetail() {
     (() => {
       const d = new Date();
       d.setDate(d.getDate() - 6);
-      return d.toISOString().split("T")[0];
+      return d.toLocaleDateString('sv-SE');
     })();
   const endDate =
     State.financeEndDate || new Date().toLocaleDateString('sv-SE');
@@ -307,7 +307,7 @@ function printProfitDetail() {
     (() => {
       const d = new Date();
       d.setDate(d.getDate() - 6);
-      return d.toISOString().split("T")[0];
+      return d.toLocaleDateString('sv-SE');
     })();
   const endDate =
     State.financeEndDate || new Date().toLocaleDateString('sv-SE');
@@ -391,7 +391,7 @@ function showPendapatanModal() {
 function getPlaygroundPeriodOrders(startDate, endDate) {
   return (DB.playgroundTickets || []).filter((t) => {
     if (t.payment_status !== "paid" || !t.created_at) return false;
-    const d = t.created_at.split("T")[0];
+    const d = new Date(t.created_at).toLocaleDateString('sv-SE');
     return d >= startDate && d <= endDate;
   });
 }
@@ -403,7 +403,7 @@ function getPlaygroundPeriodEntries(startDate, endDate) {
     entries.push({ ...t, _isExtra: false, _paymentMethod: t.payment_method });
     (t.pgTransactions || []).forEach((tx) => {
       if (!tx.created_at) return;
-      const d = tx.created_at.split("T")[0];
+      const d = new Date(tx.created_at).toLocaleDateString('sv-SE');
       if (d >= startDate && d <= endDate) {
         entries.push({
           _isExtra: true,
@@ -433,7 +433,7 @@ function getMergedDailyEntries(startDate, endDate) {
   const pgEntries = getPlaygroundPeriodEntries(startDate, endDate);
   const pgByDate = {};
   pgEntries.forEach(e => {
-    const d = e.created_at?.split("T")[0] || "";
+    const d = e.created_at ? new Date(e.created_at).toLocaleDateString('sv-SE') : "";
     pgByDate[d] = (pgByDate[d] || 0) + (e.total_amount || 0);
   });
 
@@ -458,7 +458,7 @@ function getCombinedDailyRevenue(startDate, endDate) {
   const pgEntries = getPlaygroundPeriodEntries(startDate, endDate);
   const pgByDate = {};
   pgEntries.forEach(e => {
-    const d = e.created_at?.split("T")[0] || "";
+    const d = e.created_at ? new Date(e.created_at).toLocaleDateString('sv-SE') : "";
     pgByDate[d] = (pgByDate[d] || 0) + (e.total_amount || 0);
   });
   const allDates = new Set([...Object.keys(cafeByDate), ...Object.keys(pgByDate)]);
@@ -479,7 +479,7 @@ function renderFinanceReport() {
     (() => {
       const d = new Date();
       d.setDate(d.getDate() - 6);
-      return d.toISOString().split("T")[0];
+      return d.toLocaleDateString('sv-SE');
     })();
   const endDate =
     State.financeEndDate || new Date().toLocaleDateString('sv-SE');
@@ -504,7 +504,7 @@ function renderFinanceReport() {
   const paidOrders = DB.orders.filter((o) => o.payment_status === "paid");
   const periodOrders = paidOrders.filter((o) => {
     if (!o.created_at) return false;
-    const d = o.created_at.split("T")[0];
+    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d >= startDate && d <= endDate;
   });
 
@@ -545,8 +545,8 @@ function renderFinanceReport() {
           <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Pelanggan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Keterangan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
           <tbody>${pgEntries
             .map((e) => {
-              const date = e.created_at?.split("T")[0] || "";
-              const time = e.created_at?.split("T")[1]?.slice(0, 5) || "-";
+              const date = e.created_at ? new Date(e.created_at).toLocaleDateString('sv-SE') : "";
+              const time = e.created_at ? new Date(e.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : "-";
               if (e._isExtra) {
                 const methodBadge = getPgMethodBadge(e._paymentMethod);
                 return `<tr style="border-bottom:1px solid var(--border);opacity:.65;font-style:italic"><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;font-size:12px">${e.customer_name || "-"} <em style="color:var(--muted);font-size:10px">(Extra)</em> ${methodBadge}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--warning);font-size:12px">${e._desc || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(e.total_amount || 0)}</td></tr>`;
@@ -583,8 +583,8 @@ function renderFinanceReport() {
           <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Orders</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Menu</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Pendapatan</th></tr></thead>
           <tbody>${periodOrders
             .map((o) => {
-              const date = o.created_at?.split("T")[0] || "";
-              const time = o.created_at?.split("T")[1]?.slice(0, 5) || "-";
+              const date = o.created_at ? new Date(o.created_at).toLocaleDateString('sv-SE') : "";
+              const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : "-";
               const menuCount = {};
               (o.items || []).forEach((item) => {
                 const mi = DB.menuItems.find((m) => m.id === item.menu_item_id);

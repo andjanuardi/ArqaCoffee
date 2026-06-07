@@ -16,9 +16,9 @@ function initCharts() {
   State.chartInstances = {};
 
   const startDate = State.financeStartDate || (() => {
-    const d = new Date(); d.setDate(d.getDate() - 6); return d.toISOString().split('T')[0];
+    const d = new Date(); d.setDate(d.getDate() - 6); return d.toLocaleDateString('sv-SE');
   })();
-  const endDate = State.financeEndDate || new Date().toISOString().split('T')[0];
+  const endDate = State.financeEndDate || new Date().toLocaleDateString('sv-SE');
   const ds = typeof getFinanceData === 'function' ? getFinanceData(startDate, endDate) : [];
 
   const chartOptions = (yLabel) => ({
@@ -139,11 +139,11 @@ function initCharts() {
       const dateMap = {};
       const cursor = new Date(pgStart);
       while (cursor <= pgEnd) {
-        dateMap[cursor.toISOString().split('T')[0]] = 0;
+        dateMap[cursor.toLocaleDateString('sv-SE')] = 0;
         cursor.setDate(cursor.getDate() + 1);
       }
       (DB.playgroundTickets || []).filter(t => t.payment_status === 'paid' && t.created_at).forEach(t => {
-        const d = t.created_at.split('T')[0];
+        const d = new Date(t.created_at).toLocaleDateString('sv-SE');
         if (dateMap[d] !== undefined) dateMap[d] += t.total_amount;
       });
       const labels = Object.keys(dateMap);

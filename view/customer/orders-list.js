@@ -5,7 +5,7 @@ function renderCustomerOrders() {
   let myOrders = DB.orders.filter((o) => o.user_id === State.currentUser.id);
   const dateFilter = State.customerOrderDateFilter || new Date().toLocaleDateString('sv-SE');
   if (dateFilter) {
-    myOrders = myOrders.filter((o) => o.created_at && o.created_at.split('T')[0] === dateFilter);
+    myOrders = myOrders.filter((o) => o.created_at && new Date(o.created_at).toLocaleDateString('sv-SE') === dateFilter);
   }
   myOrders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   return `

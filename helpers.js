@@ -60,23 +60,23 @@ function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takea
           return cfg.value;
         }
         function isCheckedIn() {
-          const today = new Date().toISOString().split('T')[0];
+          const today = new Date().toLocaleDateString('sv-SE');
           return DB.attendances.some(a =>
             a.user_id === State.currentUser.id && !a.check_out &&
-            new Date(a.check_in).toISOString().split('T')[0] === today
+            new Date(a.check_in).toLocaleDateString('sv-SE') === today
           );
         }
         function hasActiveCourier() {
-          const today = new Date().toISOString().split('T')[0];
+          const today = new Date().toLocaleDateString('sv-SE');
           return DB.users.some(u => u.role === 'courier' && DB.attendances.some(a =>
-            a.user_id === u.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today
+            a.user_id === u.id && !a.check_out && new Date(a.check_in).toLocaleDateString('sv-SE') === today
           ));
         }
         function isMitraActive(mitraName) {
           if (!mitraName) return true;
-          const today = new Date().toISOString().split('T')[0];
+          const today = new Date().toLocaleDateString('sv-SE');
           return DB.users.some(u => u.role === 'mitra_juru_masak' && u.name === mitraName && DB.attendances.some(a =>
-            a.user_id === u.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today
+            a.user_id === u.id && !a.check_out && new Date(a.check_in).toLocaleDateString('sv-SE') === today
           ));
         }
 

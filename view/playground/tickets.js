@@ -19,13 +19,13 @@ function renderPlaygroundTickets() {
   const tickets = (DB.playgroundTickets || [])
     .filter((t) => t.status === "active")
     .sort((a, b) => new Date(a.end_time) - new Date(b.end_time));
-  const historyDate = State._pgHistoryDate || new Date().toISOString().split('T')[0];
+  const historyDate = State._pgHistoryDate || new Date().toLocaleDateString('sv-SE');
   const allCompleted = (DB.playgroundTickets || [])
     .filter((t) => t.status !== "active")
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const completed = allCompleted.filter((t) => {
     if (!t.created_at) return false;
-    return t.created_at.split('T')[0] === historyDate;
+    return new Date(t.created_at).toLocaleDateString('sv-SE') === historyDate;
   });
   const completedCount = allCompleted.filter(t => t.status === "completed").length;
   const cancelledCount = allCompleted.filter(t => t.status === "cancelled").length;

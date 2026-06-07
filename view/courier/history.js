@@ -167,7 +167,7 @@ function confirmOngkir(id) {
     var custName = o.customer_name || (getUser(o.user_id)?.name || '');
     DB.expenses.push({
       id: 'e' + Date.now(),
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toLocaleDateString('sv-SE'),
       time: new Date().toTimeString().slice(0, 5),
       category: 'Operasional',
       amount: o.shipping_cost - calcCourierFee(o.shipping_cost),

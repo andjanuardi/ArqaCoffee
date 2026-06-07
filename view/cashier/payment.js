@@ -136,10 +136,10 @@ function payOngkir(id) {
 }
 
 function renderCashTable() {
-  const dateVal = State.cashierReportDate || new Date().toISOString().split('T')[0];
+  const dateVal = State.cashierReportDate || new Date().toLocaleDateString('sv-SE');
   const orders = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || (o.payment_method !== 'cash' && o.payment_method !== 'cod') || !o.created_at) return false;
-    const d = o.created_at.split('T')[0];
+    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
@@ -157,8 +157,8 @@ function renderCashTable() {
         <table class="w-full text-sm" style="border-collapse:collapse">
           <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Orders</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Menu</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
           <tbody>${orders.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="5">Belum ada transaksi tunai</td></tr>' : orders.map(o => {
-            const date = o.created_at?.split('T')[0] || '';
-            const time = o.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            const date = o.created_at ? new Date(o.created_at).toLocaleDateString('sv-SE') : '';
+            const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
             const menuCount = {};
             (o.items || []).forEach(item => {
               const mi = DB.menuItems.find(m => m.id === item.menu_item_id);
@@ -175,10 +175,10 @@ function renderCashTable() {
 }
 
 function renderDigitalTable() {
-  const dateVal = State.cashierReportDate || new Date().toISOString().split('T')[0];
+  const dateVal = State.cashierReportDate || new Date().toLocaleDateString('sv-SE');
   const orders = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || (o.payment_method !== 'digital' && o.payment_method !== 'qris' && o.payment_method !== 'bank_transfer') || !o.created_at) return false;
-    const d = o.created_at.split('T')[0];
+    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
@@ -196,8 +196,8 @@ function renderDigitalTable() {
         <table class="w-full text-sm" style="border-collapse:collapse">
           <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Orders</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Menu</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
           <tbody>${orders.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="5">Belum ada transaksi digital</td></tr>' : orders.map(o => {
-            const date = o.created_at?.split('T')[0] || '';
-            const time = o.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            const date = o.created_at ? new Date(o.created_at).toLocaleDateString('sv-SE') : '';
+            const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
             const menuCount = {};
             (o.items || []).forEach(item => {
               const mi = DB.menuItems.find(m => m.id === item.menu_item_id);
@@ -215,10 +215,10 @@ function renderDigitalTable() {
 }
 
 function renderCashierReport() {
-  const dateVal = State.cashierReportDate || new Date().toISOString().split('T')[0];
+  const dateVal = State.cashierReportDate || new Date().toLocaleDateString('sv-SE');
   const paidInRange = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || !o.created_at) return false;
-    const d = o.created_at.split('T')[0];
+    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   });
   const cashInRange = paidInRange.filter(o => o.payment_method === 'cash' || o.payment_method === 'cod');
@@ -239,7 +239,7 @@ function renderCashierReport() {
       <div class="stat-card cursor-pointer" onclick="State.currentTab['cashier']='payment';render()"><div class="flex items-center gap-2"><i class="fas fa-exclamation-circle" style="color:var(--danger);font-size:18px"></i><span class="text-xs" style="color:var(--muted)">Belum Bayar</span></div><div class="text-xl font-bold mt-1" style="color:var(--danger)">${DB.orders.filter(o => {
         if (o.payment_status !== 'unpaid' || !o.created_at) return false;
         if (o.status === 'cancelled' || o.status === 'rejected') return false;
-        const d = o.created_at.split('T')[0];
+        const d = new Date(o.created_at).toLocaleDateString('sv-SE');
         return d === dateVal;
       }).length}</div></div>
     </div>

@@ -371,9 +371,9 @@ function renderWaiterOrders() {
     if (o.order_type === 'dine-in' && ['ready', 'delivered'].includes(o.status)) return true;
     return false;
   });
-  const dateFilter = State.waiterOrderDateFilter !== undefined ? State.waiterOrderDateFilter : new Date().toISOString().split('T')[0];
+  const dateFilter = State.waiterOrderDateFilter !== undefined ? State.waiterOrderDateFilter : new Date().toLocaleDateString('sv-SE');
   if (dateFilter) {
-    myOrders = myOrders.filter((o) => o.created_at && o.created_at.split('T')[0] === dateFilter);
+    myOrders = myOrders.filter((o) => o.created_at && new Date(o.created_at).toLocaleDateString('sv-SE') === dateFilter);
   }
   myOrders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   return `

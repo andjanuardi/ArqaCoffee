@@ -12,11 +12,11 @@ function renderMitraView() {
 }
 
 function renderMitraQueue() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('sv-SE');
   const hasCheckedIn = DB.attendances.some(
     a => a.user_id === State.currentUser.id
       && !a.check_out
-      && new Date(a.check_in).toISOString().split('T')[0] === today
+      && new Date(a.check_in).toLocaleDateString('sv-SE') === today
   );
   if (!hasCheckedIn) {
     return `
@@ -224,8 +224,8 @@ function renderMitraFinance() {
 
 function renderMitraProfile() {
   const u = State.currentUser;
-  const today = new Date().toISOString().split('T')[0];
-  const att = DB.attendances.find(a => a.user_id === u.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
+  const today = new Date().toLocaleDateString('sv-SE');
+  const att = DB.attendances.find(a => a.user_id === u.id && !a.check_out && new Date(a.check_in).toLocaleDateString('sv-SE') === today);
   return `
   <div class="animate-fade-up">
     <div class="card text-center mb-4">
@@ -272,8 +272,8 @@ function mitraCheckIn() {
 }
 
 function mitraCheckOut() {
-  const today = new Date().toISOString().split('T')[0];
-  const att = DB.attendances.find(a => a.user_id === State.currentUser.id && !a.check_out && new Date(a.check_in).toISOString().split('T')[0] === today);
+  const today = new Date().toLocaleDateString('sv-SE');
+  const att = DB.attendances.find(a => a.user_id === State.currentUser.id && !a.check_out && new Date(a.check_in).toLocaleDateString('sv-SE') === today);
   if (!att) { showToast('Belum check-in hari ini', 'warning'); return; }
   att.check_out = new Date().toISOString();
   showToast('Check-out berhasil', 'success');

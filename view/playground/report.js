@@ -3,10 +3,10 @@
 // ============================================================
 
 function renderPlaygroundFinance() {
-  const dateVal = State.pgFinanceDate || new Date().toISOString().split('T')[0];
+  const dateVal = State.pgFinanceDate || new Date().toLocaleDateString('sv-SE');
   const paidTickets = (DB.playgroundTickets || []).filter(t => {
     if (t.payment_status !== 'paid' || !t.created_at) return false;
-    const d = t.created_at.split('T')[0];
+    const d = new Date(t.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   });
   const cashTickets = paidTickets.filter(t => t.payment_method === 'cash');
@@ -61,7 +61,7 @@ function getPgExtraTx(dateVal, methodFilter) {
   const r = [];
   (DB.playgroundTickets || []).forEach(t => {
     (t.pgTransactions || []).forEach(tx => {
-      if (!tx.created_at || tx.created_at.split('T')[0] !== dateVal) return;
+      if (!tx.created_at || new Date(tx.created_at).toLocaleDateString('sv-SE') !== dateVal) return;
       if (tx.method !== methodFilter) return;
       r.push({ ...tx, _cust: t.customer_name, _kids: t.children, _ticketId: t.id, _isExtra: true });
     });
@@ -72,7 +72,7 @@ function getPgExtraTx(dateVal, methodFilter) {
 function renderPgCashTable(dateVal) {
   const tickets = (DB.playgroundTickets || []).filter(t => {
     if (t.payment_status !== 'paid' || t.payment_method !== 'cash' || !t.created_at) return false;
-    return t.created_at.split('T')[0] === dateVal;
+    return new Date(t.created_at).toLocaleDateString('sv-SE') === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const extras = getPgExtraTx(dateVal, 'cash');
   const entries = [...tickets.map(t => ({ ...t, _isExtra: false })), ...extras]
@@ -93,8 +93,8 @@ function renderPgCashTable(dateVal) {
           <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Pelanggan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Keterangan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
           <tbody>${entries.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="5">Belum ada transaksi tunai</td></tr>' : entries.map(e => {
             if (e._isExtra) {
-              const d = e.created_at?.split('T')[0] || '-';
-              const tm = e.created_at?.split('T')[1]?.slice(0, 5) || '-';
+              const d = e.created_at ? new Date(e.created_at).toLocaleDateString('sv-SE') : '-';
+              const tm = e.created_at ? new Date(e.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
               return '<tr style="border-bottom:1px solid var(--border);opacity:.65;font-style:italic">' +
                 '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + d + '</td>' +
                 '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + tm + '</td>' +
@@ -102,8 +102,8 @@ function renderPgCashTable(dateVal) {
                 '<td style="padding:8px 10px;color:var(--warning);font-size:12px">' + e.description + '</td>' +
                 '<td style="padding:8px 10px;text-align:right;color:var(--success);font-size:12px">' + formatCurrency(e.amount) + '</td></tr>';
             }
-            const d = e.created_at?.split('T')[0] || '-';
-            const tm = e.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            const d = e.created_at ? new Date(e.created_at).toLocaleDateString('sv-SE') : '-';
+            const tm = e.created_at ? new Date(e.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
             return '<tr class="cursor-pointer hover:bg-white/5" onclick="showPlaygroundTicketDetail(\'' + e.id + '\')" style="border-bottom:1px solid var(--border)">' +
               '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + d + '</td>' +
               '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + tm + '</td>' +
@@ -120,7 +120,7 @@ function renderPgCashTable(dateVal) {
 function renderPgDigitalTable(dateVal) {
   const tickets = (DB.playgroundTickets || []).filter(t => {
     if (t.payment_status !== 'paid' || (t.payment_method !== 'qris' && t.payment_method !== 'transfer') || !t.created_at) return false;
-    return t.created_at.split('T')[0] === dateVal;
+    return new Date(t.created_at).toLocaleDateString('sv-SE') === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const extras = getPgExtraTx(dateVal, 'qris').concat(getPgExtraTx(dateVal, 'transfer'));
   const entries = [...tickets.map(t => ({ ...t, _isExtra: false })), ...extras]
@@ -141,8 +141,8 @@ function renderPgDigitalTable(dateVal) {
           <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Tanggal</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Pelanggan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Keterangan</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
           <tbody>${entries.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="5">Belum ada transaksi digital</td></tr>' : entries.map(e => {
             if (e._isExtra) {
-              const d = e.created_at?.split('T')[0] || '-';
-              const tm = e.created_at?.split('T')[1]?.slice(0, 5) || '-';
+              const d = e.created_at ? new Date(e.created_at).toLocaleDateString('sv-SE') : '-';
+              const tm = e.created_at ? new Date(e.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
               return '<tr style="border-bottom:1px solid var(--border);opacity:.65;font-style:italic">' +
                 '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + d + '</td>' +
                 '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + tm + '</td>' +
@@ -150,8 +150,8 @@ function renderPgDigitalTable(dateVal) {
                 '<td style="padding:8px 10px;color:var(--warning);font-size:12px">' + e.description + '</td>' +
                 '<td style="padding:8px 10px;text-align:right;color:var(--accent);font-size:12px">' + formatCurrency(e.amount) + '</td></tr>';
             }
-            const d = e.created_at?.split('T')[0] || '-';
-            const tm = e.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            const d = e.created_at ? new Date(e.created_at).toLocaleDateString('sv-SE') : '-';
+            const tm = e.created_at ? new Date(e.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
             const payLabel = e.payment_method === 'qris' ? 'QRIS' : 'Transfer';
             return '<tr class="cursor-pointer hover:bg-white/5" onclick="showPlaygroundTicketDetail(\'' + e.id + '\')" style="border-bottom:1px solid var(--border)">' +
               '<td style="padding:8px 10px;color:var(--muted);font-size:12px">' + d + '</td>' +

@@ -2,7 +2,7 @@
 // ATTENDANCE
 // ------------------------------------------------------------------
 function renderAttendance() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('sv-SE');
   const staff = DB.users.filter(u => ['manager', 'cashier', 'kitchen', 'courier', 'waiter', 'playground'].includes(u.role));
   return `
   <div class="animate-fade-up">
@@ -35,9 +35,9 @@ function renderAttendance() {
 function showAttendanceReport(id) {
   const u = DB.users.find(x => x.id === id);
   if (!u) return;
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('sv-SE');
   const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('sv-SE');
   const dailyRecords = DB.attendances.filter(a => a.user_id === id && a.check_in.startsWith(today));
   const monthlyRecords = DB.attendances.filter(a => a.user_id === id && a.check_in >= monthStart);
   const dailyTotalMin = dailyRecords.reduce((sum, r) => {

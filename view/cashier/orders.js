@@ -402,7 +402,7 @@ function renderCashierPayment() {
       ${unpaid
         .map(
           (o) => {
-            const oTime = o.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            const oTime = o.created_at ? new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
             const oTable = o.table_id ? getTable(o.table_id) : null;
             return `
       <div class="card">
@@ -435,8 +435,8 @@ function renderCashierPayment() {
       ${State.showPaymentHistory ? `
       <div class="mt-3 space-y-2">
         ${paid.length === 0 ? '<div class="text-center py-6"><p style="color:var(--muted)">Belum ada riwayat</p></div>' : paid.map(o => {
-          const time = o.created_at?.split('T')[1]?.slice(0, 5) || '-';
-          const date = o.created_at?.split('T')[0] || '';
+          const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
+          const date = o.created_at ? new Date(o.created_at).toLocaleDateString('sv-SE') : '';
           return `
         <div class="card cursor-pointer" onclick="showFinanceOrderDetail('${encodeURIComponent(o.id)}')">
           <div class="flex justify-between items-center">

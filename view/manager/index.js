@@ -24,17 +24,17 @@ function renderManagerView() {
 }
 
 function renderManagerReport() {
-  const dateVal = State.managerReportDate || new Date().toISOString().split('T')[0];
+  const dateVal = State.managerReportDate || new Date().toLocaleDateString('sv-SE');
   const paidInRange = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || !o.created_at) return false;
-    const d = o.created_at.split('T')[0];
+    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   });
   const cashInRange = paidInRange.filter(o => o.payment_method === 'cash' || o.payment_method === 'cod');
   const cashTotal = cashInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
   const digitalInRange = paidInRange.filter(o => o.payment_method === 'digital' || o.payment_method === 'qris' || o.payment_method === 'bank_transfer');
   const digitalTotal = digitalInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
-  const unpaidOrders = DB.orders.filter(o => o.status !== 'cancelled' && o.status !== 'rejected' && o.payment_status === 'unpaid' && (!o.created_at || o.created_at.split('T')[0] === dateVal));
+  const unpaidOrders = DB.orders.filter(o => o.status !== 'cancelled' && o.status !== 'rejected' && o.payment_status === 'unpaid' && (!o.created_at || new Date(o.created_at).toLocaleDateString('sv-SE') === dateVal));
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Harian</h2>
@@ -66,7 +66,7 @@ function renderManagerReport() {
 function renderManagerCashTable(dateVal) {
   const orders = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || (o.payment_method !== 'cash' && o.payment_method !== 'cod') || !o.created_at) return false;
-    return o.created_at.split('T')[0] === dateVal;
+    return new Date(o.created_at).toLocaleDateString('sv-SE') === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
   return `
@@ -83,7 +83,7 @@ function renderManagerCashTable(dateVal) {
         <table class="w-full text-sm" style="border-collapse:collapse">
           <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Orders</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Menu</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
           <tbody>${orders.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="4">Belum ada transaksi tunai</td></tr>' : orders.map(o => {
-            const time = o.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
             const menuCount = {};
             (o.items || []).forEach(item => {
               const mi = DB.menuItems.find(m => m.id === item.menu_item_id);
@@ -101,7 +101,7 @@ function renderManagerCashTable(dateVal) {
 function renderManagerDigitalTable(dateVal) {
   const orders = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || (o.payment_method !== 'digital' && o.payment_method !== 'qris' && o.payment_method !== 'bank_transfer') || !o.created_at) return false;
-    return o.created_at.split('T')[0] === dateVal;
+    return new Date(o.created_at).toLocaleDateString('sv-SE') === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
   return `
@@ -118,7 +118,7 @@ function renderManagerDigitalTable(dateVal) {
         <table class="w-full text-sm" style="border-collapse:collapse">
           <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Orders</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Menu</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
           <tbody>${orders.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="4">Belum ada transaksi digital</td></tr>' : orders.map(o => {
-            const time = o.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
             const menuCount = {};
             (o.items || []).forEach(item => {
               const mi = DB.menuItems.find(m => m.id === item.menu_item_id);
@@ -135,10 +135,10 @@ function renderManagerDigitalTable(dateVal) {
 }
 
 function renderManagerFinance() {
-  const dateVal = State.managerFinanceDate || new Date().toISOString().split('T')[0];
+  const dateVal = State.managerFinanceDate || new Date().toLocaleDateString('sv-SE');
   const paidInRange = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || !o.created_at) return false;
-    const d = o.created_at.split('T')[0];
+    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   });
   const cashInRange = paidInRange.filter(o => o.payment_method === 'cash' || o.payment_method === 'cod');
@@ -148,7 +148,7 @@ function renderManagerFinance() {
   const unpaid = DB.orders.filter(o => {
     if (o.payment_status !== 'unpaid' || !o.created_at) return false;
     if (o.status === 'cancelled' || o.status === 'rejected') return false;
-    const d = o.created_at.split('T')[0];
+    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   });
   return `
@@ -205,7 +205,7 @@ function renderManagerFinance() {
 function renderManagerFinanceCashTable(dateVal) {
   const orders = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || (o.payment_method !== 'cash' && o.payment_method !== 'cod') || !o.created_at) return false;
-    const d = o.created_at.split('T')[0];
+    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
@@ -229,8 +229,8 @@ function renderManagerFinanceCashTable(dateVal) {
             <th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th>
           </tr></thead>
           <tbody>${orders.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="5">Belum ada transaksi tunai</td></tr>' : orders.map(o => {
-            const date = o.created_at?.split('T')[0] || '';
-            const time = o.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            const date = o.created_at ? new Date(o.created_at).toLocaleDateString('sv-SE') : '';
+            const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
             const menuCount = {};
             (o.items || []).forEach(item => {
               const mi = DB.menuItems.find(m => m.id === item.menu_item_id);
@@ -261,7 +261,7 @@ function renderManagerFinanceCashTable(dateVal) {
 function renderManagerFinanceDigitalTable(dateVal) {
   const orders = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || (o.payment_method !== 'digital' && o.payment_method !== 'qris' && o.payment_method !== 'bank_transfer') || !o.created_at) return false;
-    const d = o.created_at.split('T')[0];
+    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
@@ -285,8 +285,8 @@ function renderManagerFinanceDigitalTable(dateVal) {
             <th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th>
           </tr></thead>
           <tbody>${orders.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="5">Belum ada transaksi digital</td></tr>' : orders.map(o => {
-            const date = o.created_at?.split('T')[0] || '';
-            const time = o.created_at?.split('T')[1]?.slice(0, 5) || '-';
+            const date = o.created_at ? new Date(o.created_at).toLocaleDateString('sv-SE') : '';
+            const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
             const menuCount = {};
             (o.items || []).forEach(item => {
               const mi = DB.menuItems.find(m => m.id === item.menu_item_id);

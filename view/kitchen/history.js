@@ -115,9 +115,9 @@ function confirmRejectKitchenOrder(orderId) {
 
 function renderKitchenHistory() {
   let done = DB.orders.filter((o) => ["ready", "completed", "rejected"].includes(o.status));
-  const dateFilter = State.kitchenDateFilter !== undefined ? State.kitchenDateFilter : new Date().toISOString().split('T')[0];
+  const dateFilter = State.kitchenDateFilter !== undefined ? State.kitchenDateFilter : new Date().toLocaleDateString('sv-SE');
   if (dateFilter) {
-    done = done.filter((o) => o.created_at && o.created_at.split('T')[0] === dateFilter);
+    done = done.filter((o) => o.created_at && new Date(o.created_at).toLocaleDateString('sv-SE') === dateFilter);
   }
   done.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   return `
