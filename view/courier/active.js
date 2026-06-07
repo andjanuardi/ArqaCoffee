@@ -5,6 +5,15 @@ function renderCourierActive() {
   const active = DB.orders.filter(
     (o) => o.courier_id === State.currentUser.id && o.status === "delivering",
   );
+  function getCafeToCustDist(o) {
+    if (!o.delivery_location || !o.delivery_location.lat) return null;
+    const cafe = DB.cafe.location;
+    const d = calcDistance(cafe.lat, cafe.lng, o.delivery_location.lat, o.delivery_location.lng);
+    const meter = Math.round(d).toLocaleString('id-ID');
+    const km = (d / 1000).toFixed(1).replace('.', ',');
+    if (d < 1000) return meter + ' meter';
+    return meter + ' m (' + km + ' km)';
+  }
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Pengantaran Aktif</h2>
@@ -26,6 +35,7 @@ function renderCourierActive() {
         ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="text-xs mb-2" style="color:var(--accent)"><i class="fas fa-truck mr-1"></i>Ongkos Kirim: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ""}
         ${(() => { const fee = calcCourierFee(o.shipping_cost); return fee > 0 ? `<div class="text-xs mb-2" style="color:var(--muted)"><i class="fas fa-hand-holding-dollar mr-1"></i>Jasa Aplikasi: <b style="color:var(--danger)">-${formatCurrency(fee)}</b></div>` : ''; })()}
         ${o.payment_status === "paid" && o.shipping_cost > 0 ? `<div class="text-xs mb-2" style="color:var(--success)"><i class="fas fa-hand-holding-dollar mr-1"></i>Ongkir dari kasir: <b>${formatCurrency((o.shipping_cost || 0) - calcCourierFee(o.shipping_cost))}</b></div>` : ""}
+        ${(() => { const d = getCafeToCustDist(o); return d ? `<div class="text-xs mb-2" style="color:var(--accent)"><i class="fas fa-store mr-1"></i>Cafe → Pelanggan: ${d}</div>` : ''; })()}
         <div id="map-courier-${o.id}" class="mb-3" style="height:200px;border-radius:12px"></div>
         <div class="flex gap-2">
           <button onclick="openNavigation('${o.id}')" class="btn-secondary btn-sm flex-1 text-center"><i class="fas fa-map-signs mr-1"></i>Navigasi</button>

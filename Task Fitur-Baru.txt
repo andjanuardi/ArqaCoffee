@@ -155,9 +155,20 @@ jika approval diterima admin, maka default password "12345 d/s"  (selesai)
 Review (penambahan)
 	Pelanggan
 		- update invoice (selesai)
+
+	Kasir
+		- update informasi Pesanan tersedia (selesai)
 	
 	Kasir
-		- update informasi Pesanan tersedia
+		- update informasi Pesanan tersedia	
+
+
+
+
+
+
+
+
 
 Pesan di Tempat
 Makan di kafe
