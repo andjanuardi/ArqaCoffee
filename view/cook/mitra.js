@@ -57,6 +57,10 @@ function renderMitraHistory() {
           const mi = getMenuItem(i.menu_item_id);
           return mi ? mi.name + ' x' + i.quantity : '';
         }).filter(Boolean).join(', ');
+        const hItems = o.items.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
+        const hTax = calcItemTax(o.items);
+        const hFee = calcMitraFee(hItems);
+        const hTotal = Math.max(0, hItems - hTax - hFee);
         return `
       <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showMitraOrderDetail('${o.id}')">
         <div class="flex justify-between items-start mb-1">
@@ -72,7 +76,7 @@ function renderMitraHistory() {
         <div class="text-xs truncate" style="color:var(--muted)">${itemsStr || '-'}</div>
         <div class="flex justify-between items-center mt-1">
           <span class="text-xs" style="color:var(--muted)"><i class="far fa-clock mr-1"></i>${formatDate(o.created_at)} ${formatTime(o.created_at)}</span>
-          <span class="text-sm font-semibold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
+          <span class="text-sm font-semibold" style="color:var(--accent)">${formatCurrency(hTotal)}</span>
         </div>
       </div>`;
       }).join('')}
