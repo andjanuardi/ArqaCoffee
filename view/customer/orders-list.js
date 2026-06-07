@@ -64,6 +64,7 @@ function showOrderDetail(id) {
   if (!o) return;
   const activeItems = o.items.filter(i => i.status !== "rejected");
   const hasRejected = o.items.some(i => i.status === "rejected");
+  const subtotal = activeItems.reduce((s, i) => s + i.unit_price * i.quantity, 0);
   showModal(`
     <div>
       <div class="flex justify-between items-start mb-4">
@@ -93,12 +94,14 @@ function showOrderDetail(id) {
           .join("")}
       </div>
       <div class="border-t pt-3" style="border-color:var(--border)">
+        <div class="flex justify-between text-xs mb-1"><span><i class="fas fa-calculator mr-1"></i>Subtotal</span><span>${formatCurrency(subtotal)}</span></div>
         ${o.promo_discount ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
         ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-truck mr-1"></i>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ""}
+        ${o.service_fee && o.service_fee > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:#e07a3a"><span><i class="fas fa-hand-holding-usd mr-1"></i>Biaya Layanan</span><span>${formatCurrency(o.service_fee)}</span></div>` : ""}
         <div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(activeItems)))}</span></div>
         <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
         <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "qris" ? "QRIS" : o.payment_method === "bank_transfer" ? "Transfer Bank" : o.payment_method === "cod" ? "COD" : o.payment_method === "" ? "Bayar Nanti" : "Tunai"}</span></div>
-        ${!(o.order_type === "delivery" && o.payment_method === "cod") ? `<div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}">${o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>` : ""}
+        <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}">${o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>
       </div>
       <div class="flex gap-2 mt-4">
         ${o.status !== "rejected" && o.status !== "cancelled" ? `<button onclick="closeModal();printInvoice('${o.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i> Cetak Invoice</button>` : ""}
@@ -114,8 +117,17 @@ function printInvoice(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
   const activeItems = o.items.filter(i => i.status !== "rejected");
+  const subtotal = activeItems.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+  const tax = Math.round(calcItemTax(activeItems));
   const win = window.open('', '_blank');
   const statusLabel = o.payment_status === 'paid' ? 'Lunas' : 'Belum Bayar';
+  let payMethodLabel = 'Tunai';
+  if (o.payment_method === 'qris') payMethodLabel = 'QRIS';
+  else if (o.payment_method === 'bank_transfer') payMethodLabel = 'Transfer Bank';
+  else if (o.payment_method === 'cod') payMethodLabel = 'COD';
+  else if (o.payment_method === '') payMethodLabel = 'Bayar Nanti';
+  const custName = o.customer_name || (o.user_id && getUser(o.user_id)?.name) || '';
+  const orderTypeLabel = o.order_type === 'dine-in' ? 'Makan di Tempat' : o.order_type === 'takeaway' ? 'Bungkus' : 'Pesan Antar';
   win.document.write(`
     <html><head>
       <title>Invoice #${o.id.slice(-5).toUpperCase()}</title>
@@ -126,6 +138,9 @@ function printInvoice(id) {
         .header p { font-size:12px; color:#666; margin:2px 0; }
         .divider { border-top:2px dashed #333; margin:16px 0; }
         .item { display:flex; justify-content:space-between; font-size:13px; padding:4px 0; }
+        .item .name { flex:1; }
+        .item .qty { margin:0 12px; color:#666; }
+        .item .price { text-align:right; }
         .totals { margin-top:12px; font-size:13px; }
         .totals > div { display:flex; justify-content:space-between; padding:2px 0; }
         .footer { text-align:center; font-size:11px; color:#888; margin-top:24px; }
@@ -134,24 +149,27 @@ function printInvoice(id) {
     </head><body>
       <div class="header">
         <h1>ARQA Coffee</h1>
-        <p>${o.order_type === 'dine-in' ? 'Makan di Tempat' : 'Pesan Antar'}</p>
+        <p>${orderTypeLabel}</p>
         ${o.table_id ? '<p>Meja ' + (getTable(o.table_id)?.number || '') + '</p>' : ''}
+        ${custName ? '<p>' + custName + '</p>' : ''}
         <p>#${o.id.slice(-5).toUpperCase()}</p>
         <p>${new Date(o.created_at).toLocaleString('id-ID')}</p>
       </div>
       <div class="divider"></div>
       ${activeItems.map(i => {
         const mi = getMenuItem(i.menu_item_id);
-        return `<div class="item"><span>${mi ? mi.name : 'Item'} x${i.quantity}</span><span>${formatCurrency(i.unit_price * i.quantity)}</span></div>`;
+        return `<div class="item"><span class="name">${mi ? mi.name : 'Item'}</span><span class="qty">x${i.quantity}</span><span class="price">${formatCurrency(i.unit_price * i.quantity)}</span></div>`;
       }).join('')}
       <div class="divider"></div>
       <div class="totals">
-        <div><span>Subtotal</span><span>${formatCurrency(o.total_amount)}</span></div>
-        <div><span>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(activeItems)))}</span></div>
+        <div><span>Subtotal</span><span>${formatCurrency(subtotal)}</span></div>
+        ${o.promo_discount ? `<div style="color:#27ae60"><span>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ''}
         ${o.shipping_cost && o.shipping_cost > 0 ? `<div><span>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ''}
+        ${o.service_fee && o.service_fee > 0 ? `<div style="color:#e07a3a"><span>Biaya Layanan</span><span>${formatCurrency(o.service_fee)}</span></div>` : ''}
+        <div><span>Pajak</span><span>${formatCurrency(tax)}</span></div>
         <div style="font-weight:bold;font-size:15px"><span>Total</span><span>${formatCurrency(o.total_amount)}</span></div>
-        <div style="margin-top:8px"><span>Pembayaran</span><span>${o.payment_method === 'qris' ? 'QRIS' : o.payment_method === 'bank_transfer' ? 'Transfer Bank' : o.payment_method === 'cod' ? 'COD' : o.payment_method === '' ? 'Bayar Nanti' : 'Tunai'}</span></div>
-        ${o.order_type !== 'delivery' ? `<div><span>Status</span><span>${statusLabel}</span></div>` : ''}
+        <div style="margin-top:8px"><span>Pembayaran</span><span>${payMethodLabel}</span></div>
+        <div><span>Status</span><span>${statusLabel}</span></div>
       </div>
       ${o.delivery_address ? `<div class="divider"></div><p style="font-size:12px"><strong>Alamat:</strong> ${o.delivery_address}</p>` : ''}
       <div class="footer">Terima kasih telah berbelanja di ARQA Coffee</div>
