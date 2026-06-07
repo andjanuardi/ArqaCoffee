@@ -47,7 +47,10 @@ function renderCourierHistory() {
     done = done.filter((o) => new Date(o.created_at) >= s && new Date(o.created_at) <= e);
   }
   const totalSetor = done.filter(o => o.status === "delivered").reduce((s, o) => s + (o.total_amount || 0), 0);
-  const totalOngkir = done.reduce((s, o) => s + (o.shipping_cost || 0), 0);
+  const totalOngkir = done.reduce((s, o) => {
+    const fee = calcCourierFee(o.shipping_cost);
+    return s + (o.shipping_cost || 0) - fee;
+  }, 0);
   const totalSemuaAmount = done.reduce((s, o) => s + (o.total_amount || 0), 0);
   const totalTransaksi = totalSemuaAmount + totalOngkir;
   const totalOngkirBelum = done.filter(o => o.ongkir_status === "unpaid").reduce((s, o) => s + (o.shipping_cost || 0), 0);

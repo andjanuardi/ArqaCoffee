@@ -54,6 +54,7 @@ function renderCourierAvailable() {
         <div class="text-sm mb-1"><i class="fas fa-map-marker-alt mr-1" style="color:var(--accent)"></i>${o.delivery_address}</div>
         ${o.delivery_detail ? `<div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-info-circle mr-1"></i>${o.delivery_detail}</div>` : ""}
         ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="text-xs mb-1" style="color:var(--accent)"><i class="fas fa-truck mr-1"></i>Ongkos Kirim: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ""}
+        ${(() => { const fee = calcCourierFee(o.shipping_cost); return fee > 0 ? `<div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-hand-holding-dollar mr-1"></i>Jasa Aplikasi: <b style="color:var(--danger)">-${formatCurrency(fee)}</b></div>` : ''; })()}
         ${o.payment_status === "paid" && o.shipping_cost > 0 ? `<div class="text-xs mb-1" style="color:var(--success)"><i class="fas fa-hand-holding-dollar mr-1"></i>Ongkir dari kasir: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ""}
         ${distStr ? `<div class="text-xs mb-2" style="color:var(--accent)"><i class="fas fa-store mr-1"></i>Cafe → Pelanggan: ${distStr}</div>` : ''}
         <div class="space-y-1 mb-3">${o.items.filter(i => i.status !== "rejected")
