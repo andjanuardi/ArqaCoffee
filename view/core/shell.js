@@ -82,12 +82,6 @@ function renderSideDrawer(role) {
     ] },
     { id: 'menu-mgmt', icon: 'fa-utensils', label: 'Kelola Menu' },
     { id: 'promos', icon: 'fa-tags', label: 'Kelola Promo' },
-    { id: 'pengaturan', icon: 'fa-gear', label: 'Pengaturan', children: [
-      { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Kelola Meja' },
-      { id: 'users', icon: 'fa-users-gear', label: 'Kelola Pengguna' },
-      { id: 'service-control', icon: 'fa-store', label: 'Buka Tutup Layanan' },
-      { id: 'tarif-group', icon: 'fa-sliders', label: 'Pengaturan Tarif' },
-    ] },
     { id: 'financial', icon: 'fa-coins', label: 'Finansial', children: [
       { id: 'finance', icon: 'fa-chart-pie', label: 'Keuangan' },
       { id: 'expenses', icon: 'fa-money-bill-wave', label: 'Pengeluaran' },
@@ -97,6 +91,12 @@ function renderSideDrawer(role) {
     { id: 'stock-group', icon: 'fa-warehouse', label: 'Stok', children: [
       { id: 'stock', icon: 'fa-mug-saucer', label: 'Stok Cafe' },
       { id: 'pg-stock', icon: 'fa-box-open', label: 'Stok Playground' },
+    ] },
+    { id: 'pengaturan', icon: 'fa-gear', label: 'Pengaturan', children: [
+      { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Kelola Meja' },
+      { id: 'users', icon: 'fa-users-gear', label: 'Kelola Pengguna' },
+      { id: 'service-control', icon: 'fa-store', label: 'Buka Tutup Layanan' },
+      { id: 'tarif-group', icon: 'fa-sliders', label: 'Pengaturan Tarif' },
     ] },
     { id: 'mitra-approval', icon: 'fa-user-check', label: 'Approval Mitra' },
     { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
@@ -108,10 +108,6 @@ function renderSideDrawer(role) {
     ] },
     { id: 'menu-mgmt', icon: 'fa-utensils', label: 'Kelola Menu' },
     { id: 'promos', icon: 'fa-tags', label: 'Kelola Promo' },
-    { id: 'pengaturan', icon: 'fa-gear', label: 'Pengaturan', children: [
-      { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Kelola Meja' },
-      { id: 'users', icon: 'fa-users-gear', label: 'Kelola Pengguna' },
-    ] },
     { id: 'tarif-group', icon: 'fa-sliders', label: 'Pengaturan Tarif', children: [
       { id: 'tarif-kurir', icon: 'fa-motorcycle', label: 'Tarif Kurir Per-Transaksi' },
       { id: 'tarif-mitra', icon: 'fa-handshake', label: 'Tarif Mitra Per-Transaksi' },
@@ -121,6 +117,10 @@ function renderSideDrawer(role) {
     { id: 'stock-group', icon: 'fa-warehouse', label: 'Stok', children: [
       { id: 'stock', icon: 'fa-mug-saucer', label: 'Stok Cafe' },
       { id: 'pg-stock', icon: 'fa-box-open', label: 'Stok Playground' },
+    ] },
+    { id: 'pengaturan', icon: 'fa-gear', label: 'Pengaturan', children: [
+      { id: 'tables-mgmt', icon: 'fa-table-cells', label: 'Kelola Meja' },
+      { id: 'users', icon: 'fa-users-gear', label: 'Kelola Pengguna' },
     ] },
     { id: 'expenses', icon: 'fa-money-bill-wave', label: 'Pengeluaran' },
     { id: 'attendance', icon: 'fa-calendar-check', label: 'Presensi' },
