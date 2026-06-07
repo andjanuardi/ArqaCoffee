@@ -110,13 +110,13 @@ function payOngkir(id) {
   const kurir = getUser(o.courier_id);
   addNotification({
     title: 'Ongkir Dibayar',
-    message: '#' + o.id.slice(-5).toUpperCase() + ' — Ongkir ' + formatCurrency(o.shipping_cost) + ' sudah dibayar, silakan konfirmasi',
+    message: '#' + o.id.slice(-5).toUpperCase() + ' — Ongkir ' + formatCurrency(o.shipping_cost - calcCourierFee(o.shipping_cost)) + ' sudah dibayar, silakan konfirmasi',
     type: 'payment',
     icon: 'fa-hand-holding-dollar',
     targetRoles: ['courier'],
     relatedOrderId: o.id,
   });
-  showToast("Ongkir " + formatCurrency(o.shipping_cost) + " dibayarkan ke " + (kurir ? kurir.name : 'kurir'), "success");
+  showToast("Ongkir " + formatCurrency(o.shipping_cost - calcCourierFee(o.shipping_cost)) + " dibayarkan ke " + (kurir ? kurir.name : 'kurir'), "success");
   render();
 }
 

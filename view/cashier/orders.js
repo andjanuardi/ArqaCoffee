@@ -147,7 +147,7 @@ function renderCashierOrders() {
     <div class="space-y-3 mb-6">
       ${(() => {
         const ongkirOrders = DB.orders.filter(o =>
-          o.ongkir_status === "unpaid" && o.courier_id && o.shipping_cost > 0 && o.status === "completed"
+          o.ongkir_status !== "confirmed" && o.courier_id && o.shipping_cost > 0 && o.status === "completed"
         );
         if (ongkirOrders.length === 0) return '<p class="text-sm text-center py-4" style="color:var(--muted)">Tidak ada ongkir yang perlu dibayar</p>';
         return ongkirOrders.map(o => {
@@ -159,14 +159,16 @@ function renderCashierOrders() {
               <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
               <span class="badge badge-completed" style="font-size:9px">Selesai</span>
             </div>
-            <span class="font-bold" style="color:var(--warning)">${formatCurrency(o.shipping_cost)}</span>
+            <span class="font-bold" style="color:var(--warning)">${formatCurrency(o.shipping_cost - calcCourierFee(o.shipping_cost))}</span>
           </div>
           <div class="flex items-center gap-3 text-[11px] mb-2" style="color:var(--muted)">
             <span><i class="fas fa-user mr-1" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</span>
             <span><i class="fas fa-motorcycle mr-1" style="color:var(--accent)"></i>${kurir ? kurir.name : '—'}</span>
           </div>
           <div class="text-xs mb-2" style="color:var(--muted)">${formatDate(o.created_at)} ${formatTime(o.created_at)}</div>
-          <button onclick="payOngkir('${o.id}')" class="btn-primary btn-sm w-full text-center"><i class="fas fa-hand-holding-dollar mr-1"></i>Bayar Ongkir ${formatCurrency(o.shipping_cost)}</button>
+          ${o.ongkir_status === "paid"
+            ? `<div class="text-xs w-full text-center py-2 rounded-lg font-medium" style="background:rgba(52,152,219,.15);color:#3498db"><i class="fas fa-clock mr-1"></i>Menunggu Konfirmasi Kurir</div>`
+            : `<button onclick="payOngkir('${o.id}')" class="btn-primary btn-sm w-full text-center"><i class="fas fa-hand-holding-dollar mr-1"></i>Bayar Ongkir ${formatCurrency(o.shipping_cost - calcCourierFee(o.shipping_cost))}</button>`}
         </div>`;
         }).join('');
       })()}

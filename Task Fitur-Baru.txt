@@ -160,7 +160,7 @@ Review (penambahan)
 		- update informasi Pesanan tersedia (selesai)
 		- update informasi Pesanan aktif (selesai)
 		- update informasi riwayat (selesai)
-
+	
 	Kasir
 		- update informasi Pesanan tersedia	
 
