@@ -150,9 +150,19 @@ function renderMitraFinance() {
     claimItems.length = 0;
     claimItems.push(...filtered);
   }
-  const totalRevenue = claimItems
+  const orderTotals = {};
+  claimItems
     .filter(ci => ci.order.payment_status === 'paid')
-    .reduce((s, ci) => s + (ci.unit_price * ci.quantity || 0), 0);
+    .forEach(ci => {
+      if (!orderTotals[ci.order.id]) {
+        const items = ci.order.items;
+        const sub = items.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
+        const tax = calcItemTax(items);
+        const fee = calcMitraFee(sub);
+        orderTotals[ci.order.id] = Math.max(0, sub - tax - fee);
+      }
+    });
+  const totalRevenue = Object.values(orderTotals).reduce((s, v) => s + v, 0);
   const totalOrders = new Set(claimItems.map(ci => ci.order.id)).size;
   return `
   <div class="animate-fade-up">
