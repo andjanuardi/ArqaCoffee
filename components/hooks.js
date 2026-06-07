@@ -243,8 +243,8 @@ function initMaps() {
   if (checkinEl && !State.mapInstances['checkin-profile']) {
     const att = DB.attendances.find(a => a.user_id === State.currentUser.id && !a.check_out && a.lat);
     if (att) {
-      const map = L.map(checkinEl, { zoomControl: false, attributionControl: false }).setView([att.lat, att.lng], 15);
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
+      const map = L.map(checkinEl, { zoomControl: false, attributionControl: false }).setView([att.lat, att.lng], 19);
+      L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, attribution: 'Google' }).addTo(map);
       L.marker([att.lat, att.lng]).addTo(map).bindPopup('Check-in: ' + formatTime(att.check_in));
       State.mapInstances['checkin-profile'] = map;
       setTimeout(() => map.invalidateSize(), 200);
@@ -255,8 +255,8 @@ function initMaps() {
     const doPreview = function(userLat, userLng) {
       if (State.mapInstances['checkin-preview']) return;
       State.pendingCheckinCoords = { lat: userLat, lng: userLng };
-      const map = L.map(previewEl, { zoomControl: false, attributionControl: false }).setView([ARQA_COORDS.lat, ARQA_COORDS.lng], 15);
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
+      const map = L.map(previewEl, { zoomControl: false, attributionControl: false }).setView([ARQA_COORDS.lat, ARQA_COORDS.lng], 19);
+      L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, attribution: 'Google' }).addTo(map);
       L.circle([ARQA_COORDS.lat, ARQA_COORDS.lng], { radius: ARQA_RADIUS, color: '#3498db', fillColor: '#3498db', fillOpacity: 0.08 }).addTo(map);
       L.marker([ARQA_COORDS.lat, ARQA_COORDS.lng], { icon: L.divIcon({ html: '<i class="fas fa-store" style="color:#e07a3a;font-size:22px"></i>', className: '', iconSize: [22, 22], iconAnchor: [11, 11] }) }).addTo(map).bindPopup('ARQA Coffee');
       const userMarker = L.marker([userLat, userLng], { draggable: true, icon: L.divIcon({ html: '<i class="fas fa-motorcycle" style="color:#27ae60;font-size:24px"></i>', className: '', iconSize: [24, 24], iconAnchor: [12, 12] }) }).addTo(map).bindPopup('Lokasi Anda (seret untuk menyesuaikan)').openPopup();
@@ -284,9 +284,9 @@ function initMaps() {
           ? '<span style="color:var(--success)">&#10003; Dalam radius (' + Math.round(dist) + 'm)</span>'
           : '<span style="color:var(--danger)">&#10007; Di luar radius (' + Math.round(dist) + 'm)</span>';
       }
-      map.fitBounds([[ARQA_COORDS.lat, ARQA_COORDS.lng], [userLat, userLng]], { padding: [40, 40], maxZoom: 16 });
+      map.fitBounds([[ARQA_COORDS.lat, ARQA_COORDS.lng], [userLat, userLng]], { padding: [40, 40], maxZoom: 19 });
       if (userLat === ARQA_COORDS.lat && userLng === ARQA_COORDS.lng) {
-        map.setView([ARQA_COORDS.lat, ARQA_COORDS.lng], 16);
+        map.setView([ARQA_COORDS.lat, ARQA_COORDS.lng], 19);
       }
       State.mapInstances['checkin-preview'] = map;
       setTimeout(() => map.invalidateSize(), 200);
@@ -303,8 +303,8 @@ function initMaps() {
     const cafe = DB.cafe ? DB.cafe.location : ARQA_COORDS;
     const startPos = State.courierPosition || cafe;
     State.courierPosition = State.courierPosition || { lat: cafe.lat, lng: cafe.lng };
-    const map = L.map(courierPosEl, { zoomControl: false, attributionControl: false }).setView([startPos.lat, startPos.lng], 14);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
+    const map = L.map(courierPosEl, { zoomControl: false, attributionControl: false }).setView([startPos.lat, startPos.lng], 19);
+    L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, attribution: 'Google' }).addTo(map);
     L.marker([cafe.lat, cafe.lng], { icon: L.divIcon({ html: '<i class="fas fa-store" style="color:#e07a3a;font-size:22px"></i>', className: '', iconSize: [22, 22], iconAnchor: [11, 11] }) }).addTo(map).bindPopup('ARQA Coffee');
     const userMarker = L.marker([State.courierPosition.lat, State.courierPosition.lng], { draggable: true, icon: L.divIcon({ html: '<i class="fas fa-motorcycle" style="color:#27ae60;font-size:24px"></i>', className: '', iconSize: [24, 24], iconAnchor: [12, 12] }) }).addTo(map).bindPopup('Posisi Anda (seret)').openPopup();
     userMarker.on('dragend', function() {
@@ -313,9 +313,9 @@ function initMaps() {
       updateCourierPosDisplay(pos.lat, pos.lng);
     });
     updateCourierPosDisplay(State.courierPosition.lat, State.courierPosition.lng);
-    map.fitBounds([[cafe.lat, cafe.lng], [State.courierPosition.lat, State.courierPosition.lng]], { padding: [50, 50], maxZoom: 15 });
+    map.fitBounds([[cafe.lat, cafe.lng], [State.courierPosition.lat, State.courierPosition.lng]], { padding: [50, 50], maxZoom: 19 });
     if (cafe.lat === State.courierPosition.lat && cafe.lng === State.courierPosition.lng) {
-      map.setView([cafe.lat, cafe.lng], 15);
+      map.setView([cafe.lat, cafe.lng], 19);
     }
     State.mapInstances['courier-position'] = map;
     setTimeout(() => map.invalidateSize(), 200);

@@ -22,10 +22,10 @@ function showTrackingMap(orderId) {
         if (!el) return;
         const lat = DB.cafe.location.lat,
           lng = DB.cafe.location.lng;
-        const map = L.map(el).setView([lat, lng], 15);
+        const map = L.map(el).setView([lat, lng], 19);
         L.tileLayer(
-          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-          { attribution: "Esri" },
+          "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+          { maxZoom: 20, attribution: "Google" },
         ).addTo(map);
         L.marker([lat, lng]).addTo(map).bindPopup("Posisi Kurir").openPopup();
         State.mapInstances["tracking"] = map;

@@ -1,7 +1,7 @@
 // ============================================================
 // GENERIC PROFILE
 // ============================================================
-const ARQA_COORDS = { lat: -6.2088, lng: 106.8456 };
+const ARQA_COORDS = DB.cafe?.location || { lat: -6.2088, lng: 106.8456 };
 const ARQA_RADIUS = 200;
 
 function calcDistance(lat1, lon1, lat2, lon2) {
@@ -118,8 +118,8 @@ function showGeoAttendanceModal() {
 function initModalCheckinMap() {
   const el = document.getElementById('modal-checkin-map');
   if (!el || State.mapInstances['modal-checkin']) return;
-  const map = L.map(el, { zoomControl: false, attributionControl: false }).setView([ARQA_COORDS.lat, ARQA_COORDS.lng], 16);
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
+  const map = L.map(el, { zoomControl: false, attributionControl: false }).setView([ARQA_COORDS.lat, ARQA_COORDS.lng], 19);
+  L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, attribution: 'Google' }).addTo(map);
   L.circle([ARQA_COORDS.lat, ARQA_COORDS.lng], { radius: ARQA_RADIUS, color: '#3498db', fillColor: '#3498db', fillOpacity: 0.08 }).addTo(map);
   L.marker([ARQA_COORDS.lat, ARQA_COORDS.lng], {
     icon: L.divIcon({ html: '<i class="fas fa-store" style="color:#e07a3a;font-size:22px"></i>', className: '', iconSize: [22, 22], iconAnchor: [11, 11] })
@@ -144,7 +144,7 @@ function initModalCheckinMap() {
     }).addTo(map).bindPopup('Lokasi Anda (seret)').openPopup();
     m.on('dragend', function() { const p = m.getLatLng(); upd(p.lat, p.lng); });
     upd(lat, lng);
-    map.fitBounds([[ARQA_COORDS.lat, ARQA_COORDS.lng], [lat, lng]], { padding: [40, 40], maxZoom: 16 });
+    map.fitBounds([[ARQA_COORDS.lat, ARQA_COORDS.lng], [lat, lng]], { padding: [40, 40], maxZoom: 19 });
     setTimeout(function() { map.invalidateSize(); }, 200);
   };
   mkMarker(ARQA_COORDS.lat, ARQA_COORDS.lng);

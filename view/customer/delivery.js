@@ -39,10 +39,10 @@ function pickDeliveryLocation() {
         }
 
         function initMap(initialLat, initialLng) {
-          const map = L.map(el).setView([initialLat, initialLng], 15);
+          const map = L.map(el).setView([initialLat, initialLng], 19);
           L.tileLayer(
-            "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-            { attribution: "Esri" },
+            "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+            { maxZoom: 20, attribution: "Google" },
           ).addTo(map);
 
           const marker = L.marker([initialLat, initialLng]).addTo(map);

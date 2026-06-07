@@ -14,10 +14,10 @@ function initCourierMap(orderId) {
     tracks.length > 0
       ? tracks[tracks.length - 1]
       : { latitude: DB.cafe.location.lat, longitude: DB.cafe.location.lng };
-  const map = L.map(el).setView([last.latitude, last.longitude], 15);
+  const map = L.map(el).setView([last.latitude, last.longitude], 19);
   L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    { attribution: "Esri" },
+    "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+    { maxZoom: 20, attribution: "Google" },
   ).addTo(map);
   L.marker([last.latitude, last.longitude])
     .addTo(map)
