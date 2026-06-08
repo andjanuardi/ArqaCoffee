@@ -171,7 +171,7 @@ function _renderMitraFinanceFor(mitraName) {
   }
   const orderTotals = {};
   claimItems
-    .filter(ci => ci.order.payment_status === 'paid')
+    .filter(ci => ci.order.payment_status === 'paid' && ci.order.status !== 'cancelled' && ci.order.status !== 'rejected')
     .forEach(ci => {
       if (!orderTotals[ci.order.id]) {
         const mitraItems = ci.order.items.filter(i => i.claimed_by === mitraName);
@@ -183,7 +183,7 @@ function _renderMitraFinanceFor(mitraName) {
     });
   const totalRevenue = Object.values(orderTotals).reduce((s, v) => s + v, 0);
   const totalOrders = new Set(claimItems.map(ci => ci.order.id)).size;
-  const totalHarga = claimItems.filter(ci => ci.order.payment_status === 'paid').reduce((s, i) => s + (i.unit_price * i.quantity), 0);
+  const totalHarga = claimItems.filter(ci => ci.order.payment_status === 'paid' && ci.order.status !== 'cancelled' && ci.order.status !== 'rejected').reduce((s, i) => s + (i.unit_price * i.quantity), 0);
   const totalPengeluaran = totalHarga - totalRevenue;
   return `
   <div class="animate-fade-up">

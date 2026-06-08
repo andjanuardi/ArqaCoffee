@@ -121,6 +121,7 @@ function renderCashTable() {
   const dateVal = State.cashierReportDate || new Date().toLocaleDateString('sv-SE');
   const orders = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || (o.payment_method !== 'cash' && o.payment_method !== 'cod') || !o.created_at) return false;
+    if (o.status === 'cancelled' || o.status === 'rejected') return false;
     const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -161,6 +162,7 @@ function renderDigitalTable() {
   const dateVal = State.cashierReportDate || new Date().toLocaleDateString('sv-SE');
   const orders = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || (o.payment_method !== 'digital' && o.payment_method !== 'qris' && o.payment_method !== 'bank_transfer') || !o.created_at) return false;
+    if (o.status === 'cancelled' || o.status === 'rejected') return false;
     const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -202,6 +204,7 @@ function renderCashierReport() {
   const dateVal = State.cashierReportDate || new Date().toLocaleDateString('sv-SE');
   const paidInRange = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || !o.created_at) return false;
+    if (o.status === 'cancelled' || o.status === 'rejected') return false;
     const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   });

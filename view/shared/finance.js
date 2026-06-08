@@ -6,7 +6,7 @@
 // FINANCE HELPERS
 // ------------------------------------------------------------------
 function getFinanceData(startDate, endDate) {
-  const paidOrders = DB.orders.filter((o) => o.payment_status === "paid");
+  const paidOrders = DB.orders.filter((o) => o.payment_status === "paid" && o.status !== "cancelled" && o.status !== "rejected");
   if (!startDate) {
     const end = new Date();
     const start = new Date();
@@ -159,7 +159,7 @@ function printRevenueDetail() {
     ticketCount = filtered.filter((e) => !e._isExtra).length;
   } else {
     const paidOrders = DB.orders.filter(
-      (o) => o.payment_status === "paid" && o.created_at,
+      (o) => o.payment_status === "paid" && o.created_at && o.status !== "cancelled" && o.status !== "rejected",
     );
     filtered = paidOrders.filter((o) => {
       const d = new Date(o.created_at).toLocaleDateString('sv-SE');

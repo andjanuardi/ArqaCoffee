@@ -199,7 +199,7 @@ function renderAdminOverview() {
   const activePgTickets = (DB.playgroundTickets || []).filter(t => t.status === 'active').length;
   const pegawai = DB.users.filter(u => u.role !== 'customer').length;
   const prodCount = {};
-  DB.orders.filter(o => o.payment_status === 'paid').forEach(o => {
+  DB.orders.filter(o => o.payment_status === 'paid' && o.status !== 'cancelled' && o.status !== 'rejected').forEach(o => {
     (o.items || []).forEach(item => {
       const mi = DB.menuItems.find(m => m.id === item.menu_item_id);
       if (mi) prodCount[mi.name] = (prodCount[mi.name] || 0) + item.quantity;

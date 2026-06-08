@@ -431,7 +431,7 @@ function renderActiveOrders() {
     State.activeOrderStart = d.toLocaleDateString('sv-SE');
   }
   if (!State.activeOrderEnd) State.activeOrderEnd = new Date().toLocaleDateString('sv-SE');
-  const raw = DB.orders.filter(o => !['completed', 'cancelled', 'rejected'].includes(o.status));
+  const raw = DB.orders.filter(o => !['completed', 'cancelled', 'rejected'].includes(o.status) && !(o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery"));
   const dateFiltered = raw.filter(o => {
     if (!o.created_at) return false;
     const d = new Date(o.created_at).toLocaleDateString('sv-SE');
@@ -530,7 +530,6 @@ function renderActiveOrders() {
             ${o.status === "pending" && o.accepted ? `<span class="badge" style="background:rgba(46,204,113,.15);color:var(--success)">Diterima</span>` : ""}
             ${o.status === "ready" && o.payment_status === "unpaid" ? `<button onclick="event.stopPropagation();showPaymentModal('${o.id}')" class="btn-primary btn-sm">Bayar</button>` : ""}
             ${o.status === "ready" && o.payment_status === "paid" && o.order_type !== "delivery" ? `<button onclick="event.stopPropagation();confirmCompleteOrder('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
-            ${o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery" ? `<button onclick="event.stopPropagation();settleDelivery('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#3498db,#2980b9)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran</button>` : ""}
             ${o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "dine-in" ? `<button onclick="event.stopPropagation();cashierSettleDineIn('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#27ae60,#1e8449)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran Waiter</button>` : ""}
           </div>
         </div>
@@ -539,17 +538,45 @@ function renderActiveOrders() {
     </div>
     ${(() => {
       const ongkirOrders = DB.orders.filter(o => {
-        if (o.ongkir_status !== "confirmed" && o.courier_id && o.shipping_cost > 0 && o.status === "completed" && o.payment_method !== "cod") return true;
+        if (o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery" && o.shipping_cost > 0) return true;
         if (o.status === "delivered" && o.payment_status === "paid" && o.order_type === "delivery" && o.shipping_cost > 0) return true;
+        if (o.ongkir_status !== "confirmed" && o.courier_id && o.shipping_cost > 0 && o.status === "completed" && o.payment_method !== "cod") return true;
         return false;
       });
       if (ongkirOrders.length === 0) return '';
       return `
-    <h3 class="font-semibold text-sm mb-3 mt-6">Bayar Ongkir</h3>
+    <h3 class="font-semibold text-sm mb-3 mt-6">Bayar / Terima Setoran</h3>
     <div class="space-y-3 mb-6">
       ${ongkirOrders.map(o => {
+        const isUnpaidDelivery = o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery";
         const kurir = getUser(o.courier_id);
         const netOngkir = o.shipping_cost - calcCourierFee(o.shipping_cost);
+        if (isUnpaidDelivery) {
+          return `
+      <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showActiveOrderDetail('${o.id}')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
+            <span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>
+            <span class="badge badge-unpaid ml-1">Belum Bayar</span>
+            <span class="badge ml-1" style="background:rgba(52,152,219,.15);color:#3498db">Belum Setor</span>
+          </div>
+          <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
+        </div>
+        <div class="text-xs mb-2" style="color:var(--muted)">
+          <i class="fas fa-motorcycle mr-1"></i>Delivery — ${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}${kurir ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-motorcycle"></i> ' + kurir.name + '</span>' : ''}
+        </div>
+        <div class="text-xs mb-3">${(() => {
+          const names = o.items.map(i => { const mi = getMenuItem(i.menu_item_id); return mi ? mi.name + ' x' + i.quantity : ''; }).filter(Boolean);
+          return names.length <= 3 ? names.join(', ') : names.slice(0, 3).join(', ') + ' <span style="color:var(--muted)">+' + (names.length - 3) + ' lainnya</span>';
+        })()}</div>
+        <div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--danger)"><i class="fas fa-wallet"></i>Pendapatan Kurir: <b>${formatCurrency(netOngkir)}</b></div>
+        <div class="flex justify-between items-center">
+          <span class="font-bold" style="color:var(--success)">${formatCurrency(o.total_amount - netOngkir)}</span>
+          <button onclick="event.stopPropagation();settleDelivery('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#3498db,#2980b9)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran</button>
+        </div>
+      </div>`;
+        }
         return `
       <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showOngkirPaymentModal('${o.id}')">
         <div class="flex justify-between items-start mb-2">

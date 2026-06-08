@@ -27,6 +27,7 @@ function renderManagerReport() {
   const dateVal = State.managerReportDate || new Date().toLocaleDateString('sv-SE');
   const paidInRange = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || !o.created_at) return false;
+    if (o.status === 'cancelled' || o.status === 'rejected') return false;
     const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   });
@@ -154,6 +155,7 @@ function renderManagerFinance() {
   const dateVal = State.managerFinanceDate || new Date().toLocaleDateString('sv-SE');
   const paidInRange = DB.orders.filter(o => {
     if (o.payment_status !== 'paid' || !o.created_at) return false;
+    if (o.status === 'cancelled' || o.status === 'rejected') return false;
     const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   });
