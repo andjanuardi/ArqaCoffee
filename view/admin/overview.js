@@ -554,8 +554,8 @@ function renderServiceControl() {
 function toggleServiceStatus() {
   if (!DB.cafe) DB.cafe = {};
   if (DB.cafe.serviceStatus === 'force_open') {
-    DB.cafe.serviceStatus = 'closed';
-    showToast('Layanan ditutup', 'warning');
+    DB.cafe.serviceStatus = 'open';
+    showToast('Layanan dikembalikan ke mode otomatis', 'info');
   } else if (DB.cafe.serviceStatus === 'closed') {
     DB.cafe.serviceStatus = 'open';
     showToast('Layanan dikembalikan ke mode otomatis', 'info');
