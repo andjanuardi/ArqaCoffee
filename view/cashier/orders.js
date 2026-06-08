@@ -6,13 +6,7 @@ function showPaymentModal(id) {
   if (!o) return;
   const t = o.table_id ? getTable(o.table_id) : null;
   const paySubtotal = o.items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
-  const dineInFee = o.order_type === 'dine-in'
-    ? (() => {
-        const cfg = DB.cafe?.rates?.customer?.service_fee;
-        if (!cfg || !cfg.value) return 0;
-        return cfg.type === 'percent' ? Math.round(paySubtotal * cfg.value / 100) : cfg.value;
-      })()
-    : 0;
+  const dineInFee = calcCustomerFee(paySubtotal, o.order_type);
   showModal(`
     <div>
       <div class="flex justify-between items-start mb-4">
@@ -111,13 +105,7 @@ function renderCashierOrders() {
           const t = o.table_id ? getTable(o.table_id) : null;
           const tax = Math.round(calcItemTax(o.items));
           const itemTotal = o.items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
-          const dineInFee = o.order_type === 'dine-in'
-            ? (() => {
-                const cfg = DB.cafe?.rates?.customer?.service_fee;
-                if (!cfg || !cfg.value) return 0;
-                return cfg.type === 'percent' ? Math.round(itemTotal * cfg.value / 100) : cfg.value;
-              })()
-            : 0;
+          const dineInFee = calcCustomerFee(itemTotal, o.order_type);
           const displayServiceFee = dineInFee || o.service_fee || 0;
           return `
         <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showCashierActiveOrderDetail('${o.id}')">
@@ -401,13 +389,7 @@ function showCashierActiveOrderDetail(id) {
   const t = o.table_id ? getTable(o.table_id) : null;
   const tax = Math.round(calcItemTax(o.items));
   const subtotal = o.items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
-  const dineInFee = o.order_type === 'dine-in'
-    ? (() => {
-        const cfg = DB.cafe?.rates?.customer?.service_fee;
-        if (!cfg || !cfg.value) return 0;
-        return cfg.type === 'percent' ? Math.round(subtotal * cfg.value / 100) : cfg.value;
-      })()
-    : 0;
+  const dineInFee = calcCustomerFee(subtotal, o.order_type);
   showModal(`
 <div>
   <div class="flex justify-between items-start mb-4">
