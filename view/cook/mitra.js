@@ -147,7 +147,7 @@ function showMitraOrderDetail(id) {
 `);
 }
 
-function _renderMitraFinanceHTML(mitraName, s) {
+function _renderMitraFinanceFor(mitraName) {
   const claimItems = [];
   DB.orders.forEach(o => {
     if (!o.created_at) return;
@@ -155,7 +155,7 @@ function _renderMitraFinanceHTML(mitraName, s) {
       if (i.claimed_by === mitraName) claimItems.push({ ...i, order: o });
     });
   });
-  const dateFilter = State[s.dateFilter] || new Date().toLocaleDateString('sv-SE');
+  const dateFilter = State.mitraFinanceDateFilter || new Date().toLocaleDateString('sv-SE');
   if (dateFilter) {
     const s = new Date(dateFilter);
     s.setHours(0, 0, 0, 0);
@@ -188,21 +188,27 @@ function _renderMitraFinanceHTML(mitraName, s) {
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Keuangan Mitra</h2>
+    <div class="flex gap-2 mb-4">
+      <div class="flex-1">
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tanggal</label>
+        <input type="date" id="mitra-finance-date-filter" class="input-field w-full" value="${dateFilter}" onchange="State.mitraFinanceDateFilter=this.value;render()">
+      </div>
+    </div>
     <div class="grid grid-cols-3 gap-2 mb-4">
-      <div class="stat-card text-center cursor-pointer hover:scale-[1.02] transition-transform" onclick="State[s.showRevenue]=!State[s.showRevenue];State[s.showExpense]=false;State[s.showProfit]=false;render()">
+      <div class="stat-card text-center cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showMitraRevenueTable=!State.showMitraRevenueTable;State.showMitraExpenseTable=false;State.showMitraProfitTable=false;render()">
         <div class="text-xs" style="color:var(--muted)">Total Pendapatan</div>
         <div class="text-sm font-bold mt-1" style="color:var(--warning)">${formatCurrency(totalHarga)}</div>
       </div>
-      <div class="stat-card text-center cursor-pointer hover:scale-[1.02] transition-transform" onclick="State[s.showExpense]=!State[s.showExpense];State[s.showRevenue]=false;State[s.showProfit]=false;render()">
+      <div class="stat-card text-center cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showMitraExpenseTable=!State.showMitraExpenseTable;State.showMitraRevenueTable=false;State.showMitraProfitTable=false;render()">
         <div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div>
         <div class="text-sm font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalPengeluaran)}</div>
       </div>
-      <div class="stat-card text-center cursor-pointer hover:scale-[1.02] transition-transform" onclick="State[s.showProfit]=!State[s.showProfit];State[s.showRevenue]=false;State[s.showExpense]=false;render()">
+      <div class="stat-card text-center cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showMitraProfitTable=!State.showMitraProfitTable;State.showMitraRevenueTable=false;State.showMitraExpenseTable=false;render()">
         <div class="text-xs" style="color:var(--muted)">Total Laba Bersih</div>
         <div class="text-sm font-bold mt-1" style="color:var(--success)">${formatCurrency(totalRevenue)}</div>
       </div>
     </div>
-    ${State[s.showExpense] ? (() => {
+    ${State.showMitraExpenseTable ? (() => {
       const paidOrderIds = new Set();
       const expenseRows = [];
       let gSub = 0, gTax = 0, gFee = 0;
@@ -225,7 +231,7 @@ function _renderMitraFinanceHTML(mitraName, s) {
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
         <h3 class="font-semibold text-sm">Detail Pengeluaran</h3>
-        <button onclick="State[s.showExpense]=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+        <button onclick="State.showMitraExpenseTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
       </div>
       <p class="text-sm py-4 text-center" style="color:var(--muted)">Belum ada data pengeluaran</p>
     </div>`;
@@ -234,7 +240,7 @@ function _renderMitraFinanceHTML(mitraName, s) {
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
         <h3 class="font-semibold text-sm">Detail Pengeluaran</h3>
-        <button onclick="State[s.showExpense]=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+        <button onclick="State.showMitraExpenseTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
       </div>
       <div class="grid grid-cols-2 gap-3 mb-3">
         <div class="stat-card text-center"><div class="text-xs" style="color:var(--muted)"><i class="fas fa-receipt mr-1"></i>Pajak</div><div class="text-sm font-bold mt-1" style="color:var(--accent)">${formatCurrency(gTax)}</div></div>
@@ -262,7 +268,7 @@ function _renderMitraFinanceHTML(mitraName, s) {
           </tr></tfoot>
         </table>
       </div>
-    </div>`; })() : State[s.showRevenue] ? (() => {
+    </div>`; })() : State.showMitraRevenueTable ? (() => {
       const revenueRows = [];
       let revCount = 0, revTotal = 0;
       const orderMap = {};
@@ -283,7 +289,7 @@ function _renderMitraFinanceHTML(mitraName, s) {
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
         <h3 class="font-semibold text-sm">Detail Pendapatan</h3>
-        <button onclick="State[s.showRevenue]=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+        <button onclick="State.showMitraRevenueTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
       </div>
       <p class="text-sm py-4 text-center" style="color:var(--muted)">Belum ada data pendapatan</p>
     </div>`;
@@ -292,7 +298,7 @@ function _renderMitraFinanceHTML(mitraName, s) {
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
         <h3 class="font-semibold text-sm">Detail Pendapatan</h3>
-        <button onclick="State[s.showRevenue]=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+        <button onclick="State.showMitraRevenueTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
       </div>
       <div class="grid grid-cols-2 gap-3 mb-3">
         <div class="stat-card text-center"><div class="text-xs" style="color:var(--muted)"><i class="fas fa-money-bill mr-1"></i>Total Pendapatan</div><div class="text-sm font-bold mt-1" style="color:var(--warning)">${formatCurrency(revTotal)}</div></div>
@@ -316,7 +322,7 @@ function _renderMitraFinanceHTML(mitraName, s) {
           </tr></tfoot>
         </table>
       </div>
-    </div>`; })() : State[s.showProfit] ? (() => {
+    </div>`; })() : State.showMitraProfitTable ? (() => {
       const profitRows = [];
       let pCount = 0, pSubTotal = 0, pExpTotal = 0, pProfitTotal = 0;
       const orderMap = {};
@@ -337,7 +343,7 @@ function _renderMitraFinanceHTML(mitraName, s) {
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
         <h3 class="font-semibold text-sm">Detail Laba Bersih</h3>
-        <button onclick="State[s.showProfit]=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+        <button onclick="State.showMitraProfitTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
       </div>
       <p class="text-sm py-4 text-center" style="color:var(--muted)">Belum ada data laba bersih</p>
     </div>`;
@@ -346,7 +352,7 @@ function _renderMitraFinanceHTML(mitraName, s) {
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
         <h3 class="font-semibold text-sm">Detail Laba Bersih</h3>
-        <button onclick="State[s.showProfit]=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+        <button onclick="State.showMitraProfitTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
       </div>
       <div class="grid grid-cols-3 gap-2 mb-3">
         <div class="stat-card text-center"><div class="text-xs" style="color:var(--muted)"><i class="fas fa-money-bill mr-1"></i>Pendapatan</div><div class="text-sm font-bold mt-1" style="color:var(--warning)">${formatCurrency(pSubTotal)}</div></div>
@@ -430,22 +436,7 @@ function _renderMitraFinanceHTML(mitraName, s) {
 }
 
 function renderMitraFinance() {
-  const dateFilter = State.mitraFinanceDateFilter || new Date().toLocaleDateString('sv-SE');
-  return `
-  <div class="animate-fade-up">
-    <div class="flex gap-2 mb-4">
-      <div class="flex-1">
-        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tanggal</label>
-        <input type="date" id="mitra-finance-date-filter" class="input-field w-full" value="${dateFilter}" onchange="State.mitraFinanceDateFilter=this.value;render()">
-      </div>
-    </div>
-    ${_renderMitraFinanceHTML(State.currentUser.name, {
-      dateFilter: 'mitraFinanceDateFilter',
-      showRevenue: 'showMitraRevenueTable',
-      showExpense: 'showMitraExpenseTable',
-      showProfit: 'showMitraProfitTable',
-    })}
-  </div>`;
+  return _renderMitraFinanceFor(State.currentUser.name);
 }
 
 function renderMitraProfile() {

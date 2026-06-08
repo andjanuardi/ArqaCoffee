@@ -90,30 +90,19 @@ function renderAdminCourierFinance() {
 
 function renderAdminMitraFinance() {
   const mitraUsers = DB.users.filter(u => u.role === 'mitra_juru_masak');
-  if (!State.adminMitraSelectedName) State.adminMitraSelectedName = mitraUsers[0]?.name || '';
-  if (!State.adminMitraDateFilter) State.adminMitraDateFilter = new Date().toLocaleDateString('sv-SE');
-  const selected = State.adminMitraSelectedName;
+  if (!State.adminMitraSelectedName || !mitraUsers.some(u => u.name === State.adminMitraSelectedName)) {
+    State.adminMitraSelectedName = mitraUsers.length ? mitraUsers[0].name : '';
+  }
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Mitra Juru Masak</h2>
-    <div class="flex gap-2 mb-4">
-      <div class="flex-[2]">
-        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Pilih Mitra</label>
-        <select class="input-field w-full" onchange="State.adminMitraSelectedName=this.value;render()">
-          ${mitraUsers.map(m => `<option value="${m.name}" ${m.name === selected ? 'selected' : ''}>${m.name}</option>`).join('')}
-        </select>
-      </div>
-      <div class="flex-1">
-        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tanggal</label>
-        <input type="date" class="input-field w-full" value="${State.adminMitraDateFilter}" onchange="State.adminMitraDateFilter=this.value;render()">
-      </div>
+    <div class="mb-4">
+      <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Pilih Mitra</label>
+      <select class="input-field" style="max-width:320px" onchange="State.adminMitraSelectedName=this.value;render()">
+        ${mitraUsers.map(m => `<option value="${m.name}" ${State.adminMitraSelectedName === m.name ? 'selected' : ''}>${m.name}</option>`).join('')}
+      </select>
     </div>
-    ${_renderMitraFinanceHTML(selected, {
-      dateFilter: 'adminMitraDateFilter',
-      showRevenue: 'adminShowMitraRevenueTable',
-      showExpense: 'adminShowMitraExpenseTable',
-      showProfit: 'adminShowMitraProfitTable',
-    })}
+    ${State.adminMitraSelectedName ? _renderMitraFinanceFor(State.adminMitraSelectedName) : '<p class="text-sm text-center py-8" style="color:var(--muted)">Tidak ada mitra juru masak</p>'}
   </div>`;
 }
 
@@ -140,7 +129,6 @@ function renderAdminMitraApproval() {
             <div class="text-xs" style="color:var(--muted)">${r.email}${r.phone ? ' • ' + r.phone : ''}</div>
             <div class="text-xs mt-1"><span class="badge" style="background:${r.role === 'courier' ? 'rgba(155,89,182,.15)' : 'rgba(232,67,147,.15)'};color:${r.role === 'courier' ? '#9b59b6' : '#e84393'}">${r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}</span></div>
             ${r.address ? `<div class="text-xs mt-1" style="color:var(--muted)"><i class="fas fa-map-pin mr-1"></i>${r.address}</div>` : ''}
-            ${r.usaha && r.role === 'mitra_juru_masak' ? `<div class="text-xs mt-1" style="color:var(--accent)"><i class="fas fa-store mr-1"></i>${r.usaha}</div>` : ''}
             <div class="text-[10px] mt-1" style="color:var(--muted)">Daftar: ${formatDate(r.created_at)}</div>
           </div>
         </div>
@@ -159,7 +147,6 @@ function renderAdminMitraApproval() {
           <div class="flex-1 min-w-0">
             <div class="text-sm font-semibold">${r.name}</div>
             <div class="text-xs" style="color:var(--muted)">${r.email} — ${r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}</div>
-            ${r.usaha && r.role === 'mitra_juru_masak' ? `<div class="text-xs mt-0.5" style="color:var(--accent)"><i class="fas fa-store mr-1"></i>${r.usaha}</div>` : ''}
           </div>
           <span class="text-[10px]" style="color:var(--muted)">${formatDate(r.created_at)}</span>
         </div>`).join('')}</div>
@@ -173,7 +160,6 @@ function renderAdminMitraApproval() {
           <div class="flex-1 min-w-0">
             <div class="text-sm font-semibold">${r.name}</div>
             <div class="text-xs" style="color:var(--muted)">${r.email} — ${r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}</div>
-            ${r.usaha && r.role === 'mitra_juru_masak' ? `<div class="text-xs mt-0.5" style="color:var(--accent)"><i class="fas fa-store mr-1"></i>${r.usaha}</div>` : ''}
           </div>
           <span class="text-[10px]" style="color:var(--muted)">${formatDate(r.created_at)}</span>
         </div>`).join('')}</div>

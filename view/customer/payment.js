@@ -15,11 +15,6 @@ function selectPayTiming(t) {
   render();
 }
 function selectOrderType(t) {
-  const hasMitraItems = State.cart.some(c => c.menu_item && c.menu_item.submitted_by);
-  if (t === "dine-in" && hasMitraItems) {
-    showToast("Pesanan dengan menu Mitra Juru Masak hanya bisa diantar (Pesan Antar)", "warning");
-    return;
-  }
   if (t === "delivery" && !hasActiveCourier()) {
     showToast("Kurir sedang tidak tersedia. Coba lagi nanti", "warning");
     return;

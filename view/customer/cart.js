@@ -134,19 +134,10 @@ function renderOrderSummary(total, discount, afterDiscount, shippingCost, servic
 }
 function renderOrderTypeSelector() {
   const courierActive = hasActiveCourier();
-  const hasMitraItems = State.cart.some(c => c.menu_item && c.menu_item.submitted_by);
-  if (hasMitraItems && State.orderType !== "delivery") {
-    State.selectedTable = null;
-    State.orderType = "delivery";
-  }
   return `<div class="card mb-4">
     <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Tipe Pesanan</label>
-    ${hasMitraItems ? `<div class="p-3 mb-3 rounded-xl text-xs flex items-start gap-2" style="background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.2);color:var(--warning)">
-      <i class="fas fa-info-circle mt-0.5"></i>
-      <span>Tidak bisa dine-in karena terdapat menu dari luar cafe.</span>
-    </div>` : ''}
     <div class="grid grid-cols-2 gap-3">
-      <div class="card text-center py-3 text-sm" style="${hasMitraItems ? "opacity:.3;cursor:not-allowed;border-color:var(--border)" : "cursor:pointer"}" ${hasMitraItems ? '' : 'onclick="selectOrderType(\'dine-in\')"'}>
+      <div class="card text-center py-3 cursor-pointer text-sm" onclick="selectOrderType('dine-in')" style="${State.orderType === "dine-in" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}">
         <i class="fas fa-utensils mb-1" style="color:var(--accent)"></i><br><span class="font-semibold">Pesan di Tempat</span>
         <div class="text-[10px] mt-1" style="color:var(--muted)">Makan di kafe</div>
       </div>
