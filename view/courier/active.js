@@ -106,7 +106,6 @@ function completeDelivery(id) {
   } else {
     o.status = "completed";
     o.ongkir_status = "unpaid";
-    if (o.payment_method === "cod" || o.payment_method === "") o.payment_status = "paid";
     notifyDeliveryCompleted(o);
     showToast("Pengantaran selesai! Ongkir " + formatCurrency(o.shipping_cost) + " dari kasir — jangan lupa ambil ongkir", "info");
   }

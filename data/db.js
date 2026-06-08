@@ -693,6 +693,7 @@ const DB =
         },
       ],
       cafe: {
+        address: "Sinabang, Simeulue Timur, Simeulue, Aceh, Sumatra, 23891, Indonesia",
         location: { lat: 2.458461, lng: 96.3766943 },
         shipping: { rate_per_km: 3000, min: 5000, max: 50000 },
         rates: {
@@ -884,3 +885,17 @@ if (!DB.users.some(u => u.role === 'playground')) {
 
 // Migration: ensure pgStockItems have category field
 (DB.pgStockItems || []).forEach(s => { if (!s.category) s.category = 'Makanan'; });
+
+// Migration: ensure cafe has address field
+if (DB.cafe && !DB.cafe.address) {
+  DB.cafe.address = "Sinabang, Simeulue Timur, Simeulue, Aceh, Sumatra, 23891, Indonesia";
+}
+
+// Migration: init ongkir_status for delivery orders
+(DB.orders || []).forEach(o => {
+  if (o.shipping_cost > 0 && o.order_type === "delivery" && o.ongkir_status === undefined) {
+    if (o.payment_method !== "cod" && o.status === "completed") {
+      o.ongkir_status = "unpaid";
+    }
+  }
+});
