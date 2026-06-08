@@ -37,11 +37,11 @@ function showPaymentModal(id) {
         <div class="flex justify-between font-bold text-sm"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
       </div>
       <div class="grid grid-cols-3 gap-3 mb-3">
-        <div class="card text-center py-4 cursor-pointer" onclick="closeModal();processQRISPayment('${o.id}')" style="border-color:var(--accent)">
+        <div class="card text-center py-4 cursor-pointer" onclick="closeModal();showCashierQRIS('${o.id}')" style="border-color:var(--accent)">
           <i class="fas fa-qrcode text-xl mb-2" style="color:var(--accent)"></i>
           <div class="text-sm font-semibold">QRIS</div>
         </div>
-        <div class="card text-center py-4 cursor-pointer" onclick="closeModal();processTransferPayment('${o.id}')">
+        <div class="card text-center py-4 cursor-pointer" onclick="closeModal();showCashierTransfer('${o.id}')">
           <i class="fas fa-university text-xl mb-2" style="color:var(--accent)"></i>
           <div class="text-sm font-semibold">Transfer</div>
         </div>
@@ -51,6 +51,80 @@ function showPaymentModal(id) {
         </div>
       </div>
       <button onclick="closeModal();printCashierInvoice('${o.id}')" class="btn-sm w-full text-center" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:10px"><i class="fas fa-print mr-1"></i>Cetak Invoice</button>
+    </div>
+  `);
+}
+
+function showCashierQRIS(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  const data = encodeURIComponent("ARQA-COFFEE:PAY:" + o.id.slice(-6) + ":" + o.total_amount);
+  showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-2 text-center">Pembayaran QRIS</h3>
+      <p class="text-xs text-center mb-4" style="color:var(--muted)">Scan kode QR berikut untuk membayar</p>
+      <div class="flex justify-center mb-4">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${data}" alt="QRIS Payment" style="border-radius:12px;max-width:100%">
+      </div>
+      <div class="text-center mb-4">
+        <div class="text-sm" style="color:var(--muted)">Total Pembayaran</div>
+        <div class="font-bold text-xl" style="color:var(--accent)">${formatCurrency(o.total_amount)}</div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Tutup</button>
+        <button onclick="confirmCashierPayment('${o.id}','qris')" class="btn-primary btn-sm flex-1 text-center">Saya Sudah Bayar</button>
+      </div>
+    </div>
+  `);
+}
+
+function showCashierTransfer(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-2 text-center">Transfer Bank</h3>
+      <p class="text-xs text-center mb-4" style="color:var(--muted)">Transfer ke rekening berikut</p>
+      <div class="card mb-4 space-y-3">
+        <div class="flex justify-between text-sm"><span style="color:var(--muted)">Bank</span><span class="font-semibold">BCA</span></div>
+        <div class="flex justify-between text-sm"><span style="color:var(--muted)">No. Rekening</span><span class="font-semibold">1234567890</span></div>
+        <div class="flex justify-between text-sm"><span style="color:var(--muted)">Atas Nama</span><span class="font-semibold">ARQA Coffee</span></div>
+        <div class="flex justify-between text-sm pt-2 border-t" style="border-color:var(--border)"><span style="color:var(--muted)">Total Transfer</span><span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+        <button onclick="confirmCashierPayment('${o.id}','bank_transfer')" class="btn-primary btn-sm flex-1 text-center">Saya Sudah Transfer</button>
+      </div>
+    </div>
+  `);
+}
+
+function confirmCashierPayment(id, method) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  o.payment_status = "paid";
+  o.payment_method = method;
+  const label = method === "qris" ? "QRIS" : "Transfer Bank";
+  notifyPayment(o, label);
+  closeModal();
+  showToast(`Pembayaran #${o.id.slice(-5).toUpperCase()} berhasil (${label})`, "success");
+  render();
+}
+
+function confirmCompleteOrder(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  showModal(`
+    <div>
+      <div class="text-center mb-4">
+        <i class="fas fa-check-circle text-4xl mb-3" style="color:var(--success)"></i>
+        <h3 class="font-display text-lg font-bold">Selesaikan Pesanan</h3>
+        <p class="text-sm mt-2" style="color:var(--muted)">Apakah Anda yakin ingin menyelesaikan pesanan #${o.id.slice(-5).toUpperCase()}?</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+        <button onclick="closeModal();updateOrderStatus('${o.id}','completed')" class="btn-primary btn-sm flex-1 text-center">Ya, Selesai</button>
+      </div>
     </div>
   `);
 }
@@ -145,7 +219,7 @@ function renderCashierOrders() {
               }
               ${o.status === "pending" && o.accepted ? `<span class="badge" style="background:rgba(46,204,113,.15);color:var(--success)">Diterima</span>` : ""}
               ${o.status === "ready" && o.payment_status === "unpaid" ? `<button onclick="event.stopPropagation();showPaymentModal('${o.id}')" class="btn-primary btn-sm">Bayar</button>` : ""}
-              ${o.status === "ready" && o.payment_status === "paid" && o.order_type !== "delivery" ? `<button onclick="event.stopPropagation();updateOrderStatus('${o.id}','completed')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
+              ${o.status === "ready" && o.payment_status === "paid" && o.order_type !== "delivery" ? `<button onclick="event.stopPropagation();confirmCompleteOrder('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
               ${o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery" ? `<button onclick="event.stopPropagation();settleDelivery('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#3498db,#2980b9)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran</button>` : ""}
               ${o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "dine-in" ? `<button onclick="event.stopPropagation();cashierSettleDineIn('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#27ae60,#1e8449)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran Waiter</button>` : ""}
             </div>
@@ -520,7 +594,7 @@ function showCashierActiveOrderDetail(id) {
     <button onclick="closeModal();printOngkirInvoice('${o.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak</button>
     ` : `
     ${o.status === "ready" && o.payment_status === "unpaid" ? `<button onclick="closeModal();showPaymentModal('${o.id}')" class="btn-primary flex-1 text-center">Bayar</button>` : ""}
-    ${o.status === "ready" && o.payment_status === "paid" && o.order_type !== "delivery" ? `<button onclick="closeModal();updateOrderStatus('${o.id}','completed')" class="btn-primary flex-1 text-center" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
+    ${o.status === "ready" && o.payment_status === "paid" && o.order_type !== "delivery" ? `<button onclick="closeModal();confirmCompleteOrder('${o.id}')" class="btn-primary flex-1 text-center" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
     <button onclick="closeModal();printCashierInvoice('${o.id}')" class="btn-secondary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak</button>
     `}
     <button onclick="closeModal()" class="btn-secondary flex-1 text-center">Tutup</button>
