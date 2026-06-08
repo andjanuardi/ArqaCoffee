@@ -275,6 +275,15 @@ function renderAdminOverview() {
       <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="switchTab('users')"><div class="text-xs" style="color:var(--muted)">Pengguna</div><div class="text-lg font-bold mt-1">${DB.users.length}</div></div>
     </div>
     ${(() => {
+      const pendingMenus = DB.menuItems.filter(m => m.is_approved === false && m.submitted_by);
+      if (!pendingMenus.length) return '';
+      return `
+    <div class="mb-4 p-3 rounded-xl flex items-center gap-2 text-xs cursor-pointer" style="background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.2);color:var(--warning)" onclick="switchTab('menu-mgmt')">
+      <i class="fas fa-clock"></i>
+      <span class="font-semibold">${pendingMenus.length} menu menunggu persetujuan</span>
+      <i class="fas fa-chevron-right ml-auto text-[10px]" style="color:var(--muted)"></i>
+    </div>`})()}
+    ${(() => {
       const lowStock = DB.stockItems.filter(s => s.current_quantity <= s.min_quantity);
       const lowPgStock = (DB.pgStockItems || []).filter(s => s.current_quantity <= s.min_quantity);
       const allLow = [
