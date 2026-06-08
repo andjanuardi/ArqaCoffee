@@ -226,8 +226,9 @@ function initCharts() {
 
   Object.keys(chartConfigs).forEach(id => {
     const el = document.getElementById(id);
-    if (el) {
-      State.chartInstances[id] = new Chart(el, chartConfigs[id]);
+    const cfg = chartConfigs[id];
+    if (el && cfg) {
+      State.chartInstances[id] = new Chart(el, cfg);
     }
   });
 }

@@ -200,7 +200,7 @@ function renderMitraFinance() {
         <div class="text-xs" style="color:var(--muted)">Total Pendapatan</div>
         <div class="text-sm font-bold mt-1" style="color:var(--warning)">${formatCurrency(totalHarga)}</div>
       </div>
-      <div class="stat-card text-center">
+      <div class="stat-card text-center cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showMitraExpenseTable=!State.showMitraExpenseTable;render()">
         <div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div>
         <div class="text-sm font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalPengeluaran)}</div>
       </div>
@@ -209,6 +209,67 @@ function renderMitraFinance() {
         <div class="text-sm font-bold mt-1" style="color:var(--success)">${formatCurrency(totalRevenue)}</div>
       </div>
     </div>
+    ${State.showMitraExpenseTable ? (() => {
+      const paidOrderIds = new Set();
+      const expenseRows = [];
+      let gSub = 0, gTax = 0, gFee = 0;
+      claimItems.forEach(ci => {
+        const o = ci.order;
+        if (o.payment_status !== 'paid') return;
+        if (paidOrderIds.has(o.id)) return;
+        paidOrderIds.add(o.id);
+        const mitraItems = o.items.filter(i => i.claimed_by === mitraName);
+        const sub = mitraItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
+        const tax = calcItemTax(mitraItems);
+        const fee = calcMitraFee(sub);
+        const exp = tax + fee;
+        expenseRows.push({ o, sub, tax, fee, exp });
+        gSub += sub; gTax += tax; gFee += fee;
+      });
+      const gExp = gTax + gFee;
+      if (!expenseRows.length) {
+        return `
+    <div class="card mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-sm">Detail Pengeluaran</h3>
+        <button onclick="State.showMitraExpenseTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+      </div>
+      <p class="text-sm py-4 text-center" style="color:var(--muted)">Belum ada data pengeluaran</p>
+    </div>`;
+      }
+      return `
+    <div class="card mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-sm">Detail Pengeluaran</h3>
+        <button onclick="State.showMitraExpenseTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="stat-card text-center"><div class="text-xs" style="color:var(--muted)"><i class="fas fa-receipt mr-1"></i>Pajak</div><div class="text-sm font-bold mt-1" style="color:var(--accent)">${formatCurrency(gTax)}</div></div>
+        <div class="stat-card text-center"><div class="text-xs" style="color:var(--muted)"><i class="fas fa-hand-holding-dollar mr-1"></i>Biaya Layanan</div><div class="text-sm font-bold mt-1" style="color:var(--danger)">${formatCurrency(gFee)}</div></div>
+      </div>
+      <div class="overflow-x-auto max-h-72 overflow-y-auto">
+        <table class="w-full text-sm" style="border-collapse:collapse">
+          <thead><tr style="color:var(--muted);font-size:11px"><th style="border-bottom:2px solid var(--border);padding:6px 8px;text-align:left">No</th><th style="border-bottom:2px solid var(--border);padding:6px 8px;text-align:left">Order</th><th style="border-bottom:2px solid var(--border);padding:6px 8px;text-align:right">Subtotal</th><th style="border-bottom:2px solid var(--border);padding:6px 8px;text-align:right">Pajak</th><th style="border-bottom:2px solid var(--border);padding:6px 8px;text-align:right">Biaya</th><th style="border-bottom:2px solid var(--border);padding:6px 8px;text-align:right">Jumlah</th></tr></thead>
+          <tbody>${expenseRows.map((r, i) => `
+            <tr class="cursor-pointer hover:bg-white/5" onclick="showMitraOrderDetail('${r.o.id}')">
+              <td style="border-bottom:1px solid var(--border);padding:6px 8px;color:var(--muted)">${i + 1}</td>
+              <td style="border-bottom:1px solid var(--border);padding:6px 8px;font-weight:600">#${r.o.id.slice(-5).toUpperCase()}</td>
+              <td style="border-bottom:1px solid var(--border);padding:6px 8px;text-align:right;color:var(--muted)">${formatCurrency(r.sub)}</td>
+              <td style="border-bottom:1px solid var(--border);padding:6px 8px;text-align:right;color:var(--accent)">${formatCurrency(r.tax)}</td>
+              <td style="border-bottom:1px solid var(--border);padding:6px 8px;text-align:right;color:var(--danger)">${formatCurrency(r.fee)}</td>
+              <td style="border-bottom:1px solid var(--border);padding:6px 8px;text-align:right;color:var(--danger)">${formatCurrency(r.exp)}</td>
+            </tr>`).join('')}</tbody>
+          <tfoot><tr class="font-bold" style="font-size:11px">
+            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--danger)"></td>
+            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--danger)">Total</td>
+            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--danger);text-align:right;color:var(--muted)">${formatCurrency(gSub)}</td>
+            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--danger);text-align:right;color:var(--accent)">${formatCurrency(gTax)}</td>
+            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--danger);text-align:right;color:var(--danger)">${formatCurrency(gFee)}</td>
+            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--danger);text-align:right;color:var(--danger)">${formatCurrency(gExp)}</td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>`; })() : `
     <div class="card mb-4">
       <h3 class="font-semibold text-sm mb-3">Menu Terlaris</h3>
       <div class="space-y-2">
@@ -260,7 +321,7 @@ function renderMitraFinance() {
           }).join('');
         })()}
       </div>
-    </div>
+    </div>`}
   </div>`;
 }
 
