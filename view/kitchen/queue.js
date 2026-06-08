@@ -70,7 +70,7 @@ function renderKitchenQueue(itemFilterFn, renderExtraFn) {
             <span class="text-xs" style="color:var(--muted)">${formatTime(i.createdAt)}</span>
           </div>
           <div class="text-xs mb-2" style="color:var(--muted)">
-            <i class="fas ${i.orderType === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${t ? "Meja " + t.number : i.orderType === "dine-in" ? "Dine-in" : "Delivery"}
+            <i class="fas ${i.orderType === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${i.orderType === "dine-in" && t ? "Meja " + t.number : getOrderTypeName(i.orderType)}
             <span class="ml-2"><i class="fas fa-wallet mr-1"></i>${i.paymentStatus === "paid" ? "Lunas" : "Belum Bayar"}</span>
           </div>
           <div class="flex justify-between items-center">

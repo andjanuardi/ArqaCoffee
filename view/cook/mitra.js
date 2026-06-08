@@ -175,16 +175,16 @@ function renderMitraFinance() {
     .filter(ci => ci.order.payment_status === 'paid')
     .forEach(ci => {
       if (!orderTotals[ci.order.id]) {
-        const items = ci.order.items;
-        const sub = items.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
-        const tax = calcItemTax(items);
+        const mitraItems = ci.order.items.filter(i => i.claimed_by === mitraName);
+        const sub = mitraItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
+        const tax = calcItemTax(mitraItems);
         const fee = calcMitraFee(sub);
         orderTotals[ci.order.id] = Math.max(0, sub - tax - fee);
       }
     });
   const totalRevenue = Object.values(orderTotals).reduce((s, v) => s + v, 0);
   const totalOrders = new Set(claimItems.map(ci => ci.order.id)).size;
-  const totalHarga = claimItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
+  const totalHarga = claimItems.filter(ci => ci.order.payment_status === 'paid').reduce((s, i) => s + (i.unit_price * i.quantity), 0);
   const totalPengeluaran = totalHarga - totalRevenue;
   return `
   <div class="animate-fade-up">
@@ -273,7 +273,7 @@ function renderMitraFinance() {
       const revenueRows = [];
       let revCount = 0, revTotal = 0;
       const orderMap = {};
-      claimItems.forEach(ci => { orderMap[ci.order.id] = ci.order; });
+      claimItems.forEach(ci => { if (ci.order.payment_status === 'paid') orderMap[ci.order.id] = ci.order; });
       Object.values(orderMap).forEach(o => {
         const mitraItems = o.items.filter(i => i.claimed_by === mitraName);
         const sub = mitraItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
@@ -327,7 +327,7 @@ function renderMitraFinance() {
       const profitRows = [];
       let pCount = 0, pSubTotal = 0, pExpTotal = 0, pProfitTotal = 0;
       const orderMap = {};
-      claimItems.forEach(ci => { orderMap[ci.order.id] = ci.order; });
+      claimItems.forEach(ci => { if (ci.order.payment_status === 'paid') orderMap[ci.order.id] = ci.order; });
       Object.values(orderMap).forEach(o => {
         const mitraItems = o.items.filter(i => i.claimed_by === mitraName);
         const sub = mitraItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
