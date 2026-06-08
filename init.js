@@ -214,12 +214,14 @@ function startApp() {
 
   window.addEventListener('storage', function(e) {
     if (e.key === 'arqa_db' && e.newValue) {
+      if (e.newValue === JSON.stringify(DB)) return;
       var fresh = JSON.parse(e.newValue);
       Object.keys(fresh).forEach(function(k) { DB[k] = fresh[k]; });
       loadNotifications();
       if (!document.getElementById('modal-overlay')) render();
     }
     if (e.key === 'arqa_notifications' && e.newValue) {
+      if (e.newValue === JSON.stringify(State.notifications)) return;
       var oldCount = getUnreadCount();
       loadNotifications();
       var newCount = getUnreadCount();
