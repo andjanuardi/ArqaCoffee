@@ -173,24 +173,33 @@ function renderCashierOrders() {
         return ongkirOrders.map(o => {
           const kurir = getUser(o.courier_id);
           const netOngkir = o.shipping_cost - calcCourierFee(o.shipping_cost);
+          const jasaAplikasi = calcCourierFee(o.shipping_cost);
           return `
         <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showOngkirPaymentModal('${o.id}')">
           <div class="flex justify-between items-start mb-2">
             <div>
               <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
-              <span class="badge badge-completed" style="font-size:9px">Selesai</span>
+              <span class="badge badge-completed ml-1" style="font-size:9px">Selesai</span>
               <span class="badge ml-1" style="${o.ongkir_status === "paid" ? 'background:rgba(52,152,219,.15);color:#3498db' : 'background:rgba(241,196,15,.15);color:#f1c40f'}">${o.ongkir_status === "paid" ? "Siap Diambil" : "Belum Diambil"}</span>
             </div>
-            <span class="font-bold" style="color:var(--success)">${formatCurrency(netOngkir)}</span>
+            <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
           </div>
-          <div class="flex items-center gap-3 text-[11px] mb-2" style="color:var(--muted)">
-            <span><i class="fas fa-user mr-1" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</span>
-            <span><i class="fas fa-motorcycle mr-1" style="color:var(--accent)"></i>${kurir ? kurir.name : '—'}</span>
+          <div class="text-xs mb-2" style="color:var(--muted)">
+            <i class="fas fa-motorcycle mr-1"></i>Delivery — ${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}${kurir ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-motorcycle"></i> ' + kurir.name + '</span>' : ''}
           </div>
-          <div class="text-xs mb-3" style="color:var(--muted)">${formatDate(o.created_at)} ${formatTime(o.created_at)}</div>
-          ${o.ongkir_status === "paid"
-            ? `<div class="text-xs w-full text-center py-2 rounded-lg font-medium" style="background:rgba(52,152,219,.15);color:#3498db"><i class="fas fa-clock mr-1"></i>Menunggu Konfirmasi Kurir</div>`
-            : `<button onclick="event.stopPropagation();payOngkir('${o.id}')" class="btn-primary btn-sm w-full text-center"><i class="fas fa-hand-holding-dollar mr-1"></i>Bayar Ongkir ${formatCurrency(netOngkir)}</button>`}
+          <div class="text-xs mb-3">${(() => {
+            const names = o.items.map(i => { const mi = getMenuItem(i.menu_item_id); return mi ? mi.name + " x" + i.quantity : ""; }).filter(Boolean);
+            return names.length <= 3 ? names.join(", ") : names.slice(0, 3).join(", ") + ' <span style="color:var(--muted)">+' + (names.length - 3) + ' lainnya</span>';
+          })()}</div>
+          <div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--danger)"><i class="fas fa-wallet"></i>Pendapatan Kurir: <b>${formatCurrency(netOngkir)}</b></div>
+          <div class="flex justify-between items-center">
+            <span class="font-bold" style="color:var(--success)">${formatCurrency(o.total_amount - netOngkir + jasaAplikasi)}</span>
+            <div>
+              ${o.ongkir_status === "paid"
+                ? `<span class="text-xs font-medium px-3 py-1.5 rounded" style="background:rgba(52,152,219,.15);color:#3498db"><i class="fas fa-clock mr-1"></i>Menunggu Konfirmasi Kurir</span>`
+                : `<button onclick="event.stopPropagation();payOngkir('${o.id}')" class="btn-primary btn-sm"><i class="fas fa-hand-holding-dollar mr-1"></i>Bayar Ongkir</button>`}
+            </div>
+          </div>
         </div>`;
         }).join('');
       })()}
@@ -256,8 +265,8 @@ function showOngkirPaymentModal(id) {
   <div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.status === "delivered" ? "badge-unpaid" : o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}" ${o.status === "delivered" ? 'style="background:rgba(241,196,15,.15);color:#f1c40f"' : ""}>${o.status === "delivered" ? "Belum Setor" : o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>
   <div class="border-t pt-3 mt-3" style="border-color:var(--border)">
     ${o.shipping_cost > 0 && o.ongkir_status ? `<div class="flex justify-between text-xs mb-1" style="color:${statusColor}"><span><i class="fas fa-hand-holding-dollar mr-1"></i>Status Ongkir</span><span>${statusOngkir}</span></div>` : ""}
-    ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span><i class="fas fa-hand-holding-dollar mr-1"></i>Jasa Aplikasi</span><span style="color:var(--danger)">-${formatCurrency(calcCourierFee(o.shipping_cost))}</span></div>
-    <div class="flex justify-between text-xs mb-2 pb-2" style="border-bottom:1px dashed var(--border);color:var(--success)"><span><i class="fas fa-wallet mr-1"></i>Pendapatan Ongkir</span><span>${formatCurrency(netOngkir)}</span></div>` : ""}
+    ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span><i class="fas fa-hand-holding-dollar mr-1"></i>Jasa Aplikasi</span><span style="color:var(--success)">${formatCurrency(calcCourierFee(o.shipping_cost))}</span></div>
+    <div class="flex justify-between text-xs mb-2 pb-2" style="border-bottom:1px dashed var(--border);color:var(--danger)"><span><i class="fas fa-wallet mr-1"></i>Pendapatan Kurir</span><span>-${formatCurrency(netOngkir)}</span></div>` : ""}
     <div class="flex justify-between text-xs" style="color:var(--muted)"><span>Waktu Selesai</span><span>${formatTime(o.created_at)}</span></div>
     ${o.delivery_location && o.delivery_location.lat ? (function() {
       const d = calcDistance(DB.cafe.location.lat, DB.cafe.location.lng, o.delivery_location.lat, o.delivery_location.lng);
