@@ -161,7 +161,6 @@ function renderCashierOrders() {
         return ongkirOrders.map(o => {
           const kurir = getUser(o.courier_id);
           const netOngkir = o.shipping_cost - calcCourierFee(o.shipping_cost);
-          const jasaAplikasi = calcCourierFee(o.shipping_cost);
           return `
         <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showOngkirPaymentModal('${o.id}')">
           <div class="flex justify-between items-start mb-2">
@@ -181,7 +180,7 @@ function renderCashierOrders() {
           })()}</div>
           <div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--danger)"><i class="fas fa-wallet"></i>Pendapatan Kurir: <b>${formatCurrency(netOngkir)}</b></div>
           <div class="flex justify-between items-center">
-            <span class="font-bold" style="color:var(--success)">${formatCurrency(o.total_amount - netOngkir + jasaAplikasi)}</span>
+            <span class="font-bold" style="color:var(--success)">${formatCurrency(o.total_amount - netOngkir)}</span>
             <div>
               ${o.ongkir_status === "paid"
                 ? `<span class="text-xs font-medium px-3 py-1.5 rounded" style="background:rgba(52,152,219,.15);color:#3498db"><i class="fas fa-clock mr-1"></i>Menunggu Konfirmasi Kurir</span>`
