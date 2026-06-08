@@ -134,12 +134,14 @@ function renderOrderSummary(total, discount, afterDiscount, shippingCost, servic
 }
 function renderOrderTypeSelector() {
   const courierActive = hasActiveCourier();
+  const hasMitraItem = State.cart.some(c => getMenuItem(c.menu_item_id)?.submitted_by);
   return `<div class="card mb-4">
     <label class="text-xs font-semibold mb-3 block" style="color:var(--muted)">Tipe Pesanan</label>
+    ${hasMitraItem ? '<div class="flex items-center gap-2 p-3 rounded-xl text-xs mb-3" style="background:rgba(243,156,18,.1);color:var(--warning)"><i class="fas fa-info-circle"></i><span>Tidak bisa dine-in karena terdapat menu dari luar cafe</span></div>' : ''}
     <div class="grid grid-cols-2 gap-3">
-      <div class="card text-center py-3 cursor-pointer text-sm" onclick="selectOrderType('dine-in')" style="${State.orderType === "dine-in" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}">
+      <div class="card text-center py-3 text-sm" style="${State.orderType === "dine-in" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}${hasMitraItem ? "opacity:.4;cursor:not-allowed" : "cursor:pointer"}" onclick="${hasMitraItem ? "showToast('Tidak bisa dine-in karena terdapat menu dari luar cafe','warning')" : "selectOrderType('dine-in')"}">
         <i class="fas fa-utensils mb-1" style="color:var(--accent)"></i><br><span class="font-semibold">Pesan di Tempat</span>
-        <div class="text-[10px] mt-1" style="color:var(--muted)">Makan di kafe</div>
+        <div class="text-[10px] mt-1" style="color:var(--muted)">${hasMitraItem ? "Menu dari luar cafe" : "Makan di kafe"}</div>
       </div>
       <div class="card text-center py-3 text-sm" style="${State.orderType === "delivery" ? "border-color:var(--accent);background:rgba(224,122,58,.08)" : ""}${!courierActive ? "opacity:.4;cursor:not-allowed" : "cursor:pointer"}" onclick="${courierActive ? "selectOrderType('delivery')" : "showToast('Kurir sedang tidak tersedia','warning')"}">
         <i class="fas fa-motorcycle mb-1" style="color:var(--success)"></i><br><span class="font-semibold">Pesan Antar</span>
@@ -215,6 +217,12 @@ function renderPlaceOrderButton() {
 function renderCustomerCart() {
   if (State.cart.length === 0) return renderEmptyCart();
   const activePromo = getActivePromo();
+  const hasMitraItem = State.cart.some(c => getMenuItem(c.menu_item_id)?.submitted_by);
+  if (hasMitraItem && State.orderType === "dine-in") {
+    State.orderType = "delivery";
+    State.selectedTable = null;
+    showToast("Tidak bisa dine-in karena terdapat menu dari luar cafe", "warning");
+  }
   const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
   const discount = calcPromoDiscount();
   const afterDiscount = total - discount;

@@ -15,6 +15,13 @@ function selectPayTiming(t) {
   render();
 }
 function selectOrderType(t) {
+  if (t === "dine-in") {
+    const hasMitraItem = State.cart.some(c => getMenuItem(c.menu_item_id)?.submitted_by);
+    if (hasMitraItem) {
+      showToast("Tidak bisa dine-in karena terdapat menu dari luar cafe", "warning");
+      return;
+    }
+  }
   if (t === "delivery" && !hasActiveCourier()) {
     showToast("Kurir sedang tidak tersedia. Coba lagi nanti", "warning");
     return;
