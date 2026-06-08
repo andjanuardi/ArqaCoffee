@@ -53,6 +53,16 @@ function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takea
           if (cfg.type === 'percent') return Math.round(shippingCost * cfg.value / 100);
           return cfg.value;
         }
+        function effectiveAmount(o) {
+          if (o.order_type === 'delivery' && o.shipping_cost > 0) {
+            const ongkirPaid = o.payment_method === 'cod' || ['paid', 'confirmed'].includes(o.ongkir_status);
+            if (ongkirPaid) {
+              const netOngkir = o.shipping_cost - calcCourierFee(o.shipping_cost);
+              return o.total_amount - netOngkir;
+            }
+          }
+          return o.total_amount;
+        }
         function calcMitraFee(total) {
           const cfg = DB.cafe?.rates?.mitra?.service_fee;
           if (!cfg || !cfg.value || !total) return 0;

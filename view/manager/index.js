@@ -31,9 +31,9 @@ function renderManagerReport() {
     return d === dateVal;
   });
   const cashInRange = paidInRange.filter(o => o.payment_method === 'cash' || o.payment_method === 'cod');
-  const cashTotal = cashInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const cashTotal = cashInRange.reduce((s, o) => s + effectiveAmount(o), 0);
   const digitalInRange = paidInRange.filter(o => o.payment_method === 'digital' || o.payment_method === 'qris' || o.payment_method === 'bank_transfer');
-  const digitalTotal = digitalInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const digitalTotal = digitalInRange.reduce((s, o) => s + effectiveAmount(o), 0);
   const unpaidOrders = DB.orders.filter(o => o.status !== 'cancelled' && o.status !== 'rejected' && o.payment_status === 'unpaid' && (!o.created_at || new Date(o.created_at).toLocaleDateString('sv-SE') === dateVal));
   return `
   <div class="animate-fade-up">
@@ -56,7 +56,7 @@ function renderManagerReport() {
         ${DB.orders.slice(0, 6).map(o => `
         <div class="flex justify-between items-center text-sm py-2 border-b" style="border-color:var(--border)">
           <div><span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span><span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>${o.promo_discount ? '<span class="text-[10px] ml-1" style="color:var(--success)"><i class="fas fa-tag"></i></span>' : ''}${o.customer_name ? '<span class="text-[10px] ml-1" style="color:var(--muted)">— ' + o.customer_name + '</span>' : ''}</div>
-          <span>${formatCurrency(o.total_amount)}</span>
+          <span>${formatCurrency(effectiveAmount(o))}</span>
         </div>`).join('')}
       </div>
     </div>
@@ -68,7 +68,7 @@ function renderManagerCashTable(dateVal) {
     if (o.payment_status !== 'paid' || (o.payment_method !== 'cash' && o.payment_method !== 'cod') || !o.created_at) return false;
     return new Date(o.created_at).toLocaleDateString('sv-SE') === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const total = orders.reduce((s, o) => s + effectiveAmount(o), 0);
   return `
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
@@ -83,6 +83,7 @@ function renderManagerCashTable(dateVal) {
         <table class="w-full text-sm" style="border-collapse:collapse">
           <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Orders</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Menu</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
           <tbody>${orders.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="4">Belum ada transaksi tunai</td></tr>' : orders.map(o => {
+            const ea = effectiveAmount(o);
             const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
             const menuCount = {};
             (o.items || []).forEach(item => {
@@ -90,7 +91,7 @@ function renderManagerCashTable(dateVal) {
               if (mi) menuCount[mi.name] = (menuCount[mi.name] || 0) + item.quantity;
             });
             const menuList = Object.entries(menuCount).map(([name, qty]) => name + ' x' + qty).join(', ');
-            return `<tr><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})${o.customer_name ? '<br><span style="font-size:10px">' + o.customer_name + '</span>' : ''}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(o.total_amount || 0)}</td></tr>`;
+            return `<tr><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})${o.customer_name ? '<br><span style="font-size:10px">' + o.customer_name + '</span>' : ''}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(ea)}</td></tr>`;
           }).join('')}</tbody>
           <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(total)}</td></tr></tfoot>
         </table>
@@ -103,7 +104,7 @@ function renderManagerDigitalTable(dateVal) {
     if (o.payment_status !== 'paid' || (o.payment_method !== 'digital' && o.payment_method !== 'qris' && o.payment_method !== 'bank_transfer') || !o.created_at) return false;
     return new Date(o.created_at).toLocaleDateString('sv-SE') === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const total = orders.reduce((s, o) => s + effectiveAmount(o), 0);
   return `
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
@@ -118,6 +119,7 @@ function renderManagerDigitalTable(dateVal) {
         <table class="w-full text-sm" style="border-collapse:collapse">
           <thead><tr style="color:var(--muted)"><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Jam</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Orders</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:left">Menu</th><th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th></tr></thead>
           <tbody>${orders.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="4">Belum ada transaksi digital</td></tr>' : orders.map(o => {
+            const ea = effectiveAmount(o);
             const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
             const menuCount = {};
             (o.items || []).forEach(item => {
@@ -126,7 +128,7 @@ function renderManagerDigitalTable(dateVal) {
             });
             const menuList = Object.entries(menuCount).map(([name, qty]) => name + ' x' + qty).join(', ');
             const payLabel = o.payment_method === 'qris' ? 'QRIS' : o.payment_method === 'bank_transfer' ? 'Transfer' : 'Digital';
-            return `<tr><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})${o.customer_name ? '<br><span style="font-size:10px">' + o.customer_name + '</span>' : ''}<br><span style="font-size:10px;color:var(--accent)">${payLabel}</span></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--accent)">${formatCurrency(o.total_amount || 0)}</td></tr>`;
+            return `<tr><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})${o.customer_name ? '<br><span style="font-size:10px">' + o.customer_name + '</span>' : ''}<br><span style="font-size:10px;color:var(--accent)">${payLabel}</span></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--accent)">${formatCurrency(ea)}</td></tr>`;
           }).join('')}</tbody>
           <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(total)}</td></tr></tfoot>
         </table>
@@ -142,9 +144,9 @@ function renderManagerFinance() {
     return d === dateVal;
   });
   const cashInRange = paidInRange.filter(o => o.payment_method === 'cash' || o.payment_method === 'cod');
-  const cashTotal = cashInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const cashTotal = cashInRange.reduce((s, o) => s + effectiveAmount(o), 0);
   const digitalInRange = paidInRange.filter(o => o.payment_method === 'digital' || o.payment_method === 'qris' || o.payment_method === 'bank_transfer');
-  const digitalTotal = digitalInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const digitalTotal = digitalInRange.reduce((s, o) => s + effectiveAmount(o), 0);
   const unpaid = DB.orders.filter(o => {
     if (o.payment_status !== 'unpaid' || !o.created_at) return false;
     if (o.status === 'cancelled' || o.status === 'rejected') return false;
@@ -194,7 +196,7 @@ function renderManagerFinance() {
         ${DB.orders.slice(0, 6).map(o => `
         <div class="flex justify-between items-center text-sm py-2 border-b" style="border-color:var(--border)">
           <div><span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span><span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>${o.promo_discount ? '<span class="text-[10px] ml-1" style="color:var(--success)"><i class="fas fa-tag"></i></span>' : ''}${o.customer_name ? '<span class="text-[10px] ml-1" style="color:var(--muted)">— ' + o.customer_name + '</span>' : ''}</div>
-          <span>${formatCurrency(o.total_amount)}</span>
+          <span>${formatCurrency(effectiveAmount(o))}</span>
         </div>`).join('')}
       </div>
     </div>
@@ -208,7 +210,7 @@ function renderManagerFinanceCashTable(dateVal) {
     const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const total = orders.reduce((s, o) => s + effectiveAmount(o), 0);
   return `
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
@@ -229,6 +231,7 @@ function renderManagerFinanceCashTable(dateVal) {
             <th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th>
           </tr></thead>
           <tbody>${orders.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="5">Belum ada transaksi tunai</td></tr>' : orders.map(o => {
+            const ea = effectiveAmount(o);
             const date = o.created_at ? new Date(o.created_at).toLocaleDateString('sv-SE') : '';
             const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
             const menuCount = {};
@@ -243,7 +246,7 @@ function renderManagerFinanceCashTable(dateVal) {
               <td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td>
               <td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})${o.customer_name ? '<br><span style="font-size:10px">' + o.customer_name + '</span>' : ''}</td>
               <td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || '-'}</td>
-              <td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(o.total_amount || 0)}</td>
+              <td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(ea)}</td>
             </tr>`;
           }).join('')}</tbody>
           <tfoot><tr class="font-bold">
@@ -264,7 +267,7 @@ function renderManagerFinanceDigitalTable(dateVal) {
     const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const total = orders.reduce((s, o) => s + effectiveAmount(o), 0);
   return `
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
@@ -285,6 +288,7 @@ function renderManagerFinanceDigitalTable(dateVal) {
             <th style="border-bottom:2px solid var(--border);padding:8px 10px;text-align:right">Total</th>
           </tr></thead>
           <tbody>${orders.length === 0 ? '<tr><td style="padding:8px 10px;text-align:center;color:var(--muted)" colspan="5">Belum ada transaksi digital</td></tr>' : orders.map(o => {
+            const ea = effectiveAmount(o);
             const date = o.created_at ? new Date(o.created_at).toLocaleDateString('sv-SE') : '';
             const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
             const menuCount = {};
@@ -300,7 +304,7 @@ function renderManagerFinanceDigitalTable(dateVal) {
               <td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td>
               <td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})${o.customer_name ? '<br><span style="font-size:10px">' + o.customer_name + '</span>' : ''}<br><span style="font-size:10px;color:var(--accent)">${payLabel}</span></td>
               <td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || '-'}</td>
-              <td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--accent)">${formatCurrency(o.total_amount || 0)}</td>
+              <td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--accent)">${formatCurrency(ea)}</td>
             </tr>`;
           }).join('')}</tbody>
           <tfoot><tr class="font-bold">

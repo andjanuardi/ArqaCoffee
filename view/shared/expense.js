@@ -448,7 +448,7 @@ function renderActiveOrders() {
         ${o.promo_discount ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon: -${formatCurrency(o.promo_discount)}</div>` : ''}
         ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--accent)"><i class="fas fa-truck"></i>Ongkos Kirim: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ''}
         <div class="flex justify-between items-center">
-          <span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
+          <span class="font-bold" style="color:var(--accent)">${formatCurrency(effectiveAmount(o))}</span>
         </div>
       </div>`;
       }).join('')}
@@ -478,7 +478,7 @@ function renderActiveOrders() {
           <div class="text-xs mb-2" style="color:var(--muted)">${getOrderTypeName(o.order_type)}${t ? ' — Meja ' + t.number : ''}</div>
           <div class="flex justify-between items-center">
             <span class="text-xs" style="color:var(--muted)">${formatDate(o.created_at)}</span>
-            <span class="font-bold text-sm" style="color:var(--success)">${formatCurrency(o.total_amount)}</span>
+            <span class="font-bold text-sm" style="color:var(--success)">${formatCurrency(effectiveAmount(o))}</span>
           </div>
         </div>`;}).join('')}
       </div>

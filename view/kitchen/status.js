@@ -3,13 +3,13 @@
 // ============================================================
 function updateItemStatus(orderId, menuItemId, newStatus) {
   const o = DB.orders.find((x) => x.id === orderId);
-  if (!o) return;
+  if (!o) { showToast("Pesanan tidak ditemukan", "error"); return; }
   const item = o.items.find((i) => i.menu_item_id === menuItemId);
-  if (item) {
-    item.status = newStatus;
-    if (State.currentUser?.role === 'mitra_juru_masak') {
-      item.claimed_by = State.currentUser.name;
-    }
+  if (!item) { showToast("Item tidak ditemukan di pesanan", "error"); return; }
+
+  item.status = newStatus;
+  if (State.currentUser?.role === 'mitra_juru_masak') {
+    item.claimed_by = State.currentUser.name;
   }
 
   const activeItems = o.items.filter((i) => i.status !== "rejected");

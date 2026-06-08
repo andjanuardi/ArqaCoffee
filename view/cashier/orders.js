@@ -801,7 +801,7 @@ function renderCashierPayment() {
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const totalRevenue = completedToday
     .filter(o => o.status === 'completed')
-    .reduce((s, o) => s + (o.total_amount || 0), 0);
+    .reduce((s, o) => s + (typeof effectiveAmount === 'function' ? effectiveAmount(o) : (o.total_amount || 0)), 0);
   const totalSelesai = completedToday.filter(o => o.status === 'completed').length;
   return `
   <div class="animate-fade-up">
@@ -814,19 +814,25 @@ function renderCashierPayment() {
       <div class="stat-card text-center"><div class="text-2xl font-bold" style="color:var(--success)">${totalSelesai}</div><div class="text-[10px]" style="color:var(--muted)">Pesanan Selesai</div></div>
       <div class="stat-card text-center"><div class="text-2xl font-bold" style="color:var(--accent)">${formatCurrency(totalRevenue)}</div><div class="text-[10px]" style="color:var(--muted)">Total Pendapatan</div></div>
     </div>
-    <div class="space-y-2">
+    <div class="space-y-3">
       ${completedToday.length === 0 ? '<p class="text-sm text-center py-8" style="color:var(--muted)">Belum ada pesanan selesai hari ini</p>' : ''}
       ${completedToday.map(o => {
         const oTime = o.created_at ? new Date(o.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : '-';
+        const statusBadge = o.status === "completed" ? '<span class="badge badge-completed">Selesai</span>' : o.status === "rejected" ? '<span class="badge badge-danger">Ditolak</span>' : '<span class="badge badge-danger">Dibatalkan</span>';
+        const staffInfo = (o.waiter_id && getUser(o.waiter_id) ? ' <span style="font-size:10px;color:var(--accent)"><i class="fas fa-user-tie"></i> ' + getUser(o.waiter_id).name + '</span>' : '') + (o.courier_id && getUser(o.courier_id) ? ' <span style="font-size:10px;color:var(--accent)"><i class="fas fa-motorcycle"></i> ' + getUser(o.courier_id).name + '</span>' : '');
         return `
-      <div class="card flex justify-between items-center py-3 cursor-pointer hover:scale-[1.02] transition-transform" onclick="showCashierOrderDetail('${o.id}')">
-        <div class="text-sm">
-          <span class="font-bold">#${o.id.slice(-5).toUpperCase()}</span>
-          <span class="text-[10px] ml-1" style="color:var(--muted)">${oTime}</span>
-          <span style="color:var(--muted)">— ${getOrderTypeName(o.order_type)}${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}${o.waiter_id && getUser(o.waiter_id) ? ' <span style="font-size:10px;color:var(--accent)"><i class="fas fa-user-tie"></i> ' + getUser(o.waiter_id).name + '</span>' : ''}${o.courier_id && getUser(o.courier_id) ? ' <span style="font-size:10px;color:var(--accent)"><i class="fas fa-motorcycle"></i> ' + getUser(o.courier_id).name + '</span>' : ''}</span>
-          ${o.status === "completed" ? '<span class="badge badge-completed ml-2" style="font-size:9px">Selesai</span>' : ""}${o.status === "rejected" ? '<span class="badge badge-danger ml-2">Ditolak</span>' : ""}${o.status === "cancelled" ? '<span class="badge badge-danger ml-2">Dibatalkan</span>' : ""}
+      <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showCashierOrderDetail('${o.id}')">
+        <div class="flex justify-between items-start mb-2">
+          <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
+          <span class="text-xs" style="color:var(--muted)">${oTime}</span>
         </div>
-        <span class="font-semibold text-sm" style="color:${o.status === "rejected" || o.status === "cancelled" ? "var(--danger)" : "var(--success)"}">${formatCurrency(o.total_amount)}</span>
+        <div class="text-xs mb-2" style="color:var(--muted)">
+          <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}${staffInfo}
+        </div>
+        <div class="flex justify-between items-center pt-2" style="border-top:1px solid var(--border)">
+          ${statusBadge}
+          <span class="font-bold text-sm" style="color:${o.status === "rejected" || o.status === "cancelled" ? "var(--danger)" : "var(--success)"}">${formatCurrency(typeof effectiveAmount === 'function' ? effectiveAmount(o) : o.total_amount)}</span>
+        </div>
       </div>`;
       }).join('')}
     </div>

@@ -91,6 +91,20 @@ function payOngkir(id) {
   if (!o) return;
   o.ongkir_status = "paid";
   const kurir = getUser(o.courier_id);
+  if (o.shipping_cost > 0) {
+    const netOngkir = o.shipping_cost - calcCourierFee(o.shipping_cost);
+    DB.expenses.push({
+      id: "e" + Date.now(),
+      date: new Date().toLocaleDateString('sv-SE'),
+      time: new Date().toTimeString().slice(0, 5),
+      category: "Operasional",
+      amount: netOngkir,
+      note: "Ongkir kurir — #" + o.id.slice(-5).toUpperCase() + " — " + (kurir ? kurir.name : "—"),
+      source: "Cafe",
+      orderType: "delivery",
+      paymentMethod: o.payment_method || "digital",
+    });
+  }
   addNotification({
     title: 'Ongkir Dibayar',
     message: '#' + o.id.slice(-5).toUpperCase() + ' — Ongkir ' + formatCurrency(o.shipping_cost - calcCourierFee(o.shipping_cost)) + ' sudah dibayar, silakan konfirmasi',
@@ -110,7 +124,7 @@ function renderCashTable() {
     const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const total = orders.reduce((s, o) => s + effectiveAmount(o), 0);
   return `
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
@@ -134,7 +148,8 @@ function renderCashTable() {
             });
             const menuList = Object.entries(menuCount).map(([name, qty]) => name + ' x' + qty).join(', ');
             const encoded = encodeURIComponent(o.id);
-            return `<tr class="cursor-pointer hover:bg-white/5" onclick="showFinanceOrderDetail('${encoded}')"><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})${o.customer_name ? '<br><span style="font-size:10px">' + o.customer_name + '</span>' : ''}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? '<br><span style="font-size:10px;color:var(--accent)">' + getUser(o.user_id).email + '</span>' : ''}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(o.total_amount || 0)}</td></tr>`;
+            const ea = effectiveAmount(o);
+            return `<tr class="cursor-pointer hover:bg-white/5" onclick="showFinanceOrderDetail('${encoded}')"><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})${o.customer_name ? '<br><span style="font-size:10px">' + o.customer_name + '</span>' : ''}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? '<br><span style="font-size:10px;color:var(--accent)">' + getUser(o.user_id).email + '</span>' : ''}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(ea)}</td></tr>`;
           }).join('')}</tbody>
           <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(total)}</td></tr></tfoot>
         </table>
@@ -149,7 +164,7 @@ function renderDigitalTable() {
     const d = new Date(o.created_at).toLocaleDateString('sv-SE');
     return d === dateVal;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  const total = orders.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const total = orders.reduce((s, o) => s + effectiveAmount(o), 0);
   return `
     <div class="card mb-4">
       <div class="flex items-center justify-between mb-3">
@@ -174,7 +189,8 @@ function renderDigitalTable() {
             const menuList = Object.entries(menuCount).map(([name, qty]) => name + ' x' + qty).join(', ');
             const encoded = encodeURIComponent(o.id);
             const payLabel = o.payment_method === 'qris' ? 'QRIS' : o.payment_method === 'bank_transfer' ? 'Transfer' : 'Digital';
-            return `<tr class="cursor-pointer hover:bg-white/5" onclick="showFinanceOrderDetail('${encoded}')"><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})${o.customer_name ? '<br><span style="font-size:10px">' + o.customer_name + '</span>' : ''}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? '<br><span style="font-size:10px;color:var(--accent)">' + getUser(o.user_id).email + '</span>' : ''}<br><span style="font-size:10px;color:var(--accent)">${payLabel}</span></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--accent)">${formatCurrency(o.total_amount || 0)}</td></tr>`;
+            const ea = effectiveAmount(o);
+            return `<tr class="cursor-pointer hover:bg-white/5" onclick="showFinanceOrderDetail('${encoded}')"><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})${o.customer_name ? '<br><span style="font-size:10px">' + o.customer_name + '</span>' : ''}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? '<br><span style="font-size:10px;color:var(--accent)">' + getUser(o.user_id).email + '</span>' : ''}<br><span style="font-size:10px;color:var(--accent)">${payLabel}</span></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || '-'}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--accent)">${formatCurrency(ea)}</td></tr>`;
           }).join('')}</tbody>
           <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(total)}</td></tr></tfoot>
         </table>
@@ -190,9 +206,9 @@ function renderCashierReport() {
     return d === dateVal;
   });
   const cashInRange = paidInRange.filter(o => o.payment_method === 'cash' || o.payment_method === 'cod');
-  const cashTotal = cashInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const cashTotal = cashInRange.reduce((s, o) => s + effectiveAmount(o), 0);
   const digitalInRange = paidInRange.filter(o => o.payment_method === 'digital' || o.payment_method === 'qris' || o.payment_method === 'bank_transfer');
-  const digitalTotal = digitalInRange.reduce((s, o) => s + (o.total_amount || 0), 0);
+  const digitalTotal = digitalInRange.reduce((s, o) => s + effectiveAmount(o), 0);
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Harian</h2>
@@ -224,14 +240,33 @@ function renderCashierReport() {
       </div>
     </div>`})()}
     <div class="card mb-4">
-      <h3 class="font-semibold text-sm mb-3">Pesanan Terkini</h3>
-      <div class="space-y-2 max-h-64 overflow-y-auto">
-        ${DB.orders.slice(0, 6).map(o => `
-        <div class="flex justify-between items-center text-sm py-2 border-b" style="border-color:var(--border)">
-          <div><span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span><span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>${o.promo_discount ? '<span class="text-[10px] ml-1" style="color:var(--success)"><i class="fas fa-tag"></i></span>' : ''}${o.customer_name ? '<span class="text-[10px] ml-1" style="color:var(--muted)">— ' + o.customer_name + '</span>' : ''}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? '<span class="text-[10px] ml-1" style="color:var(--accent)">(' + getUser(o.user_id).email + ')</span>' : ''}</div>
-          <span>${formatCurrency(o.total_amount)}</span>
-        </div>`).join('')}
-      </div>
+      <h3 class="font-semibold text-sm mb-3">Pesanan Hari Ini</h3>
+      ${(() => {
+        const todayOrders = DB.orders.filter(o => {
+          if (!o.created_at) return false;
+          const d = new Date(o.created_at).toLocaleDateString('sv-SE');
+          return d === dateVal;
+        }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 10);
+        if (!todayOrders.length) return '<p class="text-sm text-center py-4" style="color:var(--muted)">Belum ada pesanan hari ini</p>';
+        return `<div class="space-y-2 max-h-72 overflow-y-auto">${todayOrders.map(o => {
+          const staffIcon = o.waiter_id && getUser(o.waiter_id) ? '<i class="fas fa-user-tie ml-2" style="color:var(--accent)"></i> ' + getUser(o.waiter_id).name : '';
+          const courierIcon = o.courier_id && getUser(o.courier_id) ? '<i class="fas fa-motorcycle ml-2" style="color:var(--accent)"></i> ' + getUser(o.courier_id).name : '';
+          return `
+        <div class="flex items-center justify-between text-sm py-2.5 px-3 rounded-xl cursor-pointer hover:bg-white/5" style="border:1px solid var(--border)" onclick="showFinanceOrderDetail('${encodeURIComponent(o.id)}')">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5">
+              <span class="font-medium text-xs">#${o.id.slice(-5).toUpperCase()}</span>
+              <span class="badge ${getStatusBadge(o.status)}" style="font-size:8px">${getStatusLabel(o.status)}</span>
+              ${o.promo_discount ? '<span class="text-[10px]" style="color:var(--success)"><i class="fas fa-tag"></i></span>' : ''}
+            </div>
+            <div class="text-[10px] truncate mt-0.5" style="color:var(--muted)">
+              ${getOrderTypeName(o.order_type)}${o.customer_name ? ' — ' + o.customer_name : ''}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}${staffIcon}${courierIcon}
+            </div>
+          </div>
+          <span class="font-semibold text-xs whitespace-nowrap ml-3" style="color:${o.payment_status === 'paid' ? 'var(--success)' : 'var(--muted)'}">${formatCurrency(effectiveAmount(o))}</span>
+        </div>`;
+        }).join('')}</div>`;
+      })()}
     </div>
     <div class="card"><canvas id="chart-cashier" height="200"></canvas></div>
   </div>`;

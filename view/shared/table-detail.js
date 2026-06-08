@@ -6,7 +6,7 @@ function showTableDetail(id) {
   if (!t) return;
   const orders = DB.orders.filter(o => o.table_id === id && !['completed', 'cancelled'].includes(o.status));
   const totalOrders = DB.orders.filter(o => o.table_id === id);
-  const todayRevenue = totalOrders.filter(o => o.payment_status === 'paid').reduce((s, o) => s + o.total_amount, 0);
+  const todayRevenue = totalOrders.filter(o => o.payment_status === 'paid').reduce((s, o) => s + effectiveAmount(o), 0);
   showModal(`
     <div>
       <div class="flex items-center gap-3 mb-4">
@@ -35,7 +35,7 @@ function showTableDetail(id) {
         <div class="flex justify-between items-center text-xs py-1.5 border-b" style="border-color:var(--border)">
           <span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span>
           <span class="badge ${getStatusBadge(o.status)}">${getStatusLabel(o.status)}</span>
-          <span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
+          <span style="color:var(--accent)">${formatCurrency(effectiveAmount(o))}</span>
         </div>`).join('')}
       </div>` : '<div class="text-sm py-3 text-center" style="color:var(--muted)">Meja kosong</div>'}
     </div>

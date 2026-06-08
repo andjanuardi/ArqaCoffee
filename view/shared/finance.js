@@ -24,7 +24,7 @@ function getFinanceData(startDate, endDate) {
     const dateKey = new Date(o.created_at).toLocaleDateString('sv-SE');
     if (!grouped[dateKey])
       grouped[dateKey] = { date: dateKey, revenue: 0, orders: 0 };
-    grouped[dateKey].revenue += o.total_amount || 0;
+    grouped[dateKey].revenue += effectiveAmount(o) || 0;
     grouped[dateKey].orders += 1;
   });
   const entries = Object.values(grouped).sort((a, b) =>
@@ -113,7 +113,7 @@ function printRevenueDetail() {
       const d = new Date(o.created_at).toLocaleDateString('sv-SE');
       return d >= startDate && d <= endDate;
     });
-    totalRev = filtered.reduce((s, o) => s + (o.total_amount || 0), 0);
+    totalRev = filtered.reduce((s, o) => s + effectiveAmount(o), 0);
   }
 
   const rows = isPlayground
@@ -145,7 +145,7 @@ function printRevenueDetail() {
           const menuList = Object.entries(menuCount)
             .map(([name, qty]) => name + " x" + qty)
             .join(", ");
-          return `<tr><td>${formatDate(date)}</td><td class="muted">${time}</td><td class="muted">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})<br><span style="font-size:10px;color:${o.payment_method === "cash" || o.payment_method === "cod" ? "#27ae60" : "#e07a3a"}">${o.payment_method === "cash" || o.payment_method === "cod" ? "Tunai" : "Digital"}</span></td><td class="muted">${menuList || "-"}</td><td class="right green">${formatCurrency(o.total_amount || 0)}</td></tr>`;
+          return `<tr><td>${formatDate(date)}</td><td class="muted">${time}</td><td class="muted">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})<br><span style="font-size:10px;color:${o.payment_method === "cash" || o.payment_method === "cod" ? "#27ae60" : "#e07a3a"}">${o.payment_method === "cash" || o.payment_method === "cod" ? "Tunai" : "Digital"}</span></td><td class="muted">${menuList || "-"}</td><td class="right green">${formatCurrency(effectiveAmount(o))}</td></tr>`;
         })
         .join("");
 
@@ -630,7 +630,7 @@ function renderFinanceReport() {
                 .map(([name, qty]) => name + " x" + qty)
                 .join(", ");
               const encoded = encodeURIComponent(o.id);
-              return `<tr class="cursor-pointer hover:bg-white/5" onclick="showFinanceOrderDetail('${encoded}')"><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})<br><span style="font-size:10px;color:${o.payment_method === "cash" || o.payment_method === "cod" ? "var(--success)" : "var(--accent)"}">${o.payment_method === "cash" || o.payment_method === "cod" ? "Tunai" : "Digital"}</span></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(o.total_amount || 0)}</td></tr>`;
+              return `<tr class="cursor-pointer hover:bg-white/5" onclick="showFinanceOrderDetail('${encoded}')"><td style="border-bottom:1px solid var(--border);padding:8px 10px">${formatDate(date)}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${time}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">#${o.id.slice(-5).toUpperCase()} (${getOrderTypeName(o.order_type)})<br><span style="font-size:10px;color:${o.payment_method === "cash" || o.payment_method === "cod" ? "var(--success)" : "var(--accent)"}">${o.payment_method === "cash" || o.payment_method === "cod" ? "Tunai" : "Digital"}</span></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;color:var(--muted);font-size:12px">${menuList || "-"}</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;color:var(--success)">${formatCurrency(effectiveAmount(o))}</td></tr>`;
             })
             .join("")}</tbody>
           <tfoot><tr class="font-bold"><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)">Total</td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent)"></td><td style="border-bottom:1px solid var(--border);padding:8px 10px;border-top:2px solid var(--accent);text-align:right;color:var(--accent)">${formatCurrency(totalRev)}</td></tr></tfoot>
