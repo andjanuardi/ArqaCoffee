@@ -46,8 +46,32 @@ function showFinanceOrderDetail(orderId) {
   const o = DB.orders.find((x) => x.id === orderId);
   if (!o) return;
   const t = o.table_id ? getTable(o.table_id) : null;
+  const tax = Math.round(calcItemTax(o.items));
+  const subtotal = o.items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+  const dineInFee = calcCustomerFee(subtotal, o.order_type);
+  const isDelivery = o.order_type === "delivery";
+  const isDelivered = o.status === "delivered" && isDelivery;
+  const isCompletedDelivery = o.status === "completed" && isDelivery;
+  const kurir = (isDelivered || isCompletedDelivery) ? getUser(o.courier_id) : null;
+  const netOngkir = (isDelivered || isCompletedDelivery) && o.shipping_cost > 0 ? o.shipping_cost - calcCourierFee(o.shipping_cost) : 0;
   showModal(`
 <div>
+  ${isDelivery ? `
+  <div class="flex justify-between items-start mb-4">
+    <h3 class="font-display text-lg font-bold">Pesanan #${o.id.slice(-5).toUpperCase()}</h3>
+    ${isDelivered && o.payment_status === 'unpaid' ? '<span class="badge" style="background:rgba(52,152,219,.15);color:#3498db">Belum Setor</span>' : '<span class="badge" style="background:rgba(46,204,113,.15);color:var(--success)">Selesai</span>'}
+  </div>
+  <div class="text-sm mb-4">
+    <div class="mb-1"><i class="fas fa-user mr-2" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</div>
+    <div class="mb-1"><i class="fas fa-phone mr-2" style="color:var(--accent)"></i>${o.customer_phone || (getUser(o.user_id)?.phone || '—')}</div>
+    <div class="mb-1"><i class="fas fa-map-marker-alt mr-2" style="color:var(--accent)"></i>${o.delivery_address || '—'}</div>
+    ${o.delivery_detail ? `<div class="text-xs mt-1" style="color:var(--muted)"><i class="fas fa-info-circle mr-1"></i>${o.delivery_detail}</div>` : ''}
+    <div class="mt-2 text-xs" style="color:var(--muted)">
+      <i class="far fa-clock mr-1"></i>${formatDate(o.created_at)} ${formatTime(o.created_at)}
+      ${kurir ? '— <i class="fas fa-motorcycle mr-1" style="color:var(--accent)"></i>' + kurir.name : ''}
+    </div>
+  </div>
+  ` : `
   <div class="flex justify-between items-start mb-4">
     <h3 class="font-display text-lg font-bold">Pesanan #${o.id.slice(-5).toUpperCase()}</h3>
     <span class="badge ${getStatusBadge(o.status)}">${getStatusLabel(o.status)}</span>
@@ -58,26 +82,54 @@ function showFinanceOrderDetail(orderId) {
     ${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}
     ${o.delivery_address ? "<br>" + o.delivery_address : ""}
   </div>
-  <div class="space-y-2 mb-4">
-    ${o.items.map(i => {
-      const mi = getMenuItem(i.menu_item_id);
-      return mi ? `
-    <div class="flex justify-between text-sm">
-      <span>${mi.name} x${i.quantity} ${i.notes ? '<span style="color:var(--muted)">(' + i.notes + ")</span>" : ""}</span>
-      <span style="color:var(--muted)">${formatCurrency(i.unit_price * i.quantity)}</span>
-    </div>` : "";
-    }).join('')}
+  `}
+  <div class="p-3 rounded-xl mb-3" style="background:var(--bg2)">
+    <div class="flex items-center gap-2 mb-2 text-xs font-semibold" style="color:var(--muted)">
+      <i class="fas fa-receipt"></i> Rincian Pesanan
+    </div>
+    <div class="space-y-1.5">
+      ${(isDelivered ? o.items.filter(i => i.status !== "rejected") : o.items).map((i) => {
+        const mi = getMenuItem(i.menu_item_id);
+        return mi ? `
+      <div class="flex justify-between text-xs">
+        <span>${mi.name} x${i.quantity}${i.notes ? ' <span style="color:var(--muted)">(' + i.notes + ')</span>' : ''}</span>
+        <span style="color:var(--muted)">${formatCurrency(i.unit_price * i.quantity)}</span>
+      </div>` : '';
+      }).join('')}
+    </div>
+    <div class="border-t my-2" style="border-color:var(--border)"></div>
+    <div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span>Subtotal</span><span>${formatCurrency(subtotal)}</span></div>
+    ${o.promo_discount ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ''}
+    ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-truck mr-1"></i>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ''}
+    ${isDelivered && o.service_fee > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:#e07a3a"><span><i class="fas fa-hand-holding-usd mr-1"></i>Biaya Layanan</span><span>${formatCurrency(o.service_fee)}</span></div>` : ''}
+    ${!isDelivered && dineInFee > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:#e07a3a"><span><i class="fas fa-hand-holding-usd mr-1"></i>Biaya Layanan</span><span>${formatCurrency(dineInFee)}</span></div>` : ''}
+    <div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(tax))}</span></div>
+    <div class="border-t my-2" style="border-color:var(--border)"></div>
+    <div class="flex justify-between font-bold text-sm"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
   </div>
-  <div class="border-t pt-3" style="border-color:var(--border)">
-    ${o.promo_discount ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
-    ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-truck mr-1"></i>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ""}
-    <div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(o.items)))}</span></div>
-    <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
-    <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "qris" ? "QRIS" : o.payment_method === "bank_transfer" ? "Transfer Bank" : o.payment_method === "digital" ? "Digital" : o.payment_method === "cod" ? "COD" : o.payment_method === "" ? "Bayar Nanti" : "Tunai"}</span></div>
-    <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}">${o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>
+  ${isDelivery ? `
+  <div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span>Metode Pembayaran</span><span>${o.payment_method === 'qris' ? 'QRIS' : o.payment_method === 'bank_transfer' ? 'Transfer Bank' : o.payment_method === 'digital' ? 'Digital' : o.payment_method === '' ? 'Bayar Nanti (COD)' : 'Tunai/COD'}</span></div>
+  <div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge" style="${o.payment_status === 'paid' ? 'background:rgba(46,204,113,.15);color:var(--success)' : 'background:rgba(52,152,219,.15);color:#3498db'}">${o.payment_status === 'paid' ? 'Lunas' : 'Belum Setor'}</span></div>
+  <div class="border-t pt-3 mt-3" style="border-color:var(--border)">
+    ${o.shipping_cost && o.shipping_cost > 0 ? `
+    <div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span><i class="fas fa-hand-holding-dollar mr-1"></i>Jasa Aplikasi</span><span style="color:var(--success)">${formatCurrency(calcCourierFee(o.shipping_cost))}</span></div>
+    <div class="flex justify-between text-xs mb-2 pb-2" style="border-bottom:1px dashed var(--border);color:var(--danger)"><span><i class="fas fa-wallet mr-1"></i>Pendapatan Kurir</span><span>-${formatCurrency(netOngkir)}</span></div>
+    ` : ''}
+    <div class="flex justify-between text-xs" style="color:var(--muted)"><span>Waktu Selesai</span><span>${formatTime(o.created_at)}</span></div>
+    ${o.delivery_location && o.delivery_location.lat ? (function() {
+      const d = calcDistance(DB.cafe.location.lat, DB.cafe.location.lng, o.delivery_location.lat, o.delivery_location.lng);
+      const meter = Math.round(d).toLocaleString('id-ID');
+      const km = (d / 1000).toFixed(1).replace('.', ',');
+      const label = d < 1000 ? meter + ' meter' : meter + ' m (' + km + ' km)';
+      return `<div class="flex justify-between text-xs mt-1" style="color:var(--accent)"><span><i class="fas fa-store mr-1"></i>Cafe → Pelanggan</span><span>${label}</span></div>`;
+    })() : ''}
   </div>
+  ` : `
+  <div class="flex justify-between text-xs mb-1 mt-3" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "qris" ? "QRIS" : o.payment_method === "bank_transfer" ? "Transfer Bank" : o.payment_method === "digital" ? "Digital" : o.payment_method === "cod" ? "COD" : o.payment_method === "" ? "Bayar Nanti" : "Tunai"}</span></div>
+  <div class="flex justify-between text-xs mb-4" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}">${o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>
+  `}
   <div class="flex gap-2 mt-4">
-    ${o.status !== "cancelled" && o.status !== "rejected" ? `<button onclick="printCashierInvoice('${o.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak Invoice</button>` : ""}
+    ${o.status !== "cancelled" && o.status !== "rejected" ? `<button onclick="printCashierInvoice('${o.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak Invoice</button>` : ''}
     <button onclick="closeModal()" class="btn-secondary flex-1 text-center">Tutup</button>
   </div>
 </div>

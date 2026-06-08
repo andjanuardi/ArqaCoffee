@@ -324,38 +324,101 @@ function showActiveOrderDetail(orderId) {
   const o = DB.orders.find((x) => x.id === orderId);
   if (!o) return;
   const t = o.table_id ? getTable(o.table_id) : null;
+  const tax = Math.round(calcItemTax(o.items));
+  const subtotal = o.items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+  const dineInFee = calcCustomerFee(subtotal, o.order_type);
+  const isDeliverOrder = o.order_type === "delivery";
+  const isDelivered = o.status === "delivered" && isDeliverOrder;
+  const isCompletedDelivery = o.status === "completed" && isDeliverOrder;
+  const kurir = (isDelivered || isCompletedDelivery) ? getUser(o.courier_id) : null;
+  const netOngkir = (isDelivered || isCompletedDelivery) && o.shipping_cost ? o.shipping_cost - calcCourierFee(o.shipping_cost) : 0;
   showModal(`
 <div>
+  ${isDeliverOrder ? `
   <div class="flex justify-between items-start mb-4">
     <h3 class="font-display text-lg font-bold">Pesanan #${o.id.slice(-5).toUpperCase()}</h3>
+    ${isDelivered && o.payment_status === 'unpaid' ? '<span class="badge" style="background:rgba(52,152,219,.15);color:#3498db">Belum Setor</span>' : '<span class="badge" style="background:rgba(46,204,113,.15);color:var(--success)">Selesai</span>'}
+  </div>
+  <div class="text-sm mb-4">
+    <div class="mb-1"><i class="fas fa-user mr-2" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</div>
+    <div class="mb-1"><i class="fas fa-phone mr-2" style="color:var(--accent)"></i>${o.customer_phone || (getUser(o.user_id)?.phone || '—')}</div>
+    <div class="mb-1"><i class="fas fa-map-marker-alt mr-2" style="color:var(--accent)"></i>${o.delivery_address || '—'}</div>
+    ${o.delivery_detail ? `<div class="text-xs mt-1" style="color:var(--muted)"><i class="fas fa-info-circle mr-1"></i>${o.delivery_detail}</div>` : ""}
+    <div class="mt-2 text-xs" style="color:var(--muted)"><i class="far fa-clock mr-1"></i>${formatDate(o.created_at)} ${formatTime(o.created_at)} ${kurir ? '— <i class="fas fa-motorcycle mr-1" style="color:var(--accent)"></i>' + kurir.name : ''}</div>
+  </div>
+  ` : `
+  <div class="flex justify-between items-start mb-4">
+    <div>
+      <h3 class="font-display text-lg font-bold">#${o.id.slice(-5).toUpperCase()}</h3>
+      <p class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</p>
+    </div>
     <span class="badge ${getStatusBadge(o.status)}">${getStatusLabel(o.status)}</span>
   </div>
   <div class="text-xs mb-4" style="color:var(--muted)">
-    <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}
+    <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : o.order_type === "delivery" ? "fa-motorcycle" : "fa-bag-shopping"} mr-1"></i>${getOrderTypeName(o.order_type)}
     ${t ? " — Meja " + t.number : ""}
     ${o.customer_name ? " — " + o.customer_name : ""}${o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}
+    ${o.order_type === "dine-in" && o.status !== "completed" ? ` <button onclick="closeModal();changeOrderTable('${o.id}')" class="text-xs inline-flex items-center" style="color:var(--accent)"><i class="fas fa-pen"></i> Ubah Meja</button>` : ""}
+    ${o.waiter_id && getUser(o.waiter_id) ? '<br><span style="font-size:10px;color:var(--accent)"><i class="fas fa-user-tie"></i> ' + getUser(o.waiter_id).name + '</span>' : ''}
+    ${o.courier_id && getUser(o.courier_id) ? '<br><span style="font-size:10px;color:var(--accent)"><i class="fas fa-motorcycle"></i> ' + getUser(o.courier_id).name + '</span>' : ''}
     ${o.delivery_address ? "<br>" + o.delivery_address : ""}
   </div>
-  <div class="space-y-2 mb-4">
-    ${o.items.map(i => {
-      const mi = getMenuItem(i.menu_item_id);
-      return mi ? `
-    <div class="flex justify-between text-sm">
-      <span>${mi.name} x${i.quantity} ${i.notes ? '<span style="color:var(--muted)">(' + i.notes + ")</span>" : ""}</span>
-      <span style="color:var(--muted)">${formatCurrency(i.unit_price * i.quantity)}</span>
-    </div>` : "";
-    }).join('')}
-  </div>
-  <div class="border-t pt-3" style="border-color:var(--border)">
+  `}
+  <div class="p-3 rounded-xl mb-3" style="background:var(--bg2)">
+    <div class="flex items-center gap-2 mb-2 text-xs font-semibold" style="color:var(--muted)">
+      <i class="fas fa-receipt"></i> Rincian Pesanan
+    </div>
+    <div class="space-y-1.5">
+      ${(isDelivered ? o.items.filter(i => i.status !== "rejected") : o.items).map((i) => {
+        const mi = getMenuItem(i.menu_item_id);
+        return mi ? `
+      <div class="flex justify-between text-xs">
+        <span>${mi.name} x${i.quantity}${i.notes ? ' <span style="color:var(--muted)">(' + i.notes + ")</span>" : ""}</span>
+        <span style="color:var(--muted)">${formatCurrency(i.unit_price * i.quantity)}</span>
+      </div>` : "";
+      }).join("")}
+    </div>
+    <div class="border-t my-2" style="border-color:var(--border)"></div>
+    <div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span>Subtotal</span><span>${formatCurrency(subtotal)}</span></div>
     ${o.promo_discount ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
     ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-truck mr-1"></i>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ""}
-    <div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(calcItemTax(o.items)))}</span></div>
-    <div class="flex justify-between font-bold"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
-    <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "qris" ? "QRIS" : o.payment_method === "bank_transfer" ? "Transfer Bank" : o.payment_method === "digital" ? "Digital" : o.payment_method === "cod" ? "COD" : o.payment_method === "" ? "Bayar Nanti" : "Tunai"}</span></div>
-    <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}">${o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>
+    ${isDelivered && o.service_fee > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:#e07a3a"><span><i class="fas fa-hand-holding-usd mr-1"></i>Biaya Layanan</span><span>${formatCurrency(o.service_fee)}</span></div>` : ""}
+    ${!isDelivered && dineInFee > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:#e07a3a"><span><i class="fas fa-hand-holding-usd mr-1"></i>Biaya Layanan</span><span>${formatCurrency(dineInFee)}</span></div>` : ""}
+    <div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(tax))}</span></div>
+    <div class="border-t my-2" style="border-color:var(--border)"></div>
+    <div class="flex justify-between font-bold text-sm"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
   </div>
-  <div class="flex gap-2 mt-4">
-    ${o.status !== "cancelled" && o.status !== "rejected" ? `<button onclick="printCashierInvoice('${o.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak Invoice</button>` : ""}
+  ${isDeliverOrder ? `
+  <div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span>Metode Pembayaran</span><span>${o.payment_method === 'qris' ? 'QRIS' : o.payment_method === 'bank_transfer' ? 'Transfer Bank' : o.payment_method === 'digital' ? 'Digital' : o.payment_method === "" ? 'Bayar Nanti (COD)' : 'Tunai/COD'}</span></div>
+  <div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge" style="${o.payment_status === 'paid' ? 'background:rgba(46,204,113,.15);color:var(--success)' : 'background:rgba(52,152,219,.15);color:#3498db'}">${o.payment_status === 'paid' ? 'Lunas' : 'Belum Setor'}</span></div>
+  <div class="border-t pt-3 mt-3" style="border-color:var(--border)">
+    ${o.shipping_cost && o.shipping_cost > 0 ? `
+    <div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span><i class="fas fa-hand-holding-dollar mr-1"></i>Jasa Aplikasi</span><span style="color:var(--success)">${formatCurrency(calcCourierFee(o.shipping_cost))}</span></div>
+    <div class="flex justify-between text-xs mb-2 pb-2" style="border-bottom:1px dashed var(--border);color:var(--danger)"><span><i class="fas fa-wallet mr-1"></i>Pendapatan Kurir</span><span>-${formatCurrency(netOngkir)}</span></div>
+    ` : ""}
+    <div class="flex justify-between text-xs" style="color:var(--muted)"><span>Waktu Selesai</span><span>${formatTime(o.created_at)}</span></div>
+    ${o.delivery_location && o.delivery_location.lat ? (function() {
+      const d = calcDistance(DB.cafe.location.lat, DB.cafe.location.lng, o.delivery_location.lat, o.delivery_location.lng);
+      const meter = Math.round(d).toLocaleString('id-ID');
+      const km = (d / 1000).toFixed(1).replace('.', ',');
+      const label = d < 1000 ? meter + ' meter' : meter + ' m (' + km + ' km)';
+      return `<div class="flex justify-between text-xs mt-1" style="color:var(--accent)"><span><i class="fas fa-store mr-1"></i>Cafe → Pelanggan</span><span>${label}</span></div>`;
+    })() : ""}
+  </div>
+  ` : `
+  <div class="flex justify-between text-xs mb-4" style="color:var(--muted)">
+    <span>Pembayaran</span>
+    <span class="badge ${o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"} ml-1">${o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span>
+  </div>
+  `}
+  <div class="flex flex-wrap gap-2 mt-4">
+    ${isDeliverOrder ? `
+    ${o.payment_status === 'unpaid' ? `<button onclick="closeModal();printOngkirInvoice('${o.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak</button>` : `<button onclick="closeModal();printCashierInvoice('${o.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak</button>`}
+    ` : `
+    ${o.status === "ready" && o.payment_status === "unpaid" ? `<button onclick="closeModal();showPaymentModal('${o.id}')" class="btn-primary flex-1 text-center">Bayar</button>` : ""}
+    ${o.status === "ready" && o.payment_status === "paid" && o.order_type !== "delivery" ? `<button onclick="closeModal();confirmCompleteOrder('${o.id}')" class="btn-primary flex-1 text-center" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
+    <button onclick="closeModal();printCashierInvoice('${o.id}')" class="btn-secondary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak</button>
+    `}
     <button onclick="closeModal()" class="btn-secondary flex-1 text-center">Tutup</button>
   </div>
 </div>
@@ -426,33 +489,96 @@ function renderActiveOrders() {
       ${filtered.length === 0 ? '<p class="text-sm text-center py-10" style="color:var(--muted)"><i class="fas fa-inbox mr-2"></i>Tidak ada pesanan aktif</p>' : ''}
       ${filtered.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')).map(o => {
         const t = o.table_id ? getTable(o.table_id) : null;
+        const tax = Math.round(calcItemTax(o.items));
+        const itemTotal = o.items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+        const dineInFee = calcCustomerFee(itemTotal, o.order_type);
+        const displayServiceFee = dineInFee || o.service_fee || 0;
+        const netOngkir = o.shipping_cost ? o.shipping_cost - calcCourierFee(o.shipping_cost) : 0;
+        const isDelivered = o.status === "delivered" && o.order_type === "delivery";
+        const breakdownHtml = isDelivered
+          ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--danger)"><i class="fas fa-wallet"></i>Pendapatan Kurir: <b>${formatCurrency(netOngkir)}</b></div>`
+          : `${o.promo_discount ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon promo: <b>-${formatCurrency(o.promo_discount)}</b></div>` : ""}${o.shipping_cost && o.shipping_cost > 0 ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--accent)"><i class="fas fa-truck"></i>Ongkos Kirim: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ""}${displayServiceFee > 0 ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:#e07a3a"><i class="fas fa-hand-holding-usd"></i>Biaya Layanan: <b>${formatCurrency(displayServiceFee)}</b></div>` : ""}${tax > 0 ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--accent)"><i class="fas fa-receipt"></i>Pajak: <b>${formatCurrency(tax)}</b></div>` : ""}`;
+        const amountColor = isDelivered ? 'var(--success)' : 'var(--accent)';
+        const amountValue = isDelivered ? formatCurrency(o.total_amount - netOngkir) : formatCurrency(o.total_amount);
         return `
-      <div class="order-card" onclick="showActiveOrderDetail('${o.id}')">
+      <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showActiveOrderDetail('${o.id}')">
         <div class="flex justify-between items-start mb-2">
           <div>
             <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
             <span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>
             <span class="badge ${o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid'} ml-1">${o.payment_status === 'paid' ? 'Lunas' : 'Belum Bayar'}</span>
+            ${isDelivered ? `<span class="badge ml-1" style="background:rgba(52,152,219,.15);color:#3498db">Belum Setor</span>` : ''}
           </div>
           <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
         </div>
-        <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-user mr-1" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</div>
-        <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-phone mr-1" style="color:var(--accent)"></i>${o.customer_phone || (getUser(o.user_id)?.phone || '—')}</div>
         <div class="text-xs mb-2" style="color:var(--muted)">
-          <i class="fas ${o.order_type === 'dine-in' ? 'fa-chair' : 'fa-motorcycle'} mr-1"></i>${getOrderTypeName(o.order_type)}${t ? ' — Meja ' + t.number : ''}
+          <i class="fas ${o.order_type === 'dine-in' ? 'fa-chair' : 'fa-motorcycle'} mr-1"></i>${getOrderTypeName(o.order_type)}${t && o.order_type !== "delivery" ? " — Meja " + t.number : ""}${isDelivered ? " — " + (o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')) : o.customer_name ? " — " + o.customer_name : ""}${!isDelivered && o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}${o.waiter_id && getUser(o.waiter_id) ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-user-tie"></i> ' + getUser(o.waiter_id).name + '</span>' : ''}${o.courier_id && getUser(o.courier_id) ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-motorcycle"></i> ' + getUser(o.courier_id).name + '</span>' : ''}
         </div>
-        <div class="text-xs mb-3">${(o.items || []).map(i => {
-          const mi = getMenuItem(i.menu_item_id);
-          return mi ? mi.name + ' x' + i.quantity : '';
-        }).filter(Boolean).join(', ') || '-'}</div>
-        ${o.promo_discount ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon: -${formatCurrency(o.promo_discount)}</div>` : ''}
-        ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="text-[10px] mb-2 flex items-center gap-1" style="color:var(--accent)"><i class="fas fa-truck"></i>Ongkos Kirim: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ''}
+        <div class="text-xs mb-3">${(() => {
+          const names = o.items.map(i => { const mi = getMenuItem(i.menu_item_id); return mi ? mi.name + ' x' + i.quantity : ''; }).filter(Boolean);
+          return names.length <= 3 ? names.join(', ') : names.slice(0, 3).join(', ') + ' <span style="color:var(--muted)">+' + (names.length - 3) + ' lainnya</span>';
+        })()}</div>
+        ${breakdownHtml}
         <div class="flex justify-between items-center">
-          <span class="font-bold" style="color:var(--accent)">${formatCurrency(effectiveAmount(o))}</span>
+          <span class="font-bold" style="color:${amountColor}">${amountValue}</span>
+          <div class="flex gap-2">
+            ${o.status === "pending" && !o.accepted ? `
+            <button onclick="event.stopPropagation();cancelCashierOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded" style="color:var(--danger); background:rgba(231,76,60,.1)">Batal</button>
+            <button onclick="event.stopPropagation();editCashierOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded" style="color:var(--accent); background:rgba(224,122,58,.1)">Edit</button>
+            <button onclick="event.stopPropagation();acceptCashierOrder('${o.id}')" class="btn-primary btn-sm">Terima</button>
+            ` : ""}
+            ${o.status === "pending" && o.accepted ? `<span class="badge" style="background:rgba(46,204,113,.15);color:var(--success)">Diterima</span>` : ""}
+            ${o.status === "ready" && o.payment_status === "unpaid" ? `<button onclick="event.stopPropagation();showPaymentModal('${o.id}')" class="btn-primary btn-sm">Bayar</button>` : ""}
+            ${o.status === "ready" && o.payment_status === "paid" && o.order_type !== "delivery" ? `<button onclick="event.stopPropagation();confirmCompleteOrder('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
+            ${o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery" ? `<button onclick="event.stopPropagation();settleDelivery('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#3498db,#2980b9)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran</button>` : ""}
+            ${o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "dine-in" ? `<button onclick="event.stopPropagation();cashierSettleDineIn('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#27ae60,#1e8449)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran Waiter</button>` : ""}
+          </div>
         </div>
       </div>`;
       }).join('')}
     </div>
+    ${(() => {
+      const ongkirOrders = DB.orders.filter(o => {
+        if (o.ongkir_status !== "confirmed" && o.courier_id && o.shipping_cost > 0 && o.status === "completed" && o.payment_method !== "cod") return true;
+        if (o.status === "delivered" && o.payment_status === "paid" && o.order_type === "delivery" && o.shipping_cost > 0) return true;
+        return false;
+      });
+      if (ongkirOrders.length === 0) return '';
+      return `
+    <h3 class="font-semibold text-sm mb-3 mt-6">Bayar Ongkir</h3>
+    <div class="space-y-3 mb-6">
+      ${ongkirOrders.map(o => {
+        const kurir = getUser(o.courier_id);
+        const netOngkir = o.shipping_cost - calcCourierFee(o.shipping_cost);
+        return `
+      <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showOngkirPaymentModal('${o.id}')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
+            <span class="badge ml-1" style="font-size:9px;background:rgba(52,152,219,.15);color:#3498db">Telah Diantar</span>
+            <span class="badge ml-1" style="${o.ongkir_status === "paid" ? 'background:rgba(52,152,219,.15);color:#3498db' : 'background:rgba(241,196,15,.15);color:#f1c40f'}">${o.ongkir_status === "paid" ? "Siap Diambil" : "Belum Diambil"}</span>
+          </div>
+          <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
+        </div>
+        <div class="text-xs mb-2" style="color:var(--muted)">
+          <i class="fas fa-motorcycle mr-1"></i>Delivery — ${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}${kurir ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-motorcycle"></i> ' + kurir.name + '</span>' : ''}
+        </div>
+        <div class="text-xs mb-3">${(() => {
+          const names = o.items.map(i => { const mi = getMenuItem(i.menu_item_id); return mi ? mi.name + ' x' + i.quantity : ''; }).filter(Boolean);
+          return names.length <= 3 ? names.join(', ') : names.slice(0, 3).join(', ') + ' <span style="color:var(--muted)">+' + (names.length - 3) + ' lainnya</span>';
+        })()}</div>
+        <div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--danger)"><i class="fas fa-wallet"></i>Pendapatan Kurir: <b>${formatCurrency(netOngkir)}</b></div>
+        <div class="flex justify-between items-center">
+          <span class="font-bold" style="color:var(--success)">${formatCurrency(o.total_amount - netOngkir)}</span>
+          <div>
+            ${o.ongkir_status === "paid"
+              ? `<span class="text-xs font-medium px-3 py-1.5 rounded" style="background:rgba(52,152,219,.15);color:#3498db"><i class="fas fa-clock mr-1"></i>Menunggu Konfirmasi Kurir</span>`
+              : `<button onclick="event.stopPropagation();confirmPayOngkir('${o.id}')" class="btn-primary btn-sm"><i class="fas fa-hand-holding-dollar mr-1"></i>Bayar Ongkir</button>`}
+          </div>
+        </div>
+      </div>`;
+      }).join('')}
+    </div>`; })()}
     ${history.length > 0 ? `
     <div class="mt-6">
       <div class="flex items-center gap-2 mb-3 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')" style="user-select:none">
