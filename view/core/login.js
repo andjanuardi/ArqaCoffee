@@ -196,6 +196,7 @@ function showMitraRegistrationModal() {
       <div id="mitra-reg-form" style="display:none">
         <div class="space-y-3">
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama Lengkap</label><input id="mitra-reg-name" class="input-field text-sm w-full" placeholder="Nama Anda"></div>
+          <div id="mitra-reg-usaha-wrap" style="display:none"><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama Usaha</label><input id="mitra-reg-usaha" class="input-field text-sm w-full" placeholder="Nama kafe / warung / catering"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Email</label><input id="mitra-reg-email" type="email" class="input-field text-sm w-full" placeholder="email@example.com"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nomor Telepon</label><input id="mitra-reg-phone" class="input-field text-sm w-full" placeholder="08xxxxxxxxxx"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Alamat</label><textarea id="mitra-reg-address" class="input-field text-sm w-full min-h-[80px]" placeholder="Alamat lengkap"></textarea></div>
@@ -218,6 +219,8 @@ function selectMitraRole(role) {
   if (m) m.style.borderColor = role === 'mitra_juru_masak' ? '#e84393' : 'var(--border)';
   const form = document.getElementById('mitra-reg-form');
   if (form) form.style.display = 'block';
+  const uw = document.getElementById('mitra-reg-usaha-wrap');
+  if (uw) uw.style.display = role === 'mitra_juru_masak' ? 'block' : 'none';
   const label = document.getElementById('mitra-selected-role');
   if (label) label.textContent = 'Terpilih: ' + (role === 'courier' ? 'Kurir' : 'Mitra Juru Masak');
 }
@@ -227,8 +230,10 @@ function submitMitraRegistration() {
   const email = document.getElementById('mitra-reg-email')?.value?.trim();
   const phone = document.getElementById('mitra-reg-phone')?.value?.trim();
   const address = document.getElementById('mitra-reg-address')?.value?.trim();
+  const usaha = document.getElementById('mitra-reg-usaha')?.value?.trim();
   if (!_selectedMitraRole) { showToast('Pilih peran mitra terlebih dahulu', 'warning'); return; }
   if (!name) { showToast('Nama wajib diisi', 'warning'); return; }
+  if (_selectedMitraRole === 'mitra_juru_masak' && !usaha) { showToast('Nama Usaha wajib diisi', 'warning'); return; }
   if (!email) { showToast('Email wajib diisi', 'warning'); return; }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Format email tidak valid', 'warning'); return; }
   if (DB.users.find(u => u.email === email)) { showToast('Email sudah terdaftar sebagai pengguna', 'error'); return; }
@@ -239,7 +244,7 @@ function submitMitraRegistration() {
   if (!DB.mitraRegistrations) DB.mitraRegistrations = [];
   DB.mitraRegistrations.push({
     id: 'mr' + Date.now(),
-    name, email, phone, address,
+    name, email, phone, address, usaha: usaha || '',
     role: _selectedMitraRole,
     status: 'pending',
     created_at: new Date().toISOString(),

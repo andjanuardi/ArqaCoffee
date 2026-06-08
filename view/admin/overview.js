@@ -140,6 +140,7 @@ function renderAdminMitraApproval() {
             <div class="text-xs" style="color:var(--muted)">${r.email}${r.phone ? ' • ' + r.phone : ''}</div>
             <div class="text-xs mt-1"><span class="badge" style="background:${r.role === 'courier' ? 'rgba(155,89,182,.15)' : 'rgba(232,67,147,.15)'};color:${r.role === 'courier' ? '#9b59b6' : '#e84393'}">${r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}</span></div>
             ${r.address ? `<div class="text-xs mt-1" style="color:var(--muted)"><i class="fas fa-map-pin mr-1"></i>${r.address}</div>` : ''}
+            ${r.usaha && r.role === 'mitra_juru_masak' ? `<div class="text-xs mt-1" style="color:var(--accent)"><i class="fas fa-store mr-1"></i>${r.usaha}</div>` : ''}
             <div class="text-[10px] mt-1" style="color:var(--muted)">Daftar: ${formatDate(r.created_at)}</div>
           </div>
         </div>
@@ -158,6 +159,7 @@ function renderAdminMitraApproval() {
           <div class="flex-1 min-w-0">
             <div class="text-sm font-semibold">${r.name}</div>
             <div class="text-xs" style="color:var(--muted)">${r.email} — ${r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}</div>
+            ${r.usaha && r.role === 'mitra_juru_masak' ? `<div class="text-xs mt-0.5" style="color:var(--accent)"><i class="fas fa-store mr-1"></i>${r.usaha}</div>` : ''}
           </div>
           <span class="text-[10px]" style="color:var(--muted)">${formatDate(r.created_at)}</span>
         </div>`).join('')}</div>
@@ -171,6 +173,7 @@ function renderAdminMitraApproval() {
           <div class="flex-1 min-w-0">
             <div class="text-sm font-semibold">${r.name}</div>
             <div class="text-xs" style="color:var(--muted)">${r.email} — ${r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}</div>
+            ${r.usaha && r.role === 'mitra_juru_masak' ? `<div class="text-xs mt-0.5" style="color:var(--accent)"><i class="fas fa-store mr-1"></i>${r.usaha}</div>` : ''}
           </div>
           <span class="text-[10px]" style="color:var(--muted)">${formatDate(r.created_at)}</span>
         </div>`).join('')}</div>
