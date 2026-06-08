@@ -85,9 +85,8 @@ function startQRScan() {
 function selectTable(tid) {
   State.selectedTable = tid;
   State.orderType = "dine-in";
-  const t = getTable(tid);
-  if (t) t.status = "occupied";
   closeModal();
+  const t = getTable(tid);
   showToast(`Meja ${t?.number} dipilih — silakan pesan!`, "success");
   render();
 }

@@ -891,6 +891,9 @@ if (DB.cafe && !DB.cafe.address) {
   DB.cafe.address = "Sinabang, Simeulue Timur, Simeulue, Aceh, Sumatra, 23891, Indonesia";
 }
 
+// Migration: ensure stockItems have price field
+(DB.stockItems || []).forEach(s => { if (s.price === undefined) s.price = 0; });
+
 // Migration: init ongkir_status for delivery orders
 (DB.orders || []).forEach(o => {
   if (o.shipping_cost > 0 && o.order_type === "delivery" && o.ongkir_status === undefined) {

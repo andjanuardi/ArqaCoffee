@@ -123,10 +123,29 @@ function confirmCompleteOrder(id) {
       </div>
       <div class="flex gap-2">
         <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
-        <button onclick="closeModal();updateOrderStatus('${o.id}','completed')" class="btn-primary btn-sm flex-1 text-center">Ya, Selesai</button>
+        <button onclick="closeModal();doCompleteOrder('${o.id}')" class="btn-primary btn-sm flex-1 text-center">Ya, Selesai</button>
       </div>
     </div>
   `);
+}
+
+function doCompleteOrder(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  o.status = "completed";
+  if (o.table_id && o.order_type !== "delivery") {
+    const hasOther = DB.orders.some(x =>
+      x.id !== id && x.table_id === o.table_id &&
+      !['completed', 'cancelled', 'rejected'].includes(x.status)
+    );
+    if (!hasOther) {
+      const t = getTable(o.table_id);
+      if (t) t.status = "available";
+    }
+  }
+  notifyStatusChange(o, "completed");
+  showToast("Pesanan #" + o.id.slice(-5).toUpperCase() + " selesai", "success");
+  render();
 }
 
 function renderCashierView() {
@@ -727,7 +746,7 @@ function selectCashierTable(orderId, tableId) {
   if (o.table_id) {
     const oldT = getTable(o.table_id);
     const hasOtherOrders = DB.orders.some(
-      (x) => x.id !== o.id && x.table_id === o.table_id && x.status !== "completed" && x.status !== "cancelled",
+      (x) => x.id !== o.id && x.table_id === o.table_id && x.status !== "completed" && x.status !== "cancelled" && x.status !== "rejected",
     );
     if (oldT && !hasOtherOrders) oldT.status = "available";
   }

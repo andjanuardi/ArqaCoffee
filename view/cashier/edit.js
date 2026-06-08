@@ -68,7 +68,8 @@ function confirmCancelCashierOrder(id) {
         x.id !== id &&
         x.table_id === o.table_id &&
         x.status !== "completed" &&
-        x.status !== "cancelled",
+        x.status !== "cancelled" &&
+        x.status !== "rejected",
     );
     if (!hasOtherOrders) {
       const t = getTable(o.table_id);
@@ -83,7 +84,7 @@ function confirmCancelCashierOrder(id) {
       message: '#' + o.id.slice(-5).toUpperCase() + ' — Pesanan Anda dibatalkan oleh kasir. Alasan: ' + reason,
       type: 'order',
       icon: 'fa-ban',
-      targetRoles: ['customer', 'admin', 'manager'],
+      targetRoles: ['customer', 'kitchen', 'admin', 'manager'],
       relatedOrderId: o.id
     });
   }

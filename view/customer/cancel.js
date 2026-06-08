@@ -70,7 +70,8 @@ function confirmCancelOrder(id) {
         x.id !== id &&
         x.table_id === o.table_id &&
         x.status !== "completed" &&
-        x.status !== "cancelled",
+        x.status !== "cancelled" &&
+        x.status !== "rejected",
     );
     if (!hasOtherOrders) {
       const t = getTable(o.table_id);
@@ -86,7 +87,7 @@ function confirmCancelOrder(id) {
     message: '#' + o.id.slice(-5).toUpperCase() + ' dibatalkan oleh pelanggan: ' + reason,
     type: 'warning',
     icon: 'fa-ban',
-    targetRoles: ['cashier', 'admin', 'manager'],
+    targetRoles: ['cashier', 'kitchen', 'admin', 'manager'],
     relatedOrderId: o.id
   });
   showToast("Pesanan berhasil dibatalkan", "success");

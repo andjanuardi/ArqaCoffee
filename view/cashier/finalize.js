@@ -85,7 +85,8 @@ function finalizeManualOrder() {
             x.id !== o.id &&
             x.table_id === o.table_id &&
             x.status !== "completed" &&
-            x.status !== "cancelled",
+            x.status !== "cancelled" &&
+            x.status !== "rejected",
         );
         if (oldT && !hasOtherOrders) oldT.status = "available";
       }

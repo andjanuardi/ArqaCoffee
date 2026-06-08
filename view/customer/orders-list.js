@@ -256,8 +256,9 @@ function confirmPayOrder(id, method) {
   if (!o) return;
   o.payment_status = "paid";
   o.payment_method = method || "qris";
-  closeModal();
   const label = method === "qris" ? "QRIS" : method === "bank_transfer" ? "Transfer" : "Tunai";
+  notifyPayment(o, label);
+  closeModal();
   showToast("Pembayaran " + label + " berhasil!", "success");
   render();
 }

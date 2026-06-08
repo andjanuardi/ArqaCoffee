@@ -218,8 +218,6 @@ function staffCheckOut() {
   }
   navigator.geolocation.getCurrentPosition(function(pos) {
     att.check_out = new Date().toISOString();
-    att.check_out_lat = pos.coords.latitude;
-    att.check_out_lng = pos.coords.longitude;
     addNotification({ title:'Check-Out', message:'Check-out berhasil — lokasi tersimpan', type:'info', icon:'fa-sign-out-alt', targetRoles:[role] });
     showToast('Check-out berhasil — lokasi tersimpan', 'success');
     render();

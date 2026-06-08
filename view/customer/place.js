@@ -191,6 +191,7 @@ function placeOrder() {
     total_amount: grandTotal,
     shipping_cost: shippingCost,
     service_fee: serviceFee,
+    customer_phone: State.currentUser.phone,
     payment_method: State.payTiming === "later" ? (State.orderType === "delivery" ? "cod" : "") : selectedPayment,
     payment_status:
       State.payTiming === "later"
@@ -227,6 +228,10 @@ function placeOrder() {
   };
   if (State.orderType === "delivery") order.courier_id = null;
   DB.orders.unshift(order);
+  if (order.table_id) {
+    const t = getTable(order.table_id);
+    if (t) t.status = "occupied";
+  }
   State.cart = [];
   State.activePromoId = null;
   State.deliveryLocation = null;

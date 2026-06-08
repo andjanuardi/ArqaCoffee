@@ -259,9 +259,8 @@ function showWaiterTableSelector() {
 function selectWaiterTable(tid) {
   State.selectedTable = tid;
   State.orderType = "dine-in";
-  const t = getTable(tid);
-  if (t) t.status = "occupied";
   closeModal();
+  const t = getTable(tid);
   showToast(`Meja ${t?.number} dipilih`, "success");
   render();
 }
@@ -354,6 +353,10 @@ function placeWaiterOrder() {
     })),
   };
   DB.orders.unshift(order);
+  if (order.table_id) {
+    const t = getTable(order.table_id);
+    if (t) t.status = "occupied";
+  }
   State.cart = [];
   State.activePromoId = null;
   notifyOrderPlaced(order, "Waiters: " + State.currentUser.name);
