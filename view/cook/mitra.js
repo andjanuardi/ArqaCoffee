@@ -196,15 +196,15 @@ function renderMitraFinance() {
       </div>
     </div>
     <div class="grid grid-cols-3 gap-2 mb-4">
-      <div class="stat-card text-center cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showMitraRevenueTable=!State.showMitraRevenueTable;State.showMitraExpenseTable=false;render()">
+      <div class="stat-card text-center cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showMitraRevenueTable=!State.showMitraRevenueTable;State.showMitraExpenseTable=false;State.showMitraProfitTable=false;render()">
         <div class="text-xs" style="color:var(--muted)">Total Pendapatan</div>
         <div class="text-sm font-bold mt-1" style="color:var(--warning)">${formatCurrency(totalHarga)}</div>
       </div>
-      <div class="stat-card text-center cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showMitraExpenseTable=!State.showMitraExpenseTable;State.showMitraRevenueTable=false;render()">
+      <div class="stat-card text-center cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showMitraExpenseTable=!State.showMitraExpenseTable;State.showMitraRevenueTable=false;State.showMitraProfitTable=false;render()">
         <div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div>
         <div class="text-sm font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalPengeluaran)}</div>
       </div>
-      <div class="stat-card text-center">
+      <div class="stat-card text-center cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showMitraProfitTable=!State.showMitraProfitTable;State.showMitraRevenueTable=false;State.showMitraExpenseTable=false;render()">
         <div class="text-xs" style="color:var(--muted)">Total Laba Bersih</div>
         <div class="text-sm font-bold mt-1" style="color:var(--success)">${formatCurrency(totalRevenue)}</div>
       </div>
@@ -302,7 +302,7 @@ function renderMitraFinance() {
         <button onclick="State.showMitraRevenueTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
       </div>
       <div class="grid grid-cols-2 gap-3 mb-3">
-        <div class="stat-card text-center"><div class="text-xs" style="color:var(--muted)"><i class="fas fa-money-bill mr-1"></i>Total Pendapatan</div><div class="text-sm font-bold mt-1" style="color:var(--success)">${formatCurrency(revTotal)}</div></div>
+        <div class="stat-card text-center"><div class="text-xs" style="color:var(--muted)"><i class="fas fa-money-bill mr-1"></i>Total Pendapatan</div><div class="text-sm font-bold mt-1" style="color:var(--warning)">${formatCurrency(revTotal)}</div></div>
         <div class="stat-card text-center"><div class="text-xs" style="color:var(--muted)"><i class="fas fa-receipt mr-1"></i>Total Transaksi</div><div class="text-sm font-bold mt-1" style="color:var(--accent)">${revCount}</div></div>
       </div>
       <div class="overflow-x-auto max-h-72 overflow-y-auto">
@@ -313,13 +313,70 @@ function renderMitraFinance() {
               <td style="border-bottom:1px solid var(--border);padding:6px 8px;color:var(--muted)">${i + 1}</td>
               <td style="border-bottom:1px solid var(--border);padding:6px 8px;font-weight:600">#${r.o.id.slice(-5).toUpperCase()}</td>
               <td style="border-bottom:1px solid var(--border);padding:6px 8px;color:var(--muted);font-size:11px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.itemsStr}">${r.itemsStr}</td>
-              <td style="border-bottom:1px solid var(--border);padding:6px 8px;text-align:right;color:var(--success)">${formatCurrency(r.sub)}</td>
+              <td style="border-bottom:1px solid var(--border);padding:6px 8px;text-align:right;color:var(--warning)">${formatCurrency(r.sub)}</td>
             </tr>`).join('')}</tbody>
           <tfoot><tr class="font-bold" style="font-size:11px">
-            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--success)"></td>
-            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--success)">Total</td>
-            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--success)"></td>
-            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--success);text-align:right;color:var(--success)">${formatCurrency(revTotal)}</td>
+            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--warning)"></td>
+            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--warning)">Total</td>
+            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--warning)"></td>
+            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--warning);text-align:right;color:var(--warning)">${formatCurrency(revTotal)}</td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>`; })() : State.showMitraProfitTable ? (() => {
+      const profitRows = [];
+      let pCount = 0, pSubTotal = 0, pExpTotal = 0, pProfitTotal = 0;
+      const orderMap = {};
+      claimItems.forEach(ci => { orderMap[ci.order.id] = ci.order; });
+      Object.values(orderMap).forEach(o => {
+        const mitraItems = o.items.filter(i => i.claimed_by === mitraName);
+        const sub = mitraItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
+        if (sub <= 0) return;
+        const tax = calcItemTax(mitraItems);
+        const fee = calcMitraFee(sub);
+        const expense = tax + fee;
+        const profit = Math.max(0, sub - expense);
+        profitRows.push({ o, sub, expense, profit });
+        pCount++; pSubTotal += sub; pExpTotal += expense; pProfitTotal += profit;
+      });
+      if (!profitRows.length) {
+        return `
+    <div class="card mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-sm">Detail Laba Bersih</h3>
+        <button onclick="State.showMitraProfitTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+      </div>
+      <p class="text-sm py-4 text-center" style="color:var(--muted)">Belum ada data laba bersih</p>
+    </div>`;
+      }
+      return `
+    <div class="card mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-sm">Detail Laba Bersih</h3>
+        <button onclick="State.showMitraProfitTable=false;render()" class="text-xs" style="color:var(--muted)"><i class="fas fa-times mr-1"></i>Tutup</button>
+      </div>
+      <div class="grid grid-cols-3 gap-2 mb-3">
+        <div class="stat-card text-center"><div class="text-xs" style="color:var(--muted)"><i class="fas fa-money-bill mr-1"></i>Pendapatan</div><div class="text-sm font-bold mt-1" style="color:var(--warning)">${formatCurrency(pSubTotal)}</div></div>
+        <div class="stat-card text-center"><div class="text-xs" style="color:var(--muted)"><i class="fas fa-receipt mr-1"></i>Pengeluaran</div><div class="text-sm font-bold mt-1" style="color:var(--danger)">${formatCurrency(pExpTotal)}</div></div>
+        <div class="stat-card text-center"><div class="text-xs" style="color:var(--muted)"><i class="fas fa-chart-line mr-1"></i>Laba Bersih</div><div class="text-sm font-bold mt-1" style="color:var(--success)">${formatCurrency(pProfitTotal)}</div></div>
+      </div>
+      <div class="overflow-x-auto max-h-72 overflow-y-auto">
+        <table class="w-full text-sm" style="border-collapse:collapse">
+          <thead><tr style="color:var(--muted);font-size:11px"><th style="border-bottom:2px solid var(--border);padding:6px 8px;text-align:left">No</th><th style="border-bottom:2px solid var(--border);padding:6px 8px;text-align:left">Order</th><th style="border-bottom:2px solid var(--border);padding:6px 8px;text-align:right">Pendapatan</th><th style="border-bottom:2px solid var(--border);padding:6px 8px;text-align:right">Pengeluaran</th><th style="border-bottom:2px solid var(--border);padding:6px 8px;text-align:right">Laba Bersih</th></tr></thead>
+          <tbody>${profitRows.map((r, i) => `
+            <tr class="cursor-pointer hover:bg-white/5" onclick="showMitraOrderDetail('${r.o.id}')">
+              <td style="border-bottom:1px solid var(--border);padding:6px 8px;color:var(--muted)">${i + 1}</td>
+              <td style="border-bottom:1px solid var(--border);padding:6px 8px;font-weight:600">#${r.o.id.slice(-5).toUpperCase()}</td>
+              <td style="border-bottom:1px solid var(--border);padding:6px 8px;text-align:right;color:var(--warning)">${formatCurrency(r.sub)}</td>
+              <td style="border-bottom:1px solid var(--border);padding:6px 8px;text-align:right;color:var(--danger)">${formatCurrency(r.expense)}</td>
+              <td style="border-bottom:1px solid var(--border);padding:6px 8px;text-align:right;color:var(--success)">${formatCurrency(r.profit)}</td>
+            </tr>`).join('')}</tbody>
+          <tfoot><tr class="font-bold" style="font-size:11px">
+            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--accent)"></td>
+            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--accent)">Total</td>
+            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--accent);text-align:right;color:var(--warning)">${formatCurrency(pSubTotal)}</td>
+            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--accent);text-align:right;color:var(--danger)">${formatCurrency(pExpTotal)}</td>
+            <td style="border-bottom:1px solid var(--border);padding:6px 8px;border-top:2px solid var(--accent);text-align:right;color:var(--success)">${formatCurrency(pProfitTotal)}</td>
           </tr></tfoot>
         </table>
       </div>
