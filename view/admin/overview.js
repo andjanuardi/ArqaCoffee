@@ -126,6 +126,7 @@ function renderAdminMitraApproval() {
           <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm" style="background:${r.role === 'courier' ? 'rgba(155,89,182,.15)' : 'rgba(232,67,147,.15)'};color:${r.role === 'courier' ? '#9b59b6' : '#e84393'}">${r.name[0]}</div>
           <div class="flex-1 min-w-0">
             <div class="font-semibold text-sm">${r.name}</div>
+            ${r.business ? `<div class="text-xs" style="color:var(--accent)"><i class="fas fa-store mr-1"></i>${r.business}</div>` : ''}
             <div class="text-xs" style="color:var(--muted)">${r.email}${r.phone ? ' • ' + r.phone : ''}</div>
             <div class="text-xs mt-1"><span class="badge" style="background:${r.role === 'courier' ? 'rgba(155,89,182,.15)' : 'rgba(232,67,147,.15)'};color:${r.role === 'courier' ? '#9b59b6' : '#e84393'}">${r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}</span></div>
             ${r.address ? `<div class="text-xs mt-1" style="color:var(--muted)"><i class="fas fa-map-pin mr-1"></i>${r.address}</div>` : ''}
@@ -172,7 +173,7 @@ function approveMitraRegistration(id) {
   if (!r) return;
   r.status = 'approved';
   const pwd = '123456';
-  DB.users.push({ id: 'u' + Date.now(), name: r.name, email: r.email, password: pwd, role: r.role, phone: r.phone || '', address: r.address || '', avatar: r.name[0].toUpperCase() });
+  DB.users.push({ id: 'u' + Date.now(), name: r.name, business_name: r.business || '', email: r.email, password: pwd, role: r.role, phone: r.phone || '', address: r.address || '', avatar: r.name[0].toUpperCase() });
   showToast(`${r.name} disetujui sebagai ${r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}!`, 'success');
   render();
 }

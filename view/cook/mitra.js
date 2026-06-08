@@ -448,6 +448,7 @@ function renderMitraProfile() {
     <div class="card text-center mb-4">
       <div class="w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold" style="background:var(--accent);color:#fff">${u.avatar}</div>
       <h3 class="font-semibold text-lg">${u.name}</h3>
+      ${u.business_name ? `<p class="text-xs mb-1" style="color:var(--accent)"><i class="fas fa-store mr-1"></i>${u.business_name}</p>` : ''}
       <p class="text-sm" style="color:var(--muted)">${u.email}</p>
       <p class="text-sm" style="color:var(--muted)">${u.phone}</p>
     </div>

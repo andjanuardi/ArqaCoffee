@@ -196,6 +196,7 @@ function showMitraRegistrationModal() {
       <div id="mitra-reg-form" style="display:none">
         <div class="space-y-3">
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama Lengkap</label><input id="mitra-reg-name" class="input-field text-sm w-full" placeholder="Nama Anda"></div>
+          <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama Usaha</label><input id="mitra-reg-business" class="input-field text-sm w-full" placeholder="Nama usaha atau toko Anda"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Email</label><input id="mitra-reg-email" type="email" class="input-field text-sm w-full" placeholder="email@example.com"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nomor Telepon</label><input id="mitra-reg-phone" class="input-field text-sm w-full" placeholder="08xxxxxxxxxx"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Alamat</label><textarea id="mitra-reg-address" class="input-field text-sm w-full min-h-[80px]" placeholder="Alamat lengkap"></textarea></div>
@@ -224,6 +225,7 @@ function selectMitraRole(role) {
 
 function submitMitraRegistration() {
   const name = document.getElementById('mitra-reg-name')?.value?.trim();
+  const business = document.getElementById('mitra-reg-business')?.value?.trim();
   const email = document.getElementById('mitra-reg-email')?.value?.trim();
   const phone = document.getElementById('mitra-reg-phone')?.value?.trim();
   const address = document.getElementById('mitra-reg-address')?.value?.trim();
@@ -239,7 +241,7 @@ function submitMitraRegistration() {
   if (!DB.mitraRegistrations) DB.mitraRegistrations = [];
   DB.mitraRegistrations.push({
     id: 'mr' + Date.now(),
-    name, email, phone, address,
+    name, business, email, phone, address,
     role: _selectedMitraRole,
     status: 'pending',
     created_at: new Date().toISOString(),
