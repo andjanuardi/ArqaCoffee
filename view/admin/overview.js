@@ -89,74 +89,31 @@ function renderAdminCourierFinance() {
 }
 
 function renderAdminMitraFinance() {
-  if (!State.adminMitraDate) State.adminMitraDate = new Date().toLocaleDateString('sv-SE');
-  const dateVal = State.adminMitraDate;
   const mitraUsers = DB.users.filter(u => u.role === 'mitra_juru_masak');
-  const mitraOrders = DB.orders.filter(o => o.created_at && new Date(o.created_at).toLocaleDateString('sv-SE') === dateVal && o.items.some(i => i.claimed_by));
-  const mitraStats = mitraUsers.map(m => {
-    const items = [];
-    let revenue = 0;
-    mitraOrders.forEach(o => {
-      o.items.forEach(i => {
-        if (i.claimed_by === m.name) {
-          items.push({ ...i, order: o });
-          if (o.payment_status === 'paid') revenue += (i.unit_price * i.quantity) || 0;
-        }
-      });
-    });
-    return { ...m, items, revenue, count: items.length };
-  });
-  const totalRevenue = mitraStats.reduce((s, m) => s + m.revenue, 0);
-  const totalItems = mitraStats.reduce((s, m) => s + m.count, 0);
+  if (!State.adminMitraSelectedName) State.adminMitraSelectedName = mitraUsers[0]?.name || '';
+  if (!State.adminMitraDateFilter) State.adminMitraDateFilter = new Date().toLocaleDateString('sv-SE');
+  const selected = State.adminMitraSelectedName;
   return `
   <div class="animate-fade-up">
-    <h2 class="font-display text-xl font-bold mb-4">Keuangan Mitra Juru Masak</h2>
-    <div class="mb-4">
-      <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Filter Tanggal</label>
-      <input type="date" class="input-field" style="max-width:260px" value="${dateVal}" onchange="State.adminMitraDate=this.value;render()">
-    </div>
-    <div class="grid grid-cols-2 gap-3 mb-5">
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Pendapatan Mitra</div><div class="text-xl font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRevenue)}</div></div>
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Item Diproses</div><div class="text-xl font-bold mt-1">${totalItems}</div></div>
-    </div>
-    <div class="space-y-3 mb-4">
-      <h3 class="font-semibold text-sm">Kinerja Mitra</h3>
-      ${mitraStats.map(ms => `
-      <div class="card">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold" style="background:var(--accent);color:#fff">${ms.avatar || ms.name[0]}</div>
-          <div class="flex-1">
-            <div class="font-semibold text-sm">${ms.name}</div>
-            <div class="text-xs" style="color:var(--muted)">${ms.email}</div>
-          </div>
-          <div class="text-right">
-            <div class="text-sm font-bold" style="color:var(--success)">${ms.count}</div>
-            <div class="text-[10px]" style="color:var(--muted)">Item</div>
-          </div>
-        </div>
-        <div class="text-sm flex justify-between px-1">
-          <span style="color:var(--muted)">Pendapatan:</span>
-          <span style="color:var(--accent)">${formatCurrency(ms.revenue)}</span>
-        </div>
-      </div>`).join('')}
-      ${mitraStats.length === 0 ? '<p class="text-sm text-center py-4" style="color:var(--muted)">Belum ada data mitra</p>' : ''}
-    </div>
-    <div class="card">
-      <h3 class="font-semibold text-sm mb-3">Riwayat Proses Mitra</h3>
-      <div class="space-y-2 max-h-80 overflow-y-auto">
-        ${mitraOrders.length === 0 ? '<p class="text-sm text-center py-4" style="color:var(--muted)">Belum ada item diproses mitra</p>' : mitraOrders.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).map(o => {
-          const claimedItems = o.items.filter(i => i.claimed_by);
-          return `
-        <div class="flex justify-between items-center text-sm py-2 border-b" style="border-color:var(--border)">
-          <div>
-            <span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span>
-            <span class="badge ${getStatusBadge(o.status)} ml-1">${getStatusLabel(o.status)}</span>
-            <div class="text-[10px] mt-0.5" style="color:var(--muted)">${claimedItems.map(i => i.claimed_by + ' (' + (getMenuItem(i.menu_item_id)?.name || 'Item') + ' x' + i.quantity + ')').join(', ')}</div>
-          </div>
-          <div style="color:${o.payment_status === 'paid' ? 'var(--success)' : 'var(--danger)'}">${formatCurrency(o.total_amount)}</div>
-        </div>`;}).join('')}
+    <h2 class="font-display text-xl font-bold mb-4">Laporan Mitra Juru Masak</h2>
+    <div class="flex gap-2 mb-4">
+      <div class="flex-[2]">
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Pilih Mitra</label>
+        <select class="input-field w-full" onchange="State.adminMitraSelectedName=this.value;render()">
+          ${mitraUsers.map(m => `<option value="${m.name}" ${m.name === selected ? 'selected' : ''}>${m.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="flex-1">
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">Tanggal</label>
+        <input type="date" class="input-field w-full" value="${State.adminMitraDateFilter}" onchange="State.adminMitraDateFilter=this.value;render()">
       </div>
     </div>
+    ${_renderMitraFinanceHTML(selected, {
+      dateFilter: 'adminMitraDateFilter',
+      showRevenue: 'adminShowMitraRevenueTable',
+      showExpense: 'adminShowMitraExpenseTable',
+      showProfit: 'adminShowMitraProfitTable',
+    })}
   </div>`;
 }
 
