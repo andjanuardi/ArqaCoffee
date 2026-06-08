@@ -184,6 +184,7 @@ function renderMitraFinance() {
     });
   const totalRevenue = Object.values(orderTotals).reduce((s, v) => s + v, 0);
   const totalOrders = new Set(claimItems.map(ci => ci.order.id)).size;
+  const totalHarga = claimItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Keuangan Mitra</h2>
@@ -193,9 +194,15 @@ function renderMitraFinance() {
         <input type="date" id="mitra-finance-date-filter" class="input-field w-full" value="${dateFilter}" onchange="State.mitraFinanceDateFilter=this.value;render()">
       </div>
     </div>
-    <div class="grid grid-cols-2 gap-3 mb-5">
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pendapatan</div><div class="text-lg font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRevenue)}</div></div>
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Total Pesanan Diproses</div><div class="text-lg font-bold mt-1">${totalOrders}</div></div>
+    <div class="grid grid-cols-2 gap-2 mb-4">
+      <div class="stat-card text-center">
+        <div class="text-xs" style="color:var(--muted)">Total Pendapatan</div>
+        <div class="text-sm font-bold mt-1" style="color:var(--success)">${formatCurrency(totalHarga)}</div>
+      </div>
+      <div class="stat-card text-center">
+        <div class="text-xs" style="color:var(--muted)">Total Laba Bersih</div>
+        <div class="text-sm font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRevenue)}</div>
+      </div>
     </div>
     <div class="card mb-4">
       <h3 class="font-semibold text-sm mb-3">Menu Terlaris</h3>
@@ -218,7 +225,37 @@ function renderMitraFinance() {
         })()}
       </div>
     </div>
-    <div class="card"><canvas id="chart-cashier" height="200"></canvas></div>
+    <div class="card mb-4">
+      <h3 class="font-semibold text-sm mb-3">Total Pesanan</h3>
+      <div class="space-y-2 max-h-64 overflow-y-auto">
+        ${(() => {
+          const orderMap = {};
+          claimItems.forEach(ci => { orderMap[ci.order.id] = ci.order; });
+          const list = Object.values(orderMap)
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 6);
+          if (!list.length) return '<p class="text-sm py-4 text-center" style="color:var(--muted)">Belum ada data</p>';
+          return list.map(o => {
+            const myItems = (o.items || []).filter(i => i.claimed_by === State.currentUser.name);
+            const itemsStr = myItems.map(i => {
+              const mi = getMenuItem(i.menu_item_id);
+              return mi ? mi.name + ' x' + i.quantity : '';
+            }).filter(Boolean).join(', ');
+            const tableInfo = o.order_type === 'dine-in' && o.table_id ? 'Meja ' + (getTable(o.table_id)?.number || '-') : '';
+            return `
+          <div class="flex justify-between items-center text-sm py-2 border-b" style="border-color:var(--border);cursor:pointer" onclick="showMitraOrderDetail('${o.id}')">
+            <div>
+              <span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span>
+              <span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>
+              <div class="text-[10px] mt-0.5" style="color:var(--muted)">${tableInfo || getOrderTypeName(o.order_type)}</div>
+              <div class="text-[10px] truncate max-w-[200px]" style="color:var(--muted)">${itemsStr}</div>
+            </div>
+            <span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
+          </div>`;
+          }).join('');
+        })()}
+      </div>
+    </div>
   </div>`;
 }
 
