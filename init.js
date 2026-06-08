@@ -216,6 +216,7 @@ function startApp() {
     if (e.key === 'arqa_db' && e.newValue) {
       if (e.newValue === JSON.stringify(DB)) return;
       var fresh = JSON.parse(e.newValue);
+      Object.keys(DB).forEach(function(k) { if (!(k in fresh)) delete DB[k]; });
       Object.keys(fresh).forEach(function(k) { DB[k] = fresh[k]; });
       loadNotifications();
       if (!document.getElementById('modal-overlay')) render();

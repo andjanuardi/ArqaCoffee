@@ -181,3 +181,5 @@ Alamat Pengiriman
 ￼
 
 
+perbaiki bug
+		- kurir : pelanggan membuat order delivery dengan toko yang berbeda (arqa, toko mitra, toko lainnya), maka jalur pengantaran order dimulai dari posisi kurir ke toko terdekat, lalu lanjut toko lain, sampai semua order diambil, lalu antar ke pelanggan
