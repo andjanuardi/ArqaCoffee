@@ -185,6 +185,7 @@ function renderMitraFinance() {
   const totalRevenue = Object.values(orderTotals).reduce((s, v) => s + v, 0);
   const totalOrders = new Set(claimItems.map(ci => ci.order.id)).size;
   const totalHarga = claimItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
+  const totalPengeluaran = totalHarga - totalRevenue;
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Keuangan Mitra</h2>
@@ -194,14 +195,18 @@ function renderMitraFinance() {
         <input type="date" id="mitra-finance-date-filter" class="input-field w-full" value="${dateFilter}" onchange="State.mitraFinanceDateFilter=this.value;render()">
       </div>
     </div>
-    <div class="grid grid-cols-2 gap-2 mb-4">
+    <div class="grid grid-cols-3 gap-2 mb-4">
       <div class="stat-card text-center">
         <div class="text-xs" style="color:var(--muted)">Total Pendapatan</div>
-        <div class="text-sm font-bold mt-1" style="color:var(--success)">${formatCurrency(totalHarga)}</div>
+        <div class="text-sm font-bold mt-1" style="color:var(--warning)">${formatCurrency(totalHarga)}</div>
+      </div>
+      <div class="stat-card text-center">
+        <div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div>
+        <div class="text-sm font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalPengeluaran)}</div>
       </div>
       <div class="stat-card text-center">
         <div class="text-xs" style="color:var(--muted)">Total Laba Bersih</div>
-        <div class="text-sm font-bold mt-1" style="color:var(--accent)">${formatCurrency(totalRevenue)}</div>
+        <div class="text-sm font-bold mt-1" style="color:var(--success)">${formatCurrency(totalRevenue)}</div>
       </div>
     </div>
     <div class="card mb-4">
