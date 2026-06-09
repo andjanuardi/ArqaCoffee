@@ -3,6 +3,9 @@
 // ============================================================
 const ARQA_COORDS = DB.cafe?.location || { lat: -6.2088, lng: 106.8456 };
 const ARQA_RADIUS = 200;
+let _editMitraMap = null;
+let _editMitraMarker = null;
+let _editMitraPos = null;
 
 function calcDistance(lat1, lon1, lat2, lon2) {
   const R = 6371000;
@@ -263,13 +266,27 @@ function showEditProfileModal() {
           <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Konfirmasi Password Baru</label>
           <input id="edit-profile-pass-confirm" type="password" class="input-field text-sm" placeholder="Ulangi password baru">
         </div>
+        ${u.role === 'mitra_juru_masak' ? `
+        <hr style="border-color:var(--border);margin:12px 0">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <i class="fas fa-hat-chef" style="color:#e84393;font-size:14px"></i>
+            <span class="text-xs font-semibold" style="color:var(--muted)">Posisi Mitra</span>
+          </div>
+          <p class="text-[10px] mb-2" style="color:var(--muted)">Seret marker untuk mengubah posisi</p>
+          <div id="map-edit-mitra-position" style="height:200px;border-radius:12px;overflow:hidden;margin-bottom:8px"></div>
+          <div class="flex items-center justify-between text-xs px-1" style="color:var(--muted)">
+            <span id="edit-mitra-pos-coords">Memuat lokasi...</span>
+            <span id="edit-mitra-pos-distance"></span>
+          </div>
+        </div>` : ''}
       </div>
       <div class="flex gap-2 mt-4">
         <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
         <button onclick="saveEditProfile()" class="btn-primary flex-1 text-center">Simpan</button>
       </div>
     </div>
-  `);
+  `, function() { if (u.role === 'mitra_juru_masak') initEditMitraMap(); });
 }
 
 function saveEditProfile() {
@@ -288,7 +305,56 @@ function saveEditProfile() {
   u.address = address;
   u.avatar = name[0].toUpperCase();
   if (pass) u.password = pass;
+  if (u.role === 'mitra_juru_masak' && _editMitraPos) {
+    u.mitra_position = _editMitraPos;
+    State.mitraPositions[u.name] = _editMitraPos;
+  }
+  if (_editMitraMap) { _editMitraMap.remove(); _editMitraMap = null; _editMitraMarker = null; _editMitraPos = null; }
   closeModal();
   showToast('Profil berhasil diperbarui', 'success');
   render();
+}
+
+function initEditMitraMap() {
+  const el = document.getElementById('map-edit-mitra-position');
+  if (!el || _editMitraMap) return;
+  const u = State.currentUser;
+  const cafe = DB.cafe?.location || ARQA_COORDS;
+  const startPos = u.mitra_position || { lat: cafe.lat, lng: cafe.lng };
+  _editMitraPos = { lat: startPos.lat, lng: startPos.lng };
+  _editMitraMap = L.map(el, { zoomControl: false, attributionControl: false }).setView([startPos.lat, startPos.lng], 19);
+  L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, attribution: 'Google' }).addTo(_editMitraMap);
+  L.marker([cafe.lat, cafe.lng], {
+    icon: L.divIcon({ html: '<i class="fas fa-store" style="color:#e07a3a;font-size:22px"></i>', className: '', iconSize: [22, 22], iconAnchor: [11, 11] })
+  }).addTo(_editMitraMap).bindPopup('ARQA Coffee');
+  _editMitraMarker = L.marker([startPos.lat, startPos.lng], {
+    draggable: true,
+    icon: L.divIcon({
+      html: '<div style="width:40px;height:40px;background:#e84393;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);border:3px solid #fff;cursor:grab;animation:pulse 2s infinite"><i class="fas fa-hat-chef" style="color:#fff;font-size:18px"></i></div><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #e84393;margin:-2px auto 0"></div>',
+      className: '',
+      iconSize: [40, 48],
+      iconAnchor: [20, 28]
+    })
+  }).addTo(_editMitraMap).bindPopup('Posisi Mitra (seret)').openPopup();
+  _editMitraMarker.on('dragend', function () {
+    const pos = _editMitraMarker.getLatLng();
+    _editMitraPos = { lat: pos.lat, lng: pos.lng };
+    updateEditMitraPosDisplay(pos.lat, pos.lng);
+  });
+  updateEditMitraPosDisplay(startPos.lat, startPos.lng);
+  setTimeout(function () { _editMitraMap.invalidateSize(); }, 200);
+}
+
+function updateEditMitraPosDisplay(lat, lng) {
+  const cl = document.getElementById('edit-mitra-pos-coords');
+  const dl = document.getElementById('edit-mitra-pos-distance');
+  if (cl) cl.textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+  if (dl && DB.cafe) {
+    const d = calcDistance(lat, lng, DB.cafe.location.lat, DB.cafe.location.lng);
+    if (d < 1000) {
+      dl.innerHTML = '<span style="color:var(--muted)">Jarak ke kafe: </span><span style="color:var(--accent)">' + Math.round(d).toLocaleString('id-ID') + ' meter</span>';
+    } else {
+      dl.innerHTML = '<span style="color:var(--muted)">Jarak ke kafe: </span><span style="color:var(--accent)">' + Math.round(d).toLocaleString('id-ID') + ' m (' + (d / 1000).toFixed(1).replace('.', ',') + ' km)</span>';
+    }
+  }
 }
