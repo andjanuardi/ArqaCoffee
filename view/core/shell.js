@@ -153,9 +153,11 @@ function renderSideDrawer(role) {
         </div>
       </div>`;
       }
+      const badgeCount = i.id === 'mitra-approval' ? (DB.mitraRegistrations || []).filter(r => r.status === 'pending').length : 0;
       return `
       <div class="drawer-item ${active === i.id ? 'active' : ''}" onclick="switchTab('${i.id}');toggleDrawer()">
         <i class="fas ${i.icon}"></i><span>${i.label}</span>
+        ${badgeCount > 0 ? `<span class="ml-auto text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0" style="background:var(--danger);color:#fff">${badgeCount}</span>` : ''}
       </div>`;
     }).join('')}
     </div>

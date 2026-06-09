@@ -231,6 +231,19 @@ function renderAdminOverview() {
       <i class="fas fa-chevron-right ml-auto text-[10px]" style="color:var(--muted)"></i>
     </div>`})()}
     ${(() => {
+      if (!DB.mitraRegistrations) DB.mitraRegistrations = [];
+      const pendingRegs = DB.mitraRegistrations.filter(r => r.status === 'pending');
+      if (!pendingRegs.length) return '';
+      const courierCount = pendingRegs.filter(r => r.role === 'courier').length;
+      const mitraCount = pendingRegs.filter(r => r.role === 'mitra_juru_masak').length;
+      return `
+    <div class="mb-4 p-3 rounded-xl flex items-center gap-2 text-xs cursor-pointer" style="background:rgba(155,89,182,.1);border:1px solid rgba(155,89,182,.2);color:#9b59b6" onclick="switchTab('mitra-approval')">
+      <i class="fas fa-user-plus"></i>
+      <span class="font-semibold">${pendingRegs.length} pendaftaran mitra menunggu</span>
+      <span class="text-[10px] ml-1">${courierCount > 0 ? courierCount + ' Kurir' : ''}${courierCount > 0 && mitraCount > 0 ? ' & ' : ''}${mitraCount > 0 ? mitraCount + ' Mitra Masak' : ''}</span>
+      <i class="fas fa-chevron-right ml-auto text-[10px]" style="color:var(--muted)"></i>
+    </div>`})()}
+    ${(() => {
       const lowStock = DB.stockItems.filter(s => s.current_quantity <= s.min_quantity);
       const lowPgStock = (DB.pgStockItems || []).filter(s => s.current_quantity <= s.min_quantity);
       const allLow = [
