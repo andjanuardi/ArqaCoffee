@@ -416,6 +416,7 @@ function _renderMitraFinanceFor(mitraName) {
           if (!list.length) return '<p class="text-sm py-4 text-center" style="color:var(--muted)">Belum ada data</p>';
           return list.map(o => {
             const myItems = (o.items || []).filter(i => i.claimed_by === mitraName);
+            const mySubtotal = myItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
             const itemsStr = myItems.map(i => {
               const mi = getMenuItem(i.menu_item_id);
               return mi ? mi.name + ' x' + i.quantity : '';
@@ -429,7 +430,7 @@ function _renderMitraFinanceFor(mitraName) {
               <div class="text-[10px] mt-0.5" style="color:var(--muted)">${tableInfo || getOrderTypeName(o.order_type)}</div>
               <div class="text-[10px] truncate max-w-[200px]" style="color:var(--muted)">${itemsStr}</div>
             </div>
-            <span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
+            <span style="color:var(--accent)">${formatCurrency(mySubtotal)}</span>
           </div>`;
           }).join('');
         })()}
