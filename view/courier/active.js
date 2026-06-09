@@ -80,7 +80,7 @@ function renderCourierActive() {
         })()}
         <div id="map-courier-${o.id}" class="mb-3" style="height:200px;border-radius:12px"></div>
         <div class="flex gap-2">
-          <button onclick="openNavigation('${o.id}')" class="btn-secondary btn-sm flex-1 text-center"><i class="fas fa-map-signs mr-1"></i>Navigasi</button>
+          <button onclick="showNavigationModal('${o.id}')" class="btn-secondary btn-sm flex-1 text-center"><i class="fas fa-map-signs mr-1"></i>Navigasi</button>
           <button onclick="openChatModal('${o.id}')" class="btn-secondary btn-sm flex-1 text-center" style="background:rgba(224,122,58,.1);color:var(--accent);border-color:transparent;position:relative"><i class="fas fa-comment-alt mr-1"></i>Chat${getOrderChatUnreadCount(o.id) > 0 ? `<span class="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style="background:var(--danger);color:#fff">${getOrderChatUnreadCount(o.id)}</span>` : ""}</button>
           <button onclick="completeDelivery('${o.id}')" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-check mr-1"></i>Selesai</button>
         </div>
@@ -91,21 +91,63 @@ function renderCourierActive() {
   </div>`;
 }
 
-function openNavigation(orderId) {
+function showNavigationModal(orderId) {
   const o = DB.orders.find(x => x.id === orderId);
   if (!o) return;
-  if (!o.delivery_location || !o.delivery_location.lat) {
-    showToast("Lokasi pelanggan tidak tersedia", "error");
-    return;
-  }
   const courierPos = State.courierPosition || DB.cafe?.location;
-  if (!courierPos) {
-    showToast("Posisi kurir tidak diketahui", "error");
-    return;
-  }
+  if (!courierPos) { showToast("Posisi kurir tidak diketahui", "error"); return; }
   const origin = `${courierPos.lat},${courierPos.lng}`;
-  const dest = `${o.delivery_location.lat},${o.delivery_location.lng}`;
-  window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=driving`, '_blank');
+  const dest = o.delivery_location?.lat ? `${o.delivery_location.lat},${o.delivery_location.lng}` : null;
+  const mitraList = [...new Set((o.items || []).map(i => {
+    const mi = getMenuItem(i.menu_item_id);
+    return mi?.submitted_by || null;
+  }).filter(Boolean))].map(name => ({ name, pos: State.mitraPositions[name] }));
+  const hasDest = !!dest;
+  const hasMitra = mitraList.some(m => m.pos);
+  const waypoints = mitraList.filter(m => m.pos).map(m => `${m.pos.lat},${m.pos.lng}`);
+  const routeUrl = waypoints.length > 0 && hasDest
+    ? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${waypoints.join('|')}&travelmode=driving`
+    : hasDest
+    ? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=driving`
+    : null;
+  const posSayaDist = courierPos && DB.cafe ? (() => {
+    const d = calcDistance(courierPos.lat, courierPos.lng, DB.cafe.location.lat, DB.cafe.location.lng);
+    const m = Math.round(d).toLocaleString('id-ID');
+    return d < 1000 ? m + ' meter' : m + ' m (' + (d/1000).toFixed(1).replace('.',',') + ' km)';
+  })() : '';
+  showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-4"><i class="fas fa-map-signs mr-2" style="color:var(--accent)"></i>Navigasi</h3>
+      <div class="p-3 rounded-xl mb-4 flex items-center gap-3" style="background:rgba(39,174,96,.1);border:1px solid rgba(39,174,96,.2)">
+        <div style="width:36px;height:36px;border-radius:50%;background:#27ae60;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-motorcycle" style="color:#fff;font-size:16px"></i></div>
+        <div class="flex-1">
+          <div class="text-sm font-semibold" style="color:var(--success)">Posisi Saya</div>
+          <div class="text-xs" style="color:var(--muted)">${courierPos.lat.toFixed(5)}, ${courierPos.lng.toFixed(5)}</div>
+          ${posSayaDist ? `<div class="text-xs" style="color:var(--muted)">Jarak ke kafe: <span style="color:var(--accent)">${posSayaDist}</span></div>` : ''}
+        </div>
+      </div>
+      <p class="text-xs mb-3" style="color:var(--muted)">Pilih tujuan navigasi:</p>
+      <div class="space-y-2">
+        ${mitraList.map(m => m.pos ? `
+        <button onclick="window.open('https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${m.pos.lat},${m.pos.lng}&travelmode=driving','_blank');closeModal()" class="btn-secondary w-full text-left flex items-center gap-3" style="padding:12px;border-radius:12px;font-size:13px">
+          <div style="width:36px;height:36px;border-radius:50%;background:#e84393;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-hat-chef" style="color:#fff;font-size:14px"></i></div>
+          <div class="flex-1"><span class="font-semibold">${m.name}</span><br><span style="color:var(--muted);font-size:11px">Lokasi ambil pesanan mitra</span></div>
+          <i class="fas fa-chevron-right" style="color:var(--muted);font-size:12px"></i>
+        </button>` : `<div class="flex items-center gap-3 p-3 rounded-xl" style="background:var(--bg2);font-size:13px"><div style="width:36px;height:36px;border-radius:50%;background:rgba(232,67,147,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-hat-chef" style="color:#e84393;font-size:14px"></i></div><div class="flex-1"><span class="font-semibold">${m.name}</span><br><span style="color:var(--danger);font-size:11px">Posisi belum diset mitra</span></div></div>`).join('')}
+        ${hasDest ? `
+        <button onclick="window.open('https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=driving','_blank');closeModal()" class="btn-secondary w-full text-left flex items-center gap-3" style="padding:12px;border-radius:12px;font-size:13px">
+          <div style="width:36px;height:36px;border-radius:50%;background:#e74c3c;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-map-marker-alt" style="color:#fff;font-size:14px"></i></div>
+          <div class="flex-1"><span class="font-semibold">Lokasi Pelanggan</span><br><span style="color:var(--muted);font-size:11px">${o.delivery_address?.slice(0, 40) || ''}</span></div>
+          <i class="fas fa-chevron-right" style="color:var(--muted);font-size:12px"></i>
+        </button>` : ''}
+        ${routeUrl ? `
+        <div class="border-t pt-3 mt-3" style="border-color:var(--border)">
+          <button onclick="window.open('${routeUrl}','_blank');closeModal()" class="btn-primary w-full text-center"><i class="fas fa-route mr-1"></i>Rute Lengkap (Mitra → Pelanggan)</button>
+        </div>` : ''}
+      </div>
+      <button onclick="closeModal()" class="btn-secondary w-full mt-3 text-center">Tutup</button>
+    </div>
+  `);
 }
 
 function focusMitraOnMap(orderId, mitraName) {
