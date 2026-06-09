@@ -173,7 +173,7 @@ function approveMitraRegistration(id) {
   if (!r) return;
   r.status = 'approved';
   const pwd = '123456';
-  DB.users.push({ id: 'u' + Date.now(), name: r.name, business_name: r.business || '', email: r.email, password: pwd, role: r.role, phone: r.phone || '', address: r.address || '', avatar: r.name[0].toUpperCase() });
+  DB.users.push({ id: 'u' + Date.now(), name: r.name, business_name: r.business || '', email: r.email, password: pwd, role: r.role, phone: r.phone || '', address: r.address || '', avatar: r.name[0].toUpperCase(), mitra_position: r.position || null });
   showToast(`${r.name} disetujui sebagai ${r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}!`, 'success');
   render();
 }

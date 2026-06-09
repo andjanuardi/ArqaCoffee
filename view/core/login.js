@@ -85,6 +85,9 @@ function quickLogin(role) {
     State.currentUser = u;
     State.currentView = 'main';
     State.currentTab[role] = getDefaultTab(role);
+    if (u.role === 'mitra_juru_masak' && u.mitra_position) {
+      State.mitraPositions[u.name] = u.mitra_position;
+    }
     sessionStorage.setItem('arqa_session', JSON.stringify({ userId: u.id, currentTab: State.currentTab }));
     render();
     showToast(`Selamat datang, ${u.name}!`, 'success');
@@ -99,6 +102,9 @@ function handleLogin() {
     State.currentUser = u;
     State.currentView = 'main';
     State.currentTab[u.role] = getDefaultTab(u.role);
+    if (u.role === 'mitra_juru_masak' && u.mitra_position) {
+      State.mitraPositions[u.name] = u.mitra_position;
+    }
     sessionStorage.setItem('arqa_session', JSON.stringify({ userId: u.id, currentTab: State.currentTab }));
     render();
     showToast(`Selamat datang, ${u.name}!`, 'success');
@@ -200,6 +206,22 @@ function showMitraRegistrationModal() {
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Email</label><input id="mitra-reg-email" type="email" class="input-field text-sm w-full" placeholder="email@example.com"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nomor Telepon</label><input id="mitra-reg-phone" class="input-field text-sm w-full" placeholder="08xxxxxxxxxx"></div>
           <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Alamat</label><textarea id="mitra-reg-address" class="input-field text-sm w-full min-h-[80px]" placeholder="Alamat lengkap"></textarea></div>
+          <div id="mitra-reg-position-group" style="display:none">
+            <div class="card" style="border-color:rgba(52,152,219,.3)">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(52,152,219,.15);color:#3498db"><i class="fas fa-location-dot"></i></div>
+                <div class="flex-1">
+                  <div class="font-semibold text-sm">Posisi Simulasi</div>
+                  <div class="text-xs" style="color:var(--muted)">Seret marker untuk menyesuaikan posisi pengambilan</div>
+                </div>
+              </div>
+              <div id="map-mitra-reg-position" style="height:220px;border-radius:12px;overflow:hidden"></div>
+              <div class="flex justify-between text-xs mt-2" style="color:var(--muted)">
+                <span id="mitra-reg-pos-coords">Geser marker untuk menentukan posisi</span>
+                <span id="mitra-reg-pos-distance"></span>
+              </div>
+            </div>
+          </div>
           <div id="mitra-selected-role" class="text-xs font-semibold" style="color:var(--accent)"></div>
         </div>
         <button onclick="submitMitraRegistration()" class="btn-primary w-full mt-4 text-center"><i class="fas fa-paper-plane mr-1"></i>Kirim Pendaftaran</button>
@@ -210,6 +232,9 @@ function showMitraRegistrationModal() {
 }
 
 let _selectedMitraRole = '';
+let _mitraRegMap = null;
+let _mitraRegMarker = null;
+let _mitraRegPos = null;
 
 function selectMitraRole(role) {
   _selectedMitraRole = role;
@@ -223,6 +248,55 @@ function selectMitraRole(role) {
   if (label) label.textContent = 'Terpilih: ' + (role === 'courier' ? 'Kurir' : 'Mitra Juru Masak');
   const biz = document.getElementById('mitra-reg-business-group');
   if (biz) biz.style.display = role === 'mitra_juru_masak' ? 'block' : 'none';
+  const posGroup = document.getElementById('mitra-reg-position-group');
+  if (posGroup) {
+    posGroup.style.display = role === 'mitra_juru_masak' ? 'block' : 'none';
+  }
+  if (role === 'mitra_juru_masak' && !_mitraRegMap) {
+    setTimeout(initMitraRegMap, 300);
+  }
+}
+
+function initMitraRegMap() {
+  const el = document.getElementById('map-mitra-reg-position');
+  if (!el || _mitraRegMap) return;
+  const cafe = DB.cafe?.location || ARQA_COORDS;
+  _mitraRegPos = { lat: cafe.lat, lng: cafe.lng };
+  _mitraRegMap = L.map(el, { zoomControl: false, attributionControl: false }).setView([cafe.lat, cafe.lng], 19);
+  L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, attribution: 'Google' }).addTo(_mitraRegMap);
+  L.marker([cafe.lat, cafe.lng], {
+    icon: L.divIcon({ html: '<i class="fas fa-store" style="color:#e07a3a;font-size:22px"></i>', className: '', iconSize: [22, 22], iconAnchor: [11, 11] })
+  }).addTo(_mitraRegMap).bindPopup('ARQA Coffee');
+  _mitraRegMarker = L.marker([cafe.lat, cafe.lng], {
+    draggable: true,
+    icon: L.divIcon({
+      html: '<div style="width:40px;height:40px;background:#e84393;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);border:3px solid #fff;cursor:grab;animation:pulse 2s infinite"><i class="fas fa-hat-chef" style="color:#fff;font-size:18px"></i></div><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #e84393;margin:-2px auto 0"></div>',
+      className: '',
+      iconSize: [40, 48],
+      iconAnchor: [20, 28]
+    })
+  }).addTo(_mitraRegMap).bindPopup('Posisi Mitra (seret)').openPopup();
+  _mitraRegMarker.on('dragend', function () {
+    const pos = _mitraRegMarker.getLatLng();
+    _mitraRegPos = { lat: pos.lat, lng: pos.lng };
+    updateMitraRegPosDisplay(pos.lat, pos.lng);
+  });
+  updateMitraRegPosDisplay(cafe.lat, cafe.lng);
+  setTimeout(function () { _mitraRegMap.invalidateSize(); }, 200);
+}
+
+function updateMitraRegPosDisplay(lat, lng) {
+  const cl = document.getElementById('mitra-reg-pos-coords');
+  const dl = document.getElementById('mitra-reg-pos-distance');
+  if (cl) cl.textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+  if (dl && DB.cafe) {
+    const d = calcDistance(lat, lng, DB.cafe.location.lat, DB.cafe.location.lng);
+    if (d < 1000) {
+      dl.innerHTML = '<span style="color:var(--muted)">Jarak ke kafe: </span><span style="color:var(--accent)">' + Math.round(d).toLocaleString('id-ID') + ' meter</span>';
+    } else {
+      dl.innerHTML = '<span style="color:var(--muted)">Jarak ke kafe: </span><span style="color:var(--accent)">' + Math.round(d).toLocaleString('id-ID') + ' m (' + (d / 1000).toFixed(1).replace('.', ',') + ' km)</span>';
+    }
+  }
 }
 
 function submitMitraRegistration() {
@@ -242,13 +316,18 @@ function submitMitraRegistration() {
     if (!/^(\+62|62|0)8[1-9][0-9]{6,11}$/.test(phoneClean)) { showToast('Nomor telepon tidak valid. Gunakan format Indonesia (08xx atau +628xx)', 'warning'); return; }
   }
   if (!DB.mitraRegistrations) DB.mitraRegistrations = [];
-  DB.mitraRegistrations.push({
+  var data = {
     id: 'mr' + Date.now(),
-    name, business, email, phone, address,
+    name: name, business: business, email: email, phone: phone, address: address,
     role: _selectedMitraRole,
     status: 'pending',
     created_at: new Date().toISOString(),
-  });
+  };
+  if (_selectedMitraRole === 'mitra_juru_masak' && _mitraRegPos) {
+    data.position = _mitraRegPos;
+  }
+  DB.mitraRegistrations.push(data);
+  if (_mitraRegMap) { _mitraRegMap.remove(); _mitraRegMap = null; _mitraRegMarker = null; _mitraRegPos = null; }
   addNotification({
     title: 'Pendaftaran Mitra Baru',
     message: name + ' mendaftar sebagai ' + (_selectedMitraRole === 'courier' ? 'Kurir' : 'Mitra Juru Masak'),

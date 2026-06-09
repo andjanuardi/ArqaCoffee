@@ -64,8 +64,8 @@ function renderCourierActive() {
             return mi && mi.submitted_by;
           });
           const mitraNames = [...new Set(mitraItems.map(i => getMenuItem(i.menu_item_id).submitted_by))];
-          const mitraPosHtml = mitraNames.map(name => {
-            const pos = State.mitraPositions[name];
+  const mitraPosHtml = mitraNames.map(name => {
+    const pos = State.mitraPositions[name] || DB.users.find(u => u.name === name)?.mitra_position;
             let distHtml = '';
             if (pos && DB.cafe) {
               const d = calcDistance(DB.cafe.location.lat, DB.cafe.location.lng, pos.lat, pos.lng);
@@ -101,7 +101,7 @@ function showNavigationModal(orderId) {
   const mitraList = [...new Set((o.items || []).map(i => {
     const mi = getMenuItem(i.menu_item_id);
     return mi?.submitted_by || null;
-  }).filter(Boolean))].map(name => ({ name, pos: State.mitraPositions[name] }));
+  }).filter(Boolean))].map(name => ({ name, pos: State.mitraPositions[name] || DB.users.find(u => u.name === name)?.mitra_position }));
   const hasDest = !!dest;
   const hasMitra = mitraList.some(m => m.pos);
   const waypoints = mitraList.filter(m => m.pos).map(m => `${m.pos.lat},${m.pos.lng}`);
@@ -152,7 +152,7 @@ function showNavigationModal(orderId) {
 
 function focusMitraOnMap(orderId, mitraName) {
   const map = State.mapInstances[orderId];
-  const pos = State.mitraPositions[mitraName];
+  const pos = State.mitraPositions[mitraName] || DB.users.find(u => u.name === mitraName)?.mitra_position;
   if (!map || !pos) return;
   map.flyTo([pos.lat, pos.lng], 19, { duration: 1 });
   setTimeout(() => map.invalidateSize(), 300);

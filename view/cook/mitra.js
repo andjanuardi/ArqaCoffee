@@ -492,10 +492,6 @@ function renderMitraFinance() {
 }
 
 function renderMitraProfile() {
-  if (State.mapInstances['mitra-position']) {
-    State.mapInstances['mitra-position'].remove();
-    delete State.mapInstances['mitra-position'];
-  }
   const u = State.currentUser;
   const today = new Date().toLocaleDateString('sv-SE');
   const att = DB.attendances.find(a => a.user_id === u.id && !a.check_out && new Date(a.check_in).toLocaleDateString('sv-SE') === today);
@@ -520,24 +516,7 @@ function renderMitraProfile() {
         ? `<button onclick="mitraCheckOut()" class="btn-secondary w-full text-center" style="background:rgba(231,76,60,.1);color:var(--danger);border-color:transparent;"><i class="fas fa-sign-out-alt mr-1"></i>Check Out</button>`
         : `<button onclick="mitraCheckIn()" class="btn-primary w-full text-center"><i class="fas fa-sign-in-alt mr-1"></i>Check In</button>`}
     </div>
-    <div class="card mb-3" style="border-color:rgba(52,152,219,.3)">
-      <div class="flex items-center gap-3 mb-2">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(52,152,219,.15);color:#3498db"><i class="fas fa-location-dot"></i></div>
-        <div class="flex-1">
-          <div class="font-semibold text-sm">Posisi Simulasi</div>
-          <div class="text-xs" style="color:var(--muted)">Seret marker untuk menyesuaikan posisi pengambilan</div>
-        </div>
-      </div>
-      <div id="map-mitra-position" style="height:220px;border-radius:12px;margin-bottom:10px;overflow:hidden"></div>
-      <div class="flex items-center justify-between text-xs mb-2 px-1" style="color:var(--muted)">
-        <span id="mitra-pos-coords">Memuat...</span>
-        <span id="mitra-pos-distance"></span>
-      </div>
-      <div class="flex gap-2">
-        <button onclick="saveMitraPosition()" class="btn-primary flex-1 text-center" style="font-size:13px"><i class="fas fa-floppy-disk mr-1"></i>Simpan</button>
-        <button onclick="resetMitraPosition()" class="btn-secondary flex-1 text-center" style="font-size:13px"><i class="fas fa-rotate-left mr-1"></i>Reset</button>
-      </div>
-    </div>
+
     <div class="card mb-3 flex items-center gap-3 cursor-pointer" onclick="showEditProfileModal()">
       <i class="fas fa-pen-to-square" style="color:var(--accent)"></i>
       <span class="text-sm flex-1">Edit Profil</span>
@@ -572,34 +551,4 @@ function mitraCheckOut() {
   render();
 }
 
-function updateMitraPosDisplay(lat, lng) {
-  const cl = document.getElementById('mitra-pos-coords');
-  const dl = document.getElementById('mitra-pos-distance');
-  if (cl) cl.textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
-  if (dl && DB.cafe) {
-    const d = calcDistance(lat, lng, DB.cafe.location.lat, DB.cafe.location.lng);
-    const meter = Math.round(d).toLocaleString('id-ID');
-    const km = (d / 1000).toFixed(1).replace('.', ',');
-    if (d < 1000) {
-      dl.innerHTML = '<span style="color:var(--muted)">Jarak ke kafe: </span><span style="color:var(--accent)">' + meter + ' meter</span>';
-    } else {
-      dl.innerHTML = '<span style="color:var(--muted)">Jarak ke kafe: </span><span style="color:var(--accent)">' + meter + ' m (' + km + ' km)</span>';
-    }
-  }
-}
 
-function saveMitraPosition() {
-  const pos = State.mitraPositions[State.currentUser.name];
-  if (!pos) {
-    showToast('Seret marker untuk menentukan posisi terlebih dahulu', 'warning');
-    return;
-  }
-  showToast('Posisi simulasi disimpan', 'success');
-  render();
-}
-
-function resetMitraPosition() {
-  delete State.mitraPositions[State.currentUser.name];
-  showToast('Posisi simulasi dihapus', 'info');
-  render();
-}
