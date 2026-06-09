@@ -220,13 +220,17 @@ function renderCashierOrders() {
             <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}${t && o.order_type !== "delivery" ? " — Meja " + t.number : ""}${isDelivered ? " — " + (o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')) : o.customer_name ? " — " + o.customer_name : ""}${!isDelivered && o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}${o.waiter_id && getUser(o.waiter_id) ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-user-tie"></i> ' + getUser(o.waiter_id).name + '</span>' : ''}${o.courier_id && getUser(o.courier_id) ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-motorcycle"></i> ' + getUser(o.courier_id).name + '</span>' : ''}
           </div>
           <div class="text-xs mb-3">${(() => {
-            const names = o.items.map(i => {
+            const items = o.items.map(i => {
               const mi = getMenuItem(i.menu_item_id);
-              if (!mi) return "";
-              const label = mi.name + " x" + i.quantity;
-              return mi.submitted_by ? label + ' <span style="color:#e84393;font-size:10px">[Mitra ' + mi.submitted_by + ']</span>' : label;
+              if (!mi) return null;
+              return { name: mi.name, qty: i.quantity, submitted_by: mi.submitted_by };
             }).filter(Boolean);
-            return names.length <= 3 ? names.join(", ") : names.slice(0, 3).join(", ") + ' <span style="color:var(--muted)">+' + (names.length - 3) + ' lainnya</span>';
+            const display = items.length <= 3 ? items : items.slice(0, 3);
+            const extra = items.length - display.length;
+            return display.map(item => {
+              const badge = item.submitted_by ? '<span style="color:#e84393;font-size:10px"> (Mitra ' + item.submitted_by + ')</span>' : '<span style="color:var(--accent);font-size:10px"> (Arqa)</span>';
+              return '<div class="mb-1">' + item.name + ' x' + item.qty + badge + '</div>';
+            }).join('') + (extra ? '<div style="color:var(--muted)">+' + extra + ' lainnya</div>' : '');
           })()}</div>
           ${o.has_mitra_items && !o.mitra_approved ? `<div class="mb-2 p-2 rounded-lg text-xs flex items-center gap-1" style="background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.2);color:var(--warning)"><i class="fas fa-clock"></i>Menu mitra menunggu persetujuan</div>` : ''}
           ${breakdownHtml}
@@ -581,11 +585,20 @@ function showCashierActiveOrderDetail(id) {
         const mi = getMenuItem(i.menu_item_id);
         return mi ? `
       <div class="flex justify-between text-xs">
-        <span>${mi.name} x${i.quantity}${i.notes ? ' <span style="color:var(--muted)">(' + i.notes + ")</span>" : ""}</span>
+        <span>${mi.name} x${i.quantity}${i.notes ? ' <span style="color:var(--muted)">(' + i.notes + ")</span>" : ""} ${mi.submitted_by ? '<span style="color:#e84393;font-size:10px">(Mitra ' + mi.submitted_by + ')</span>' : '<span style="color:var(--accent);font-size:10px">(Arqa)</span>'}</span>
         <span style="color:var(--muted)">${formatCurrency(i.unit_price * i.quantity)}</span>
       </div>` : "";
       }).join("")}
     </div>
+    <div class="border-t my-2" style="border-color:var(--border)"></div>
+    <div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span>Subtotal</span><span>${formatCurrency(subtotal)}</span></div>
+    ${o.promo_discount ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
+    ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-truck mr-1"></i>Ongkos Kirim</span><span>${formatCurrency(o.shipping_cost)}</span></div>` : ""}
+    ${!isDelivered && dineInFee > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:#e07a3a"><span><i class="fas fa-hand-holding-usd mr-1"></i>Biaya Layanan</span><span>${formatCurrency(dineInFee)}</span></div>` : ""}
+    <div class="flex justify-between text-xs mb-1" style="color:var(--accent)"><span><i class="fas fa-receipt mr-1"></i>Pajak</span><span>${formatCurrency(Math.round(tax))}</span></div>
+    <div class="border-t my-2" style="border-color:var(--border)"></div>
+    <div class="flex justify-between font-bold text-sm"><span>Total</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
+  </div>
     <div class="border-t my-2" style="border-color:var(--border)"></div>
     <div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span>Subtotal</span><span>${formatCurrency(subtotal)}</span></div>
     ${o.promo_discount ? `<div class="flex justify-between text-xs mb-1" style="color:var(--success)"><span><i class="fas fa-tag mr-1"></i>Diskon Promo</span><span>-${formatCurrency(o.promo_discount)}</span></div>` : ""}
@@ -663,7 +676,7 @@ function showCashierOrderDetail(id) {
           return mi
             ? `
       <div class="flex justify-between text-xs" style="color:${o.status === "rejected" || o.status === "cancelled" ? "var(--danger)" : "inherit"}">
-        <span>${mi.name} x${i.quantity} ${i.notes ? '<span style="color:var(--muted)">(' + i.notes + ")</span>" : ""}</span>
+        <span>${mi.name} x${i.quantity} ${i.notes ? '<span style="color:var(--muted)">(' + i.notes + ")</span>" : ""} ${mi.submitted_by ? '<span style="color:#e84393;font-size:10px">(Mitra ' + mi.submitted_by + ')</span>' : '<span style="color:var(--accent);font-size:10px">(Arqa)</span>'}</span>
         <span style="color:${o.status === "rejected" || o.status === "cancelled" ? "var(--danger)" : "var(--muted)"}">${formatCurrency(i.unit_price * i.quantity)}</span>
       </div>`
             : "";
