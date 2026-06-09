@@ -18,4 +18,5 @@ const State = {
   sidebarOpen: false,
   courierStatus: "offline",
   courierPosition: null,
+  mitraPositions: {},
 };

@@ -58,6 +58,26 @@ function renderCourierActive() {
           ${o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1"><span style="color:var(--muted)">Pendapatan Ongkir</span><span style="color:var(--success)">${formatCurrency((o.shipping_cost || 0) - calcCourierFee(o.shipping_cost))}</span></div>` : ""}
           ${(() => { const d = getCafeToCustDist(o); return d ? `<div class="flex justify-between text-xs"><span style="color:var(--muted)">Cafe → Pelanggan</span><span style="color:var(--accent)">${d}</span></div>` : ''; })()}
         </div>
+        ${(() => {
+          const mitraItems = o.items.filter(i => {
+            const mi = getMenuItem(i.menu_item_id);
+            return mi && mi.submitted_by;
+          });
+          const mitraNames = [...new Set(mitraItems.map(i => getMenuItem(i.menu_item_id).submitted_by))];
+          const mitraPosHtml = mitraNames.map(name => {
+            const pos = State.mitraPositions[name];
+            let distHtml = '';
+            if (pos && DB.cafe) {
+              const d = calcDistance(DB.cafe.location.lat, DB.cafe.location.lng, pos.lat, pos.lng);
+              const meter = Math.round(d).toLocaleString('id-ID');
+              const km = (d / 1000).toFixed(1).replace('.', ',');
+              const label = d < 1000 ? meter + ' meter' : meter + ' m (' + km + ' km)';
+              distHtml = `<span style="color:var(--muted)">Cafe → Mitra: </span><span style="color:var(--accent)">${label}</span>`;
+            }
+            return `<div class="flex items-center gap-2 text-xs" style="color:var(--muted)"><i class="fas fa-hat-chef" style="color:#e84393;width:16px"></i><span onclick="focusMitraOnMap('${o.id}','${name}')" style="cursor:pointer;color:var(--accent);font-weight:600" title="Klik untuk fokus di peta">${name} <i class="fas fa-location-crosshairs" style="font-size:9px"></i></span>${pos ? `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:rgba(232,67,147,.1);color:#e84393">${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}</span>` : '<span style="color:var(--danger)">Posisi belum diset</span>'}</div>${distHtml ? `<div class="text-xs ml-6 mb-1">${distHtml}</div>` : ''}`;
+          }).join('');
+          return mitraNames.length > 0 ? `<div class="p-3 rounded-xl mb-3" style="background:var(--bg2)"><div class="text-xs font-semibold mb-2" style="color:var(--muted)"><i class="fas fa-handshake mr-1"></i>Lokasi Ambil Pesanan Mitra</div>${mitraPosHtml}</div>` : '';
+        })()}
         <div id="map-courier-${o.id}" class="mb-3" style="height:200px;border-radius:12px"></div>
         <div class="flex gap-2">
           <button onclick="openNavigation('${o.id}')" class="btn-secondary btn-sm flex-1 text-center"><i class="fas fa-map-signs mr-1"></i>Navigasi</button>
@@ -86,6 +106,14 @@ function openNavigation(orderId) {
   const origin = `${courierPos.lat},${courierPos.lng}`;
   const dest = `${o.delivery_location.lat},${o.delivery_location.lng}`;
   window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=driving`, '_blank');
+}
+
+function focusMitraOnMap(orderId, mitraName) {
+  const map = State.mapInstances[orderId];
+  const pos = State.mitraPositions[mitraName];
+  if (!map || !pos) return;
+  map.flyTo([pos.lat, pos.lng], 19, { duration: 1 });
+  setTimeout(() => map.invalidateSize(), 300);
 }
 
 function completeDelivery(id) {

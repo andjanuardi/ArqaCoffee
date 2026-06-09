@@ -50,6 +50,31 @@ function initCourierMap(orderId) {
     );
     map.fitBounds(bounds, { padding: [40, 40], maxZoom: 19 });
   }
+
+  const mitraNames = [...new Set((o?.items || []).map(i => {
+    const mi = getMenuItem(i.menu_item_id);
+    return mi?.submitted_by || null;
+  }).filter(Boolean))];
+  const mitraBounds = [];
+  mitraNames.forEach(name => {
+    const pos = State.mitraPositions[name];
+    if (!pos) return;
+    L.marker([pos.lat, pos.lng], {
+      icon: L.divIcon({ html: '<div style="width:36px;height:36px;background:#e84393;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.3);border:3px solid #fff"><i class="fas fa-hat-chef" style="color:#fff;font-size:16px"></i></div><div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #e84393;margin:-2px auto 0"></div>', className: '', iconSize: [36, 43], iconAnchor: [18, 25] })
+    })
+      .addTo(map)
+      .bindPopup('Lokasi Mitra: ' + name);
+    mitraBounds.push([pos.lat, pos.lng]);
+  });
+  if (mitraBounds.length > 0) {
+    const allBounds = L.latLngBounds(mitraBounds);
+    if (o && o.delivery_location && o.delivery_location.lat) {
+      allBounds.extend([o.delivery_location.lat, o.delivery_location.lng]);
+    }
+    allBounds.extend([last.latitude, last.longitude]);
+    map.fitBounds(allBounds, { padding: [40, 40], maxZoom: 19 });
+  }
+
   State.mapInstances[orderId] = map;
 }
 

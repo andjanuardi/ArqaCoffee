@@ -321,6 +321,30 @@ function initMaps() {
     State.mapInstances['courier-position'] = map;
     setTimeout(() => map.invalidateSize(), 200);
   }
+
+  const mitraPosEl = document.getElementById('map-mitra-position');
+  if (mitraPosEl && !State.mapInstances['mitra-position']) {
+    const cafe = DB.cafe ? DB.cafe.location : ARQA_COORDS;
+    const existing = State.mitraPositions[State.currentUser.name];
+    const startPos = existing || cafe;
+    State.mitraPositions[State.currentUser.name] = State.mitraPositions[State.currentUser.name] || { lat: cafe.lat, lng: cafe.lng };
+    const map = L.map(mitraPosEl, { zoomControl: false, attributionControl: false }).setView([startPos.lat, startPos.lng], 19);
+    L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, attribution: 'Google' }).addTo(map);
+    L.marker([cafe.lat, cafe.lng], { icon: L.divIcon({ html: '<i class="fas fa-store" style="color:#e07a3a;font-size:22px"></i>', className: '', iconSize: [22, 22], iconAnchor: [11, 11] }) }).addTo(map).bindPopup('ARQA Coffee');
+    const userMarker = L.marker([State.mitraPositions[State.currentUser.name].lat, State.mitraPositions[State.currentUser.name].lng], { draggable: true, icon: L.divIcon({ html: '<div style="width:40px;height:40px;background:#e84393;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);border:3px solid #fff;cursor:grab;animation:pulse 2s infinite"><i class="fas fa-hat-chef" style="color:#fff;font-size:18px"></i></div><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #e84393;margin:-2px auto 0"></div>', className: '', iconSize: [40, 48], iconAnchor: [20, 28] }) }).addTo(map).bindPopup('Posisi Mitra (seret)').openPopup();
+    userMarker.on('dragend', function() {
+      const pos = userMarker.getLatLng();
+      State.mitraPositions[State.currentUser.name] = { lat: pos.lat, lng: pos.lng };
+      updateMitraPosDisplay(pos.lat, pos.lng);
+    });
+    updateMitraPosDisplay(State.mitraPositions[State.currentUser.name].lat, State.mitraPositions[State.currentUser.name].lng);
+    map.fitBounds([[cafe.lat, cafe.lng], [State.mitraPositions[State.currentUser.name].lat, State.mitraPositions[State.currentUser.name].lng]], { padding: [50, 50], maxZoom: 19 });
+    if (cafe.lat === State.mitraPositions[State.currentUser.name].lat && cafe.lng === State.mitraPositions[State.currentUser.name].lng) {
+      map.setView([cafe.lat, cafe.lng], 19);
+    }
+    State.mapInstances['mitra-position'] = map;
+    setTimeout(() => map.invalidateSize(), 200);
+  }
 }
 
 function initPlaygroundTimer() {
