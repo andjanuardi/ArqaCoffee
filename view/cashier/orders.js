@@ -232,7 +232,6 @@ function renderCashierOrders() {
               return '<div class="mb-1">' + item.name + ' x' + item.qty + badge + '</div>';
             }).join('') + (extra ? '<div style="color:var(--muted)">+' + extra + ' lainnya</div>' : '');
           })()}</div>
-          ${o.has_mitra_items && !o.mitra_approved ? `<div class="mb-2 p-2 rounded-lg text-xs flex items-center gap-1" style="background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.2);color:var(--warning)"><i class="fas fa-clock"></i>Menu mitra menunggu persetujuan</div>` : ''}
           ${breakdownHtml}
           <div class="flex justify-between items-center">
             <span class="font-bold" style="color:${amountColor}">${amountValue}</span>
@@ -246,7 +245,6 @@ function renderCashierOrders() {
               `
                   : ""
               }
-              ${o.has_mitra_items && !o.mitra_approved && o.status === "pending" && o.accepted ? `<button onclick="event.stopPropagation();approveMitraOrder('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#e84393,#c0392b)"><i class="fas fa-check mr-1"></i>Setujui Mitra</button>` : ""}
               ${o.status === "pending" && o.accepted ? `<span class="badge" style="background:rgba(46,204,113,.15);color:var(--success)">Diterima</span>` : ""}
               ${o.status === "ready" && o.payment_status === "unpaid" ? `<button onclick="event.stopPropagation();showPaymentModal('${o.id}')" class="btn-primary btn-sm">Bayar</button>` : ""}
               ${o.status === "ready" && o.payment_status === "paid" && o.order_type !== "delivery" ? `<button onclick="event.stopPropagation();confirmCompleteOrder('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}

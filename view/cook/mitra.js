@@ -36,7 +36,7 @@ function renderMitraQueue() {
     .filter(m => m.submitted_by === State.currentUser.name)
     .map(m => m.id);
   return renderKitchenQueue(
-    (i, mi, o) => mitraMenuIds.includes(mi.id) && o.mitra_approved !== false,
+    (i, mi, o) => mitraMenuIds.includes(mi.id),
     (i, mi, o) => {
       const subtotal = i.unit_price * i.quantity;
       const fee = calcMitraFee(subtotal);
