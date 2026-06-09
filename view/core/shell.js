@@ -68,7 +68,7 @@ function renderBottomNav(role) {
     <div class="nav-item ${active === t.id ? 'active' : ''}" onclick="switchTab('${t.id}')">
       <i class="fas ${t.icon}"></i><span>${t.label}</span>
       ${t.id === 'cart' && State.cart.length ? `<span class="notif-dot"></span>` : ''}
-      ${t.id === 'orders' && role === 'cashier' && DB.orders.some(o => o.payment_status === 'unpaid' && o.status !== 'cancelled' && o.status !== 'rejected') ? `<span class="notif-dot"></span>` : ''}
+      ${t.id === 'orders' && role === 'cashier' && (DB.orders.some(o => o.payment_status === 'unpaid' && o.status !== 'cancelled' && o.status !== 'rejected') || getMitraPendingPayouts().length > 0) ? `<span class="notif-dot"></span>` : ''}
     </div>`).join('')}
   </nav>`;
 }

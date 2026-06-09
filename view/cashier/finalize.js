@@ -96,6 +96,7 @@ function finalizeManualOrder() {
       o.total_amount = grandTotal;
       o.payment_method = payStatus === "paid" ? "cash" : "";
       o.payment_status = payStatus;
+      if (payStatus === 'paid') createMitraPayouts(o.id);
       o.items = State.cashierCart.map((c) => ({
         menu_item_id: c.menu_item_id,
         quantity: c.quantity,
@@ -128,6 +129,7 @@ function finalizeManualOrder() {
       })),
     };
     DB.orders.unshift(order);
+    if (payStatus === 'paid') createMitraPayouts(order.id);
     notifyOrderPlaced(order, info);
     showToast("Pesanan manual berhasil dibuat!", "success");
   }

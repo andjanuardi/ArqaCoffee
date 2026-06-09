@@ -7,6 +7,7 @@ function acceptCashierOrder(id) {
   o.accepted = true;
   if (o.payment_method === "cash" && o.payment_status === "unpaid") {
     o.payment_status = "paid";
+    createMitraPayouts(id);
   }
   addNotification({
     title: 'Pesanan Diterima Kasir',
@@ -29,6 +30,7 @@ function processCashPayment(id) {
   o.payment_status = "paid";
   o.payment_method = "cash";
   notifyPayment(o, 'Tunai');
+  createMitraPayouts(id);
   showToast(
     `Pembayaran #${o.id.slice(-5).toUpperCase()} berhasil (Tunai)`,
     "success",
@@ -58,6 +60,7 @@ function settleDelivery(id) {
     });
   }
   notifyPayment(o, 'COD (Setoran Kurir)');
+  createMitraPayouts(id);
   showToast(
     `Setoran diterima — Pesanan #${o.id.slice(-5).toUpperCase()} selesai`,
     "success",
@@ -82,6 +85,7 @@ function cashierSettleDineIn(id) {
     }
   }
   notifyPayment(o, 'Setoran Waiter');
+  createMitraPayouts(id);
   showToast(`Setoran diterima — Pesanan #${o.id.slice(-5).toUpperCase()} selesai, meja dikosongkan`, "success");
   render();
 }

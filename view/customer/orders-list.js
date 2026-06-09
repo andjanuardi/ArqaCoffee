@@ -258,6 +258,7 @@ function confirmPayOrder(id, method) {
   o.payment_method = method || "qris";
   const label = method === "qris" ? "QRIS" : method === "bank_transfer" ? "Transfer" : "Tunai";
   notifyPayment(o, label);
+  createMitraPayouts(id);
   closeModal();
   showToast("Pembayaran " + label + " berhasil!", "success");
   render();

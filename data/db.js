@@ -811,6 +811,7 @@ const DB =
         { id: "ps13", name: "Kaos Kaki", category: "Perlengkapan", unit: "pasang", current_quantity: 50, min_quantity: 10, price: 10000, image: "", updated_at: new Date().toISOString() },
       ],
       pgStockMovements: [],
+      mitraPayouts: [],
     };
   })();
 
@@ -879,6 +880,7 @@ if (!DB.users.some(u => u.role === 'playground')) {
   if (!DB.pgStockMovements) DB.pgStockMovements = [];
   saveDB();
 }
+if (!DB.mitraPayouts) DB.mitraPayouts = [];
 
 // Migration: ensure pgStockItems have image field
 (DB.pgStockItems || []).forEach(s => { if (!s.image) s.image = ''; });

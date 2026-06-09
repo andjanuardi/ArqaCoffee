@@ -89,4 +89,45 @@ function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takea
             a.user_id === u.id && !a.check_out && new Date(a.check_in).toLocaleDateString('sv-SE') === today
           ));
         }
+        function createMitraPayouts(orderId) {
+          const o = DB.orders.find(x => x.id === orderId);
+          if (!o) return;
+          const mitraGroups = {};
+          o.items.forEach(i => {
+            const mi = getMenuItem(i.menu_item_id);
+            if (mi && mi.submitted_by) {
+              if (!mitraGroups[mi.submitted_by]) mitraGroups[mi.submitted_by] = [];
+              mitraGroups[mi.submitted_by].push(i);
+            }
+          });
+          Object.keys(mitraGroups).forEach(mitraName => {
+            const items = mitraGroups[mitraName];
+            const total = items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+            const tax = Math.round(calcItemTax(items));
+            const fee = calcMitraFee(total);
+            const amount = total - tax - fee;
+            if (amount <= 0) return;
+            const exists = DB.mitraPayouts.some(p => p.order_id === orderId && p.mitra_name === mitraName);
+            if (exists) return;
+            DB.mitraPayouts.push({
+              id: 'mp' + Date.now() + Math.random().toString(36).slice(2,6),
+              order_id: orderId,
+              mitra_name: mitraName,
+              total_items: total,
+              fee: fee,
+              tax: tax,
+              amount: amount,
+              status: 'unpaid',
+              created_at: new Date().toISOString(),
+              paid_at: null,
+              paid_by: null,
+            });
+          });
+        }
+        function getMitraPendingPayouts() {
+          return DB.mitraPayouts.filter(p => p.status === 'unpaid');
+        }
+        function getMitraPaidPayouts() {
+          return DB.mitraPayouts.filter(p => p.status === 'paid');
+        }
 

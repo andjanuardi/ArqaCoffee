@@ -230,6 +230,7 @@ function placeOrder() {
   };
   if (State.orderType === "delivery") order.courier_id = null;
   DB.orders.unshift(order);
+  if (order.payment_status === 'paid') createMitraPayouts(order.id);
   if (order.table_id) {
     const t = getTable(order.table_id);
     if (t) t.status = "occupied";

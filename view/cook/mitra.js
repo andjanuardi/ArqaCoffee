@@ -90,6 +90,12 @@ function renderMitraHistory() {
             <span class="text-xs" style="color:var(--muted)">${getOrderTypeName(o.order_type)}</span>
           </div>
           <span class="badge ${o.status === 'rejected' ? 'badge-danger' : 'badge-completed'}">${o.status === 'rejected' ? 'Ditolak' : getStatusLabel(o.status)}</span>
+          ${o.payment_status === 'paid' ? (() => {
+            const payout = DB.mitraPayouts.find(p => p.order_id === o.id && p.mitra_name === State.currentUser.name);
+            if (!payout) return '';
+            if (payout.status === 'paid') return '<span class="badge" style="background:rgba(39,174,96,.15);color:var(--success);font-size:9px"><i class="fas fa-check mr-0.5"></i>Dibayar</span>';
+            return '<span class="badge" style="background:rgba(243,156,18,.15);color:#f39c12;font-size:9px"><i class="fas fa-clock mr-0.5"></i>Menunggu Setoran</span>';
+          })() : ''}
         </div>
         <div class="text-xs mb-1" style="color:var(--muted)">
           ${o.customer_name ? '<i class="fas fa-user mr-1"></i>' + o.customer_name : '<i class="fas fa-chair mr-1"></i>Walk-in'}${t ? ' — Meja ' + t.number : ''}
@@ -143,6 +149,24 @@ function showMitraOrderDetail(id) {
     ${tax > 0 ? `<div class="flex justify-between text-xs mb-1"><span style="color:var(--muted)"><i class="fas fa-receipt mr-1"></i>Pajak</span><span style="color:var(--muted)">${formatCurrency(tax)}</span></div>` : ''}
     ${biayaLayanan > 0 ? `<div class="flex justify-between text-xs mb-1"><span style="color:var(--muted)"><i class="fas fa-hand-holding-dollar mr-1"></i>Biaya Layanan</span><span style="color:var(--muted)">${formatCurrency(biayaLayanan)}</span></div>` : ''}
     <div class="flex justify-between font-bold text-sm mt-2"><span>Total Pembayaran</span><span style="color:var(--accent)">${formatCurrency(pembayaranMitra)}</span></div>
+    ${(() => {
+      const payout = DB.mitraPayouts.find(p => p.order_id === o.id && p.mitra_name === State.currentUser.name);
+      if (!payout && o.payment_status === 'paid') return '';
+      if (!payout) return '';
+      if (payout.status === 'paid') {
+        const payer = payout.paid_by ? getUser(payout.paid_by) : null;
+        return `
+    <div class="flex justify-between items-center text-xs mt-2 p-2 rounded-lg" style="background:rgba(39,174,96,.1);border:1px solid rgba(39,174,96,.2)">
+      <span style="color:var(--success)"><i class="fas fa-check-circle mr-1"></i>Sudah Dibayar Kasir</span>
+      <span style="color:var(--muted)">${payout.paid_at ? formatDate(payout.paid_at) + ' ' + formatTime(payout.paid_at) : ''}${payer ? ' — ' + payer.name : ''}</span>
+    </div>`;
+      }
+      return `
+    <div class="flex justify-between items-center text-xs mt-2 p-2 rounded-lg" style="background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.2)">
+      <span style="color:#f39c12"><i class="fas fa-clock mr-1"></i>Menunggu Pembayaran Kasir</span>
+      <span style="color:var(--muted)">${formatCurrency(pembayaranMitra)}</span>
+    </div>`;
+    })()}
     <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Waktu</span><span>${formatTime(o.created_at)}</span></div>
   </div>
   <button onclick="closeModal()" class="btn-secondary w-full mt-4 text-center">Tutup</button>
@@ -172,22 +196,28 @@ function _renderMitraFinanceFor(mitraName) {
     claimItems.length = 0;
     claimItems.push(...filtered);
   }
-  const orderTotals = {};
+  const paidTotals = {};
+  const pendingTotals = {};
   claimItems
     .filter(ci => ci.order.payment_status === 'paid' && ci.order.status !== 'cancelled' && ci.order.status !== 'rejected')
     .forEach(ci => {
-      if (!orderTotals[ci.order.id]) {
+      const payout = DB.mitraPayouts.find(p => p.order_id === ci.order.id && p.mitra_name === mitraName);
+      const isPaid = payout && payout.status === 'paid';
+      const target = isPaid ? paidTotals : pendingTotals;
+      if (!target[ci.order.id]) {
         const mitraItems = ci.order.items.filter(i => i.claimed_by === mitraName);
         const sub = mitraItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
         const tax = calcItemTax(mitraItems);
         const fee = calcMitraFee(sub);
-        orderTotals[ci.order.id] = Math.max(0, sub - tax - fee);
+        target[ci.order.id] = Math.max(0, sub - tax - fee);
       }
     });
-  const totalRevenue = Object.values(orderTotals).reduce((s, v) => s + v, 0);
+  const totalRevenue = Object.values(paidTotals).reduce((s, v) => s + v, 0);
+  const totalPending = Object.values(pendingTotals).reduce((s, v) => s + v, 0);
   const totalOrders = new Set(claimItems.map(ci => ci.order.id)).size;
   const totalHarga = claimItems.filter(ci => ci.order.payment_status === 'paid' && ci.order.status !== 'cancelled' && ci.order.status !== 'rejected').reduce((s, i) => s + (i.unit_price * i.quantity), 0);
-  const totalPengeluaran = totalHarga - totalRevenue;
+  const totalPengeluaran = totalHarga - totalRevenue - totalPending;
+  const pendingCount = Object.keys(pendingTotals).length;
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Keuangan Mitra</h2>
@@ -219,6 +249,8 @@ function _renderMitraFinanceFor(mitraName) {
         const o = ci.order;
         if (o.payment_status !== 'paid') return;
         if (paidOrderIds.has(o.id)) return;
+        const payout = DB.mitraPayouts.find(p => p.order_id === o.id && p.mitra_name === mitraName && p.status === 'paid');
+        if (!payout) return;
         paidOrderIds.add(o.id);
         const mitraItems = o.items.filter(i => i.claimed_by === mitraName);
         const sub = mitraItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
@@ -275,7 +307,12 @@ function _renderMitraFinanceFor(mitraName) {
       const revenueRows = [];
       let revCount = 0, revTotal = 0;
       const orderMap = {};
-      claimItems.forEach(ci => { if (ci.order.payment_status === 'paid') orderMap[ci.order.id] = ci.order; });
+      claimItems.forEach(ci => {
+        if (ci.order.payment_status !== 'paid') return;
+        const payout = DB.mitraPayouts.find(p => p.order_id === ci.order.id && p.mitra_name === mitraName && p.status === 'paid');
+        if (!payout) return;
+        orderMap[ci.order.id] = ci.order;
+      });
       Object.values(orderMap).forEach(o => {
         const mitraItems = o.items.filter(i => i.claimed_by === mitraName);
         const sub = mitraItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
@@ -329,7 +366,12 @@ function _renderMitraFinanceFor(mitraName) {
       const profitRows = [];
       let pCount = 0, pSubTotal = 0, pExpTotal = 0, pProfitTotal = 0;
       const orderMap = {};
-      claimItems.forEach(ci => { if (ci.order.payment_status === 'paid') orderMap[ci.order.id] = ci.order; });
+      claimItems.forEach(ci => {
+        if (ci.order.payment_status !== 'paid') return;
+        const payout = DB.mitraPayouts.find(p => p.order_id === ci.order.id && p.mitra_name === mitraName && p.status === 'paid');
+        if (!payout) return;
+        orderMap[ci.order.id] = ci.order;
+      });
       Object.values(orderMap).forEach(o => {
         const mitraItems = o.items.filter(i => i.claimed_by === mitraName);
         const sub = mitraItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
@@ -427,6 +469,12 @@ function _renderMitraFinanceFor(mitraName) {
             <div>
               <span class="font-medium">#${o.id.slice(-5).toUpperCase()}</span>
               <span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>
+              ${(() => {
+                const payout = DB.mitraPayouts.find(p => p.order_id === o.id && p.mitra_name === mitraName);
+                if (!payout) return '';
+                if (payout.status === 'paid') return '<span class="badge" style="background:rgba(39,174,96,.15);color:var(--success);font-size:9px;margin-left:4px"><i class="fas fa-check mr-0.5"></i>Sudah Dibayar</span>';
+                return '<span class="badge" style="background:rgba(243,156,18,.15);color:#f39c12;font-size:9px;margin-left:4px"><i class="fas fa-clock mr-0.5"></i>Menunggu Pembayaran</span>';
+              })()}
               <div class="text-[10px] mt-0.5" style="color:var(--muted)">${tableInfo || getOrderTypeName(o.order_type)}</div>
               <div class="text-[10px] truncate max-w-[200px]" style="color:var(--muted)">${itemsStr}</div>
             </div>
