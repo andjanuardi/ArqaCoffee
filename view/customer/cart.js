@@ -14,6 +14,7 @@ function showMenuItem(id) {
       <div class="relative">
         <img src="${m.image}" alt="${m.name}" class="w-full h-48 object-cover rounded-xl mb-4" onerror="this.src='https://picsum.photos/seed/${m.id}/400/300'">
         ${hasPromo ? '<div class="absolute top-2 left-2 text-[10px] font-bold px-3 py-1 rounded-full" style="background:var(--success);color:#fff"><i class="fas fa-tag mr-1"></i>Diskon Promo</div>' : ""}
+        ${m.submitted_by ? (() => { const u = DB.users.find(x => x.name === m.submitted_by); const lbl = u?.business_name || m.submitted_by; return '<div class="absolute top-2 right-2 text-[10px] font-bold px-3 py-1 rounded-full" style="background:rgba(232,67,147,.9);color:#fff"><i class="fas fa-handshake mr-1" style="font-size:8px"></i>' + lbl + '</div>'; })() : '<div class="absolute top-2 right-2 text-[10px] font-bold px-3 py-1 rounded-full" style="background:rgba(224,122,58,.9);color:#fff"><i class="fas fa-check-circle mr-1" style="font-size:8px"></i>Arqa</div>'}
       </div>
       <div class="flex justify-between items-start mb-2">
         <h3 class="font-display text-xl font-bold">${m.name}</h3>

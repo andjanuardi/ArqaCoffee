@@ -105,6 +105,7 @@ function renderCustomerMenu() {
           <img src="${m.image}" alt="${m.name}" loading="lazy" onerror="this.src='https://picsum.photos/seed/${m.id}/400/300'">
           ${hasPromo ? '<div class="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:var(--success);color:#fff"><i class="fas fa-tag mr-1" style="font-size:8px"></i>Diskon</div>' : ''}
           ${!available ? '<div class="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:rgba(100,100,100,.85);color:#fff"><i class="fas fa-circle mr-1" style="font-size:6px"></i>Tidak Tersedia</div>' : ''}
+          ${m.submitted_by ? (() => { const u = DB.users.find(x => x.name === m.submitted_by); const lbl = u?.business_name || m.submitted_by; return '<div class="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:rgba(232,67,147,.9);color:#fff"><i class="fas fa-handshake mr-1" style="font-size:8px"></i>' + lbl + '</div>'; })() : '<div class="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:rgba(224,122,58,.9);color:#fff"><i class="fas fa-check-circle mr-1" style="font-size:8px"></i>Arqa</div>'}
         </div>
         <div class="p-3 ${!available ? 'opacity-60' : ''}">
           <div class="font-semibold text-sm mb-1 truncate">${m.name}</div>
