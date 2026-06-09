@@ -249,7 +249,7 @@ function showCourierOrderDetail(id) {
       <div class="border-t pt-3 mt-3" style="border-color:var(--border)">
         ${o.shipping_cost > 0 && o.ongkir_status ? `<div class="flex justify-between text-xs mb-1" style="color:${o.ongkir_status === "confirmed" ? "var(--success)" : o.ongkir_status === "paid" ? "#3498db" : "#f1c40f"}"><span><i class="fas fa-hand-holding-dollar mr-1"></i>Status Ongkir</span><span>${o.ongkir_status === "unpaid" ? "Belum Diambil" : o.ongkir_status === "paid" ? "Siap Diambil" : "Sudah Diterima"}</span></div>` : ""}
         ${o.shipping_cost && o.shipping_cost > 0 ? `<div class="flex justify-between text-xs mb-1" style="color:var(--muted)"><span><i class="fas fa-hand-holding-dollar mr-1"></i>Jasa Aplikasi</span><span style="color:var(--danger)">-${formatCurrency(calcCourierFee(o.shipping_cost))}</span></div>
-        <div class="flex justify-between text-xs mb-2 pb-2" style="border-bottom:1px dashed var(--border);color:var(--success)"><span><i class="fas fa-wallet mr-1"></i>Pendapatan Ongkir</span><span>${formatCurrency(o.shipping_cost - calcCourierFee(o.shipping_cost))}</span></div>` : ""}
+        <div class="flex justify-between text-xs mb-2 pb-2" style="border-bottom:1px dashed var(--border);color:var(--success)"><span><i class="fas fa-wallet mr-1"></i>Pendapatan Kurir</span><span>${formatCurrency(o.shipping_cost - calcCourierFee(o.shipping_cost))}</span></div>` : ""}
         <div class="flex justify-between text-xs" style="color:var(--muted)"><span>Waktu Selesai</span><span>${formatTime(o.created_at)}</span></div>
         ${o.delivery_location && o.delivery_location.lat ? (function() {
           const d = calcDistance(DB.cafe.location.lat, DB.cafe.location.lng, o.delivery_location.lat, o.delivery_location.lng);
