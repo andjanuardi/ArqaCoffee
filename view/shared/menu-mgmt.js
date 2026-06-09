@@ -32,14 +32,17 @@ function renderAdminMenuMgmt() {
           <img src="${m.image}" class="w-12 h-12 rounded-xl object-cover" onerror="this.src='https://picsum.photos/seed/${m.id}/100/100'">
           <div class="flex-1 min-w-0">
             <div class="font-semibold text-sm truncate">${m.name}</div>
-          <div class="text-xs" style="color:var(--muted)">${m.category} — ${formatCurrency(m.price)}</div>
-          <div class="text-[10px]" style="color:${m.submitted_by ? '#e84393' : 'var(--accent)'}">${m.submitted_by ? `<i class="fas fa-handshake mr-1"></i>Mitra: ${m.submitted_by}` : `<i class="fas fa-check-circle mr-1" style="font-size:8px"></i>Menu ARQA`}</div>
+            <div class="text-xs" style="color:var(--muted)">${m.category} — ${formatCurrency(m.price)}</div>
+            <div class="text-[10px]" style="color:${m.submitted_by ? '#e84393' : 'var(--accent)'}">${m.submitted_by ? `<i class="fas fa-handshake mr-1"></i>Mitra: ${m.submitted_by}` : `<i class="fas fa-check-circle mr-1" style="font-size:8px"></i>Menu ARQA`}</div>
+          </div>
           ${isAdmin ? `
           <div class="flex gap-2 shrink-0">
             <button onclick="event.stopPropagation();approveMenuItem('${m.id}')" class="btn-sm text-xs" style="background:linear-gradient(135deg,var(--success),#1e8449);color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer"><i class="fas fa-check mr-1"></i>Setujui</button>
             <button onclick="event.stopPropagation();rejectMenuItem('${m.id}')" class="btn-sm text-xs" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:6px 12px;border-radius:8px;cursor:pointer"><i class="fas fa-times mr-1"></i>Tolak</button>
           </div>` : `
-          <button onclick="event.stopPropagation();cancelOwnMenuItem('${m.id}')" class="btn-sm text-xs" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:6px 12px;border-radius:8px;cursor:pointer"><i class="fas fa-ban mr-1"></i>Batalkan</button>`}
+          <div class="flex gap-2 shrink-0">
+            <button onclick="event.stopPropagation();cancelOwnMenuItem('${m.id}')" class="btn-sm text-xs" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:6px 12px;border-radius:8px;cursor:pointer"><i class="fas fa-ban mr-1"></i>Batalkan</button>
+          </div>`}
         </div>`).join('')}
       </div>
     </div>` : ''}

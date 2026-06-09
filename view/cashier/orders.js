@@ -190,41 +190,6 @@ function renderCashierOrders() {
       <div class="stat-card text-center"><div class="text-2xl font-bold" style="color:var(--accent)">${pending.filter((o) => o.status === "cooking").length}</div><div class="text-[10px]" style="color:var(--muted)">Dimasak</div></div>
       <div class="stat-card text-center"><div class="text-2xl font-bold" style="color:var(--success)">${pending.filter((o) => o.status === "ready").length}</div><div class="text-[10px]" style="color:var(--muted)">Siap Saji</div></div>
     </div>
-    ${mitraPending.length > 0 ? `
-    <div class="card mb-4" style="border-color:rgba(232,67,147,.3)">
-      <div class="flex items-center gap-3 mb-3">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(232,67,147,.15);color:#e84393"><i class="fas fa-hat-chef"></i></div>
-        <div class="flex-1">
-          <div class="font-semibold text-sm">Pembayaran Mitra <span class="badge" style="background:rgba(232,67,147,.15);color:#e84393;font-size:10px">${mitraPending.length} Menunggu</span></div>
-          <div class="text-xs" style="color:var(--muted)">Bayar pendapatan mitra juru masak yang sudah tersedia</div>
-        </div>
-        <button onclick="document.getElementById('mitra-payout-list').classList.toggle('hidden')" class="btn-secondary btn-sm" style="padding:6px 12px;font-size:12px"><i class="fas fa-chevron-down"></i></button>
-      </div>
-      <div id="mitra-payout-list" class="hidden space-y-2">
-        ${mitraPending.map(p => {
-          const o = DB.orders.find(x => x.id === p.order_id);
-          return `
-        <div class="p-3 rounded-xl" style="background:var(--bg2)">
-          <div class="flex justify-between items-start mb-1">
-            <div>
-              <span class="font-semibold text-sm">${p.mitra_name}</span>
-              <span class="text-xs ml-2" style="color:var(--muted)">#${p.order_id.slice(-5).toUpperCase()}</span>
-            </div>
-            <span class="font-bold text-sm" style="color:var(--success)">${formatCurrency(p.amount)}</span>
-          </div>
-          <div class="text-xs mb-2" style="color:var(--muted)">
-            ${o ? `<i class="fas ${o.order_type === 'dine-in' ? 'fa-chair' : 'fa-motorcycle'} mr-1"></i>${getOrderTypeName(o.order_type)} — ${o.customer_name || '—'}` : ''}
-          </div>
-          <div class="flex justify-between text-[10px] mb-2" style="color:var(--muted)">
-            <span>Item: ${formatCurrency(p.total_items)}</span>
-            <span>Pajak: -${formatCurrency(p.tax)}</span>
-            <span>Biaya: -${formatCurrency(p.fee)}</span>
-          </div>
-          <button onclick="payMitraPayout('${p.id}')" class="btn-primary w-full text-center" style="font-size:13px"><i class="fas fa-hand-holding-dollar mr-1"></i>Bayar ${formatCurrency(p.amount)}</button>
-        </div>`;
-        }).join('')}
-      </div>
-    </div>` : ''}
     <h3 class="font-semibold text-sm mb-3">Aktif</h3>
     <div class="space-y-3 mb-6">
       ${pending.length === 0 ? '<p class="text-sm text-center py-8" style="color:var(--muted)">Tidak ada pesanan aktif</p>' : ""}
@@ -295,6 +260,41 @@ function renderCashierOrders() {
     </div>
     <h3 class="font-semibold text-sm mb-3 mt-6">Bayar / Terima Setoran</h3>
     <div class="space-y-3 mb-6">
+      ${mitraPending.length > 0 ? `
+    <div class="card mb-4" style="border-color:rgba(232,67,147,.3)">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(232,67,147,.15);color:#e84393"><i class="fas fa-hat-chef"></i></div>
+        <div class="flex-1">
+          <div class="font-semibold text-sm">Pembayaran Mitra <span class="badge" style="background:rgba(232,67,147,.15);color:#e84393;font-size:10px">${mitraPending.length} Menunggu</span></div>
+          <div class="text-xs" style="color:var(--muted)">Bayar pendapatan mitra juru masak yang sudah tersedia</div>
+        </div>
+        <button onclick="document.getElementById('mitra-payout-list').classList.toggle('hidden')" class="btn-secondary btn-sm" style="padding:6px 12px;font-size:12px"><i class="fas fa-chevron-down"></i></button>
+      </div>
+      <div id="mitra-payout-list" class="hidden space-y-2">
+        ${mitraPending.map(p => {
+          const o = DB.orders.find(x => x.id === p.order_id);
+          return `
+        <div class="p-3 rounded-xl" style="background:var(--bg2)">
+          <div class="flex justify-between items-start mb-1">
+            <div>
+              <span class="font-semibold text-sm">${p.mitra_name}</span>
+              <span class="text-xs ml-2" style="color:var(--muted)">#${p.order_id.slice(-5).toUpperCase()}</span>
+            </div>
+            <span class="font-bold text-sm" style="color:var(--success)">${formatCurrency(p.amount)}</span>
+          </div>
+          <div class="text-xs mb-2" style="color:var(--muted)">
+            ${o ? `<i class="fas ${o.order_type === 'dine-in' ? 'fa-chair' : 'fa-motorcycle'} mr-1"></i>${getOrderTypeName(o.order_type)} — ${o.customer_name || '—'}` : ''}
+          </div>
+          <div class="flex justify-between text-[10px] mb-2" style="color:var(--muted)">
+            <span>Item: ${formatCurrency(p.total_items)}</span>
+            <span>Pajak: -${formatCurrency(p.tax)}</span>
+            <span>Biaya: -${formatCurrency(p.fee)}</span>
+          </div>
+          <button onclick="payMitraPayout('${p.id}')" class="btn-primary w-full text-center" style="font-size:13px"><i class="fas fa-hand-holding-dollar mr-1"></i>Bayar ${formatCurrency(p.amount)}</button>
+        </div>`;
+        }).join('')}
+      </div>
+    </div>` : ''}
       ${(() => {
         const ongkirOrders = DB.orders.filter(o => {
           if (o.ongkir_status !== "confirmed" && o.courier_id && o.shipping_cost > 0 && o.status === "completed" && o.payment_method !== "cod") return true;
