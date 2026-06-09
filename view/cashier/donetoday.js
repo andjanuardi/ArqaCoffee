@@ -23,6 +23,22 @@ function acceptCashierOrder(id) {
   render();
 }
 
+function approveMitraOrder(id) {
+  const o = DB.orders.find(x => x.id === id);
+  if (!o) return;
+  o.mitra_approved = true;
+  addNotification({
+    title: 'Pesanan Mitra Disetujui',
+    message: '#' + o.id.slice(-5).toUpperCase() + ' — mitra dapat mulai memasak',
+    type: 'order',
+    icon: 'fa-check-circle',
+    targetRoles: ['mitra_juru_masak', 'admin', 'manager'],
+    relatedOrderId: o.id,
+  });
+  showToast('Pesanan mitra disetujui!', 'success');
+  render();
+}
+
 function processCashPayment(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;

@@ -36,7 +36,7 @@ function renderMitraQueue() {
     .filter(m => m.submitted_by === State.currentUser.name)
     .map(m => m.id);
   return renderKitchenQueue(
-    (i, mi, o) => mitraMenuIds.includes(mi.id),
+    (i, mi, o) => mitraMenuIds.includes(mi.id) && o.mitra_approved !== false,
     (i, mi, o) => {
       const subtotal = i.unit_price * i.quantity;
       const fee = calcMitraFee(subtotal);
@@ -73,12 +73,13 @@ function renderMitraHistory() {
       ${done.length === 0 ? '<p class="text-center py-8 text-sm" style="color:var(--muted)">Belum ada riwayat</p>' : ''}
       ${done.map((o) => {
         const t = o.table_id ? getTable(o.table_id) : null;
-        const itemsStr = (o.items || []).map(i => {
+        const myItems = (o.items || []).filter(i => mitraMenuIds.includes(i.menu_item_id));
+        const itemsStr = myItems.map(i => {
           const mi = getMenuItem(i.menu_item_id);
           return mi ? mi.name + ' x' + i.quantity : '';
         }).filter(Boolean).join(', ');
-        const hItems = o.items.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
-        const hTax = calcItemTax(o.items);
+        const hItems = myItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
+        const hTax = calcItemTax(myItems);
         const hFee = calcMitraFee(hItems);
         const hTotal = Math.max(0, hItems - hTax - hFee);
         return `
@@ -106,9 +107,11 @@ function renderMitraHistory() {
 
 function showMitraOrderDetail(id) {
   const o = DB.orders.find(x => x.id === id); if (!o) return;
+  const mitraMenuIds = DB.menuItems.filter(m => m.submitted_by === State.currentUser.name).map(m => m.id);
+  const mitraItems = o.items.filter(i => mitraMenuIds.includes(i.menu_item_id));
   const t = o.table_id ? getTable(o.table_id) : null;
-  const itemsSubtotal = o.items.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
-  const tax = calcItemTax(o.items);
+  const itemsSubtotal = mitraItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
+  const tax = calcItemTax(mitraItems);
   const biayaLayanan = calcMitraFee(itemsSubtotal);
   const pembayaranMitra = Math.max(0, itemsSubtotal - tax - biayaLayanan);
   showModal(`
@@ -125,7 +128,7 @@ function showMitraOrderDetail(id) {
   </div>
   ${o.reject_reason ? `<div class="card mb-4 text-sm" style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2)"><i class="fas fa-ban mr-1" style="color:var(--danger)"></i><strong>Alasan Tolak:</strong> ${o.reject_reason}</div>` : ''}
   <div class="space-y-2 mb-4">
-    ${o.items.map(i => {
+    ${mitraItems.map(i => {
       const mi = getMenuItem(i.menu_item_id); return mi ? `
     <div class="flex justify-between text-sm">
       <div>

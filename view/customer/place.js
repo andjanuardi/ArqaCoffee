@@ -154,16 +154,16 @@ function placeOrder() {
     );
 
     if (existingOrder) {
-      existingOrder.items.push(
-        ...State.cart.map((c) => ({
-          menu_item_id: c.menu_item_id,
-          quantity: c.quantity,
-          unit_price: c.unit_price,
-          notes: c.notes,
-          status: "pending",
-        })),
-      );
+      const newItems = State.cart.map((c) => ({
+        menu_item_id: c.menu_item_id,
+        quantity: c.quantity,
+        unit_price: c.unit_price,
+        notes: c.notes,
+        status: "pending",
+      }));
+      existingOrder.items.push(...newItems);
       existingOrder.total_amount += grandTotal;
+      existingOrder.has_mitra_items = existingOrder.has_mitra_items || newItems.some(ni => getMenuItem(ni.menu_item_id)?.submitted_by);
 
       if (
         existingOrder.status === "served" ||
@@ -225,6 +225,8 @@ function placeOrder() {
       notes: c.notes,
       status: "pending",
     })),
+    has_mitra_items: State.cart.some(c => getMenuItem(c.menu_item_id)?.submitted_by),
+    mitra_approved: false,
   };
   if (State.orderType === "delivery") order.courier_id = null;
   DB.orders.unshift(order);

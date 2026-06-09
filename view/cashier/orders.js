@@ -220,9 +220,15 @@ function renderCashierOrders() {
             <i class="fas ${o.order_type === "dine-in" ? "fa-chair" : "fa-motorcycle"} mr-1"></i>${getOrderTypeName(o.order_type)}${t && o.order_type !== "delivery" ? " — Meja " + t.number : ""}${isDelivered ? " — " + (o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')) : o.customer_name ? " — " + o.customer_name : ""}${!isDelivered && o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}${o.waiter_id && getUser(o.waiter_id) ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-user-tie"></i> ' + getUser(o.waiter_id).name + '</span>' : ''}${o.courier_id && getUser(o.courier_id) ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-motorcycle"></i> ' + getUser(o.courier_id).name + '</span>' : ''}
           </div>
           <div class="text-xs mb-3">${(() => {
-            const names = o.items.map(i => { const mi = getMenuItem(i.menu_item_id); return mi ? mi.name + " x" + i.quantity : ""; }).filter(Boolean);
+            const names = o.items.map(i => {
+              const mi = getMenuItem(i.menu_item_id);
+              if (!mi) return "";
+              const label = mi.name + " x" + i.quantity;
+              return mi.submitted_by ? label + ' <span style="color:#e84393;font-size:10px">[Mitra ' + mi.submitted_by + ']</span>' : label;
+            }).filter(Boolean);
             return names.length <= 3 ? names.join(", ") : names.slice(0, 3).join(", ") + ' <span style="color:var(--muted)">+' + (names.length - 3) + ' lainnya</span>';
           })()}</div>
+          ${o.has_mitra_items && !o.mitra_approved ? `<div class="mb-2 p-2 rounded-lg text-xs flex items-center gap-1" style="background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.2);color:var(--warning)"><i class="fas fa-clock"></i>Menu mitra menunggu persetujuan</div>` : ''}
           ${breakdownHtml}
           <div class="flex justify-between items-center">
             <span class="font-bold" style="color:${amountColor}">${amountValue}</span>
@@ -236,6 +242,7 @@ function renderCashierOrders() {
               `
                   : ""
               }
+              ${o.has_mitra_items && !o.mitra_approved && o.status === "pending" && o.accepted ? `<button onclick="event.stopPropagation();approveMitraOrder('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#e84393,#c0392b)"><i class="fas fa-check mr-1"></i>Setujui Mitra</button>` : ""}
               ${o.status === "pending" && o.accepted ? `<span class="badge" style="background:rgba(46,204,113,.15);color:var(--success)">Diterima</span>` : ""}
               ${o.status === "ready" && o.payment_status === "unpaid" ? `<button onclick="event.stopPropagation();showPaymentModal('${o.id}')" class="btn-primary btn-sm">Bayar</button>` : ""}
               ${o.status === "ready" && o.payment_status === "paid" && o.order_type !== "delivery" ? `<button onclick="event.stopPropagation();confirmCompleteOrder('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
