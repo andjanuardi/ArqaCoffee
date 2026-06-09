@@ -167,11 +167,87 @@ function showMitraOrderDetail(id) {
       <span style="color:var(--muted)">${formatCurrency(pembayaranMitra)}</span>
     </div>`;
     })()}
+    <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Pembayaran</span><span>${o.payment_method === "qris" ? "QRIS" : o.payment_method === "bank_transfer" ? "Transfer Bank" : o.payment_method === "cod" ? "COD" : o.payment_method === "" ? "Bayar Nanti" : "Tunai"}</span></div>
+    <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Status Bayar</span><span class="badge ${o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"}">${o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span></div>
     <div class="flex justify-between text-xs mt-1" style="color:var(--muted)"><span>Waktu</span><span>${formatTime(o.created_at)}</span></div>
   </div>
-  <button onclick="closeModal()" class="btn-secondary w-full mt-4 text-center">Tutup</button>
+  <div class="flex gap-2 mt-4">
+    ${o.status !== "rejected" ? `<button onclick="closeModal();printMitraInvoice('${o.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i> Cetak Invoice</button>` : ""}
+    <button onclick="closeModal()" class="btn-secondary flex-1 text-center">Tutup</button>
+  </div>
 </div>
 `);
+}
+
+function printMitraInvoice(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  const mitraMenuIds = DB.menuItems.filter(m => m.submitted_by === State.currentUser.name).map(m => m.id);
+  const mitraItems = o.items.filter(i => mitraMenuIds.includes(i.menu_item_id));
+  const itemsSubtotal = mitraItems.reduce((s, i) => s + (i.unit_price * i.quantity), 0);
+  const tax = Math.round(calcItemTax(mitraItems));
+  const biayaLayanan = calcMitraFee(itemsSubtotal);
+  const pembayaranMitra = Math.max(0, itemsSubtotal - tax - biayaLayanan);
+  const payout = DB.mitraPayouts.find(p => p.order_id === o.id && p.mitra_name === State.currentUser.name);
+  const payoutStatus = payout && payout.status === 'paid' ? 'Sudah Dibayar' : 'Menunggu Pembayaran';
+  const win = window.open('', '_blank');
+  let payMethodLabel = 'Tunai';
+  if (o.payment_method === 'qris') payMethodLabel = 'QRIS';
+  else if (o.payment_method === 'bank_transfer') payMethodLabel = 'Transfer Bank';
+  else if (o.payment_method === 'cod') payMethodLabel = 'COD';
+  else if (o.payment_method === '') payMethodLabel = 'Bayar Nanti';
+  const custName = o.customer_name || (o.user_id && getUser(o.user_id)?.name) || '';
+  const orderTypeLabel = o.order_type === 'dine-in' ? 'Makan di Tempat' : o.order_type === 'takeaway' ? 'Bungkus' : 'Pesan Antar';
+  win.document.write(`
+    <html><head>
+      <title>Invoice Mitra #${o.id.slice(-5).toUpperCase()}</title>
+      <style>
+        body { font-family: 'Segoe UI',sans-serif; padding:40px; max-width:400px; margin:0 auto; }
+        .header { text-align:center; margin-bottom:24px; }
+        .header h1 { font-size:22px; margin:0; }
+        .header p { font-size:12px; color:#666; margin:2px 0; }
+        .divider { border-top:2px dashed #333; margin:16px 0; }
+        .item { display:flex; justify-content:space-between; font-size:13px; padding:4px 0; }
+        .item .name { flex:1; }
+        .item .qty { margin:0 12px; color:#666; }
+        .item .price { text-align:right; }
+        .totals { margin-top:12px; font-size:13px; }
+        .totals > div { display:flex; justify-content:space-between; padding:2px 0; }
+        .payout-status { text-align:center; margin-top:12px; font-size:13px; font-weight:bold; }
+        .footer { text-align:center; font-size:11px; color:#888; margin-top:24px; }
+        @media print { body { padding:20px; } }
+      </style>
+    </head><body>
+      <div class="header">
+        <h1>ARQA Coffee</h1>
+        <p>Invoice Mitra</p>
+        <p>${orderTypeLabel}</p>
+        ${o.table_id ? '<p>Meja ' + (getTable(o.table_id)?.number || '') + '</p>' : ''}
+        ${custName ? '<p>' + custName + '</p>' : ''}
+        <p>#${o.id.slice(-5).toUpperCase()}</p>
+        <p>${new Date(o.created_at).toLocaleString('id-ID')}</p>
+      </div>
+      <div class="divider"></div>
+      ${mitraItems.map(i => {
+        const mi = getMenuItem(i.menu_item_id);
+        return `<div class="item"><span class="name">${mi ? mi.name : 'Item'}</span><span class="qty">x${i.quantity}</span><span class="price">${formatCurrency(i.unit_price * i.quantity)}</span></div>`;
+      }).join('')}
+      <div class="divider"></div>
+      <div class="totals">
+        <div><span>Subtotal Menu</span><span>${formatCurrency(itemsSubtotal)}</span></div>
+        ${tax > 0 ? `<div><span>Pajak</span><span>${formatCurrency(tax)}</span></div>` : ''}
+        ${biayaLayanan > 0 ? `<div style="color:#e07a3a"><span>Biaya Layanan</span><span>${formatCurrency(biayaLayanan)}</span></div>` : ''}
+        <div style="font-weight:bold;font-size:15px"><span>Total Pembayaran</span><span>${formatCurrency(pembayaranMitra)}</span></div>
+        <div style="margin-top:8px"><span>Pembayaran</span><span>${payMethodLabel}</span></div>
+        <div><span>Status Bayar</span><span>${o.payment_status === 'paid' ? 'Lunas' : 'Belum Bayar'}</span></div>
+      </div>
+      <div class="payout-status" style="color:${payout && payout.status === 'paid' ? '#27ae60' : '#f39c12'}">Pembayaran Mitra: ${payoutStatus}</div>
+      ${o.delivery_address ? `<div class="divider"></div><p style="font-size:12px"><strong>Alamat:</strong> ${o.delivery_address}</p>` : ''}
+      <div class="footer">Terima kasih atas kerja samanya</div>
+      <script>window.print()</script>
+    </body></html>
+  `);
+  win.document.close();
 }
 
 function _renderMitraFinanceFor(mitraName) {
