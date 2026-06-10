@@ -28,7 +28,7 @@ function renderAdminMenuMgmt() {
       <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:var(--warning)"></span>Menunggu Persetujuan</h3>
       <div class="space-y-2">
         ${pending.map(m => `
-        <div class="card flex items-center gap-3 p-3" style="border-color:rgba(243,156,18,.3)">
+        <div class="card flex items-center gap-3 p-3 cursor-pointer" style="border-color:rgba(243,156,18,.3)" onclick="showPendingMenuPreview('${m.id}')">
           <img src="${m.image}" class="w-12 h-12 rounded-xl object-cover" onerror="this.src='https://picsum.photos/seed/${m.id}/100/100'">
           <div class="flex-1 min-w-0">
             <div class="font-semibold text-sm truncate">${m.name}</div>
@@ -40,9 +40,7 @@ function renderAdminMenuMgmt() {
             <button onclick="event.stopPropagation();approveMenuItem('${m.id}')" class="btn-sm text-xs" style="background:linear-gradient(135deg,var(--success),#1e8449);color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer"><i class="fas fa-check mr-1"></i>Setujui</button>
             <button onclick="event.stopPropagation();rejectMenuItem('${m.id}')" class="btn-sm text-xs" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:6px 12px;border-radius:8px;cursor:pointer"><i class="fas fa-times mr-1"></i>Tolak</button>
           </div>` : `
-          <div class="flex gap-2 shrink-0">
-            <button onclick="event.stopPropagation();cancelOwnMenuItem('${m.id}')" class="btn-sm text-xs" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:6px 12px;border-radius:8px;cursor:pointer"><i class="fas fa-ban mr-1"></i>Batalkan</button>
-          </div>`}
+          <button onclick="event.stopPropagation();cancelOwnMenuItem('${m.id}')" class="btn-sm text-xs" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;padding:6px 12px;border-radius:8px;cursor:pointer"><i class="fas fa-ban mr-1"></i>Batalkan</button>`}
         </div>`).join('')}
       </div>
     </div>` : ''}
@@ -67,6 +65,42 @@ function renderAdminMenuMgmt() {
       ${filtered.length === 0 ? '<div class="text-center py-6 text-sm" style="color:var(--muted)">Tidak ada menu di kategori ini</div>' : ''}
     </div>
   </div>`;
+}
+
+function showPendingMenuPreview(id) {
+  const m = DB.menuItems.find(x => x.id === id);
+  if (!m) return;
+  const canApprove = State.currentUser?.role === 'admin' || State.currentUser?.role === 'manager';
+  const labelMap = { coffee: 'Kopi', 'non-coffee': 'Non-Kopi', food: 'Makanan', snack: 'Snack' };
+  showModal(`
+    <div>
+      <div class="relative mb-4">
+        <img src="${m.image}" class="w-full h-48 object-cover rounded-xl" onerror="this.src='https://picsum.photos/seed/${m.id}/400/300'">
+        <span class="absolute top-3 right-3 text-xs font-semibold px-3 py-1.5 rounded-full" style="background:rgba(243,156,18,.2);color:var(--warning);backdrop-filter:blur(4px)">
+          <i class="fas fa-clock mr-1"></i>Menunggu Persetujuan
+        </span>
+      </div>
+      <h3 class="font-display text-xl font-bold mb-1">${m.name}</h3>
+      ${m.description ? `<p class="text-sm mb-3" style="color:var(--muted)">${m.description}</p>` : ''}
+      <div class="flex items-center gap-3 mb-3">
+        <span class="text-lg font-bold" style="color:var(--accent)">${formatCurrency(m.price)}</span>
+        <span class="text-xs px-2.5 py-1 rounded-full" style="background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--border)">${labelMap[m.category] || m.category}</span>
+        ${m.tax_percentage > 0 ? `<span class="text-xs" style="color:var(--muted)"><i class="fas fa-receipt mr-1"></i>Pajak ${m.tax_percentage}%</span>` : ''}
+      </div>
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-xs font-medium px-3 py-1.5 rounded-full" style="background:rgba(232,67,147,.12);color:#e84393;border:1px solid rgba(232,67,147,.25)">
+          <i class="fas fa-handshake mr-1"></i>Mitra: ${m.submitted_by || 'ARQA'}
+        </span>
+        <span class="text-xs" style="color:var(--muted)"><i class="fas fa-box mr-1"></i>${m.is_available ? 'Tersedia' : 'Tidak Tersedia'}</span>
+      </div>
+      ${canApprove ? `
+      <div class="border-t pt-4 flex gap-2" style="border-color:var(--border)">
+        <button onclick="closeModal();approveMenuItem('${m.id}')" class="btn-sm flex-1 text-center" style="background:linear-gradient(135deg,var(--success),#1e8449);color:#fff;border:none;padding:10px;border-radius:10px;cursor:pointer;font-weight:600"><i class="fas fa-check mr-1"></i>Setujui</button>
+        <button onclick="closeModal();rejectMenuItem('${m.id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.15);color:var(--danger);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:10px;cursor:pointer;font-weight:600"><i class="fas fa-times mr-1"></i>Tolak</button>
+      </div>` : ''}
+      <button onclick="closeModal()" class="btn-sm w-full text-center mt-2" style="background:var(--bg2);color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Tutup</button>
+    </div>
+  `);
 }
 
 function approveMenuItem(id) {
