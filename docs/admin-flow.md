@@ -29,20 +29,24 @@ Sebagai Admin, Anda memiliki **2 cara navigasi** untuk berpindah halaman:
 
 ### 2.1 Side Drawer (Menu Samping)
 
-Klik icon **hamburger (☰)** di pojok kiri atas untuk membuka menu samping. Di dalamnya ada 10 menu:
+Klik icon **hamburger (☰)** di pojok kiri atas untuk membuka menu samping. Di dalamnya ada 14 menu:
 
-| No  | Ikon | Nama Menu           | Fungsi                                               |
-| --- | ---- | ------------------- | ---------------------------------------------------- |
-| 1   | 📊   | **Overview**        | Halaman utama — ringkasan seluruh operasional kafe   |
-| 2   | 👥   | **Kelola Pengguna** | Mengelola semua data pengguna termasuk admin         |
-| 3   | 🍽️   | **Kelola Menu**     | Menambah, mengedit, menghapus menu makanan & minuman |
-| 4   | 🪑   | **Kelola Meja**     | Mengelola data meja di kafe                          |
-| 5   | 🏷️   | **Kelola Promo**    | Mengelola program promo dan diskon                   |
-| 6   | 💰   | **Keuangan**        | Laporan keuangan lengkap dengan grafik               |
-| 7   | 📦   | **Stok Bahan**      | Mengelola stok bahan baku                            |
-| 8   | 💳   | **Pengeluaran**     | Mencatat dan mengelola pengeluaran kafe              |
-| 9   | 📋   | **Pesanan Aktif**   | Melihat semua pesanan yang sedang berlangsung        |
-| 10  | 📅   | **Presensi**        | Melihat absensi staff                                |
+| No  | Ikon | Nama Menu              | Fungsi                                                     |
+| --- | ---- | ---------------------- | ---------------------------------------------------------- |
+| 1   | 📊   | **Overview**           | Halaman utama — ringkasan seluruh operasional kafe         |
+| 2   | 👥   | **Kelola Pengguna**    | Mengelola semua data pengguna termasuk admin               |
+| 3   | 🍽️   | **Kelola Menu**        | Menambah, mengedit, menghapus menu makanan & minuman       |
+| 4   | 🪑   | **Kelola Meja**        | Mengelola data meja di kafe                                |
+| 5   | 🏷️   | **Kelola Promo**       | Mengelola program promo dan diskon                         |
+| 6   | 💰   | **Keuangan**           | Laporan keuangan lengkap dengan grafik                     |
+| 7   | 📦   | **Stok Bahan**         | Mengelola stok bahan baku                                  |
+| 8   | 📦   | **Stok Playground**    | Mengelola stok barang area bermain (terpisah dari stok kafe) |
+| 9   | 💳   | **Pengeluaran**        | Mencatat dan mengelola pengeluaran kafe                    |
+| 10  | 📋   | **Pesanan Aktif**      | Melihat semua pesanan yang sedang berlangsung              |
+| 11  | 🎫   | **Tiket Playground**   | Melihat tiket aktif area bermain anak                      |
+| 12  | 🤝   | **Approval Mitra**     | Menyetujui/menolak pendaftaran Mitra Juru Masak            |
+| 13  | 📅   | **Presensi**           | Melihat absensi staff                                     |
+| 14  | ⚙️   | **Pengaturan**         | Tarif Mitra, Tarif Grup, Status Layanan                    |
 
 Klik **"Tutup"** atau klik area gelap di samping untuk menutup menu.
 
@@ -127,7 +131,7 @@ Halaman ini menampilkan daftar **semua** pengguna aplikasi, **termasuk akun Admi
 
 ### Filter Role:
 
-- Gunakan **filter chip** untuk menampilkan pengguna berdasarkan role: **[ Semua ]** **[ Admin ]** **[ Manager ]** **[ Kasir ]** **[ Juru Masak ]** **[ Kurir ]** **[ Pelanggan ]**
+- Gunakan **filter chip** untuk menampilkan pengguna berdasarkan role: **[ Semua ]** **[ Admin ]** **[ Manager ]** **[ Kasir ]** **[ Juru Masak ]** **[ Kurir ]** **[ Pelayan ]** **[ Pelanggan ]** **[ Playground ]** **[ Mitra Juru Masak ]**
 - Klik chip yang diinginkan, chip aktif akan berwarna **oranye**
 
 ### Yang bisa Anda lakukan:
@@ -377,7 +381,116 @@ Daftar bahan baku diurutkan dari yang stoknya paling menipis. Setiap item menamp
 
 ---
 
-## 10. Pengeluaran
+## 10. Stok Playground (Side Drawer)
+
+Halaman ini untuk mengelola stok barang area bermain anak (terpisah dari stok bahan baku kafe).
+
+### Yang tampil:
+
+Daftar barang playground dengan 3 kategori:
+- **Makanan** — makanan ringan yang dijual di playground
+- **Minuman** — minuman yang dijual di playground
+- **Perlengkapan** — perlengkapan seperti kaos kaki
+
+Setiap item menampilkan: nama, kategori, harga satuan, stok saat ini, stok minimal, dan progress bar.
+
+### Yang bisa Anda lakukan:
+
+| Tombol               | Fungsi                                                     |
+| -------------------- | ---------------------------------------------------------- |
+| **➕ (plus)**        | Menambah stok (restock) — bisa dicatat sebagai pengeluaran |
+| **➖ (minus)**       | Mengurangi stok secara manual                              |
+| **✏️ Edit**          | Mengubah data barang                                       |
+| **🗑️ Hapus**         | Menghapus barang (hanya jika stok = 0)                     |
+| **➕ Tambah Barang** | Menambah barang baru                                       |
+
+Cara menambah/restock sama dengan Stok Bahan biasa, namun data disimpan di database terpisah (`DB.pgStockItems`).
+
+---
+
+## 11. Tiket Playground (Aktif)
+
+Halaman ini menampilkan tiket area bermain yang sedang aktif. Anda bisa memantau:
+- Nama pelanggan dan anak-anak yang bermain
+- Timer countdown (sisa waktu bermain)
+- Status (Aktif / Over Time)
+- Informasi pembayaran
+
+> **💡 Bersifat read-only** — Anda tidak bisa menambah waktu, pesanan, atau menyelesaikan tiket. Hanya staff Playground yang bisa mengelola tiket.
+
+---
+
+## 12. Approval Mitra
+
+Halaman ini menampilkan daftar pendaftaran Mitra Juru Masak yang menunggu persetujuan.
+
+### Yang tampil:
+
+Setiap kartu pendaftaran menampilkan:
+- **Nama** — nama calon mitra
+- **Nama Bisnis** — nama usaha mitra
+- **Email** — alamat email
+- **No. Telepon** — nomor telepon
+- **Tanggal Daftar** — kapan mendaftar
+- **Status** — 🟡 **Menunggu** / 🟢 **Disetujui** / 🔴 **Ditolak**
+
+### Yang bisa Anda lakukan:
+
+| Tombol            | Fungsi                                               |
+| ----------------- | ---------------------------------------------------- |
+| ✅ **Setujui**    | Menyetujui pendaftaran — akun mitra akan dibuat otomatis dengan password default "123456". **Posisi mitra (jika diatur saat registrasi) akan ikut tersimpan di data user** |
+| ❌ **Tolak**      | Menolak pendaftaran                                  |
+
+> **💡 Mitra yang disetujui akan langsung bisa login menggunakan email mereka dengan password "123456". Mereka bisa mengganti password di profil masing-masing. Jika mitra mengatur posisi saat registrasi, data posisi akan tersimpan dan kurir bisa melihatnya.**
+
+---
+
+## 13. Pengaturan (Side Drawer)
+
+### 13.1 Tarif Mitra (Biaya Jasa Aplikasi)
+
+Mengatur fee/platform yang dikenakan ke Mitra Juru Masak per transaksi.
+
+| Pengaturan    | Default | Keterangan                          |
+| ------------- | ------- | ----------------------------------- |
+| **Tipe**      | Persen  | Persen (%) atau Nominal (Rp)       |
+| **Nilai**     | 5%      | Besaran fee (contoh: 5 untuk 5%)   |
+
+### 13.2 Tarif Grup
+
+Pengaturan harga grup/khusus untuk pelanggan tertentu (jika ada).
+
+### 13.3 Status Layanan (Service Status)
+
+Mengatur ketersediaan layanan pemesanan. Ada 3 mode:
+
+| Mode | Ikon | Efek |
+|------|------|------|
+| **Buka** | 🟢 Hijau | Pelanggan bisa memesan — mengikuti jadwal operasional |
+| **Tutup** | 🔴 Merah | Pelanggan tidak bisa memesan — override jadwal |
+| **Paksa Buka** | 🟡 Kuning | Pelanggan bisa memesan di luar jam operasional — override jadwal |
+
+Klik toggle untuk berganti mode secara berurutan: Buka → Tutup → Paksa Buka → Buka.
+
+### 13.4 Jadwal Operasional (Service Schedule)
+
+Atur jam buka/tutup per hari dalam seminggu:
+
+- Setiap hari menampilkan input jam **Buka** dan **Tutup** (format HH:MM)
+- Ubah jam sesuai kebutuhan, lalu klik **"Simpan Jadwal"**
+- Status layanan otomatis mengecek jadwal: jika dalam jam operasional → buka, di luar jam → tutup (kecuali mode **Paksa Buka**)
+
+### 13.5 Tanggal Khusus (Special Dates)
+
+Atur pengecualian tanggal tertentu (libur nasional, acara khusus):
+
+- **Tambah Tanggal Khusus**: pilih tanggal, centang **"Tutup"** jika libur, isi keterangan (misal: "Hari Raya Idul Fitri")
+- Setiap tanggal khusus bisa dihapus dengan klik icon **🗑️**
+- Jika suatu tanggal ditandai tutup, layanan tetap tutup meskipun dalam jam operasional
+
+---
+
+## 14. Pengeluaran
 
 Halaman ini untuk mencatat semua pengeluaran kafe.
 
@@ -419,7 +532,7 @@ Halaman ini untuk mencatat semua pengeluaran kafe.
 
 ---
 
-## 11. Pesanan Aktif
+## 15. Pesanan Aktif
 
 Halaman ini menampilkan semua pesanan yang sedang berlangsung di kafe.
 
@@ -457,7 +570,7 @@ Halaman ini menampilkan semua pesanan yang sedang berlangsung di kafe.
 
 Klik kartu pesanan untuk melihat modal detail lengkap (status badge, info pelanggan, diskon, ongkir, pajak, metode & status bayar, cetak invoice).
 
-### 11.1 Riwayat Pembatalan
+### 15.1 Riwayat Pembatalan
 
 Di bagian bawah halaman Pesanan Aktif, terdapat bagian **"Riwayat Pembatalan"** yang bisa dibuka/tutup (collapsible). Bagian ini menampilkan semua pesanan yang **dibatalkan** atau **ditolak** dalam rentang tanggal yang dipilih.
 
@@ -487,7 +600,7 @@ Sumber pembatalan dideteksi dari prefix alasan:
 
 ---
 
-## 12. Presensi (Absensi Staff)
+## 16. Presensi (Absensi Staff)
 
 Halaman ini menampilkan status absensi seluruh staff (Manajer, Kasir, Koki, Kurir).
 
@@ -512,7 +625,7 @@ Halaman ini menampilkan status absensi seluruh staff (Manajer, Kasir, Koki, Kuri
 
 ---
 
-## 13. Profil
+## 17. Profil
 
 Klik tab **Profil** (icon orang) di bagian bawah.
 
@@ -525,11 +638,11 @@ Klik tab **Profil** (icon orang) di bagian bawah.
 
 ---
 
-## 14. Notifikasi
+## 18. Notifikasi
 
 ARQA Coffee memiliki dua jenis notifikasi untuk memberi tahu Anda tentang perkembangan aplikasi.
 
-### 14.1 Notifikasi Pop-up (Toast)
+### 18.1 Notifikasi Pop-up (Toast)
 
 Notifikasi ini muncul sebagai kotak kecil di pojok kanan atas layar dan akan menghilang sendiri setelah beberapa detik. Ada 4 jenis:
 
@@ -540,7 +653,7 @@ Notifikasi ini muncul sebagai kotak kecil di pojok kanan atas layar dan akan men
 | ❌ **Error**      | Merah  | "Gagal menyimpan data"            |
 | ℹ️ **Info**       | Biru   | "Pengguna ditambahkan"            |
 
-### 14.2 Notifikasi Lonceng (Notification Panel)
+### 18.2 Notifikasi Lonceng (Notification Panel)
 
 Di pojok kanan atas layar (di samping nama Anda) terdapat icon **lonceng**. Jika ada angka merah di atasnya, artinya ada notifikasi baru yang belum Anda baca.
 
@@ -562,19 +675,23 @@ Notifikasi yang sudah Anda baca akan ditandai dan jumlahnya di icon lonceng akan
 
 ---
 
-## 15. Tips Penting
+## 19. Tips Penting
 
 - **Akses penuh ke semua pengguna** — Sebagai Admin, Anda bisa melihat, mengedit, dan menghapus akun siapa pun termasuk sesama Admin. Gunakan dengan bijak.
 - **Tidak ada absensi** — Admin tidak memiliki fitur check-in/check-out. Hanya staff (Manajer, Kasir, Koki, Kurir) yang wajib absen.
 - **Tambah Admin baru** — Saat membuat pengguna baru, role Admin tidak tersedia. Buat dulu dengan role lain, lalu edit setelahnya untuk mengubah ke Admin.
 - **Stok menipis akan muncul di Overview** — Pantau Overview setiap hari untuk melihat bahan yang perlu di-restock.
-- **Side drawer vs Bottom nav** — Side drawer berisi semua menu (10 menu), sedangkan bottom nav hanya 4 menu yang paling sering digunakan.
+- **Side drawer vs Bottom nav** — Side drawer berisi semua menu (14 menu), sedangkan bottom nav hanya 4 menu yang paling sering digunakan.
 - **Filter tanggal** — Hampir semua halaman laporan (Keuangan, Pengeluaran, Pesanan Aktif) memiliki filter tanggal. Gunakan untuk melihat data periode tertentu.
 - **Cetak laporan keuangan** — Di halaman Keuangan, klik kartu ringkasan lalu klik "Cetak" untuk print laporan detail.
+- **Stok Playground terpisah** — Stok area bermain dikelola terpisah dari stok bahan baku kafe. Cek secara berkala.
+- **Approval Mitra** — Pantau pendaftaran Mitra Juru Masak di menu Approval Mitra. Setujui mitra yang layak.
+- **Pengaturan Tarif** — Atur fee mitra, tarif grup, dan status layanan di menu Pengaturan.
+- **Tiket Playground** — Anda bisa memantau tiket aktif playground secara read-only.
 
 ---
 
-## 16. Pertanyaan Umum (FAQ)
+## 20. Pertanyaan Umum (FAQ)
 
 **Q: Apa bedanya Admin dengan Manajer?**
 A: Admin memiliki akses **penuh** ke semua fitur termasuk mengelola akun Admin. Manajer tidak bisa melihat, mengedit, atau menghapus akun Admin. Juga, Admin tidak punya fitur absen check-in/check-out.
@@ -614,3 +731,18 @@ A: Buka **Presensi** dari side drawer. Klik nama staff untuk melihat laporan har
 
 **Q: Bisakah saya mengubah role pengguna?**
 A: Ya, buka **Kelola Pengguna**, klik **Edit** pada pengguna yang ingin diubah, lalu pilih role baru. Anda bisa mengubah role siapa pun termasuk menjadi Admin.
+
+**Q: Bagaimana cara menyetujui pendaftaran Mitra?**
+A: Buka **Approval Mitra** dari side drawer. Klik **"Setujui"** untuk menyetujui atau **"Tolak"** untuk menolak pendaftaran.
+
+**Q: Di mana saya mengatur biaya jasa Mitra?**
+A: Buka **Pengaturan** → **Tarif Mitra** dari side drawer. Atur tipe (persen/nominal) dan nilai fee.
+
+**Q: Bagaimana cara melihat stok playground?**
+A: Buka **Stok Playground** dari side drawer. Stok ini terpisah dari stok bahan baku kafe.
+
+**Q: Bagaimana cara melihat tiket playground yang aktif?**
+A: Buka **Tiket Playground** dari side drawer. Anda bisa memantau tiket yang sedang berjalan.
+
+**Q: Bagaimana cara menonaktifkan layanan pemesanan?**
+A: Buka **Pengaturan** → **Status Layanan**, ubah toggle menjadi **"Tutup"**. Pelanggan tidak akan bisa memesan.

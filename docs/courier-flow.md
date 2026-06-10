@@ -14,9 +14,9 @@ Ada 2 cara untuk masuk ke aplikasi ARQA Coffee sebagai kurir:
 
 ### 1.2 Masuk dengan Email & Password
 
-| Email | Password |
-|-------|----------|
-| kurir@arqa.coffee | kurir123 |
+| Role  | Email             | Password |
+|-------|------------------|----------|
+| Kurir | kurir@arqa.coffee | kurir123 |
 
 - Masukkan alamat email dan password tersebut
 - Klik tombol **"Masuk"**
@@ -60,6 +60,8 @@ Setelah masuk, Anda akan langsung berada di halaman **Tersedia**. Di sini Anda b
 | **Tolak** (warna merah) | Klik tombol **"Tolak"** | Akan muncul jendela untuk memilih alasan penolakan |
 
 > **💡 Jika belum ada pesanan:** Akan tampil tulisan "Belum ada pesanan siap diantar" di tengah layar.
+
+> **💡 Ambil Pesanan Mitra:** Jika pesanan mengandung item dari **Mitra Juru Masak**, alamat/lokasi mitra akan ditampilkan (posisi yang disimpan saat mitra mendaftar). Anda perlu mengambil pesanan di lokasi mitra sebelum mengantar ke pelanggan. Klik nama mitra di peta untuk fokus ke lokasi mereka.
 
 ---
 
@@ -116,17 +118,18 @@ Setelah Anda mengambil pesanan, kartu pesanan akan muncul di tab **Aktif**. Di s
 | **Nama Pelanggan** | Nama atau email pelanggan pemesan |
 | **Nomor Telepon** | Nomor telepon pelanggan yang bisa dihubungi |
 | **Alamat** | Alamat tujuan |
-| **Peta Lokasi** | Peta satellite yang menunjukkan posisi Anda |
+| **Peta Lokasi** | Peta satellite yang menunjukkan posisi Anda. Jika ada Mitra, lokasi mitra juga ditandai |
 | **3 Tombol Aksi** | Update, Chat, Selesai (lihat tabel di bawah) |
 
 ### 3 Tombol yang tersedia:
 
-#### 📍 Tombol "Update" — Memperbarui Posisi
+#### 📍 Tombol "Update" / "Simulasi Posisi" — Memperbarui Posisi
 
 - Klik tombol ini untuk **mensimulasikan pergerakan** Anda di peta
 - Setiap kali diklik, posisi Anda di peta akan bergeser secara acak (sekitar 250 meter)
 - **Klik beberapa kali** selama perjalanan agar rute perjalanan terlihat di peta
 - Akan muncul notifikasi: "Lokasi diupdate"
+- Pelanggan bisa melihat posisi Anda di peta secara real-time
 - Cocok untuk menunjukkan perkembangan pengantaran ke pelanggan
 
 #### 💬 Tombol "Chat" — Berkomunikasi dengan Pelanggan
@@ -134,8 +137,8 @@ Setelah Anda mengambil pesanan, kartu pesanan akan muncul di tab **Aktif**. Di s
 - Klik untuk membuka jendela chat dengan pelanggan
 - Anda bisa:
   - **Mengirim pesan teks** — ketik pesan lalu tekan Enter atau klik ikon pesawat
-  - **Mengirim foto** — klik ikon gambar, pilih foto, foto akan otomatis diperkecil ukurannya
-- Pesan dari pelanggan akan muncul di sebelah kiri, pesan Anda di sebelah kanan
+  - **Mengirim foto** — klik ikon gambar/kamera, pilih foto dari galeri, foto akan otomatis diperkecil ukurannya
+- Pesan dari pelanggan akan muncul di sebelah kiri (gelembung abu-abu), pesan Anda di sebelah kanan (gelembung oranye)
 - **Jika ada pesan baru:** Tombol Chat akan menampilkan **lingkaran merah dengan angka** (jumlah pesan yang belum dibaca)
 - Pelanggan akan mendapat notifikasi saat Anda mengirim pesan
 
@@ -154,6 +157,14 @@ Klik tombol ini setelah pesanan berhasil sampai ke tangan pelanggan. **Yang terj
 - Anda harus **menyetorkan uang tunai** yang diterima ke kasir
 - **Kasir** yang akan mengklik tombol **"Terima Setoran"** agar pesanan benar-benar selesai dan masuk ke Riwayat
 
+### ✅ Tombol "Konfirmasi Ongkir" — Menerima Biaya Pengiriman
+
+Jika pesanan memiliki **ongkos kirim** yang perlu dikonfirmasi, setelah menyelesaikan pengantaran Anda bisa mengklik tombol **"Konfirmasi Ongkir"** (tersedia di tab Riwayat). Tujuannya:
+- Menandai bahwa Anda sudah menerima biaya ongkos kirim dari kasir
+- Ongkir tercatat sebagai pemasukan Anda
+- Status ongkir berubah menjadi **"Terkonfirmasi"**
+- Notifikasi dikirim ke kasir
+
 ---
 
 ## 7. Tab "Riwayat" — Pengantaran yang Sudah Selesai
@@ -165,6 +176,7 @@ Di sini Anda bisa melihat semua pengantaran yang sudah Anda selesaikan.
 - **Dari Tanggal** — pilih tanggal mulai
 - **Sampai Tanggal** — pilih tanggal akhir
 - Klik tombol **X** (merah) untuk menghapus filter
+- Default: menampilkan semua riwayat (tanpa filter)
 
 ### Yang tampil di setiap kartu:
 
@@ -291,6 +303,7 @@ Notifikasi yang sudah Anda baca akan ditandai dan jumlahnya di icon lonceng akan
 | 🔄 **Siap Antar** | Dapur sudah selesai memasak, pesanan siap diantar | 📦 Tersedia |
 | 🛵 **Dalam Perjalanan** | Anda sedang mengantar pesanan ke pelanggan | 🛵 Aktif |
 | 📬 **Telah Diantar** | Pesanan sudah sampai, menunggu setoran ke kasir | 🛵 Aktif (khusus COD) |
+| 🟡 **Belum Setor** | Pesanan sudah sampai, Anda belum setor uang ke kasir | 🕐 Riwayat |
 | ✅ **Selesai** | Pengantaran selesai | 🕐 Riwayat |
 
 ---
@@ -304,6 +317,9 @@ Notifikasi yang sudah Anda baca akan ditandai dan jumlahnya di icon lonceng akan
 5. **Tolak dengan alasan jelas** — Pilih alasan yang sesuai karena pelanggan, kasir, admin, dan manajer akan mendapat notifikasi penolakan Anda
 6. **Absen setiap hari** — Jangan lupa check-in saat tiba di kafe dan check-out saat pulang
 7. **Check-in harus di kafe** — Anda harus berada dalam radius 200 meter dari kafe untuk bisa check-in
+8. **Mitra Juru Masak** — Jika pesanan mengandung item mitra, lokasi mitra (dari data pendaftaran) ditampilkan di peta. Ambil pesanan di lokasi mitra sebelum mengantar ke pelanggan. Klik marker mitra untuk fokus peta
+9. **Kirim gambar di chat** — Anda bisa mengirim foto lokasi atau bukti pengantaran melalui fitur chat
+10. **Filter riwayat** — Gunakan filter tanggal di tab Riwayat untuk mencari pengantaran lama
 
 ---
 

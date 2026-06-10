@@ -22,20 +22,22 @@ Ada 2 cara untuk masuk ke aplikasi ARQA Coffee sebagai Kasir:
 | ----- | ----------------- | -------- |
 | Kasir | kasir@arqa.coffee | kasir123 |
 
+> **💡 Kredensial login untuk role lain:** Admin (admin@arqa.coffee / admin123), Manager (manager@arqa.coffee / manager123), Koki (dapur@arqa.coffee / dapur123), Kurir (kurir@arqa.coffee / kurir123), Pelayan (waiter@arqa.coffee / waiter123), Pelanggan (customer@arqa.coffee / customer123), Playground (playground@arqa.coffee / playground123), Mitra Juru Masak (mitra@arqa.coffee / mitra123).
+
 ---
 
 ## 2. Navigasi dan Tampilan Utama
 
-Setelah berhasil masuk, Anda akan melihat 5 tab di **bottom nav** (bagian bawah layar):
+Setelah berhasil masuk, Anda akan melihat **6 tab** di **bottom nav** (bagian bawah layar):
 
-| Tab          | Icon | Label            | Fungsi                                                            |
-| ------------ | ---- | ---------------- | ----------------------------------------------------------------- |
-| Buat Pesanan |      | **Buat Pesanan** | Membuat pesanan baru secara manual atau mengedit pesanan yang ada |
-| Pesanan      | 📋   | **Pesanan**      | Melihat & mengelola semua pesanan masuk                           |
-| Bayar        | 💳   | **Bayar**        | Memproses pembayaran & riwayat lunas                              |
-| Laporan      | 📊   | **Laporan**      | Rekap harian, statistik, grafik revenue                           |
-| Meja         | 🪑   | **Meja**         | Kelola data meja & cetak QR                                       |
-| Profil       | 👤   | **Profil**       | Lihat data diri, absensi, keluar                                  |
+| Tab          | Icon              | Label            | Fungsi                                                            |
+| ------------ | ----------------- | ---------------- | ----------------------------------------------------------------- |
+| Buat Pesanan | 🍽️                | **Buat Pesanan** | Membuat pesanan baru secara manual atau mengedit pesanan yang ada |
+| Pesanan      | 📋                | **Pesanan**      | Melihat & mengelola semua pesanan masuk                           |
+| Bayar        | 💳                | **Bayar**        | Memproses pembayaran & riwayat lunas                              |
+| Laporan      | 📊                | **Laporan**      | Rekap harian, statistik, grafik revenue                           |
+| Meja         | 🪑                | **Meja**         | Kelola data meja & cetak QR                                       |
+| Profil       | 👤                | **Profil**       | Lihat data diri, absensi, keluar                                  |
 
 **Notifikasi Lonceng:** Di pojok kanan atas terdapat icon lonceng dengan badge merah jika ada notifikasi baru.
 
@@ -129,10 +131,21 @@ Setiap kartu menampilkan:
 **Pesanan hanya bisa diedit jika status masih "Menunggu".**
 
 1. Klik tombol **"Edit"** pada kartu pesanan
-2. Item-item pesanan akan dimuat ke **keranjang kasir**
-3. Anda akan dialihkan ke tampilan **Buat Pesanan** dengan data pesanan yang sudah terisi
-4. Ubah item, jumlah, atau informasi lainnya
-5. Klik **"Proses Pesanan"** dan simpan perubahan
+2. Item-item pesanan akan dimuat ke **keranjang kasir** (`State.cashierCart`)
+3. ID pesanan yang diedit disimpan sebagai `State.editingOrderId`
+4. Anda akan dialihkan ke tampilan **Buat Pesanan** dengan data pesanan yang sudah terisi:
+   - Nama pelanggan terisi sesuai data sebelumnya
+   - Item-item pesanan muncul di keranjang
+5. Ubah item, jumlah, atau informasi lainnya
+6. Klik **"Proses Pesanan"**
+7. Jika **meja berubah**:
+   - Meja lama dibebaskan (jika tidak ada pesanan lain)
+   - Meja baru diisi
+8. Data pesanan diperbarui: nama pelanggan, meja, tipe, total, item
+9. Item-item direset ke status **pending**
+10. Kembali ke tab **Pesanan**
+
+> **💡 Saat mengedit, keranjang kasir digunakan (bukan keranjang pelanggan). Status pesanan tetap "Menunggu" selama diedit.**
 
 ### 3.7 Menyelesaikan Pesanan (Selesai)
 
@@ -248,7 +261,39 @@ Saat klik **"Bayar"** dari tab Pesanan, muncul modal yang menampilkan:
   - **Tunai** — proses pembayaran tunai
   - **Cetak Invoice** — cetak struk saja (tanpa bayar)
 
-### 4.5 Riwayat Lunas
+### 4.5 Pembayaran Mitra (Payout Mitra Juru Masak)
+
+Di tab **Bayar**, Anda juga akan melihat daftar **pembayaran Mitra Juru Masak** yang menunggu settlement.
+
+Setiap kartu mitra payout menampilkan:
+- Nama mitra
+- Nomor pesanan terkait
+- Jumlah yang harus dibayarkan ke mitra (setelah potong pajak & fee)
+- Status: 🟡 **Belum Dibayar** atau 🟢 **Sudah Dibayar**
+
+**Cara menyetorkan pendapatan mitra:**
+1. Klik **"Bayar"** pada kartu payout mitra
+2. Konfirmasi pembayaran
+3. Status berubah menjadi **"Dibayar"**
+4. Otomatis tercatat sebagai **pengeluaran** (kategori: Mitra)
+5. Notifikasi dikirim ke mitra, admin, dan manager
+
+> **💡 Payout mitra adalah dana yang harus Anda setorkan ke Mitra Juru Masak setelah pesanan mereka dibayar pelanggan.**
+
+### 4.6 Pembayaran Ongkir Kurir
+
+Untuk pesanan **Delivery** yang sudah selesai, kurir akan mengkonfirmasi penerimaan biaya ongkos kirim. Sebagai kasir, Anda perlu menyelesaikan pembayaran ongkir:
+
+1. Kurir mengklik **"Konfirmasi Ongkir"** di aplikasi mereka
+2. Di tab **Bayar**, akan muncul notifikasi ongkir yang perlu dibayar
+3. Klik tombol **"Bayar Ongkir"** pada kartu pesanan terkait
+4. Ongkir tercatat sebagai **pengeluaran** (kategori Operasional)
+5. Status ongkir berubah menjadi **"Dibayar"**
+6. Notifikasi dikirim ke kurir
+
+Anda juga bisa mencetak invoice ongkir dengan tombol **"Cetak Invoice Ongkir"**.
+
+### 4.7 Riwayat Lunas
 
 Bagian collapsible yang bisa dibuka/tutup. Menampilkan 20 transaksi lunas terakhir.
 
@@ -360,11 +405,12 @@ Saat tombol **"Simpan Perubahan"** diklik:
 
 Tab **Laporan** menampilkan rekap harian kasir.
 
-### 6.1 Filter Tanggal
+### 6.1 Filter Tanggal & Pencarian
 
 - Input **"Dari Tanggal"** dan **"Sampai Tanggal"**
 - Default: hari ini
 - Tombol **X** (merah) untuk mereset filter
+- **Search Bar** — cari berdasarkan nama pelanggan atau ID pesanan (menggunakan `State.cashierSearchQuery`)
 
 ### 6.2 Stat Cards (4 Kartu)
 

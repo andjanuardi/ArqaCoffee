@@ -22,6 +22,8 @@ Ada 2 cara untuk masuk ke aplikasi ARQA Coffee sebagai Juru Masak:
 |------|-------|----------|
 | Juru Masak | dapur@arqa.coffee | dapur123 |
 
+> **💡 Catatan:** Juru Masak hanya melihat item menu **milik kafe** (bukan milik Mitra Juru Masak). Item dari mitra ditangani oleh mitra masing-masing.
+
 ---
 
 ## 2. Navigasi dan Tampilan Utama
@@ -47,6 +49,7 @@ Tab **Antrian** adalah halaman utama kerja Juru Masak. Semua item yang perlu dim
 Pesanan hanya muncul jika:
 1. **Kasir sudah menerima** pesanan (klik "Terima")
 2. Status pesanan masih: **Menunggu**, **Dimasak**, atau **Siap Saji**
+3. **Hanya item milik kafe** — item dari Mitra Juru Masak (`submitted_by` terisi) **tidak muncul** di antrian ini. Mitra memiliki antrian sendiri
 
 ### Yang Ditampilkan:
 
@@ -157,6 +160,8 @@ Anda bisa menolak pesanan yang bermasalah, asalkan statusnya masih **"Menunggu"*
 - Jika pesanan **dine-in** dan meja tersebut tidak punya pesanan lain, meja akan kembali **tersedia**
 - Notifikasi dikirim ke **Pelanggan** dan **Kasir**
 - Pesanan masuk ke tab **Riwayat** dengan badge merah "Ditolak"
+
+> **💡 Perbedaan dengan Mitra Juru Masak:** Jika Mitra menolak item, hanya item mereka yang ditolak — item kafe tetap diproses. Namun jika Juru Masak (kafe) menolak, **seluruh pesanan** dibatalkan.
 
 > ⚠️ **Pesanan tidak bisa ditolak** jika sudah ada item yang berstatus "Dimasak" atau "Siap".
 

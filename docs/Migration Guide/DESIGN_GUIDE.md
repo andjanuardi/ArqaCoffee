@@ -56,7 +56,10 @@
 | Cashier | `#27AE60` — green |
 | Kitchen | `#E07A3A` — orange |
 | Courier | `#9B59B6` — purple |
+| Waiter | `#F39C12` — yellow |
 | Customer | `#1ABC9C` — teal |
+| Playground | `#E91E63` — pink |
+| Mitra Juru Masak | `#8BC34A` — lime green |
 
 ---
 
@@ -504,7 +507,10 @@ When user prefers reduced motion:
 | Cashier | `cash-register` |
 | Kitchen | `fire-burner` |
 | Courier | `motorcycle` |
+| Waiter | `bell-concierge` |
 | Customer | `user` |
+| Playground | `children` or `gamepad` |
+| Mitra Juru Masak | `handshake` or `fire-burner` |
 | App logo | `mug-hot` |
 
 ### 8.3 Action Icons
@@ -561,11 +567,14 @@ When user prefers reduced motion:
 | Role | Tabs (icon sequence) |
 |---|---|
 | Customer | `utensils` / `shopping-bag` / `receipt` / `user` |
+| Waiter | `utensils` / `shopping-bag` / `receipt` / `user` |
 | Cashier | `clipboard-list` / `credit-card` / `chart-bar` / `table-cells` / `user` |
 | Kitchen | `fire-burner` / `clock-rotate-left` / `user` |
 | Courier | `box` / `route` / `clock-rotate-left` / `user` |
 | Admin | `gauge-high` / `tags` / `calendar-check` / `user` |
 | Manager | `gauge-high` / `tags` / `calendar-check` / `user` |
+| Playground | `ticket` / `chart-bar` / `warehouse` / `user` |
+| Mitra Juru Masak | `fire-burner` / `clock-rotate-left` / `utensils` / `chart-pie` / `user` |
 
 ---
 
@@ -679,7 +688,7 @@ When user prefers reduced motion:
 | Background | bg at 95% opacity, blur 20dp |
 | Top border | 1dp border |
 | Layout | Flex, space-around |
-| Tab count per role | Customer: 4, Cashier: 5, Kitchen: 3, Courier: 4, Admin: 4, Manager: 4 |
+| Tab count per role | Customer: 4, Waiter: 4, Cashier: 6, Kitchen: 3, Courier: 4, Admin: 4, Manager: 4, Playground: 4, Mitra Juru Masak: 5 |
 | Active indicator | primary color, icon scale 1.1 |
 | Notification dot | 8dp circle, danger, top-right |
 

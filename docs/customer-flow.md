@@ -14,6 +14,10 @@ Ada 4 cara untuk masuk ke aplikasi ARQA Coffee:
 
 ### 1.2 Masuk dengan Email & Password
 
+| Role     | Email                   | Password      |
+| -------- | ----------------------- | ------------- |
+| Pelanggan | customer@arqa.coffee   | customer123  |
+
 - Masukkan alamat email dan password Anda
 - Klik tombol **"Masuk"**
 - Jika email atau password salah, akan muncul notifikasi
@@ -47,7 +51,8 @@ Setelah berhasil masuk, Anda akan melihat halaman Menu:
 
 - **Cari menu** — ketik nama menu di kolom pencarian
 - **Filter kategori** — pilih: Semua, Kopi, Non-Kopi, Makanan, atau Snack
-- **Lihat promo** — carousel promo otomatis bergulir di bagian atas, klik untuk melihat detail
+- **Lihat promo** — carousel promo otomatis bergulir di bagian atas, klik untuk melihat detail promo — klik **"Gunakan Promo"** untuk memakainya
+- **Menu Mitra** — menu dari Mitra Juru Masak ditandai dengan badge nama bisnis (warna pink). Jika mitra sedang tidak check-in, menunya akan tampak **abu-abu** dan tidak bisa diklik
 - **Pakai promo** — klik **"Gunakan Promo"** untuk mendapatkan diskon
 
 ### Cara memesan menu:
@@ -56,7 +61,8 @@ Setelah berhasil masuk, Anda akan melihat halaman Menu:
 2. Akan muncul jendela detail yang menampilkan:
    - Gambar menu
    - Nama dan harga
-   - Diskon (jika ada promo aktif)
+   - Diskon (jika ada promo aktif) — harga diskon ditampilkan dengan coretan harga asli
+   - Badge pajak (jika item kena pajak)
    - Kolom catatan (misalnya: kurang gula, ekstra es)
    - Tombol untuk menambah/mengurangi jumlah
 3. Atur jumlah yang diinginkan
@@ -92,10 +98,12 @@ Klik tab **Keranjang** (icon tas) di bagian bawah untuk melihat pesanan Anda.
 - Klik **"Pesan Antar"**
 - Masukkan alamat lengkap di kolom yang tersedia
 - Klik **"Pilih Titik Lokasi"** untuk menandai lokasi di peta:
-  - Peta akan muncul, geser pin ke lokasi Anda
+  - Peta satellite akan muncul dengan marker yang bisa **digeser (draggable)**
+  - Geser pin ke lokasi Anda
   - Klik **"Simpan Lokasi"**
-  - Alamat akan otomatis terisi
+  - Alamat akan otomatis terisi, dan koordinat tersimpan
 - Isi **detail alamat** (opsional) untuk petunjuk tambahan bagi kurir, misalnya: "Depan rumah cat hijau"
+- Ongkos kirim akan dihitung otomatis berdasarkan **jarak dari kafe** ke lokasi Anda
 
 ### Pilih Cara Bayar:
 
@@ -103,8 +111,8 @@ Klik tab **Keranjang** (icon tas) di bagian bawah untuk melihat pesanan Anda.
 
 - Pilih metode: **QRIS**, **Transfer Bank**, atau **Tunai** (hanya untuk makan di tempat)
 - Setelah konfirmasi pesanan:
-  - **QRIS** — akan muncul kode QR yang bisa di-scan untuk membayar
-  - **Transfer Bank** — akan muncul nomor rekening BCA (1234567890 a.n. ARQA Coffee) untuk ditransfer
+  - **QRIS** — akan muncul **kode QR** yang bisa di-scan untuk membayar via aplikasi pembayaran
+  - **Transfer Bank** — akan muncul nomor rekening **BCA 1234567890 a.n. ARQA Coffee** untuk ditransfer
   - **Tunai** — bayar langsung ke kasir, pesanan akan langsung lunas setelah kasir menerima
 - Jika Anda belum memilih meja, akan muncul peringatan **"Silahkan memilih meja terlebih dahulu"** dan pemindai QR terbuka — modal konfirmasi tidak akan muncul
 - Klik **"Bayar & Proses Pesanan"**
@@ -114,6 +122,8 @@ Klik tab **Keranjang** (icon tas) di bagian bawah untuk melihat pesanan Anda.
 - Untuk makan di tempat: bayar langsung ke kasir
 - Untuk pesan antar: siapkan uang tunai (COD)
 - Klik **"Pesan Sekarang, Bayar Nanti"**
+
+> **💡 Untuk metode QRIS, Anda bisa menyimpan gambar QR code atau screenshot untuk dibayar nanti. Untuk Transfer, silakan transfer ke rekening yang ditampilkan lalu unggah bukti transfer jika diminta.
 
 ---
 
@@ -168,18 +178,27 @@ Klik kartu pesanan untuk melihat detail lengkap yang menampilkan:
 - Tombol **Cetak Invoice** (tidak untuk ditolak/dibatalkan)
 - Tombol **Bayar Sekarang** (jika belum bayar) atau **Batal Pesanan** (jika masih menunggu)
 
+### Filter Tanggal
+
+Di bagian atas tab Pesanan, terdapat filter tanggal untuk melihat pesanan pada hari tertentu. Default: menampilkan semua pesanan.
+
 ### Yang bisa Anda lakukan:
 
 **Batalkan Pesanan** (hanya untuk status **Menunggu**):
 
-- **Dibatalkan oleh Anda:** Klik **"Batal"** pada card pesanan, pilih alasan, klik **"Ya, Batalkan"**. Pesanan **tidak dihapus** — status diubah menjadi **"Dibatalkan"** dengan alasan tersimpan, dan muncul di riwayat. Admin & manajer mendapat notifikasi.
+- **Dibatalkan oleh Anda:** Klik **"Batal"** pada card pesanan atau di modal detail, pilih alasan dari dropdown:
+  - Tidak jadi pesan
+  - Pesanan duplikat
+  - Pesanan salah
+  - Stok bahan habis
+  - Lainnya... (ketik alasan sendiri)
+- Klik **"Ya, Batalkan"**. Pesanan **tidak dihapus** — status diubah menjadi **"Dibatalkan"** dengan alasan tersimpan, dan muncul di riwayat. Admin & manajer mendapat notifikasi.
 - **Dibatalkan oleh Kasir:** Jika kasir membatalkan pesanan Anda, akan muncul notifikasi di lonceng yang menyertakan alasan pembatalan
 
 **Bayar Sekarang:**
 
-- Klik card pesanan untuk melihat detail
-- Jika status masih **belum dibayar**, klik **"Bayar Sekarang"**
-- Akan muncul 3 pilihan metode pembayaran:
+- Jika status masih **belum dibayar**, klik **"Bayar Sekarang"** di modal detail pesanan
+- Akan muncul pilihan metode pembayaran:
   - **QRIS** — scan kode QR untuk membayar
   - **Transfer Bank** — transfer ke rekening BCA (1234567890 a.n. ARQA Coffee)
   - **Tunai** — bayar langsung (konfirmasi instan)
@@ -187,14 +206,16 @@ Klik kartu pesanan untuk melihat detail lengkap yang menampilkan:
 
 **Lacak Kurir** (untuk pesan antar yang sedang **Diantar**):
 
-- Klik **"Lacak Kurir"**
-- Peta akan menampilkan posisi kurir
+- Klik **"Lacak Kurir"** di card pesanan
+- Peta satellite akan menampilkan posisi kurir secara real-time
+- Marker kurir akan bergerak sesuai update posisi
 
 **Chat Kurir** (untuk pesan antar yang sedang **Diantar**):
 
-- Klik **"Chat Kurir"**
-- Kirim pesan teks atau gambar
-- Kurir akan mendapat notifikasi
+- Klik **"Chat Kurir"** di card pesanan
+- Kirim **pesan teks** atau **gambar** (klik icon kamera/gambar)
+- Pesan dari kurir muncul di sebelah kiri, pesan Anda di sebelah kanan
+- Kurir akan mendapat notifikasi saat Anda mengirim pesan
 
 **Cetak Invoice:**
 
@@ -210,8 +231,9 @@ Klik tab **Profil** (icon orang) di bagian bawah.
 
 ### Yang bisa Anda lakukan:
 
-- **Lihat data diri** — nama, email, nomor telepon
-- **Scan QR Meja** —快捷 memilih meja tanpa perlu ke halaman menu
+- **Lihat data diri** — nama, email, nomor telepon, alamat
+- **Edit Profil** — ubah nama, email, telepon, alamat, password
+- **Scan QR Meja** — arahkan kamera ke QR code di meja untuk langsung memilih meja tanpa perlu ke halaman menu
 - **Keluar** — klik **"Keluar"** untuk kembali ke halaman login
 
 ---
@@ -268,18 +290,20 @@ Di pojok kanan atas layar (di samping nama Anda) terdapat icon **lonceng**. Jika
 
 Klik icon lonceng untuk membuka panel notifikasi. Di dalamnya akan muncul daftar pemberitahuan seperti:
 
-| Kejadian                | Icon | Notifikasi yang Muncul                                                   |
-| ----------------------- | ---- | ------------------------------------------------------------------------ |
-| Pesanan berhasil dibuat | 🛎️   | "Pesanan #xf3b4 berhasil dibuat. Status: Menunggu"                       |
-| Pesanan mulai dimasak   | 🔔   | "Status pesanan #xf3b4 berubah menjadi Dimasak"                          |
-| Pesanan siap saji       | 🔔   | "Pesanan #xf3b4 sudah siap!"                                             |
-| Kurir mengambil pesanan | 🚚   | "Pesanan #xf3b4 sedang diantar oleh Kurir"                               |
-| Pesanan selesai         | ✅   | "Pesanan #xf3b4 selesai"                                                 |
-| Pesanan ditolak koki    | ❌   | "Pesanan #xf3b4 ditolak: {alasan}"                                       |
-| Pesanan ditolak kurir   | ⛔   | "Pesanan #xf3b4 ditolak Kurir — Alasan: {alasan}"                        |
-| Pesanan dibatalkan kasir | ❌   | "Pesanan #xf3b4 — Pesanan Anda dibatalkan oleh kasir. Alasan: {alasan}" |
-| Pembayaran diterima     | 💳   | "Pembayaran #xf3b4 sebesar RpXX via QRIS/Tunai berhasil"                 |
-| Ada pesan dari kurir    | 💬   | "Pesan baru dari Kurir untuk pesanan #xf3b4"                             |
+| Kejadian                      | Icon | Notifikasi yang Muncul                                                    |
+| ----------------------------- | ---- | ------------------------------------------------------------------------- |
+| Pesanan berhasil dibuat       | 🛎️   | "Pesanan #xf3b4 berhasil dibuat. Status: Menunggu"                        |
+| Pesanan mulai dimasak         | 🔔   | "Status pesanan #xf3b4 berubah menjadi Dimasak"                           |
+| Pesanan siap saji             | 🔔   | "Pesanan #xf3b4 sudah siap!"                                              |
+| Kurir mengambil pesanan       | 🚚   | "Pesanan #xf3b4 sedang diantar oleh Kurir"                                |
+| Pesanan selesai               | ✅   | "Pesanan #xf3b4 selesai"                                                  |
+| Pesanan ditolak koki          | ❌   | "Pesanan #xf3b4 ditolak: {alasan}"                                        |
+| Pesanan ditolak kurir         | ⛔   | "Pesanan #xf3b4 ditolak Kurir — Alasan: {alasan}"                         |
+| Pesanan dibatalkan kasir      | ❌   | "Pesanan #xf3b4 — Pesanan Anda dibatalkan oleh kasir. Alasan: {alasan}"  |
+| Pesanan dibatalkan pelanggan  | ❌   | "Pesanan Dibatalkan Pelanggan — #xf3b4 — Alasan: {alasan}"               |
+| Pembayaran diterima           | 💳   | "Pembayaran #xf3b4 sebesar RpXX via QRIS/Tunai berhasil"                  |
+| Ada pesan dari kurir          | 💬   | "Pesan baru dari Kurir untuk pesanan #xf3b4"                              |
+| Check-out staff               | 🚪   | "Check-out berhasil"                                                      |
 
 Notifikasi yang sudah Anda baca akan ditandai dan jumlahnya di icon lonceng akan berkurang. Panel notifikasi bisa ditutup dengan klik di luar panel atau klik icon lonceng lagi.
 
@@ -292,6 +316,11 @@ Notifikasi yang sudah Anda baca akan ditandai dan jumlahnya di icon lonceng akan
 - **Makan di tempat + Bayar Nanti** — jika Anda pesan lagi dari meja yang sama, pesanan akan digabung otomatis (tidak dibuat baru)
 - **Menu tidak ditemukan?** Coba ubah kata kunci pencarian atau filter kategori
 - **QR scan tidak jalan?** Anda bisa pilih meja secara manual dari daftar
+- **Lacak kurir di peta** — saat status "Diantar", Anda bisa lihat posisi kurir secara real-time
+- **Chat dengan kurir** — gunakan fitur chat untuk koordinasi alamat
+- **Pesanan delivery** — ongkos kirim dihitung otomatis berdasarkan jarak dari kafe
+- **Menu mitra tidak aktif** — jika menu mitra tampak abu-abu, berarti mitra sedang tidak check-in
+- **Filter tanggal pesanan** — gunakan filter tanggal di tab Pesanan untuk mencari pesanan lama
 
 ---
 
@@ -326,3 +355,15 @@ A: Ya. Klik card pesanan untuk melihat detail, lalu klik **"Cetak Invoice"**.
 
 **Q: Kenapa tagihan saya berbeda dari harga menu?**
 A: Tagihan akhir sudah termasuk **pajak 10%** dan **diskon promo** (jika ada). Cek rincian di halaman keranjang atau konfirmasi pesanan.
+
+**Q: Bagaimana cara membatalkan pesanan sendiri?**
+A: Klik **"Batal"** pada card pesanan yang masih berstatus **"Menunggu"**, pilih alasan, lalu klik **"Ya, Batalkan"**.
+
+**Q: Kenapa ada menu yang tampak abu-abu?**
+A: Menu tersebut berasal dari Mitra Juru Masak yang sedang tidak check-in. Menu akan aktif kembali saat mitra check-in.
+
+**Q: Bagaimana cara chat dengan kurir?**
+A: Setelah kurir mengambil pesanan (status **"Diantar"**), klik **"Chat Kurir"** di card pesanan.
+
+**Q: Bisaya saya melihat posisi kurir?**
+A: Ya. Klik **"Lacak Kurir"** pada pesanan yang sedang **"Diantar"** untuk melihat peta posisi kurir.
