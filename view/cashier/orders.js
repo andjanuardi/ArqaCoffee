@@ -250,7 +250,6 @@ function renderCashierOrders() {
               }
               ${o.status === "pending" && o.accepted ? `<span class="badge" style="background:rgba(46,204,113,.15);color:var(--success)">Diterima</span>` : ""}
               ${(o.status === "ready" || (o.status === "delivered" && o.order_type !== "delivery")) && o.payment_status === "unpaid" ? `<button onclick="event.stopPropagation();showPaymentModal('${o.id}')" class="btn-primary btn-sm">Bayar</button>` : ""}
-              ${(o.status === "ready" || (o.status === "delivered" && o.order_type !== "delivery")) && o.payment_status === "paid" ? `<button onclick="event.stopPropagation();confirmCompleteOrder('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
               ${o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery" ? `<button onclick="event.stopPropagation();settleDelivery('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#3498db,#2980b9)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran</button>` : ""}
               ${o.status === "delivered" && o.payment_status === "collected" && o.order_type === "dine-in" ? `<button onclick="event.stopPropagation();confirmSettleDineIn('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#27ae60,#1e8449)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran Waiter</button>` : ""}
             </div>
