@@ -769,6 +769,7 @@ function changeOrderTable(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o || o.status === "completed" || o.status === "cancelled" || o.status === "rejected") return;
   const currentTable = o.table_id ? getTable(o.table_id) : null;
+  syncTableStatus();
   showModal(`
     <div>
       <h3 class="font-display text-lg font-bold mb-2 text-center">Ubah Meja</h3>

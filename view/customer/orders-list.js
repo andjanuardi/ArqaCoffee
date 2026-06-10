@@ -269,6 +269,7 @@ function changeOrderTable(orderId) {
   const o = DB.orders.find((x) => x.id === orderId);
   if (!o) return;
   const currentTable = o.table_id ? getTable(o.table_id) : null;
+  syncTableStatus();
   showModal(`
     <div>
       <h3 class="font-display text-lg font-bold mb-2 text-center">Ganti Meja</h3>
