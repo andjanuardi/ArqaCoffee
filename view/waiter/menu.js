@@ -359,6 +359,7 @@ function placeWaiterOrder() {
     if (t) t.status = "occupied";
   }
   State.cart = [];
+  State.selectedTable = null;
   State.activePromoId = null;
   notifyOrderPlaced(order, "Waiters: " + State.currentUser.name);
   showToast(
@@ -421,6 +422,8 @@ function renderWaiterOrders() {
           <div class="mt-3 flex justify-end gap-2">
             ${o.status === "pending" ? `<button onclick="event.stopPropagation();cancelOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded-lg" style="color:var(--danger);background:rgba(231,76,60,.1)">Batal Pesanan</button>` : ""}
             ${o.status === "ready" && o.order_type === "dine-in" ? `<button onclick="event.stopPropagation();serveWaiterOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded-lg" style="color:#fff;background:var(--accent)"><i class="fas fa-utensils mr-1"></i>Antarkan</button>` : ""}
+            ${o.status === "delivered" && o.order_type === "dine-in" && o.payment_status === "unpaid" ? `<button onclick="event.stopPropagation();showWaiterPaymentModal('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded-lg" style="color:#fff;background:var(--accent)"><i class="fas fa-money-bill-wave mr-1"></i>Bayar</button>` : ""}
+            ${o.status === "delivered" && o.order_type === "dine-in" && o.payment_status === "collected" ? `<span class="text-xs font-bold px-3 py-1.5 rounded-lg" style="background:rgba(243,156,18,.1);color:var(--warning)"><i class="fas fa-clock mr-1"></i>Menunggu Setoran</span>` : ""}
             ${o.status === "delivered" && o.order_type === "dine-in" && o.payment_status === "paid" ? `<button onclick="event.stopPropagation();completeWaiterOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded-lg" style="color:#fff;background:var(--success)"><i class="fas fa-check mr-1"></i>Selesaikan</button>` : ""}
           </div>
         </div>`;
@@ -441,6 +444,92 @@ function serveWaiterOrder(orderId) {
   o.status = 'delivered';
   notifyStatusChange(o, 'delivered');
   showToast('Pesanan telah diantarkan ke meja', 'success');
+  render();
+}
+
+function showWaiterPaymentModal(orderId) {
+  const o = DB.orders.find((x) => x.id === orderId);
+  if (!o) return;
+  const t = o.table_id ? getTable(o.table_id) : null;
+  showModal(`
+    <div>
+      <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl" style="background:rgba(224,122,58,.1);color:var(--accent)">
+        <i class="fas fa-money-bill-wave"></i>
+      </div>
+      <h3 class="font-display text-lg font-bold mb-1 text-center">Pembayaran Meja ${t ? t.number : ''}</h3>
+      <p class="text-xs text-center mb-3" style="color:var(--muted)">#${o.id.slice(-5).toUpperCase()} — Total ${formatCurrency(o.total_amount)}</p>
+      <div class="p-3 rounded-xl mb-4 text-center" style="background:var(--bg2)">
+        <div class="text-xs" style="color:var(--muted)">Total Pembayaran</div>
+        <div class="font-bold text-xl" style="color:var(--accent)">${formatCurrency(o.total_amount)}</div>
+      </div>
+      <div class="grid grid-cols-3 gap-3 mb-3">
+        <div class="card text-center py-4 cursor-pointer" onclick="closeModal();processWaiterPayment('${o.id}','qris')" style="border-color:var(--accent)">
+          <i class="fas fa-qrcode text-xl mb-2" style="color:var(--accent)"></i>
+          <div class="text-sm font-semibold">QRIS</div>
+        </div>
+        <div class="card text-center py-4 cursor-pointer" onclick="closeModal();showWaiterTransfer('${o.id}')">
+          <i class="fas fa-university text-xl mb-2" style="color:var(--accent)"></i>
+          <div class="text-sm font-semibold">Transfer</div>
+        </div>
+        <div class="card text-center py-4 cursor-pointer" onclick="closeModal();waiterCollectCash('${o.id}')">
+          <i class="fas fa-money-bill text-xl mb-2" style="color:var(--success)"></i>
+          <div class="text-sm font-semibold">Tunai</div>
+        </div>
+      </div>
+      <button onclick="closeModal()" class="btn-secondary w-full text-center">Batal</button>
+    </div>
+  `);
+}
+
+function showWaiterTransfer(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  showModal(`
+    <div>
+      <h3 class="font-display text-lg font-bold mb-2 text-center">Transfer Bank</h3>
+      <p class="text-xs text-center mb-4" style="color:var(--muted)">Transfer ke rekening berikut</p>
+      <div class="card mb-4 space-y-3">
+        <div class="flex justify-between text-sm"><span style="color:var(--muted)">Bank</span><span class="font-semibold">BCA</span></div>
+        <div class="flex justify-between text-sm"><span style="color:var(--muted)">No. Rekening</span><span class="font-semibold">1234567890</span></div>
+        <div class="flex justify-between text-sm"><span style="color:var(--muted)">Atas Nama</span><span class="font-semibold">ARQA Coffee</span></div>
+        <div class="flex justify-between text-sm pt-2 border-t" style="border-color:var(--border)"><span style="color:var(--muted)">Total Transfer</span><span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeModal();processWaiterPayment('${o.id}','bank_transfer')" class="btn-primary btn-sm flex-1 text-center">Saya Sudah Transfer</button>
+        <button onclick="closeModal()" class="btn-sm flex-1 text-center" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">Batal</button>
+      </div>
+    </div>
+  `);
+}
+
+function processWaiterPayment(id, method) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  o.payment_status = "paid";
+  o.payment_method = method;
+  const label = method === "qris" ? "QRIS" : "Transfer Bank";
+  notifyPayment(o, label);
+  createMitraPayouts(id);
+  closeModal();
+  showToast(`Pembayaran #${o.id.slice(-5).toUpperCase()} berhasil (${label})`, "success");
+  render();
+}
+
+function waiterCollectCash(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  o.payment_status = "collected";
+  o.payment_method = "cash";
+  addNotification({
+    title: 'Setoran Waiter',
+    message: '#' + o.id.slice(-5).toUpperCase() + ' — Uang tunai sudah dikumpulkan waiter, silakan terima setoran',
+    type: 'payment',
+    icon: 'fa-hand-holding-dollar',
+    targetRoles: ['cashier', 'admin', 'manager'],
+    relatedOrderId: o.id
+  });
+  closeModal();
+  showToast(`Pembayaran tunai dikumpulkan — Setorkan ke kasir`, "success");
   render();
 }
 

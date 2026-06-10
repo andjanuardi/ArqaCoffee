@@ -175,7 +175,8 @@ function renderCashierOrders() {
   }
   const pending = DB.orders.filter((o) =>
     ["pending", "cooking", "ready", "delivering", "delivered"].includes(o.status)
-    && !(o.status === "delivered" && o.order_type === "delivery"),
+    && !(o.status === "delivered" && o.order_type === "delivery")
+    && o.payment_status !== "collected",
   );
   const mitraPending = getMitraPendingPayouts();
   return `
@@ -212,8 +213,8 @@ function renderCashierOrders() {
             <div>
               <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
               <span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>
-              <span class="badge ${o.payment_status === "paid" ? "badge-paid" : "badge-unpaid"} ml-1">${o.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span>
-              ${isDelivered ? `<span class="badge ml-1" style="background:rgba(52,152,219,.15);color:#3498db">Belum Setor</span>` : ""}
+              <span class="badge ${o.payment_status === "paid" ? "badge-paid" : o.payment_status === "collected" ? "" : "badge-unpaid"} ml-1">${o.payment_status === "paid" ? "Lunas" : o.payment_status === "collected" ? "Menunggu Setoran" : "Belum Bayar"}</span>
+              ${o.payment_status === "collected" && o.order_type === "dine-in" ? `<span class="badge ml-1" style="background:rgba(241,196,15,.15);color:#f1c40f">Dikumpulkan Waiter</span>` : isDelivered ? `<span class="badge ml-1" style="background:rgba(52,152,219,.15);color:#3498db">Belum Setor</span>` : ""}
             </div>
             <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
           </div>
@@ -247,10 +248,10 @@ function renderCashierOrders() {
                   : ""
               }
               ${o.status === "pending" && o.accepted ? `<span class="badge" style="background:rgba(46,204,113,.15);color:var(--success)">Diterima</span>` : ""}
-              ${o.status === "ready" && o.payment_status === "unpaid" ? `<button onclick="event.stopPropagation();showPaymentModal('${o.id}')" class="btn-primary btn-sm">Bayar</button>` : ""}
-              ${o.status === "ready" && o.payment_status === "paid" && o.order_type !== "delivery" ? `<button onclick="event.stopPropagation();confirmCompleteOrder('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
+              ${(o.status === "ready" || (o.status === "delivered" && o.order_type !== "delivery")) && o.payment_status === "unpaid" ? `<button onclick="event.stopPropagation();showPaymentModal('${o.id}')" class="btn-primary btn-sm">Bayar</button>` : ""}
+              ${(o.status === "ready" || (o.status === "delivered" && o.order_type !== "delivery")) && o.payment_status === "paid" ? `<button onclick="event.stopPropagation();confirmCompleteOrder('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
               ${o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery" ? `<button onclick="event.stopPropagation();settleDelivery('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#3498db,#2980b9)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran</button>` : ""}
-              ${o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "dine-in" ? `<button onclick="event.stopPropagation();cashierSettleDineIn('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#27ae60,#1e8449)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran Waiter</button>` : ""}
+              ${o.status === "delivered" && o.payment_status === "collected" && o.order_type === "dine-in" ? `<button onclick="event.stopPropagation();confirmSettleDineIn('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#27ae60,#1e8449)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran Waiter</button>` : ""}
             </div>
           </div>
         </div>`;
@@ -295,18 +296,46 @@ function renderCashierOrders() {
       </div>
     </div>` : ''}
       ${(() => {
-        const ongkirOrders = DB.orders.filter(o => {
+        const setoranOrders = DB.orders.filter(o => {
           if (o.ongkir_status !== "confirmed" && o.courier_id && o.shipping_cost > 0 && o.status === "completed" && o.payment_method !== "cod") return true;
           if (o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery" && o.shipping_cost > 0) return true;
           if (o.status === "delivered" && o.payment_status === "paid" && o.order_type === "delivery" && o.shipping_cost > 0) return true;
+          if (o.status === "delivered" && o.payment_status === "collected" && o.order_type === "dine-in") return true;
           return false;
         });
-        if (ongkirOrders.length === 0) return '<p class="text-sm text-center py-4" style="color:var(--muted)">Tidak ada bayar/terima setoran</p>';
-        return ongkirOrders.map(o => {
+        if (setoranOrders.length === 0) return '<p class="text-sm text-center py-4" style="color:var(--muted)">Tidak ada bayar/terima setoran</p>';
+        return setoranOrders.map(o => {
           const kurir = getUser(o.courier_id);
           const netOngkir = o.shipping_cost - calcCourierFee(o.shipping_cost);
           const isDeliveredOngkir = o.status === "delivered" && o.order_type === "delivery";
           const isUnpaidDelivery = isDeliveredOngkir && o.payment_status === "unpaid";
+          const isCollectedDineIn = o.status === "delivered" && o.payment_status === "collected" && o.order_type === "dine-in";
+          if (isCollectedDineIn) {
+            const t = o.table_id ? getTable(o.table_id) : null;
+            const waiter = o.waiter_id ? getUser(o.waiter_id) : null;
+            return `
+        <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showCashierActiveOrderDetail('${o.id}')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
+              <span class="badge ml-1" style="background:rgba(241,196,15,.15);color:#f1c40f">Menunggu Setoran</span>
+              <span class="badge ml-1" style="background:rgba(224,122,58,.1);color:var(--accent)"><i class="fas fa-user-tie mr-1"></i>${waiter ? waiter.name : '—'}</span>
+            </div>
+            <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
+          </div>
+          <div class="text-xs mb-2" style="color:var(--muted)">
+            <i class="fas fa-chair mr-1"></i>Dine-In${t ? ' — Meja ' + t.number : ''}${waiter ? ' — ' + waiter.name : ''}
+          </div>
+          <div class="text-xs mb-3">${(() => {
+            const names = o.items.map(i => { const mi = getMenuItem(i.menu_item_id); return mi ? mi.name + " x" + i.quantity : ""; }).filter(Boolean);
+            return names.length <= 3 ? names.join(", ") : names.slice(0, 3).join(", ") + ' <span style="color:var(--muted)">+' + (names.length - 3) + ' lainnya</span>';
+          })()}</div>
+          <div class="flex justify-between items-center">
+            <span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
+            <button onclick="event.stopPropagation();confirmSettleDineIn('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#27ae60,#1e8449)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran Waiter</button>
+          </div>
+        </div>`;
+          }
           if (isUnpaidDelivery) {
             return `
         <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showCashierActiveOrderDetail('${o.id}')">
@@ -670,8 +699,8 @@ function showCashierActiveOrderDetail(id) {
     ${isDeliverOrder ? `
     ${o.payment_status === 'unpaid' ? `<button onclick="closeModal();printOngkirInvoice('${o.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak</button>` : `<button onclick="closeModal();printCashierInvoice('${o.id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak</button>`}
     ` : `
-    ${o.status === "ready" && o.payment_status === "unpaid" ? `<button onclick="closeModal();showPaymentModal('${o.id}')" class="btn-primary flex-1 text-center">Bayar</button>` : ""}
-    ${o.status === "ready" && o.payment_status === "paid" && o.order_type !== "delivery" ? `<button onclick="closeModal();confirmCompleteOrder('${o.id}')" class="btn-primary flex-1 text-center" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
+    ${(o.status === "ready" || (o.status === "delivered" && o.order_type !== "delivery")) && o.payment_status === "unpaid" ? `<button onclick="closeModal();showPaymentModal('${o.id}')" class="btn-primary flex-1 text-center">Bayar</button>` : ""}
+    ${(o.status === "ready" || (o.status === "delivered" && o.order_type !== "delivery")) && o.payment_status === "paid" ? `<button onclick="closeModal();confirmCompleteOrder('${o.id}')" class="btn-primary flex-1 text-center" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
     <button onclick="closeModal();printCashierInvoice('${o.id}')" class="btn-secondary flex-1 text-center"><i class="fas fa-print mr-1"></i>Cetak</button>
     `}
     <button onclick="closeModal()" class="btn-secondary flex-1 text-center">Tutup</button>

@@ -68,6 +68,34 @@ function settleDelivery(id) {
   render();
 }
 
+function confirmSettleDineIn(id) {
+  const o = DB.orders.find((x) => x.id === id);
+  if (!o) return;
+  const t = o.table_id ? getTable(o.table_id) : null;
+  const waiter = o.waiter_id ? getUser(o.waiter_id) : null;
+  showModal(`
+    <div>
+      <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl" style="background:rgba(39,174,96,.1);color:var(--success)">
+        <i class="fas fa-hand-holding-dollar"></i>
+      </div>
+      <h3 class="font-display text-lg font-bold mb-1 text-center">Terima Setoran Waiter</h3>
+      <p class="text-xs text-center mb-4" style="color:var(--muted)">Konfirmasi penerimaan setoran dari waiter</p>
+      <div class="p-3 rounded-xl mb-4" style="background:var(--bg2)">
+        <div class="flex justify-between text-sm mb-2"><span style="color:var(--muted)">Pesanan</span><span class="font-semibold">#${o.id.slice(-5).toUpperCase()}</span></div>
+        ${t ? `<div class="flex justify-between text-sm mb-2"><span style="color:var(--muted)">Meja</span><span class="font-semibold">${t.number}</span></div>` : ""}
+        ${waiter ? `<div class="flex justify-between text-sm mb-2"><span style="color:var(--muted)">Waiter</span><span class="font-semibold">${waiter.name}</span></div>` : ""}
+        <div class="border-t pt-2 mt-2" style="border-color:var(--border)">
+          <div class="flex justify-between font-bold"><span>Total Setoran</span><span style="color:var(--accent)">${formatCurrency(o.total_amount)}</span></div>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="closeModal()" class="btn-secondary flex-1">Batal</button>
+        <button onclick="closeModal();cashierSettleDineIn('${o.id}')" class="btn-primary flex-1" style="background:linear-gradient(135deg,#27ae60,#1e8449)">Terima Setoran</button>
+      </div>
+    </div>
+  `);
+}
+
 function cashierSettleDineIn(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
