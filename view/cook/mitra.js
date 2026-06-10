@@ -93,7 +93,8 @@ function renderMitraHistory() {
           ${o.payment_status === 'paid' ? (() => {
             const payout = DB.mitraPayouts.find(p => p.order_id === o.id && p.mitra_name === State.currentUser.name);
             if (!payout) return '';
-            if (payout.status === 'paid') return '<span class="badge" style="background:rgba(39,174,96,.15);color:var(--success);font-size:9px"><i class="fas fa-check mr-0.5"></i>Dibayar</span>';
+            if (payout.status === 'confirmed') return '<span class="badge" style="background:rgba(39,174,96,.15);color:var(--success);font-size:9px"><i class="fas fa-check mr-0.5"></i>Dikonfirmasi</span>';
+            if (payout.status === 'paid') return '<span class="badge" style="background:rgba(52,152,219,.15);color:#3498db;font-size:9px"><i class="fas fa-clock mr-0.5"></i>Menunggu Konfirmasi</span>';
             return '<span class="badge" style="background:rgba(243,156,18,.15);color:#f39c12;font-size:9px"><i class="fas fa-clock mr-0.5"></i>Menunggu Setoran</span>';
           })() : ''}
         </div>
@@ -105,6 +106,11 @@ function renderMitraHistory() {
           <span class="text-xs" style="color:var(--muted)"><i class="far fa-clock mr-1"></i>${formatDate(o.created_at)} ${formatTime(o.created_at)}</span>
           <span class="text-sm font-semibold" style="color:var(--accent)">${formatCurrency(hTotal)}</span>
         </div>
+        ${o.payment_status === 'paid' ? (() => {
+          const payout = DB.mitraPayouts.find(p => p.order_id === o.id && p.mitra_name === State.currentUser.name);
+          if (!payout || payout.status !== 'paid') return '';
+          return `<button onclick="event.stopPropagation();confirmMitraPayoutReceipt('${o.id}')" class="btn-sm w-full mt-2 text-center" style="background:linear-gradient(135deg,var(--success),#1e8449);color:#fff;border:none;padding:8px;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px"><i class="fas fa-check mr-1"></i>Konfirmasi Terima Pembayaran</button>`;
+        })() : ''}
       </div>`;
       }).join('')}
     </div>
@@ -153,11 +159,18 @@ function showMitraOrderDetail(id) {
       const payout = DB.mitraPayouts.find(p => p.order_id === o.id && p.mitra_name === State.currentUser.name);
       if (!payout && o.payment_status === 'paid') return '';
       if (!payout) return '';
+      if (payout.status === 'confirmed') {
+        return `
+    <div class="flex justify-between items-center text-xs mt-2 p-2 rounded-lg" style="background:rgba(39,174,96,.1);border:1px solid rgba(39,174,96,.2)">
+      <span style="color:var(--success)"><i class="fas fa-check-circle mr-1"></i>Sudah Dikonfirmasi</span>
+      <span style="color:var(--muted)">${payout.paid_at ? formatDate(payout.paid_at) + ' ' + formatTime(payout.paid_at) : ''}</span>
+    </div>`;
+      }
       if (payout.status === 'paid') {
         const payer = payout.paid_by ? getUser(payout.paid_by) : null;
         return `
-    <div class="flex justify-between items-center text-xs mt-2 p-2 rounded-lg" style="background:rgba(39,174,96,.1);border:1px solid rgba(39,174,96,.2)">
-      <span style="color:var(--success)"><i class="fas fa-check-circle mr-1"></i>Sudah Dibayar Kasir</span>
+    <div class="flex justify-between items-center text-xs mt-2 p-2 rounded-lg" style="background:rgba(52,152,219,.1);border:1px solid rgba(52,152,219,.2)">
+      <span style="color:#3498db"><i class="fas fa-clock mr-1"></i>Dibayar Kasir — Menunggu Konfirmasi</span>
       <span style="color:var(--muted)">${payout.paid_at ? formatDate(payout.paid_at) + ' ' + formatTime(payout.paid_at) : ''}${payer ? ' — ' + payer.name : ''}</span>
     </div>`;
       }
@@ -189,7 +202,7 @@ function printMitraInvoice(id) {
   const biayaLayanan = calcMitraFee(itemsSubtotal);
   const pembayaranMitra = Math.max(0, itemsSubtotal - tax - biayaLayanan);
   const payout = DB.mitraPayouts.find(p => p.order_id === o.id && p.mitra_name === State.currentUser.name);
-  const payoutStatus = payout && payout.status === 'paid' ? 'Sudah Dibayar' : 'Menunggu Pembayaran';
+  const payoutStatus = payout && payout.status === 'confirmed' ? 'Sudah Dikonfirmasi' : payout && payout.status === 'paid' ? 'Sudah Dibayar' : 'Menunggu Pembayaran';
   const win = window.open('', '_blank');
   let payMethodLabel = 'Tunai';
   if (o.payment_method === 'qris') payMethodLabel = 'QRIS';
@@ -241,7 +254,7 @@ function printMitraInvoice(id) {
         <div style="margin-top:8px"><span>Pembayaran</span><span>${payMethodLabel}</span></div>
         <div><span>Status Bayar</span><span>${o.payment_status === 'paid' ? 'Lunas' : 'Belum Bayar'}</span></div>
       </div>
-      <div class="payout-status" style="color:${payout && payout.status === 'paid' ? '#27ae60' : '#f39c12'}">Pembayaran Mitra: ${payoutStatus}</div>
+      <div class="payout-status" style="color:${payout && (payout.status === 'paid' || payout.status === 'confirmed') ? '#27ae60' : '#f39c12'}">Pembayaran Mitra: ${payoutStatus}</div>
       ${o.delivery_address ? `<div class="divider"></div><p style="font-size:12px"><strong>Alamat:</strong> ${o.delivery_address}</p>` : ''}
       <div class="footer">Terima kasih atas kerja samanya</div>
       <script>window.print()</script>
@@ -278,7 +291,7 @@ function _renderMitraFinanceFor(mitraName) {
     .filter(ci => ci.order.payment_status === 'paid' && ci.order.status !== 'cancelled' && ci.order.status !== 'rejected')
     .forEach(ci => {
       const payout = DB.mitraPayouts.find(p => p.order_id === ci.order.id && p.mitra_name === mitraName);
-      const isPaid = payout && payout.status === 'paid';
+      const isPaid = payout && (payout.status === 'paid' || payout.status === 'confirmed');
       const target = isPaid ? paidTotals : pendingTotals;
       if (!target[ci.order.id]) {
         const mitraItems = ci.order.items.filter(i => i.claimed_by === mitraName);
@@ -548,7 +561,8 @@ function _renderMitraFinanceFor(mitraName) {
               ${(() => {
                 const payout = DB.mitraPayouts.find(p => p.order_id === o.id && p.mitra_name === mitraName);
                 if (!payout) return '';
-                if (payout.status === 'paid') return '<span class="badge" style="background:rgba(39,174,96,.15);color:var(--success);font-size:9px;margin-left:4px"><i class="fas fa-check mr-0.5"></i>Sudah Dibayar</span>';
+                if (payout.status === 'confirmed') return '<span class="badge" style="background:rgba(39,174,96,.15);color:var(--success);font-size:9px;margin-left:4px"><i class="fas fa-check mr-0.5"></i>Dikonfirmasi</span>';
+                if (payout.status === 'paid') return '<span class="badge" style="background:rgba(52,152,219,.15);color:#3498db;font-size:9px;margin-left:4px"><i class="fas fa-clock mr-0.5"></i>Menunggu Konfirmasi</span>';
                 return '<span class="badge" style="background:rgba(243,156,18,.15);color:#f39c12;font-size:9px;margin-left:4px"><i class="fas fa-clock mr-0.5"></i>Menunggu Pembayaran</span>';
               })()}
               <div class="text-[10px] mt-0.5" style="color:var(--muted)">${tableInfo || getOrderTypeName(o.order_type)}</div>
@@ -624,6 +638,53 @@ function mitraCheckOut() {
   if (!att) { showToast('Belum check-in hari ini', 'warning'); return; }
   att.check_out = new Date().toISOString();
   showToast('Check-out berhasil', 'success');
+  render();
+}
+
+function confirmMitraPayoutReceipt(orderId) {
+  const o = DB.orders.find(x => x.id === orderId);
+  if (!o) return;
+  const payout = DB.mitraPayouts.find(p => p.order_id === orderId && p.mitra_name === State.currentUser.name);
+  if (!payout || payout.status !== 'paid') return;
+  showModal(`
+    <div class="text-center">
+      <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl" style="background:rgba(39,174,96,.1);color:var(--success)">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h3 class="font-display text-lg font-bold mb-2">Konfirmasi Pembayaran</h3>
+      <p class="text-sm mb-1" style="color:var(--muted)">Anda akan mengkonfirmasi penerimaan pembayaran sebesar</p>
+      <p class="text-2xl font-bold mb-4" style="color:var(--success)">${formatCurrency(payout.amount)}</p>
+      <div class="p-3 rounded-xl mb-4 text-xs text-left" style="background:var(--bg2)">
+        <div class="flex justify-between mb-1"><span style="color:var(--muted)">Pesanan</span><span>#${o.id.slice(-5).toUpperCase()}</span></div>
+        <div class="flex justify-between mb-1"><span style="color:var(--muted)">Item</span><span>${formatCurrency(payout.total_items)}</span></div>
+        <div class="flex justify-between mb-1"><span style="color:var(--muted)">Pajak</span><span>-${formatCurrency(payout.tax)}</span></div>
+        <div class="flex justify-between"><span style="color:var(--muted)">Biaya Layanan</span><span>-${formatCurrency(payout.fee)}</span></div>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="closeModal()" class="btn-secondary flex-1">Batal</button>
+        <button onclick="processMitraPayoutConfirm('${orderId}')" class="btn-primary flex-1 text-center" style="background:linear-gradient(135deg,var(--success),#1e8449)"><i class="fas fa-check mr-1"></i>Ya, Konfirmasi</button>
+      </div>
+    </div>
+  `);
+}
+
+function processMitraPayoutConfirm(orderId) {
+  const o = DB.orders.find(x => x.id === orderId);
+  if (!o) return;
+  const payout = DB.mitraPayouts.find(p => p.order_id === orderId && p.mitra_name === State.currentUser.name);
+  if (!payout || payout.status !== 'paid') return;
+  payout.status = 'confirmed';
+  payout.confirmed_at = new Date().toISOString();
+  addNotification({
+    title: 'Pembayaran Dikonfirmasi Mitra',
+    message: payout.mitra_name + ' telah mengkonfirmasi penerimaan ' + formatCurrency(payout.amount) + ' — #' + o.id.slice(-5).toUpperCase(),
+    type: 'payment',
+    icon: 'fa-check-circle',
+    targetRoles: ['cashier', 'admin', 'manager'],
+    relatedOrderId: o.id,
+  });
+  closeModal();
+  showToast('Pembayaran ' + formatCurrency(payout.amount) + ' berhasil dikonfirmasi', 'success');
   render();
 }
 
