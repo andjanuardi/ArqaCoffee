@@ -180,7 +180,6 @@ function renderCashierOrders() {
   );
   const mitraUnpaid = getMitraPendingPayouts();
   const mitraPendingConfirm = DB.mitraPayouts.filter(p => p.status === 'paid');
-  const mitraPayoutsToShow = [...mitraUnpaid, ...mitraPendingConfirm];
   return `
   <div class="animate-fade-up">
     <div class="flex justify-between items-center mb-4">
@@ -262,18 +261,18 @@ function renderCashierOrders() {
     </div>
     <h3 class="font-semibold text-sm mb-3 mt-6">Bayar / Terima Setoran</h3>
     <div class="space-y-3 mb-6">
-      ${mitraPayoutsToShow.length > 0 ? `
+      ${mitraUnpaid.length > 0 ? `
     <div class="card mb-4" style="border-color:rgba(232,67,147,.3)">
       <div class="flex items-center gap-3 mb-3">
         <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(232,67,147,.15);color:#e84393"><i class="fas fa-hat-chef"></i></div>
         <div class="flex-1">
-          <div class="font-semibold text-sm">Pembayaran Mitra ${mitraUnpaid.length > 0 ? `<span class="badge" style="background:rgba(232,67,147,.15);color:#e84393;font-size:10px">${mitraUnpaid.length} Menunggu</span>` : ''}</div>
+          <div class="font-semibold text-sm">Pembayaran Mitra <span class="badge" style="background:rgba(232,67,147,.15);color:#e84393;font-size:10px">${mitraUnpaid.length} Menunggu</span></div>
           <div class="text-xs" style="color:var(--muted)">Bayar pendapatan mitra juru masak yang sudah tersedia</div>
         </div>
         <button onclick="document.getElementById('mitra-payout-list').classList.toggle('hidden')" class="btn-secondary btn-sm" style="padding:6px 12px;font-size:12px"><i class="fas fa-chevron-down"></i></button>
       </div>
       <div id="mitra-payout-list" class="hidden space-y-2">
-        ${mitraPayoutsToShow.map(p => {
+        ${mitraUnpaid.map(p => {
           const o = DB.orders.find(x => x.id === p.order_id);
           return `
         <div class="p-3 rounded-xl cursor-pointer" style="background:var(--bg2)" onclick="showCashierMitraOrderDetail('${p.order_id}','${p.mitra_name}')">
@@ -282,7 +281,7 @@ function renderCashierOrders() {
               <span class="font-semibold text-sm">${p.mitra_name}</span>
               <span class="text-xs ml-2" style="color:var(--muted)">#${p.order_id.slice(-5).toUpperCase()}</span>
             </div>
-            <span class="font-bold text-sm" style="color:${p.status === 'unpaid' ? 'var(--success)' : '#3498db'}">${formatCurrency(p.amount)}</span>
+            <span class="font-bold text-sm" style="color:var(--success)">${formatCurrency(p.amount)}</span>
           </div>
           <div class="text-xs mb-2" style="color:var(--muted)">
             ${o ? `<i class="fas ${o.order_type === 'dine-in' ? 'fa-chair' : 'fa-motorcycle'} mr-1"></i>${getOrderTypeName(o.order_type)} — ${o.customer_name || '—'}` : ''}
@@ -292,13 +291,37 @@ function renderCashierOrders() {
             <span>Pajak: -${formatCurrency(p.tax)}</span>
             <span>Biaya: -${formatCurrency(p.fee)}</span>
           </div>
-          ${p.status === 'unpaid'
-            ? `<button onclick="event.stopPropagation();confirmPayMitraPayout('${p.id}')" class="btn-primary w-full text-center" style="font-size:13px"><i class="fas fa-hand-holding-dollar mr-1"></i>Bayar ${formatCurrency(p.amount)}</button>`
-            : `<div class="flex items-center justify-center gap-1 text-xs py-2.5 rounded-lg" style="background:rgba(52,152,219,.1);color:#3498db;font-weight:600"><i class="fas fa-clock mr-1"></i>Menunggu Konfirmasi Mitra</div>`
-          }
+          <button onclick="event.stopPropagation();confirmPayMitraPayout('${p.id}')" class="btn-primary w-full text-center" style="font-size:13px"><i class="fas fa-hand-holding-dollar mr-1"></i>Bayar ${formatCurrency(p.amount)}</button>
         </div>`;
         }).join('')}
       </div>
+    </div>` : ''}
+      ${mitraPendingConfirm.length > 0 ? `
+    <div class="space-y-3 mb-4">
+        ${mitraPendingConfirm.map(p => {
+          const o = DB.orders.find(x => x.id === p.order_id);
+          const payer = p.paid_by ? getUser(p.paid_by) : null;
+          return `
+        <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showCashierMitraOrderDetail('${p.order_id}','${p.mitra_name}')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <span class="font-semibold text-sm">${p.mitra_name}</span>
+              <span class="text-xs ml-2" style="color:var(--muted)">#${p.order_id.slice(-5).toUpperCase()}</span>
+            </div>
+            <span class="text-xs" style="color:var(--muted)">${p.paid_at ? formatTime(p.paid_at) : ''}</span>
+          </div>
+          <div class="text-xs mb-1" style="color:var(--muted)">
+            ${o ? `<i class="fas ${o.order_type === 'dine-in' ? 'fa-chair' : 'fa-motorcycle'} mr-1"></i>${getOrderTypeName(o.order_type)} — ${o.customer_name || '—'}` : ''}
+          </div>
+          <div class="text-xs mb-2" style="color:var(--muted)">
+            <i class="fas fa-user mr-1"></i>${payer ? payer.name : '—'} ${p.paid_at ? '• ' + formatDate(p.paid_at) : ''}
+          </div>
+          <div class="flex justify-between items-center pt-2" style="border-top:1px solid var(--border)">
+            <span class="badge" style="background:rgba(52,152,219,.15);color:#3498db;font-size:10px"><i class="fas fa-clock mr-0.5"></i>Menunggu Konfirmasi Mitra</span>
+            <span class="font-bold text-sm" style="color:#3498db">${formatCurrency(p.amount)}</span>
+          </div>
+        </div>`;
+        }).join('')}
     </div>` : ''}
       ${(() => {
         const setoranOrders = DB.orders.filter(o => {
@@ -948,6 +971,41 @@ function renderCashierPayment() {
       </div>`;
       }).join('')}
     </div>
+    ${(() => {
+      const confirmedPayouts = DB.mitraPayouts.filter(p => {
+        if (p.status !== 'confirmed') return false;
+        if (!p.confirmed_at) return false;
+        return new Date(p.confirmed_at).toLocaleDateString('sv-SE') === dateVal;
+      });
+      if (confirmedPayouts.length === 0) return '';
+      return `
+    <h3 class="font-semibold text-sm mb-3 mt-6">Pembayaran Mitra Dikonfirmasi</h3>
+    <div class="space-y-3">
+      ${confirmedPayouts.map(p => {
+        const o = DB.orders.find(x => x.id === p.order_id);
+        const payer = p.paid_by ? getUser(p.paid_by) : null;
+        return `
+      <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showCashierMitraOrderDetail('${p.order_id}','${p.mitra_name}')">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="font-semibold text-sm">${p.mitra_name}</span>
+            <span class="text-xs ml-2" style="color:var(--muted)">#${p.order_id.slice(-5).toUpperCase()}</span>
+          </div>
+          <span class="text-xs" style="color:var(--muted)">${p.confirmed_at ? formatTime(p.confirmed_at) : ''}</span>
+        </div>
+        <div class="text-xs mb-1" style="color:var(--muted)">
+          ${o ? `<i class="fas ${o.order_type === 'dine-in' ? 'fa-chair' : 'fa-motorcycle'} mr-1"></i>${getOrderTypeName(o.order_type)} — ${o.customer_name || '—'}` : ''}
+        </div>
+        <div class="text-xs mb-2" style="color:var(--muted)">
+          <i class="fas fa-user mr-1"></i>${payer ? payer.name : '—'} ${p.paid_at ? '• ' + formatDate(p.paid_at) : ''}
+        </div>
+        <div class="flex justify-between items-center pt-2" style="border-top:1px solid var(--border)">
+          <span class="badge" style="background:rgba(39,174,96,.15);color:var(--success);font-size:10px"><i class="fas fa-check-circle mr-0.5"></i>Selesai</span>
+          <span class="font-bold text-sm" style="color:var(--success)">${formatCurrency(p.amount)}</span>
+        </div>
+      </div>`;
+      }).join('')}
+    </div>`; })()}
   </div>`;
 }
 
@@ -991,9 +1049,9 @@ function showCashierMitraOrderDetail(orderId, mitraName) {
     ${biayaLayanan > 0 ? `<div class="flex justify-between text-xs mb-1"><span style="color:var(--muted)"><i class="fas fa-hand-holding-dollar mr-1"></i>Biaya Layanan</span><span style="color:var(--muted)">${formatCurrency(biayaLayanan)}</span></div>` : ''}
     <div class="flex justify-between font-bold text-sm mt-2"><span>Total Pembayaran Mitra</span><span style="color:var(--accent)">${formatCurrency(pembayaranMitra)}</span></div>
     ${payout ? `
-    <div class="flex justify-between items-center text-xs mt-2 p-2 rounded-lg" style="${payout.status === 'paid' ? 'background:rgba(39,174,96,.1);border:1px solid rgba(39,174,96,.2)' : 'background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.2)'}">
-      <span style="${payout.status === 'paid' ? 'color:var(--success)' : 'color:#f39c12'}"><i class="fas ${payout.status === 'paid' ? 'fa-check-circle' : 'fa-clock'} mr-1"></i>${payout.status === 'paid' ? 'Sudah Dibayar' : 'Menunggu Pembayaran'}</span>
-      ${payout.status === 'paid' && payout.paid_at ? `<span style="color:var(--muted)">${formatDate(payout.paid_at)} ${formatTime(payout.paid_at)}${payout.paid_by && getUser(payout.paid_by) ? ' — ' + getUser(payout.paid_by).name : ''}</span>` : ''}
+    <div class="flex justify-between items-center text-xs mt-2 p-2 rounded-lg" style="background:${payout.status === 'confirmed' ? 'rgba(39,174,96,.1)' : payout.status === 'paid' ? 'rgba(39,174,96,.1)' : 'rgba(243,156,18,.1)'};border:1px solid ${payout.status === 'confirmed' ? 'rgba(39,174,96,.2)' : payout.status === 'paid' ? 'rgba(39,174,96,.2)' : 'rgba(243,156,18,.2)'}">
+      <span style="color:${payout.status === 'confirmed' ? 'var(--success)' : payout.status === 'paid' ? 'var(--success)' : '#f39c12'}"><i class="fas ${payout.status === 'confirmed' ? 'fa-check-circle' : payout.status === 'paid' ? 'fa-check-circle' : 'fa-clock'} mr-1"></i>${payout.status === 'confirmed' ? 'Selesai' : payout.status === 'paid' ? 'Sudah Dibayar' : 'Menunggu Pembayaran'}</span>
+      ${(payout.status === 'confirmed' || payout.status === 'paid') && payout.paid_at ? `<span style="color:var(--muted)">${formatDate(payout.paid_at)} ${formatTime(payout.paid_at)}${payout.paid_by && getUser(payout.paid_by) ? ' — ' + getUser(payout.paid_by).name : ''}</span>` : ''}
     </div>` : ''}
   </div>
   <div class="flex gap-2 mt-4">
