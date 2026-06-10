@@ -84,6 +84,7 @@ function confirmRejectKitchenOrder(orderId) {
     // All items rejected → full order rejection
     o.status = "rejected";
     o.reject_reason = reason;
+    DB.mitraPayouts = DB.mitraPayouts.filter(p => p.order_id !== orderId || p.status === 'paid');
 
     if (o.order_type === "dine-in" && o.table_id) {
       const hasOtherOrders = DB.orders.some(

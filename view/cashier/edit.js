@@ -91,6 +91,7 @@ function confirmCancelCashierOrder(id) {
 
   o.status = "cancelled";
   o.reject_reason = reason;
+  DB.mitraPayouts = DB.mitraPayouts.filter(p => p.order_id !== id || p.status === 'paid');
   showToast("Pesanan berhasil dibatalkan", "success");
   closeModal();
   render();

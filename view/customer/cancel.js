@@ -81,6 +81,7 @@ function confirmCancelOrder(id) {
 
   o.status = "cancelled";
   o.reject_reason = "Dibatalkan Pelanggan: " + reason;
+  DB.mitraPayouts = DB.mitraPayouts.filter(p => p.order_id !== id || p.status === 'paid');
 
   addNotification({
     title: 'Pesanan Dibatalkan',

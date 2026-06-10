@@ -22,6 +22,7 @@ function confirmRejectCourierOrder(orderId) {
   o.courier_id = null;
   o.status = "rejected";
   o.reject_reason = "Ditolak Kurir: " + reason;
+  DB.mitraPayouts = DB.mitraPayouts.filter(p => p.order_id !== orderId || p.status === 'paid');
   notifyRejected(o, o.reject_reason);
   showToast("Pesanan ditolak", "info");
   closeModal();
