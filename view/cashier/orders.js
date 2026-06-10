@@ -106,7 +106,6 @@ function confirmCashierPayment(id, method) {
   o.payment_method = method;
   const label = method === "qris" ? "QRIS" : "Transfer Bank";
   notifyPayment(o, label);
-  createMitraPayouts(id);
   closeModal();
   showToast(`Pembayaran #${o.id.slice(-5).toUpperCase()} berhasil (${label})`, "success");
   render();

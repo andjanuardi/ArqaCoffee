@@ -188,6 +188,7 @@ function confirmOngkir(id) {
   const o = DB.orders.find((x) => x.id === id);
   if (!o) return;
   o.ongkir_status = "confirmed";
+  createMitraPayouts(id);
   if (o.shipping_cost > 0) {
     var kurir = getUser(o.courier_id);
     DB.expenses.push({
