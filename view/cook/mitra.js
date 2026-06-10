@@ -49,7 +49,7 @@ function renderMitraHistory() {
   const mitraMenuIds = DB.menuItems
     .filter(m => m.submitted_by === State.currentUser.name)
     .map(m => m.id);
-  let done = DB.orders.filter((o) => ["ready", "completed", "rejected"].includes(o.status));
+  let done = DB.orders.filter((o) => ["ready", "delivering", "delivered", "completed", "rejected"].includes(o.status));
   const dateFilter = State.mitraDateFilter || new Date().toLocaleDateString('sv-SE');
   if (dateFilter) {
     const s = new Date(dateFilter);
