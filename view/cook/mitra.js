@@ -291,7 +291,7 @@ function _renderMitraFinanceFor(mitraName) {
     .filter(ci => ci.order.payment_status === 'paid' && ci.order.status !== 'cancelled' && ci.order.status !== 'rejected')
     .forEach(ci => {
       const payout = DB.mitraPayouts.find(p => p.order_id === ci.order.id && p.mitra_name === mitraName);
-      const isPaid = payout && (payout.status === 'paid' || payout.status === 'confirmed');
+      const isPaid = payout && payout.status === 'confirmed';
       const target = isPaid ? paidTotals : pendingTotals;
       if (!target[ci.order.id]) {
         const mitraItems = ci.order.items.filter(i => i.claimed_by === mitraName);
@@ -302,11 +302,9 @@ function _renderMitraFinanceFor(mitraName) {
       }
     });
   const totalRevenue = Object.values(paidTotals).reduce((s, v) => s + v, 0);
-  const totalPending = Object.values(pendingTotals).reduce((s, v) => s + v, 0);
-  const totalOrders = new Set(claimItems.map(ci => ci.order.id)).size;
-  const totalHarga = claimItems.filter(ci => ci.order.payment_status === 'paid' && ci.order.status !== 'cancelled' && ci.order.status !== 'rejected').reduce((s, i) => s + (i.unit_price * i.quantity), 0);
-  const totalPengeluaran = totalHarga - totalRevenue - totalPending;
-  const pendingCount = Object.keys(pendingTotals).length;
+  const confirmedOrderIds = new Set(DB.mitraPayouts.filter(p => p.mitra_name === mitraName && p.status === 'confirmed').map(p => p.order_id));
+  const confirmedHarga = claimItems.filter(ci => confirmedOrderIds.has(ci.order.id)).reduce((s, i) => s + (i.unit_price * i.quantity), 0);
+  const confirmedPengeluaran = confirmedHarga - totalRevenue;
   return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Laporan Keuangan Mitra</h2>
@@ -319,11 +317,11 @@ function _renderMitraFinanceFor(mitraName) {
     <div class="grid grid-cols-3 gap-2 mb-4">
       <div class="stat-card text-center cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showMitraRevenueTable=!State.showMitraRevenueTable;State.showMitraExpenseTable=false;State.showMitraProfitTable=false;render()">
         <div class="text-xs" style="color:var(--muted)">Total Pendapatan</div>
-        <div class="text-sm font-bold mt-1" style="color:var(--warning)">${formatCurrency(totalHarga)}</div>
+        <div class="text-sm font-bold mt-1" style="color:var(--warning)">${formatCurrency(confirmedHarga)}</div>
       </div>
       <div class="stat-card text-center cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showMitraExpenseTable=!State.showMitraExpenseTable;State.showMitraRevenueTable=false;State.showMitraProfitTable=false;render()">
         <div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div>
-        <div class="text-sm font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalPengeluaran)}</div>
+        <div class="text-sm font-bold mt-1" style="color:var(--danger)">${formatCurrency(confirmedPengeluaran)}</div>
       </div>
       <div class="stat-card text-center cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showMitraProfitTable=!State.showMitraProfitTable;State.showMitraRevenueTable=false;State.showMitraExpenseTable=false;render()">
         <div class="text-xs" style="color:var(--muted)">Total Laba Bersih</div>
@@ -338,7 +336,7 @@ function _renderMitraFinanceFor(mitraName) {
         const o = ci.order;
         if (o.payment_status !== 'paid') return;
         if (paidOrderIds.has(o.id)) return;
-        const payout = DB.mitraPayouts.find(p => p.order_id === o.id && p.mitra_name === mitraName && p.status === 'paid');
+        const payout = DB.mitraPayouts.find(p => p.order_id === o.id && p.mitra_name === mitraName && p.status === 'confirmed');
         if (!payout) return;
         paidOrderIds.add(o.id);
         const mitraItems = o.items.filter(i => i.claimed_by === mitraName);
@@ -398,7 +396,7 @@ function _renderMitraFinanceFor(mitraName) {
       const orderMap = {};
       claimItems.forEach(ci => {
         if (ci.order.payment_status !== 'paid') return;
-        const payout = DB.mitraPayouts.find(p => p.order_id === ci.order.id && p.mitra_name === mitraName && p.status === 'paid');
+        const payout = DB.mitraPayouts.find(p => p.order_id === ci.order.id && p.mitra_name === mitraName && p.status === 'confirmed');
         if (!payout) return;
         orderMap[ci.order.id] = ci.order;
       });
@@ -457,7 +455,7 @@ function _renderMitraFinanceFor(mitraName) {
       const orderMap = {};
       claimItems.forEach(ci => {
         if (ci.order.payment_status !== 'paid') return;
-        const payout = DB.mitraPayouts.find(p => p.order_id === ci.order.id && p.mitra_name === mitraName && p.status === 'paid');
+        const payout = DB.mitraPayouts.find(p => p.order_id === ci.order.id && p.mitra_name === mitraName && p.status === 'confirmed');
         if (!payout) return;
         orderMap[ci.order.id] = ci.order;
       });
