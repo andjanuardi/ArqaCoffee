@@ -13,6 +13,7 @@ function loadDB() {
 
 function saveDB() {
   try {
+    DB._updatedAt = Date.now();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
   } catch (e) {}
 }
@@ -814,6 +815,8 @@ const DB =
       mitraPayouts: [],
     };
   })();
+
+if (!DB._updatedAt) DB._updatedAt = 0;
 
 if (!localStorage.getItem(STORAGE_KEY)) saveDB();
 

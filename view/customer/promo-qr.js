@@ -57,6 +57,7 @@ function applyPromo(promoId) {
 }
 
 function startQRScan() {
+  syncTableStatus();
   showModal(`
     <div class="text-center">
       <h3 class="font-display text-xl font-bold mb-2">Scan QR Code Meja</h3>
@@ -73,6 +74,7 @@ function startQRScan() {
               t,
             ) => `<button class="card text-center py-3 text-sm font-semibold ${t.status === "occupied" ? "opacity-40 cursor-not-allowed" : ""}" onclick="${t.status === "available" ? `selectTable('${t.id}')` : ""}" style="${t.status === "occupied" ? "pointer-events:none" : ""}">
           <i class="fas fa-chair mb-1" style="color:${t.status === "available" ? "var(--success)" : "var(--danger)"}"></i><br>${t.number}
+          ${t.status === "occupied" ? '<br><span style="font-size:9px;color:var(--danger)">Terisi</span>' : '<br><span style="font-size:9px;color:var(--success)">Kosong</span>'}
         </button>`,
           )
           .join("")}

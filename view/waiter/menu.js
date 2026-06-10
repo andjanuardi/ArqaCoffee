@@ -238,6 +238,7 @@ function renderWaiterEmptyCart() {
 }
 
 function showWaiterTableSelector() {
+  syncTableStatus();
   showModal(`
     <div class="text-center">
       <h3 class="font-display text-xl font-bold mb-2">Pilih Meja</h3>

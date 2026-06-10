@@ -130,4 +130,13 @@ function getOrderTypeName(t) { return t === 'dine-in' ? 'Dine-In' : t === 'takea
         function getMitraPaidPayouts() {
           return DB.mitraPayouts.filter(p => p.status === 'paid');
         }
+        function syncTableStatus() {
+          DB.tables.forEach(t => {
+            const hasActive = DB.orders.some(o =>
+              o.table_id === t.id &&
+              !['completed', 'cancelled', 'rejected'].includes(o.status)
+            );
+            t.status = hasActive ? 'occupied' : 'available';
+          });
+        }
 
