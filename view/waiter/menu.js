@@ -508,6 +508,17 @@ function processWaiterPayment(id, method) {
   if (!o) return;
   o.payment_status = "paid";
   o.payment_method = method;
+  o.status = "completed";
+  if (o.table_id) {
+    const hasOther = DB.orders.some(x =>
+      x.table_id === o.table_id && x.id !== o.id &&
+      !['completed', 'cancelled', 'rejected'].includes(x.status)
+    );
+    if (!hasOther) {
+      const t = getTable(o.table_id);
+      if (t) t.status = 'available';
+    }
+  }
   const label = method === "qris" ? "QRIS" : "Transfer Bank";
   notifyPayment(o, label);
   createMitraPayouts(id);
