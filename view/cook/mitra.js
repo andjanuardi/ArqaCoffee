@@ -656,7 +656,9 @@ function confirmMitraPayoutReceipt(orderId) {
         <div class="flex justify-between mb-1"><span style="color:var(--muted)">Pesanan</span><span>#${o.id.slice(-5).toUpperCase()}</span></div>
         <div class="flex justify-between mb-1"><span style="color:var(--muted)">Item</span><span>${formatCurrency(payout.total_items)}</span></div>
         <div class="flex justify-between mb-1"><span style="color:var(--muted)">Pajak</span><span>-${formatCurrency(payout.tax)}</span></div>
-        <div class="flex justify-between"><span style="color:var(--muted)">Biaya Layanan</span><span>-${formatCurrency(payout.fee)}</span></div>
+        <div class="flex justify-between mb-1"><span style="color:var(--muted)">Biaya Layanan</span><span>-${formatCurrency(payout.fee)}</span></div>
+        <div class="border-t pt-1 mt-1" style="border-color:var(--border)"></div>
+        <div class="flex justify-between font-semibold" style="color:var(--accent)"><span>Total</span><span>${formatCurrency(payout.amount)}</span></div>
       </div>
       <div class="flex gap-3">
         <button onclick="closeModal()" class="btn-secondary flex-1">Batal</button>
