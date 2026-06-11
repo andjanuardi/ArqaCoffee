@@ -1,0 +1,253 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id
+  name      String
+  email     String   @unique
+  password  String
+  role      String
+  phone     String
+  avatar    String?
+  address   String?
+  createdAt DateTime @default(now())
+}
+
+model Table {
+  id       String @id
+  number   String
+  qr_code  String
+  status   String
+  capacity Int
+}
+
+model MenuItem {
+  id             String  @id
+  name           String
+  description    String?
+  price          Float
+  category       String
+  image          String?
+  is_available   Boolean @default(true)
+  tax_percentage Float   @default(0)
+  submitted_by   String?
+}
+
+model Order {
+  id                String   @id
+  user_id           String
+  table_id          String?
+  order_type        String
+  status            String
+  total_amount      Float
+  shipping_cost     Float    @default(0)
+  payment_method    String?
+  payment_status    String   @default("unpaid")
+  delivery_address  String?
+  delivery_detail   String?
+  delivery_location String?  // JSON stringified lat/lng
+  customer_name     String?
+  accepted          Boolean?
+  promo_id          String?
+  promo_discount    Float    @default(0)
+  created_at        DateTime @default(now())
+  courier_id        String?
+  ongkir_status     String?
+
+  items OrderItem[]
+}
+
+model OrderItem {
+  id           String  @id @default(uuid())
+  order_id     String
+  menu_item_id String
+  quantity     Int
+  unit_price   Float
+  notes        String?
+  status       String?
+
+  order Order @relation(fields: [order_id], references: [id])
+}
+
+model StockItem {
+  id               String   @id
+  name             String
+  unit             String
+  current_quantity Float
+  min_quantity     Float
+  updated_at       DateTime @default(now())
+  price            Float    @default(0)
+}
+
+model StockMovement {
+  id            String   @id
+  stock_item_id String
+  user_id       String
+  type          String
+  quantity      Float
+  notes         String?
+  created_at    DateTime @default(now())
+}
+
+model Attendance {
+  id        String    @id
+  user_id   String
+  check_in  DateTime
+  check_out DateTime?
+  lat       Float?
+  lng       Float?
+  status    String
+}
+
+model CourierTracking {
+  id          String   @id
+  order_id    String
+  courier_id  String
+  latitude    Float
+  longitude   Float
+  recorded_at DateTime @default(now())
+}
+
+model Cafe {
+  id      String @id @default("1")
+  address String
+  lat     Float
+  lng     Float
+  rates   String // JSON stringified rates object
+  shipping String // JSON stringified shipping config
+}
+
+model Promo {
+  id             String   @id
+  code           String
+  title          String
+  icon           String
+  color          String
+  desc           String
+  discount_type  String
+  discount_value Float
+  start_date     String
+  end_date       String
+  menu_ids       String   // JSON array of strings
+  image          String?
+  terms          String   // JSON array of strings
+  is_active      Boolean  @default(true)
+}
+
+model DailySale {
+  id      String @id @default(uuid())
+  date    String @unique
+  revenue Float
+  orders  Int
+}
+
+model Expense {
+  id        String @id
+  date      String
+  category  String
+  amount    Float
+  note      String?
+  volume    Float
+  unit      String
+  unitPrice Float
+}
+
+model PlaygroundTicket {
+  id              String   @id
+  user_id         String
+  customer_name   String
+  children        String   // JSON string
+  companions      String   // JSON string
+  companion_count Int
+  socks_per_child String   // JSON string
+  socks_total     Float
+  hours           Int
+  start_time      String
+  end_time        String
+  subtotal        Float
+  items_total     Float
+  total_amount    Float
+  payment_status  String
+  payment_method  String?
+  status          String
+  created_at      DateTime @default(now())
+  
+  items PlaygroundTicketItem[]
+  transactions PgTransaction[]
+}
+
+model PlaygroundTicketItem {
+  id           String @id @default(uuid())
+  ticket_id    String
+  menu_item_id String
+  name         String
+  quantity     Int
+  unit_price   Float
+
+  ticket PlaygroundTicket @relation(fields: [ticket_id], references: [id])
+}
+
+model PgTransaction {
+  id          String @id
+  ticket_id   String
+  type        String
+  description String
+  amount      Float
+  method      String
+  created_at  String
+
+  ticket PlaygroundTicket @relation(fields: [ticket_id], references: [id])
+}
+
+model PgStockItem {
+  id               String   @id
+  name             String
+  category         String
+  unit             String
+  current_quantity Float
+  min_quantity     Float
+  price            Float
+  image            String?
+  updated_at       String
+}
+
+model PgStockMovement {
+  id            String   @id
+  stock_item_id String
+  user_id       String
+  type          String
+  quantity      Float
+  notes         String?
+  created_at    String
+}
+
+model MitraPayout {
+  id          String   @id
+  order_id    String
+  mitra_name  String
+  total_items Float
+  fee         Float
+  tax         Float
+  amount      Float
+  status      String
+  created_at  String
+  paid_at     String?
+  paid_by     String?
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  user_id     String?  // Jika ditujukan untuk user tertentu
+  target_role String?  // Jika ditujukan untuk role tertentu (misal: "kitchen", "cashier")
+  title       String
+  message     String
+  is_read     Boolean  @default(false)
+  created_at  DateTime @default(now())
+}
+
