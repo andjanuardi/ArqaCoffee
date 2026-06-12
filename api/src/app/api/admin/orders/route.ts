@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { broadcast } from '@/lib/ws-emitter'
 
 export async function GET() {
   try {
@@ -58,6 +59,11 @@ export async function POST(req: Request) {
         } : undefined
       },
       include: { items: true }
+    })
+    broadcast({
+      type: 'new_order',
+      payload: { orderId: order.id, customerName: order.customer_name || 'Walk-in' },
+      targetRoles: ['cashier', 'admin', 'manager', 'kitchen']
     })
     return NextResponse.json(order, { status: 201 })
   } catch (error) {

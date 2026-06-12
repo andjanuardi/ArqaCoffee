@@ -10,6 +10,7 @@ const PUBLIC_PATHS = [
 
 const PUBLIC_PREFIXES = [
   '/api/auth/register/', // covers /api/auth/register/mitra
+  '/api/ws/',            // internal WebSocket broadcast
 ]
 
 const CORS_HEADERS = {

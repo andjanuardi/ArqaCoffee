@@ -191,7 +191,7 @@ async function placeOrder() {
           existingOrder.status = "pending";
         }
 
-        await api.put('/orders/' + existingOrder.id, existingOrder);
+        await API.updateOrder(existingOrder.id, existingOrder);
         State.cart = [];
         if (btn) hideBtnSpinner(btn);
         notifyOrderPlaced(existingOrder, State.currentUser.name);

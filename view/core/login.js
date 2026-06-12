@@ -93,6 +93,7 @@ async function quickLogin(role) {
       State.mitraPositions[res.user.name] = res.user.mitra_position;
     }
     sessionStorage.setItem('arqa_session', JSON.stringify({ userId: res.user.id, userRole: res.user.role, currentTab: State.currentTab }));
+    if (typeof WS !== 'undefined') WS.identify();
     await render();
     showToast('Selamat datang, ' + res.user.name + '!', 'success');
   } catch (err) {
@@ -133,6 +134,7 @@ async function handleLogin() {
       State.mitraPositions[res.user.name] = res.user.mitra_position;
     }
     sessionStorage.setItem('arqa_session', JSON.stringify({ userId: res.user.id, userRole: res.user.role, currentTab: State.currentTab }));
+    if (typeof WS !== 'undefined') WS.identify();
     await render();
     showToast('Selamat datang, ' + res.user.name + '!', 'success');
   } catch (err) {

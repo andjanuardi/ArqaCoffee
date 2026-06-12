@@ -463,72 +463,7 @@ async function main() {
   // ──────────────────────────────────────────────
   // Notifications
   // ──────────────────────────────────────────────
-  const sampleNotifs = [
-    {
-      id: 'notif_seed_1',
-      target_role: 'admin',
-      target_roles: JSON.stringify(['admin', 'manager']),
-      title: 'Selamat Datang di ARQA Coffee',
-      message: 'Sistem manajemen ARQA Coffee siap digunakan',
-      type: 'info',
-      icon: 'fa-bell',
-      read: JSON.stringify({}),
-      created_at: new Date(),
-    },
-    {
-      id: 'notif_seed_2',
-      target_role: 'cashier',
-      target_roles: JSON.stringify(['cashier', 'admin', 'manager']),
-      title: 'Pesanan Baru Demo',
-      message: '#DEMO01 — Pelanggan demo memesan 3 item',
-      type: 'order',
-      icon: 'fa-shopping-bag',
-      related_order_id: null,
-      read: JSON.stringify({}),
-      created_at: new Date(),
-    },
-    {
-      id: 'notif_seed_3',
-      target_role: 'kitchen',
-      target_roles: JSON.stringify(['kitchen']),
-      title: 'Pesanan Masuk Dapur',
-      message: '#DEMO01 — 3 item perlu dimasak',
-      type: 'order',
-      icon: 'fa-fire',
-      read: JSON.stringify({}),
-      created_at: new Date(),
-    },
-    {
-      id: 'notif_seed_4',
-      target_role: 'manager',
-      target_roles: JSON.stringify(['manager', 'admin']),
-      title: 'Stok Rendah',
-      message: 'Biji Kopi Arabika tersisa 2 kg (min: 5 kg)',
-      type: 'stock',
-      icon: 'fa-exclamation-triangle',
-      read: JSON.stringify({}),
-      created_at: new Date(),
-    },
-    {
-      id: 'notif_seed_5',
-      target_role: 'admin',
-      target_roles: JSON.stringify(['admin']),
-      title: 'Sistem Siap',
-      message: 'Seed database berhasil, semua model tersedia',
-      type: 'info',
-      icon: 'fa-check-circle',
-      read: JSON.stringify({}),
-      created_at: new Date(),
-    },
-  ]
-
-  for (const n of sampleNotifs) {
-    await prisma.notification.upsert({
-      where: { id: n.id },
-      update: {},
-      create: n,
-    })
-  }
+  var sampleNotifs = []
 
   console.log('Seeding finished.')
 }

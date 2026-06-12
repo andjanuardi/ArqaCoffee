@@ -236,4 +236,5 @@ async function startApp() {
   } catch (e) {}
 
   await render();
+  if (typeof WS !== 'undefined') { WS.connect(); if (State.currentUser) WS.identify(); }
 }
