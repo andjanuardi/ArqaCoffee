@@ -4,7 +4,8 @@ import prisma from '@/lib/prisma'
 export async function GET() {
   try {
     const users = await prisma.user.findMany()
-    return NextResponse.json(users)
+    const safe = users.map(({ password, ...rest }) => rest)
+    return NextResponse.json(safe)
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
   }
@@ -22,10 +23,13 @@ export async function POST(req: Request) {
         role: data.role,
         phone: data.phone,
         avatar: data.avatar,
-        address: data.address
+        address: data.address,
+        business_name: data.business_name || null,
+        mitra_position: data.mitra_position || null,
       }
     })
-    return NextResponse.json(user, { status: 201 })
+    const { password, ...safe } = user
+    return NextResponse.json(safe, { status: 201 })
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create user' }, { status: 500 })
   }

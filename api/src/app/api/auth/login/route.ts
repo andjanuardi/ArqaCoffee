@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { signToken } from '@/lib/auth'
 
 export async function POST(req: Request) {
   try {
@@ -18,11 +19,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
-    // In a real app we would use JWT or NextAuth. For now we just return the user object (minus password)
     const { password: _, ...userWithoutPassword } = user
+    const token = await signToken({ userId: user.id, role: user.role })
 
     return NextResponse.json({
       success: true,
+      token,
       user: userWithoutPassword
     })
   } catch (error) {

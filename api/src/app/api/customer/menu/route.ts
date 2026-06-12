@@ -22,6 +22,7 @@ export async function POST(req: Request) {
         category: data.category,
         image: data.image,
         is_available: data.is_available ?? true,
+        is_approved: data.is_approved,
         tax_percentage: data.tax_percentage ?? 0,
         submitted_by: data.submitted_by
       }

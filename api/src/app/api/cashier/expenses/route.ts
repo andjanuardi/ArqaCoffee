@@ -17,12 +17,16 @@ export async function POST(req: Request) {
       data: {
         id: data.id || `e${Date.now()}`,
         date: data.date,
+        time: data.time,
         category: data.category,
         amount: data.amount,
         note: data.note,
         volume: data.volume,
         unit: data.unit,
-        unitPrice: data.unitPrice
+        unitPrice: data.unitPrice,
+        source: data.source,
+        orderType: data.orderType,
+        paymentMethod: data.paymentMethod
       }
     })
     return NextResponse.json(expense, { status: 201 })

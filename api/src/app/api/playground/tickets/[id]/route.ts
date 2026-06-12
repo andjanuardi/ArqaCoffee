@@ -20,6 +20,40 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   try {
     const data = await req.json()
     const { items, transactions, ...ticketData } = data
+
+    if (items && Array.isArray(items)) {
+      await prisma.playgroundTicketItem.deleteMany({ where: { ticket_id: id } })
+      for (const item of items) {
+        await prisma.playgroundTicketItem.create({
+          data: {
+            id: item.id || crypto.randomUUID(),
+            ticket_id: id,
+            menu_item_id: item.menu_item_id,
+            name: item.name,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+          }
+        })
+      }
+    }
+
+    if (transactions && Array.isArray(transactions)) {
+      await prisma.pgTransaction.deleteMany({ where: { ticket_id: id } })
+      for (const tx of transactions) {
+        await prisma.pgTransaction.create({
+          data: {
+            id: tx.id || `pgtx${Date.now()}${Math.random().toString(36).slice(2, 6)}`,
+            ticket_id: id,
+            type: tx.type,
+            description: tx.description,
+            amount: tx.amount,
+            method: tx.method,
+            created_at: tx.created_at || new Date().toISOString(),
+          }
+        })
+      }
+    }
+
     const ticket = await prisma.playgroundTicket.update({
       where: { id },
       data: {

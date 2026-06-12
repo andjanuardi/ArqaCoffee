@@ -23,7 +23,10 @@ export async function POST(req: Request) {
         tax: data.tax,
         amount: data.amount,
         status: data.status || 'unpaid',
-        created_at: data.created_at || new Date().toISOString()
+        created_at: data.created_at || new Date().toISOString(),
+        paid_at: data.paid_at || null,
+        paid_by: data.paid_by || null,
+        confirmed_at: data.confirmed_at || null
       }
     })
     return NextResponse.json(payout, { status: 201 })

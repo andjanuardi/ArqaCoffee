@@ -36,6 +36,9 @@ export async function POST(req: Request) {
         payment_status: ticketData.payment_status || 'unpaid',
         payment_method: ticketData.payment_method,
         status: ticketData.status || 'active',
+        cancel_reason: ticketData.cancel_reason || null,
+        was_overtime: ticketData.was_overtime || false,
+        overtime_minutes: ticketData.overtime_minutes || 0,
         items: items ? {
           create: items.map((item: any) => ({
             id: item.id || `pgi_${Date.now()}${Math.random()}`,

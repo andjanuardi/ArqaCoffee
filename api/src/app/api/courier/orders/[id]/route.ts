@@ -20,6 +20,25 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   try {
     const data = await req.json()
     const { items, ...orderData } = data
+
+    if (items && Array.isArray(items)) {
+      await prisma.orderItem.deleteMany({ where: { order_id: id } })
+      for (const item of items) {
+        await prisma.orderItem.create({
+          data: {
+            id: item.id || `oi${Date.now()}${Math.random()}`,
+            order_id: id,
+            menu_item_id: item.menu_item_id,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            notes: item.notes,
+            status: item.status,
+            claimed_by: item.claimed_by,
+          }
+        })
+      }
+    }
+
     const order = await prisma.order.update({
       where: { id },
       data: orderData,

@@ -105,6 +105,7 @@ async function main() {
         category: menu.category,
         image: menu.image,
         is_available: menu.is_available,
+        is_approved: menu.is_approved,
         tax_percentage: menu.tax_percentage || 0,
         submitted_by: menu.submitted_by,
       }
@@ -122,6 +123,7 @@ async function main() {
       unit_price: item.unit_price,
       notes: item.notes || null,
       status: item.status || null,
+      claimed_by: item.claimed_by || null,
     }))
 
     await prisma.order.upsert({
@@ -135,18 +137,26 @@ async function main() {
         status: o.status,
         total_amount: o.total_amount,
         shipping_cost: o.shipping_cost || 0,
+        service_fee: o.service_fee || 0,
         payment_method: o.payment_method || null,
         payment_status: o.payment_status || 'unpaid',
         delivery_address: o.delivery_address || null,
         delivery_detail: o.delivery_detail || null,
         delivery_location: o.delivery_location ? JSON.stringify(o.delivery_location) : null,
         customer_name: o.customer_name || null,
+        customer_phone: o.customer_phone || null,
         accepted: o.accepted ?? null,
         promo_id: o.promo_id || null,
         promo_discount: o.promo_discount || 0,
         created_at: parseDate(o.created_at) || new Date(),
         courier_id: o.courier_id || null,
         ongkir_status: o.ongkir_status || null,
+        waiter_id: o.waiter_id || null,
+        has_mitra_items: o.has_mitra_items || false,
+        mitra_approved: o.mitra_approved || false,
+        reject_reason: o.reject_reason || null,
+        messages: o.messages ? JSON.stringify(o.messages) : null,
+        lastReadAt: o.lastReadAt ? JSON.stringify(o.lastReadAt) : null,
         items: { create: items },
       }
     })
@@ -298,12 +308,16 @@ async function main() {
       create: {
         id: ex.id,
         date: ex.date,
+        time: ex.time || null,
         category: ex.category,
         amount: ex.amount,
         note: ex.note || null,
         volume: ex.volume,
         unit: ex.unit,
         unitPrice: ex.unitPrice,
+        source: ex.source || null,
+        orderType: ex.orderType || null,
+        paymentMethod: ex.paymentMethod || null,
       }
     })
   }
@@ -351,6 +365,9 @@ async function main() {
         payment_method: t.payment_method || null,
         status: t.status || 'active',
         created_at: parseDate(t.created_at) || new Date(),
+        cancel_reason: t.cancel_reason || null,
+        was_overtime: t.was_overtime || false,
+        overtime_minutes: t.overtime_minutes || 0,
         items: { create: ticketItems },
         transactions: { create: transactions },
       }
@@ -416,6 +433,29 @@ async function main() {
         created_at: asStr(mp.created_at) || new Date().toISOString(),
         paid_at: asStr(mp.paid_at) || null,
         paid_by: mp.paid_by || null,
+        confirmed_at: asStr(mp.confirmed_at) || null,
+      }
+    })
+  }
+
+  // ──────────────────────────────────────────────
+  // Mitra Registrations
+  // ──────────────────────────────────────────────
+  for (const mr of DB.mitraRegistrations || []) {
+    await prisma.mitraRegistration.upsert({
+      where: { id: mr.id },
+      update: {},
+      create: {
+        id: mr.id,
+        name: mr.name,
+        business: mr.business || null,
+        email: mr.email,
+        phone: mr.phone || null,
+        address: mr.address || null,
+        role: mr.role,
+        status: mr.status || 'pending',
+        position: mr.position ? JSON.stringify(mr.position) : null,
+        created_at: asStr(mr.created_at) || new Date().toISOString(),
       }
     })
   }

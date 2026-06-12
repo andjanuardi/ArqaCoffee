@@ -28,6 +28,8 @@ export async function POST(req: Request) {
         password, // Pada aplikasi nyata, gunakan bcrypt untuk hash password
         role: role || 'customer',
         phone: phone || '',
+        avatar: data.avatar || null,
+        address: data.address || null,
       }
     })
 

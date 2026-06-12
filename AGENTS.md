@@ -30,9 +30,3 @@ This repo has **two isolated projects** under one root:
 - Routes in `api/src/app/api/` organized by role (admin/, cashier/, courier/, customer/, kitchen/, waiter/, mitra/, playground/, auth/, notifications/).
 - Prisma client singleton in `api/src/lib/prisma.ts`. `@/*` alias maps to `./src/*`.
 - **No auth middleware** — passwords compared as plaintext in route handlers. No JWT, no NextAuth, no hashing.
-
-## Known gaps
-
-| Entity | Model | API | Frontend uses |
-|--------|-------|-----|---------------|
-| `mitraRegistrations` | `MitraRegistration` | `auth/register/mitra` (public), `admin/mitra/registrations` (admin CRUD) | `DB.mitraRegistrations` in `view/core/login.js` & `view/admin/overview.js` |

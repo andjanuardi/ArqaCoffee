@@ -7,8 +7,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const data = await req.json()
     
     const updateData: any = {}
-    if (data.read !== undefined) updateData.read = data.read
-    if (data.is_read !== undefined) updateData.read = data.is_read ? JSON.stringify({}) : undefined
+    if (data.read !== undefined) {
+      updateData.read = typeof data.read === 'object' ? JSON.stringify(data.read) : data.read
+    }
+    if (data.is_read !== undefined) {
+      updateData.read = data.is_read ? '{}' : undefined
+    }
     if (data.type !== undefined) updateData.type = data.type
     if (data.icon !== undefined) updateData.icon = data.icon
     if (data.target_roles !== undefined) updateData.target_roles = data.target_roles

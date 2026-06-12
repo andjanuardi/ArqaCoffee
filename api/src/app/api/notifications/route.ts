@@ -47,7 +47,7 @@ export async function POST(req: Request) {
         type: type || 'info',
         icon: icon || 'fa-bell',
         related_order_id: related_order_id || null,
-        read: read || '{}',
+        read: typeof read === 'object' ? JSON.stringify(read) : (read || '{}'),
       }
     })
 
