@@ -6,14 +6,18 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const user_id = searchParams.get('user_id')
     const target_role = searchParams.get('target_role')
-    const unread_only = searchParams.get('unread_only') === 'true'
+
+    const where: any = {}
+    if (user_id) where.user_id = user_id
+    if (target_role) {
+      where.OR = [
+        { target_role },
+        { target_roles: { contains: target_role } }
+      ]
+    }
 
     const notifications = await prisma.notification.findMany({
-      where: {
-        ...(user_id ? { user_id } : {}),
-        ...(target_role ? { target_role } : {}),
-        ...(unread_only ? { is_read: false } : {})
-      },
+      where,
       orderBy: { created_at: 'desc' }
     })
 
@@ -26,7 +30,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const data = await req.json()
-    const { user_id, target_role, title, message } = data
+    const { user_id, target_role, target_roles, title, message, type, icon, related_order_id, read } = data
 
     if (!title || !message) {
       return NextResponse.json({ error: 'Title and message are required' }, { status: 400 })
@@ -35,10 +39,15 @@ export async function POST(req: Request) {
     const notification = await prisma.notification.create({
       data: {
         id: `notif_${Date.now()}`,
-        user_id,
-        target_role,
+        user_id: user_id || null,
+        target_role: target_role || null,
+        target_roles: target_roles || '[]',
         title,
-        message
+        message,
+        type: type || 'info',
+        icon: icon || 'fa-bell',
+        related_order_id: related_order_id || null,
+        read: read || '{}',
       }
     })
 

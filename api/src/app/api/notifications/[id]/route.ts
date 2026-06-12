@@ -6,12 +6,19 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   try {
     const data = await req.json()
     
-    // Biasanya hanya update "is_read"
+    const updateData: any = {}
+    if (data.read !== undefined) updateData.read = data.read
+    if (data.is_read !== undefined) updateData.read = data.is_read ? JSON.stringify({}) : undefined
+    if (data.type !== undefined) updateData.type = data.type
+    if (data.icon !== undefined) updateData.icon = data.icon
+    if (data.target_roles !== undefined) updateData.target_roles = data.target_roles
+    if (data.related_order_id !== undefined) updateData.related_order_id = data.related_order_id
+    if (data.title !== undefined) updateData.title = data.title
+    if (data.message !== undefined) updateData.message = data.message
+
     const notification = await prisma.notification.update({
       where: { id },
-      data: {
-        is_read: data.is_read
-      }
+      data: updateData
     })
 
     return NextResponse.json(notification)

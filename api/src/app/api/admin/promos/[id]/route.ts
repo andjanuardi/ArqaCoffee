@@ -1,6 +1,17 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  try {
+    const promo = await prisma.promo.findUnique({ where: { id } })
+    if (!promo) return NextResponse.json({ error: 'Promo not found' }, { status: 404 })
+    return NextResponse.json(promo)
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch promo' }, { status: 500 })
+  }
+}
+
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   try {
