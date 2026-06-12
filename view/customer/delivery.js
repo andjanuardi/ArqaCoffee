@@ -2,8 +2,12 @@
 // CUSTOMER VIEW — Delivery Location
 // ============================================================
 function pickDeliveryLocation() {
-  const addressInput = document.getElementById("delivery-address");
+  var addressInput = document.getElementById("delivery-address");
   if (addressInput) State.deliveryAddress = addressInput.value;
+
+  var cafeData = State._cafe || {};
+  var defaultLat = cafeData.location ? cafeData.location.lat : -6.2088;
+  var defaultLng = cafeData.location ? cafeData.location.lng : 106.8456;
 
   showModal(
     `
@@ -15,22 +19,22 @@ function pickDeliveryLocation() {
       <button onclick="closeModal(); render();" class="btn-secondary w-full text-center">Batal</button>
     </div>
   `,
-    () => {
-      setTimeout(() => {
-        const el = document.getElementById("map-picker");
+    function() {
+      setTimeout(function() {
+        var el = document.getElementById("map-picker");
         if (!el) return;
 
-        let lat = State.deliveryLocation?.lat || DB.cafe.location.lat;
-        let lng = State.deliveryLocation?.lng || DB.cafe.location.lng;
+        var lat = State.deliveryLocation?.lat || defaultLat;
+        var lng = State.deliveryLocation?.lng || defaultLng;
 
         if (!State.deliveryLocation && navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
-            (pos) => {
+            function(pos) {
               lat = pos.coords.latitude;
               lng = pos.coords.longitude;
               initMap(lat, lng);
             },
-            () => {
+            function() {
               initMap(lat, lng);
             },
           );
@@ -39,21 +43,21 @@ function pickDeliveryLocation() {
         }
 
         function initMap(initialLat, initialLng) {
-          const map = L.map(el).setView([initialLat, initialLng], 19);
+          var map = L.map(el).setView([initialLat, initialLng], 19);
           L.tileLayer(
             "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
             { maxZoom: 20, attribution: "Google" },
           ).addTo(map);
 
-          const marker = L.marker([initialLat, initialLng]).addTo(map);
+          var marker = L.marker([initialLat, initialLng]).addTo(map);
           State.tempDeliveryLocation = { lat: initialLat, lng: initialLng };
 
-          map.on("move", function () {
+          map.on("move", function() {
             marker.setLatLng(map.getCenter());
           });
 
-          map.on("moveend", function () {
-            const position = map.getCenter();
+          map.on("moveend", function() {
+            var position = map.getCenter();
             marker.setLatLng(position);
             State.tempDeliveryLocation = {
               lat: position.lat,
@@ -64,7 +68,7 @@ function pickDeliveryLocation() {
           State.mapInstances = State.mapInstances || {};
           State.mapInstances["picker"] = map;
 
-          setTimeout(() => map.invalidateSize(), 100);
+          setTimeout(function() { map.invalidateSize(); }, 100);
         }
       }, 300);
     },
@@ -73,22 +77,23 @@ function pickDeliveryLocation() {
 
 function saveDeliveryLocation() {
   if (State.tempDeliveryLocation) {
-    State.deliveryLocation = { ...State.tempDeliveryLocation };
+    State.deliveryLocation = Object.assign({}, State.tempDeliveryLocation);
     showToast("Mengambil data alamat dari lokasi...", "info");
 
-    const { lat, lng } = State.deliveryLocation;
+    var lat = State.deliveryLocation.lat;
+    var lng = State.deliveryLocation.lng;
     fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+      "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lng,
     )
-      .then((res) => res.json())
-      .then((data) => {
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
         if (data && data.display_name) {
           State.deliveryAddress = data.display_name;
           showToast("Alamat berhasil disesuaikan dengan titik map", "success");
           render();
         }
       })
-      .catch((err) => {
+      .catch(function(err) {
         console.error("Geocoding failed", err);
         showToast("Titik lokasi disimpan", "success");
       });

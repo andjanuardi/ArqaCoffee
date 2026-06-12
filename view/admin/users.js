@@ -1,43 +1,51 @@
 // ============================================================
 // ADMIN VIEW — Users Management
 // ============================================================
-function renderAdminUsers() {
-  if (!State.adminRoleFilter) State.adminRoleFilter = '';
-  const roleChips = [
-    { id: '', label: 'Semua' },
-    { id: 'admin', label: 'Admin' },
-    { id: 'manager', label: 'Manager' },
-    { id: 'cashier', label: 'Kasir' },
-    { id: 'kitchen', label: 'Juru Masak' },
-    { id: 'courier', label: 'Kurir' },
-    { id: 'customer', label: 'Pelanggan' },
-  ];
-  const filtered = DB.users.filter(u => !State.adminRoleFilter || u.role === State.adminRoleFilter);
-  return `
-  <div class="animate-fade-up">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="font-display text-xl font-bold">Kelola Pengguna</h2>
-      <button onclick="showAddUserModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
-    </div>
-    <div class="flex gap-2 mb-4 overflow-x-auto pb-2" style="-webkit-overflow-scrolling:touch;scrollbar-width:none;">
-      ${roleChips.map(c => `<div class="category-chip ${State.adminRoleFilter === c.id ? 'active' : ''}" onclick="State.adminRoleFilter='${c.id}';render()">${c.label}</div>`).join('')}
-    </div>
-    <div class="space-y-3">
-      ${filtered.map(u => `
-      <div class="card flex items-center gap-4">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold" style="background:var(--accent);color:#fff">${u.avatar}</div>
-        <div class="flex-1">
-          <div class="font-semibold text-sm">${u.name}</div>
-          <div class="text-xs" style="color:var(--muted)">${u.email} — ${u.phone}</div>
-        </div>
-        <span class="badge ${u.role === 'admin' ? 'badge-cooking' : u.role === 'manager' ? 'badge-delivering' : u.role === 'cashier' ? 'badge-ready' : u.role === 'waiter' ? 'badge-cooking' : 'badge-pending'}">${getRoleLabel(u.role)}</span>
-        <div class="flex gap-1">
-          <button onclick="showEditUserModal('${u.id}')" class="btn-sm" style="background:rgba(224,122,58,.12);color:var(--accent);border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-pen"></i></button>
-          <button onclick="deleteUser('${u.id}')" class="btn-sm" style="background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-trash"></i></button>
-        </div>
-      </div>`).join('')}
-    </div>
-  </div>`;
+async function renderAdminUsers() {
+  try {
+    showSkeleton('admin-users', 'list');
+    var users = await API.getUsers();
+    DB.users = users;
+    if (!State.adminRoleFilter) State.adminRoleFilter = '';
+    var roleChips = [
+      { id: '', label: 'Semua' },
+      { id: 'admin', label: 'Admin' },
+      { id: 'manager', label: 'Manager' },
+      { id: 'cashier', label: 'Kasir' },
+      { id: 'kitchen', label: 'Juru Masak' },
+      { id: 'courier', label: 'Kurir' },
+      { id: 'customer', label: 'Pelanggan' },
+    ];
+    var filtered = users.filter(function(u) { return !State.adminRoleFilter || u.role === State.adminRoleFilter; });
+    return `
+    <div class="animate-fade-up">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="font-display text-xl font-bold">Kelola Pengguna</h2>
+        <button onclick="showAddUserModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
+      </div>
+      <div class="flex gap-2 mb-4 overflow-x-auto pb-2" style="-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+        ${roleChips.map(function(c) { return '<div class="category-chip ' + (State.adminRoleFilter === c.id ? 'active' : '') + '" onclick="State.adminRoleFilter=\'' + c.id + '\';render()">' + c.label + '</div>'; }).join('')}
+      </div>
+      <div class="space-y-3">
+        ${filtered.map(function(u) {
+          return `
+        <div class="card flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold" style="background:var(--accent);color:#fff">${u.avatar}</div>
+          <div class="flex-1">
+            <div class="font-semibold text-sm">${u.name}</div>
+            <div class="text-xs" style="color:var(--muted)">${u.email} — ${u.phone}</div>
+          </div>
+          <span class="badge ${u.role === 'admin' ? 'badge-cooking' : u.role === 'manager' ? 'badge-delivering' : u.role === 'cashier' ? 'badge-ready' : u.role === 'waiter' ? 'badge-cooking' : 'badge-pending'}">${getRoleLabel(u.role)}</span>
+          <div class="flex gap-1">
+            <button onclick="showEditUserModal('${u.id}')" class="btn-sm" style="background:rgba(224,122,58,.12);color:var(--accent);border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-pen"></i></button>
+            <button onclick="deleteUser('${u.id}')" class="btn-sm" style="background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  } catch(e) { console.error(e); showToast('Gagal memuat pengguna', 'error'); return ''; }
+  finally { hideSkeleton('admin-users'); }
 }
 
 function showAddUserModal() {
@@ -60,19 +68,31 @@ function showAddUserModal() {
   `);
 }
 
-function addUser() {
-  const name = document.getElementById('new-user-name')?.value;
-  const email = document.getElementById('new-user-email')?.value;
-  const pass = document.getElementById('new-user-pass')?.value;
-  const role = document.getElementById('new-user-role')?.value;
-  const phone = document.getElementById('new-user-phone')?.value || '';
-  if (!name || !email) { showToast('Nama dan email wajib diisi', 'warning'); return; }
-  DB.users.push({ id: 'u' + Date.now(), name, email, password: pass || 'password123', role, phone, avatar: name[0].toUpperCase() });
-  closeModal(); showToast('Pengguna ditambahkan', 'success'); render();
+async function addUser() {
+  try {
+    var name = document.getElementById('new-user-name')?.value;
+    var email = document.getElementById('new-user-email')?.value;
+    var pass = document.getElementById('new-user-pass')?.value;
+    var role = document.getElementById('new-user-role')?.value;
+    var phone = document.getElementById('new-user-phone')?.value || '';
+    if (!name || !email) { showToast('Nama dan email wajib diisi', 'warning'); return; }
+    await API.createUser({
+      id: 'u' + Date.now(),
+      name: name,
+      email: email,
+      password: pass || 'password123',
+      role: role,
+      phone: phone,
+      avatar: name[0].toUpperCase()
+    });
+    closeModal();
+    showToast('Pengguna ditambahkan', 'success');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal menambah pengguna', 'error'); }
 }
 
 function showEditUserModal(id) {
-  const u = DB.users.find(x => x.id === id);
+  var u = DB.users.find(function(x) { return x.id === id; });
   if (!u) return;
   showModal(`
     <div>
@@ -102,22 +122,28 @@ function showEditUserModal(id) {
   `);
 }
 
-function saveEditUser(id) {
-  const u = DB.users.find(x => x.id === id);
-  if (!u) return;
-  const name = document.getElementById('edit-user-name')?.value;
-  const email = document.getElementById('edit-user-email')?.value;
-  const phone = document.getElementById('edit-user-phone')?.value;
-  const pass = document.getElementById('edit-user-pass')?.value;
-  const role = document.getElementById('edit-user-role')?.value;
-  if (!name || !email) { showToast('Nama dan email wajib diisi', 'warning'); return; }
-  u.name = name; u.email = email; u.phone = phone; u.role = role; u.avatar = name[0].toUpperCase();
-  if (pass) u.password = pass;
-  closeModal(); showToast('Pengguna berhasil diperbarui', 'success'); render();
+async function saveEditUser(id) {
+  try {
+    var u = DB.users.find(function(x) { return x.id === id; });
+    if (!u) return;
+    var name = document.getElementById('edit-user-name')?.value;
+    var email = document.getElementById('edit-user-email')?.value;
+    var phone = document.getElementById('edit-user-phone')?.value;
+    var pass = document.getElementById('edit-user-pass')?.value;
+    var role = document.getElementById('edit-user-role')?.value;
+    if (!name || !email) { showToast('Nama dan email wajib diisi', 'warning'); return; }
+    var updateData = { name: name, email: email, phone: phone, role: role, avatar: name[0].toUpperCase() };
+    if (pass) updateData.password = pass;
+    await API.updateUser(id, updateData);
+    DB.users = await API.getUsers();
+    closeModal();
+    showToast('Pengguna berhasil diperbarui', 'success');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal memperbarui pengguna', 'error'); }
 }
 
 function deleteUser(id) {
-  const u = DB.users.find(x => x.id === id);
+  var u = DB.users.find(function(x) { return x.id === id; });
   if (!u) return;
   showModal(`
     <div>
@@ -131,7 +157,12 @@ function deleteUser(id) {
   `);
 }
 
-function confirmDeleteUser(id) {
-  DB.users = DB.users.filter(x => x.id !== id);
-  closeModal(); showToast('Pengguna dihapus', 'info'); render();
+async function confirmDeleteUser(id) {
+  try {
+    await API.deleteUser(id);
+    DB.users = DB.users.filter(function(x) { return x.id !== id; });
+    closeModal();
+    showToast('Pengguna dihapus', 'info');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal menghapus pengguna', 'error'); }
 }

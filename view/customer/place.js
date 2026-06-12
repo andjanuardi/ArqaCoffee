@@ -1,30 +1,32 @@
 // ============================================================
 // CUSTOMER VIEW — Place Order
 // ============================================================
-function confirmPlaceOrder() {
-  if (State.orderType === "delivery" && !hasActiveCourier()) {
-    showToast("Kurir sedang tidak tersedia. Silakan coba lagi nanti", "warning");
-    return;
-  }
-  if (State.orderType === "dine-in" && !State.selectedTable) {
-    showToast("Silahkan memilih meja terlebih dahulu", "warning");
-    startQRScan();
-    return;
-  }
-  const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
-  const discount = calcPromoDiscount();
-  const afterDiscount = total - discount;
-  const tax = Math.round(calcItemTax(State.cart));
-  const shippingCost = State.orderType === "delivery" && State.deliveryLocation
-    ? calcShippingCost(State.deliveryLocation.lat, State.deliveryLocation.lng) : 0;
-  const serviceFee = calcCustomerFee(total, State.orderType);
-  const grandTotal = afterDiscount + tax + shippingCost + serviceFee;
-  const itemsList = State.cart.map(c =>
-    `${c.menu_item.name} x${c.quantity} = ${formatCurrency(c.unit_price * c.quantity)}`
-  ).join('</div><div class="text-sm" style="color:var(--muted)">');
-  const activePromo = State.activePromoId ? DB.promos.find(x => x.id === State.activePromoId) : null;
+async function confirmPlaceOrder() {
+  try {
+    if (State.orderType === "delivery" && !hasActiveCourier()) {
+      showToast("Kurir sedang tidak tersedia. Silakan coba lagi nanti", "warning");
+      return;
+    }
+    if (State.orderType === "dine-in" && !State.selectedTable) {
+      showToast("Silahkan memilih meja terlebih dahulu", "warning");
+      startQRScan();
+      return;
+    }
+    var promos = await API.getPromos();
+    var total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
+    var discount = calcPromoDiscount();
+    var afterDiscount = total - discount;
+    var tax = Math.round(calcItemTax(State.cart));
+    var shippingCost = State.orderType === "delivery" && State.deliveryLocation
+      ? calcShippingCost(State.deliveryLocation.lat, State.deliveryLocation.lng) : 0;
+    var serviceFee = calcCustomerFee(total, State.orderType);
+    var grandTotal = afterDiscount + tax + shippingCost + serviceFee;
+    var itemsList = State.cart.map(c =>
+      `${c.menu_item.name} x${c.quantity} = ${formatCurrency(c.unit_price * c.quantity)}`
+    ).join('</div><div class="text-sm" style="color:var(--muted)">');
+    var activePromo = State.activePromoId ? promos.find(x => x.id === State.activePromoId) : null;
 
-  showModal(`
+    showModal(`
     <div>
       <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl" style="background:rgba(224,122,58,.1);color:var(--accent)">
         <i class="fas fa-receipt"></i>
@@ -57,19 +59,24 @@ function confirmPlaceOrder() {
       </div>
     </div>
   `);
+  } catch (err) {
+    console.error('Failed to load promo data:', err);
+    showToast('Gagal memuat data promo', 'error');
+  }
 }
 
-function handleDigitalPayment() {
-  if (State.payTiming !== "now") { placeOrder(); return; }
-  if (selectedPayment !== "qris" && selectedPayment !== "bank_transfer") { placeOrder(); return; }
-  const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
-  const discount = calcPromoDiscount();
-  const afterDiscount = total - discount;
-  const tax = Math.round(calcItemTax(State.cart));
-  const shippingCost = State.orderType === "delivery" && State.deliveryLocation
-    ? calcShippingCost(State.deliveryLocation.lat, State.deliveryLocation.lng) : 0;
-  const serviceFee = calcCustomerFee(total, State.orderType);
-  const grandTotal = afterDiscount + tax + shippingCost + serviceFee;
+async function handleDigitalPayment() {
+  try {
+    if (State.payTiming !== "now") { await placeOrder(); return; }
+    if (selectedPayment !== "qris" && selectedPayment !== "bank_transfer") { await placeOrder(); return; }
+    var total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
+    var discount = calcPromoDiscount();
+    var afterDiscount = total - discount;
+    var tax = Math.round(calcItemTax(State.cart));
+    var shippingCost = State.orderType === "delivery" && State.deliveryLocation
+      ? calcShippingCost(State.deliveryLocation.lat, State.deliveryLocation.lng) : 0;
+    var serviceFee = calcCustomerFee(total, State.orderType);
+    var grandTotal = afterDiscount + tax + shippingCost + serviceFee;
 
   if (selectedPayment === "qris") {
     const data = encodeURIComponent("ARQA-COFFEE:PAY:" + genId().slice(-6) + ":" + grandTotal);
@@ -108,141 +115,160 @@ function handleDigitalPayment() {
       </div>
     `);
   }
+  } catch (err) {
+    console.error('Failed to process payment:', err);
+    showToast('Gagal memproses pembayaran', 'error');
+  }
 }
 
-function placeOrder() {
-  if (State.cart.length === 0) {
-    showToast("Keranjang masih kosong", "warning");
-    return;
-  }
-  if (State.orderType === "delivery" && !hasActiveCourier()) {
-    showToast("Kurir sedang tidak tersedia. Silakan coba lagi nanti", "warning");
-    return;
-  }
-  if (State.orderType === "dine-in" && !State.selectedTable) {
-    showToast("Silakan pilih meja terlebih dahulu", "warning");
-    startQRScan();
-    return;
-  }
-  if (State.orderType === "delivery") {
-    const address =
-      document.getElementById("delivery-address")?.value ||
-      State.deliveryAddress;
-    if (!address || address.trim() === "") {
-      showToast("Silakan masukkan alamat pengiriman", "warning");
+async function placeOrder() {
+  try {
+    var btn = document.querySelector('[onclick="confirmPlaceOrder()"]');
+    if (btn) showBtnSpinner(btn);
+    if (State.cart.length === 0) {
+      showToast("Keranjang masih kosong", "warning");
+      if (btn) hideBtnSpinner(btn);
       return;
     }
-  }
-  const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
-  const discount = calcPromoDiscount();
-  const afterDiscount = total - discount;
-  const tax = Math.round(calcItemTax(State.cart));
-  const shippingCost = State.orderType === "delivery" && State.deliveryLocation
-    ? calcShippingCost(State.deliveryLocation.lat, State.deliveryLocation.lng) : 0;
-  const serviceFee = calcCustomerFee(total, State.orderType);
-  const grandTotal = afterDiscount + tax + shippingCost + serviceFee;
+    if (State.orderType === "delivery" && !hasActiveCourier()) {
+      showToast("Kurir sedang tidak tersedia. Silakan coba lagi nanti", "warning");
+      if (btn) hideBtnSpinner(btn);
+      return;
+    }
+    if (State.orderType === "dine-in" && !State.selectedTable) {
+      showToast("Silakan pilih meja terlebih dahulu", "warning");
+      startQRScan();
+      if (btn) hideBtnSpinner(btn);
+      return;
+    }
+    if (State.orderType === "delivery") {
+      var address =
+        document.getElementById("delivery-address")?.value ||
+        State.deliveryAddress;
+      if (!address || address.trim() === "") {
+        showToast("Silakan masukkan alamat pengiriman", "warning");
+        if (btn) hideBtnSpinner(btn);
+        return;
+      }
+    }
+    var total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
+    var discount = calcPromoDiscount();
+    var afterDiscount = total - discount;
+    var tax = Math.round(calcItemTax(State.cart));
+    var shippingCost = State.orderType === "delivery" && State.deliveryLocation
+      ? calcShippingCost(State.deliveryLocation.lat, State.deliveryLocation.lng) : 0;
+    var serviceFee = calcCustomerFee(total, State.orderType);
+    var grandTotal = afterDiscount + tax + shippingCost + serviceFee;
 
-  if (State.orderType === "dine-in" && State.payTiming === "later") {
-    const existingOrder = DB.orders.find(
-      (o) =>
-        o.user_id === State.currentUser.id &&
-        o.order_type === "dine-in" &&
-        o.table_id === State.selectedTable &&
-        o.payment_status === "unpaid" &&
-        o.status !== "completed" &&
-        o.status !== "cancelled",
-    );
+    if (State.orderType === "dine-in" && State.payTiming === "later") {
+      var allOrders = await API.getOrders();
+      var existingOrder = allOrders.find(
+        (o) =>
+          o.user_id === State.currentUser.id &&
+          o.order_type === "dine-in" &&
+          o.table_id === State.selectedTable &&
+          o.payment_status === "unpaid" &&
+          o.status !== "completed" &&
+          o.status !== "cancelled",
+      );
 
-    if (existingOrder) {
-      const newItems = State.cart.map((c) => ({
+      if (existingOrder) {
+        var newItems = State.cart.map((c) => ({
+          menu_item_id: c.menu_item_id,
+          quantity: c.quantity,
+          unit_price: c.unit_price,
+          notes: c.notes,
+          status: "pending",
+        }));
+        existingOrder.items.push(...newItems);
+        existingOrder.total_amount += grandTotal;
+        existingOrder.has_mitra_items = existingOrder.has_mitra_items || newItems.some(ni => getMenuItem(ni.menu_item_id)?.submitted_by);
+
+        if (
+          existingOrder.status === "served" ||
+          existingOrder.status === "ready"
+        ) {
+          existingOrder.status = "pending";
+        }
+
+        await api.put('/orders/' + existingOrder.id, existingOrder);
+        State.cart = [];
+        if (btn) hideBtnSpinner(btn);
+        notifyOrderPlaced(existingOrder, State.currentUser.name);
+        showToast(
+          `Pesanan digabungkan ke #${existingOrder.id.slice(-5).toUpperCase()}`,
+          "success",
+        );
+        switchTab("orders");
+        return;
+      }
+    }
+    var order = {
+      id: genId(),
+      user_id: State.currentUser.id,
+      table_id: State.selectedTable,
+      order_type: State.orderType,
+      status: "pending",
+      total_amount: grandTotal,
+      shipping_cost: shippingCost,
+      service_fee: serviceFee,
+      customer_phone: State.currentUser.phone,
+      payment_method: State.payTiming === "later" ? (State.orderType === "delivery" ? "cod" : "") : selectedPayment,
+      payment_status:
+        State.payTiming === "later"
+          ? "unpaid"
+          : isDigitalSelected()
+            ? "paid"
+            : "unpaid",
+      delivery_address:
+        State.orderType === "delivery"
+          ? document.getElementById("delivery-address")?.value ||
+            State.deliveryAddress ||
+            ""
+          : "",
+      delivery_detail:
+        State.orderType === "delivery"
+          ? document.getElementById("delivery-detail")?.value ||
+            State.deliveryDetail ||
+            ""
+          : "",
+      delivery_location:
+        State.orderType === "delivery" && State.deliveryLocation
+          ? State.deliveryLocation
+          : null,
+      promo_id: State.activePromoId || null,
+      promo_discount: discount || 0,
+      created_at: new Date().toISOString(),
+      items: State.cart.map((c) => ({
         menu_item_id: c.menu_item_id,
         quantity: c.quantity,
         unit_price: c.unit_price,
         notes: c.notes,
         status: "pending",
-      }));
-      existingOrder.items.push(...newItems);
-      existingOrder.total_amount += grandTotal;
-      existingOrder.has_mitra_items = existingOrder.has_mitra_items || newItems.some(ni => getMenuItem(ni.menu_item_id)?.submitted_by);
-
-      if (
-        existingOrder.status === "served" ||
-        existingOrder.status === "ready"
-      ) {
-        existingOrder.status = "pending"; // kembalikan ke pending agar dapur tahu ada item baru
-      }
-
-      State.cart = [];
-      notifyOrderPlaced(existingOrder, State.currentUser.name);
-      showToast(
-        `Pesanan digabungkan ke #${existingOrder.id.slice(-5).toUpperCase()}`,
-        "success",
-      );
-      switchTab("orders");
-      return;
+      })),
+      has_mitra_items: State.cart.some(c => getMenuItem(c.menu_item_id)?.submitted_by),
+      mitra_approved: false,
+    };
+    if (State.orderType === "delivery") order.courier_id = null;
+    await API.createOrder(order);
+    if (order.table_id) {
+      await API.updateTable(order.table_id, {status:'occupied'});
     }
+    State.cart = [];
+    State.activePromoId = null;
+    State.deliveryLocation = null;
+    State.deliveryAddress = "";
+    State.deliveryDetail = "";
+    if (btn) hideBtnSpinner(btn);
+    notifyOrderPlaced(order, State.currentUser.name);
+    showToast(
+      `Pesanan #${order.id.slice(-5).toUpperCase()} berhasil dibuat!`,
+      "success",
+    );
+    switchTab("orders");
+  } catch (err) {
+    console.error('Failed to place order:', err);
+    showToast('Gagal membuat pesanan', 'error');
+    if (btn) hideBtnSpinner(btn);
   }
-  const order = {
-    id: genId(),
-    user_id: State.currentUser.id,
-    table_id: State.selectedTable,
-    order_type: State.orderType,
-    status: "pending",
-    total_amount: grandTotal,
-    shipping_cost: shippingCost,
-    service_fee: serviceFee,
-    customer_phone: State.currentUser.phone,
-    payment_method: State.payTiming === "later" ? (State.orderType === "delivery" ? "cod" : "") : selectedPayment,
-    payment_status:
-      State.payTiming === "later"
-        ? "unpaid"
-        : isDigitalSelected()
-          ? "paid"
-          : "unpaid",
-    delivery_address:
-      State.orderType === "delivery"
-        ? document.getElementById("delivery-address")?.value ||
-          State.deliveryAddress ||
-          ""
-        : "",
-    delivery_detail:
-      State.orderType === "delivery"
-        ? document.getElementById("delivery-detail")?.value ||
-          State.deliveryDetail ||
-          ""
-        : "",
-    delivery_location:
-      State.orderType === "delivery" && State.deliveryLocation
-        ? State.deliveryLocation
-        : null,
-    promo_id: State.activePromoId || null,
-    promo_discount: discount || 0,
-    created_at: new Date().toISOString(),
-    items: State.cart.map((c) => ({
-      menu_item_id: c.menu_item_id,
-      quantity: c.quantity,
-      unit_price: c.unit_price,
-      notes: c.notes,
-      status: "pending",
-    })),
-    has_mitra_items: State.cart.some(c => getMenuItem(c.menu_item_id)?.submitted_by),
-    mitra_approved: false,
-  };
-  if (State.orderType === "delivery") order.courier_id = null;
-  DB.orders.unshift(order);
-  if (order.table_id) {
-    const t = getTable(order.table_id);
-    if (t) t.status = "occupied";
-  }
-  State.cart = [];
-  State.activePromoId = null;
-  State.deliveryLocation = null;
-  State.deliveryAddress = "";
-  State.deliveryDetail = "";
-  notifyOrderPlaced(order, State.currentUser.name);
-  showToast(
-    `Pesanan #${order.id.slice(-5).toUpperCase()} berhasil dibuat!`,
-    "success",
-  );
-  switchTab("orders");
 }

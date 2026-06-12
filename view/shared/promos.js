@@ -1,72 +1,85 @@
 // ------------------------------------------------------------------
 // PROMO MANAGEMENT
 // ------------------------------------------------------------------
-function renderAdminPromos() {
-  return `
-  <div class="animate-fade-up">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="font-display text-xl font-bold">Kelola Promo</h2>
-      <button onclick="showAddPromoModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
-    </div>
-    <div class="space-y-3">
-      ${(DB.promos || []).map(p => {
-        const now = new Date();
-        const active = p.is_active && (!p.end_date || new Date(p.end_date) >= now);
-        const discLabel = p.discount_type === 'fixed' ? formatCurrency(p.discount_value) : p.discount_value + '%';
-        const menuNames = (p.menu_ids || []).map(id => { const m = DB.menuItems.find(x => x.id === id); return m ? m.name : ''; }).filter(Boolean).join(', ');
-        return `
-      <div class="card flex flex-col gap-3">
-        <div class="flex items-start gap-4 cursor-pointer hover:scale-[1.01] transition-transform" onclick="showEditPromoModal('${p.id}')">
-          <img src="${p.image || 'https://picsum.photos/seed/' + p.id + '/100/100'}" class="w-14 h-14 rounded-xl object-cover" onerror="this.src='https://picsum.photos/seed/${p.id}/100/100'">
-          <div class="flex-1 min-w-0">
-            <div class="font-bold text-sm">${p.title}</div>
-            <div class="text-xs mb-1" style="color:var(--muted)">${p.desc}</div>
-            <div class="text-[10px] font-mono" style="color:var(--accent)">${p.code}</div>
-            <div class="text-[10px] mt-1" style="color:var(--muted)">Diskon ${discLabel}</div>
-            ${p.start_date ? `<div class="text-[10px]" style="color:var(--muted)">${formatDate(p.start_date)} - ${p.end_date ? formatDate(p.end_date) : '...'}</div>` : ''}
-            ${menuNames ? `<div class="text-[10px] mt-1" style="color:var(--accent)">Menu: ${menuNames}</div>` : '<div class="text-[10px] mt-1" style="color:var(--muted)">Semua menu</div>'}
+async function renderAdminPromos() {
+  try {
+    showSkeleton('admin-promos', 'list');
+    var promos = await API.getPromos();
+    var menuItems = await API.getMenu();
+    DB.promos = promos;
+    DB.menuItems = menuItems;
+    return `
+    <div class="animate-fade-up">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="font-display text-xl font-bold">Kelola Promo</h2>
+        <button onclick="showAddPromoModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
+      </div>
+      <div class="space-y-3">
+        ${(promos || []).map(function(p) {
+          var now = new Date();
+          var active = p.is_active && (!p.end_date || new Date(p.end_date) >= now);
+          var discLabel = p.discount_type === 'fixed' ? formatCurrency(p.discount_value) : p.discount_value + '%';
+          var menuNames = (p.menu_ids || []).map(function(id) { var m = menuItems.find(function(x) { return x.id === id; }); return m ? m.name : ''; }).filter(Boolean).join(', ');
+          return `
+        <div class="card flex flex-col gap-3">
+          <div class="flex items-start gap-4 cursor-pointer hover:scale-[1.01] transition-transform" onclick="showEditPromoModal('${p.id}')">
+            <img src="${p.image || 'https://picsum.photos/seed/' + p.id + '/100/100'}" class="w-14 h-14 rounded-xl object-cover" onerror="this.src='https://picsum.photos/seed/${p.id}/100/100'">
+            <div class="flex-1 min-w-0">
+              <div class="font-bold text-sm">${p.title}</div>
+              <div class="text-xs mb-1" style="color:var(--muted)">${p.desc}</div>
+              <div class="text-[10px] font-mono" style="color:var(--accent)">${p.code}</div>
+              <div class="text-[10px] mt-1" style="color:var(--muted)">Diskon ${discLabel}</div>
+              ${p.start_date ? '<div class="text-[10px]" style="color:var(--muted)">' + formatDate(p.start_date) + ' - ' + (p.end_date ? formatDate(p.end_date) : '...') + '</div>' : ''}
+              ${menuNames ? '<div class="text-[10px] mt-1" style="color:var(--accent)">Menu: ' + menuNames + '</div>' : '<div class="text-[10px] mt-1" style="color:var(--muted)">Semua menu</div>'}
+            </div>
+            <button onclick="event.stopPropagation(); togglePromoStatus('${p.id}')" class="text-xs px-3 py-1 rounded-lg" style="background:${active ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)'};color:${active ? 'var(--success)' : 'var(--danger)'}">${active ? 'Aktif' : 'Nonaktif'}</button>
           </div>
-          <button onclick="event.stopPropagation(); togglePromoStatus('${p.id}')" class="text-xs px-3 py-1 rounded-lg" style="background:${active ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)'};color:${active ? 'var(--success)' : 'var(--danger)'}">${active ? 'Aktif' : 'Nonaktif'}</button>
-        </div>
-      </div>`;
-      }).join('')}
-      ${!(DB.promos || []).length ? '<div class="text-center py-6 text-sm" style="color:var(--muted)">Belum ada promo</div>' : ''}
-    </div>
-  </div>`;
+        </div>`;
+        }).join('')}
+        ${!(promos || []).length ? '<div class="text-center py-6 text-sm" style="color:var(--muted)">Belum ada promo</div>' : ''}
+      </div>
+    </div>`;
+  } catch(e) { console.error(e); showToast('Gagal memuat promo', 'error'); return ''; }
+  finally { hideSkeleton('admin-promos'); }
 }
 
-function togglePromoStatus(id) {
-  const p = DB.promos.find(x => x.id === id);
-  if (!p) return;
-  if (!p.is_active && (p.start_date || p.end_date)) {
-    const now = new Date();
-    if (p.start_date && new Date(p.start_date) > now) {
-      showToast('Promo belum bisa diaktifkan — tanggal mulai belum tiba', 'warning');
-      return;
+async function togglePromoStatus(id) {
+  try {
+    var p = DB.promos.find(function(x) { return x.id === id; });
+    if (!p) return;
+    if (!p.is_active && (p.start_date || p.end_date)) {
+      var now = new Date();
+      if (p.start_date && new Date(p.start_date) > now) {
+        showToast('Promo belum bisa diaktifkan — tanggal mulai belum tiba', 'warning');
+        return;
+      }
+      if (p.end_date && new Date(p.end_date) < now) {
+        showToast('Promo tidak bisa diaktifkan — periode sudah berakhir', 'warning');
+        return;
+      }
     }
-    if (p.end_date && new Date(p.end_date) < now) {
-      showToast('Promo tidak bisa diaktifkan — periode sudah berakhir', 'warning');
-      return;
-    }
-  }
-  p.is_active = !p.is_active;
-  showToast(`Promo ${p.title} ${p.is_active ? 'diaktifkan' : 'dinonaktifkan'}`, 'info');
-  render();
+    var newActive = !p.is_active;
+    await API.updatePromo(id, { is_active: newActive });
+    DB.promos = await API.getPromos();
+    showToast('Promo ' + p.title + ' ' + (newActive ? 'diaktifkan' : 'dinonaktifkan'), 'info');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal mengubah status promo', 'error'); }
 }
 
 function renderPromoMenuCheckboxes(prefix, selected) {
   selected = selected || [];
-  return DB.menuItems.map(m => `
-    <label class="flex items-center gap-2 text-sm py-1 cursor-pointer">
-      <input type="checkbox" id="${prefix}-menu-${m.id}" value="${m.id}" ${selected.includes(m.id) ? 'checked' : ''} style="accent-color:var(--accent)">
-      <img src="${m.image}" class="w-6 h-6 rounded object-cover" onerror="this.src='https://picsum.photos/seed/${m.id}/40/40'">
-      <span class="flex-1">${m.name}</span>
-      <span style="color:var(--muted);font-size:11px">${formatCurrency(m.price)}</span>
-    </label>`).join('');
+  return DB.menuItems.map(function(m) {
+    return '<label class="flex items-center gap-2 text-sm py-1 cursor-pointer">' +
+      '<input type="checkbox" id="' + prefix + '-menu-' + m.id + '" value="' + m.id + '" ' + (selected.indexOf(m.id) !== -1 ? 'checked' : '') + ' style="accent-color:var(--accent)">' +
+      '<img src="' + m.image + '" class="w-6 h-6 rounded object-cover" onerror="this.src=\'https://picsum.photos/seed/' + m.id + '/40/40\'">' +
+      '<span class="flex-1">' + m.name + '</span>' +
+      '<span style="color:var(--muted);font-size:11px">' + formatCurrency(m.price) + '</span>' +
+    '</label>';
+  }).join('');
 }
 
 function getSelectedMenuIds(prefix) {
-  return DB.menuItems.filter(m => document.getElementById(prefix + '-menu-' + m.id)?.checked).map(m => m.id);
+  return DB.menuItems.filter(function(m) { return document.getElementById(prefix + '-menu-' + m.id)?.checked; }).map(function(m) { return m.id; });
 }
 
 function showAddPromoModal() {
@@ -103,39 +116,53 @@ function showAddPromoModal() {
   `);
 }
 
-function addPromo() {
-  const title = document.getElementById('new-promo-title')?.value;
-  const code = document.getElementById('new-promo-code')?.value;
-  const desc = document.getElementById('new-promo-desc')?.value;
-  const discount_type = document.getElementById('new-promo-disc-type')?.value || 'percent';
-  const discount_value = parseInt(document.getElementById('new-promo-disc-value')?.value || '0');
-  const start_date = document.getElementById('new-promo-start')?.value || '';
-  const end_date = document.getElementById('new-promo-end')?.value || '';
-  const termsStr = document.getElementById('new-promo-terms')?.value || '';
-  if (!title || !code) { showToast('Judul dan kode promo wajib diisi', 'warning'); return; }
-  if (!discount_value) { showToast('Nilai diskon wajib diisi', 'warning'); return; }
-  if (start_date && end_date && end_date <= start_date) { showToast('Tanggal berakhir harus setelah tanggal mulai', 'warning'); return; }
-  const mode = document.getElementById('new-promo-img-mode')?.value;
-  let image = document.getElementById('new-promo-img-url')?.value;
-  if (mode === 'upload') {
-    const preview = document.getElementById('new-promo-img-preview');
-    const img = preview && preview.querySelector('img');
-    if (img) image = img.src;
-  }
-  if (!image) image = `https://picsum.photos/seed/${Date.now()}/400/300`;
-  if (!DB.promos) DB.promos = [];
-  DB.promos.push({
-    id: 'p' + Date.now(), code, title, desc, discount_type, discount_value,
-    start_date, end_date, image,
-    menu_ids: getSelectedMenuIds('new-promo'),
-    terms: termsStr.split(',').map(t => t.trim()).filter(Boolean),
-    is_active: true,
-  });
-  closeModal(); showToast('Promo berhasil ditambahkan', 'success'); render();
+async function addPromo() {
+  try {
+    var title = document.getElementById('new-promo-title')?.value;
+    var code = document.getElementById('new-promo-code')?.value;
+    var desc = document.getElementById('new-promo-desc')?.value;
+    var discount_type = document.getElementById('new-promo-disc-type')?.value || 'percent';
+    var discount_value = parseInt(document.getElementById('new-promo-disc-value')?.value || '0');
+    var start_date = document.getElementById('new-promo-start')?.value || '';
+    var end_date = document.getElementById('new-promo-end')?.value || '';
+    var termsStr = document.getElementById('new-promo-terms')?.value || '';
+    if (!title || !code) { showToast('Judul dan kode promo wajib diisi', 'warning'); return; }
+    if (!discount_value) { showToast('Nilai diskon wajib diisi', 'warning'); return; }
+    if (start_date && end_date && end_date <= start_date) { showToast('Tanggal berakhir harus setelah tanggal mulai', 'warning'); return; }
+    var modeEl = document.getElementById('new-promo-img-mode');
+    var mode = modeEl ? modeEl.value : null;
+    var imgEl = document.getElementById('new-promo-img-url');
+    var image = imgEl ? imgEl.value : null;
+    if (mode === 'upload') {
+      var preview = document.getElementById('new-promo-img-preview');
+      var img = preview && preview.querySelector('img');
+      if (img) image = img.src;
+    }
+    if (!image) image = 'https://picsum.photos/seed/' + Date.now() + '/400/300';
+    var promoData = {
+      id: 'p' + Date.now(),
+      code: code,
+      title: title,
+      desc: desc,
+      discount_type: discount_type,
+      discount_value: discount_value,
+      start_date: start_date,
+      end_date: end_date,
+      image: image,
+      menu_ids: getSelectedMenuIds('new-promo'),
+      terms: termsStr.split(',').map(function(t) { return t.trim(); }).filter(Boolean),
+      is_active: true
+    };
+    await API.createPromo(promoData);
+    DB.promos = await API.getPromos();
+    closeModal();
+    showToast('Promo berhasil ditambahkan', 'success');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal menambah promo', 'error'); }
 }
 
 function showEditPromoModal(id) {
-  const p = DB.promos.find(x => x.id === id);
+  var p = DB.promos.find(function(x) { return x.id === id; });
   if (!p) return;
   showModal(`
     <div>
@@ -173,40 +200,50 @@ function showEditPromoModal(id) {
   `);
 }
 
-function saveEditPromo(id) {
-  const p = DB.promos.find(x => x.id === id);
-  if (!p) return;
-  const title = document.getElementById('edit-promo-title')?.value;
-  const code = document.getElementById('edit-promo-code')?.value;
-  const discount_value = parseInt(document.getElementById('edit-promo-disc-value')?.value || '0');
-  if (!title || !code) { showToast('Judul dan kode promo wajib diisi', 'warning'); return; }
-  if (!discount_value) { showToast('Nilai diskon wajib diisi', 'warning'); return; }
-  const start_date = document.getElementById('edit-promo-start')?.value || '';
-  const end_date = document.getElementById('edit-promo-end')?.value || '';
-  if (start_date && end_date && end_date <= start_date) { showToast('Tanggal berakhir harus setelah tanggal mulai', 'warning'); return; }
-  p.title = title;
-  p.code = code;
-  p.desc = document.getElementById('edit-promo-desc')?.value;
-  p.discount_type = document.getElementById('edit-promo-disc-type')?.value || 'percent';
-  p.discount_value = discount_value;
-  p.start_date = document.getElementById('edit-promo-start')?.value || '';
-  p.end_date = document.getElementById('edit-promo-end')?.value || '';
-  const mode = document.getElementById('edit-promo-img-mode')?.value;
-  let image = document.getElementById('edit-promo-img-url')?.value;
-  if (mode === 'upload') {
-    const preview = document.getElementById('edit-promo-img-preview');
-    const img = preview && preview.querySelector('img');
-    if (img) image = img.src;
-  }
-  if (image) p.image = image;
-  p.menu_ids = getSelectedMenuIds('edit-promo');
-  const termsStr = document.getElementById('edit-promo-terms')?.value || '';
-  p.terms = termsStr.split(',').map(t => t.trim()).filter(Boolean);
-  closeModal(); showToast('Promo berhasil diperbarui', 'success'); render();
+async function saveEditPromo(id) {
+  try {
+    var p = DB.promos.find(function(x) { return x.id === id; });
+    if (!p) return;
+    var title = document.getElementById('edit-promo-title')?.value;
+    var code = document.getElementById('edit-promo-code')?.value;
+    var discount_value = parseInt(document.getElementById('edit-promo-disc-value')?.value || '0');
+    if (!title || !code) { showToast('Judul dan kode promo wajib diisi', 'warning'); return; }
+    if (!discount_value) { showToast('Nilai diskon wajib diisi', 'warning'); return; }
+    var start_date = document.getElementById('edit-promo-start')?.value || '';
+    var end_date = document.getElementById('edit-promo-end')?.value || '';
+    if (start_date && end_date && end_date <= start_date) { showToast('Tanggal berakhir harus setelah tanggal mulai', 'warning'); return; }
+    var updateData = {
+      title: title,
+      code: code,
+      desc: document.getElementById('edit-promo-desc')?.value,
+      discount_type: document.getElementById('edit-promo-disc-type')?.value || 'percent',
+      discount_value: discount_value,
+      start_date: start_date,
+      end_date: end_date
+    };
+    var modeEl = document.getElementById('edit-promo-img-mode');
+    var mode = modeEl ? modeEl.value : null;
+    var imgEl = document.getElementById('edit-promo-img-url');
+    var image = imgEl ? imgEl.value : null;
+    if (mode === 'upload') {
+      var preview = document.getElementById('edit-promo-img-preview');
+      var img = preview && preview.querySelector('img');
+      if (img) image = img.src;
+    }
+    if (image) updateData.image = image;
+    updateData.menu_ids = getSelectedMenuIds('edit-promo');
+    var termsStr = document.getElementById('edit-promo-terms')?.value || '';
+    updateData.terms = termsStr.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
+    await API.updatePromo(id, updateData);
+    DB.promos = await API.getPromos();
+    closeModal();
+    showToast('Promo berhasil diperbarui', 'success');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal memperbarui promo', 'error'); }
 }
 
 function deletePromo(id) {
-  const p = DB.promos.find(x => x.id === id);
+  var p = DB.promos.find(function(x) { return x.id === id; });
   if (!p) return;
   showModal(`
     <div>
@@ -220,7 +257,12 @@ function deletePromo(id) {
   `);
 }
 
-function confirmDeletePromo(id) {
-  DB.promos = DB.promos.filter(x => x.id !== id);
-  closeModal(); showToast('Promo dihapus', 'info'); render();
+async function confirmDeletePromo(id) {
+  try {
+    await API.deletePromo(id);
+    DB.promos = DB.promos.filter(function(x) { return x.id !== id; });
+    closeModal();
+    showToast('Promo dihapus', 'info');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal menghapus promo', 'error'); }
 }

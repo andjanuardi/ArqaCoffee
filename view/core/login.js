@@ -79,36 +79,68 @@ function showServiceClosedPopup() {
   `);
 }
 
-function quickLogin(role) {
-  const u = DB.users.find(u => u.role === role);
-  if (u) {
-    State.currentUser = u;
+async function quickLogin(role) {
+  var creds = getRoleCredentials(role);
+  if (!creds) { showToast('Role tidak tersedia', 'error'); return; }
+  var btn = document.querySelector('[onclick*="quickLogin"]');
+  try {
+    showBtnSpinner(btn);
+    var res = await API.login(creds.email, creds.password);
+    State.currentUser = res.user;
     State.currentView = 'main';
     State.currentTab[role] = getDefaultTab(role);
-    if (u.role === 'mitra_juru_masak' && u.mitra_position) {
-      State.mitraPositions[u.name] = u.mitra_position;
+    if (res.user.role === 'mitra_juru_masak' && res.user.mitra_position) {
+      State.mitraPositions[res.user.name] = res.user.mitra_position;
     }
-    sessionStorage.setItem('arqa_session', JSON.stringify({ userId: u.id, currentTab: State.currentTab }));
-    render();
-    showToast(`Selamat datang, ${u.name}!`, 'success');
+    sessionStorage.setItem('arqa_session', JSON.stringify({ userId: res.user.id, userRole: res.user.role, currentTab: State.currentTab }));
+    await render();
+    showToast('Selamat datang, ' + res.user.name + '!', 'success');
+  } catch (err) {
+    console.error('[quickLogin]', err);
+    showToast('Gagal login: ' + err.message, 'error');
+  } finally {
+    hideBtnSpinner(btn);
   }
 }
 
-function handleLogin() {
-  const e = document.getElementById('login-email').value;
-  const p = document.getElementById('login-pass').value;
-  const u = DB.users.find(u => u.email === e && u.password === p);
-  if (u) {
-    State.currentUser = u;
+function getRoleCredentials(role) {
+  var m = {
+    admin: { email: 'admin@arqa.coffee', password: 'admin123' },
+    manager: { email: 'manager@arqa.coffee', password: 'manager123' },
+    cashier: { email: 'kasir@arqa.coffee', password: 'kasir123' },
+    kitchen: { email: 'dapur@arqa.coffee', password: 'dapur123' },
+    courier: { email: 'kurir@arqa.coffee', password: 'kurir123' },
+    waiter: { email: 'waiter@arqa.coffee', password: 'waiter123' },
+    playground: { email: 'playground@arqa.coffee', password: 'playground123' },
+    customer: { email: 'customer@arqa.coffee', password: 'customer123' },
+    mitra_juru_masak: { email: 'mitra@arqa.coffee', password: 'mitra123' },
+  };
+  return m[role] || null;
+}
+
+async function handleLogin() {
+  var email = document.getElementById('login-email').value;
+  var password = document.getElementById('login-pass').value;
+  if (!email || !password) { showToast('Email dan password wajib diisi', 'warning'); return; }
+  var btn = document.querySelector('#login-email').closest('.border-t').querySelector('.btn-primary');
+  try {
+    showBtnSpinner(btn);
+    var res = await API.login(email, password);
+    State.currentUser = res.user;
     State.currentView = 'main';
-    State.currentTab[u.role] = getDefaultTab(u.role);
-    if (u.role === 'mitra_juru_masak' && u.mitra_position) {
-      State.mitraPositions[u.name] = u.mitra_position;
+    State.currentTab[res.user.role] = getDefaultTab(res.user.role);
+    if (res.user.role === 'mitra_juru_masak' && res.user.mitra_position) {
+      State.mitraPositions[res.user.name] = res.user.mitra_position;
     }
-    sessionStorage.setItem('arqa_session', JSON.stringify({ userId: u.id, currentTab: State.currentTab }));
-    render();
-    showToast(`Selamat datang, ${u.name}!`, 'success');
-  } else showToast('Email atau password salah', 'error');
+    sessionStorage.setItem('arqa_session', JSON.stringify({ userId: res.user.id, userRole: res.user.role, currentTab: State.currentTab }));
+    await render();
+    showToast('Selamat datang, ' + res.user.name + '!', 'success');
+  } catch (err) {
+    console.error('[handleLogin]', err);
+    showToast('Email atau password salah', 'error');
+  } finally {
+    hideBtnSpinner(btn);
+  }
 }
 
 function getDefaultTab(role) {
@@ -133,27 +165,33 @@ function showCustomerRegisterModal() {
   `);
 }
 
-function registerCustomer() {
-  const name = document.getElementById('reg-name')?.value;
-  const email = document.getElementById('reg-email')?.value;
-  const pass = document.getElementById('reg-pass')?.value;
-  const phone = document.getElementById('reg-phone')?.value?.trim();
-  const address = document.getElementById('reg-address')?.value;
+async function registerCustomer() {
+  var name = document.getElementById('reg-name')?.value;
+  var email = document.getElementById('reg-email')?.value;
+  var pass = document.getElementById('reg-pass')?.value;
+  var phone = document.getElementById('reg-phone')?.value?.trim();
+  var address = document.getElementById('reg-address')?.value;
   if (!name || !name.trim() || !email || !email.trim()) { showToast('Nama dan email wajib diisi', 'warning'); return; }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { showToast('Format email tidak valid', 'warning'); return; }
-  if (DB.users.find(u => u.email === email.trim())) { showToast('Email sudah terdaftar', 'error'); return; }
   if (pass && pass.length < 6) { showToast('Password minimal 6 karakter', 'warning'); return; }
   if (pass !== document.getElementById('reg-pass-confirm')?.value) { showToast('Konfirmasi password tidak cocok', 'warning'); return; }
   if (phone) {
-    const phoneClean = phone.replace(/[\s\-]/g, '');
+    var phoneClean = phone.replace(/[\s\-]/g, '');
     if (!/^(\+62|62|0)8[1-9][0-9]{6,11}$/.test(phoneClean)) { showToast('Nomor telepon tidak valid. Gunakan format Indonesia (08xx atau +628xx)', 'warning'); return; }
   }
-  if (isServiceClosed()) { closeModal(); showServiceClosedPopup(); return; }
-  const u = { id: 'u' + Date.now(), name: name.trim(), email: email.trim(), password: pass || 'password123', role: 'customer', phone: phone || '', address: address?.trim() || '', avatar: name.trim()[0].toUpperCase() };
-  DB.users.push(u);
-  closeModal();
-  render();
-  showToast('Pendaftaran berhasil! Silahkan login', 'success');
+  try {
+    await API.register({ name: name.trim(), email: email.trim(), password: pass || 'password123', phone: phone || '', address: address?.trim() || '' });
+    closeModal();
+    await render();
+    showToast('Pendaftaran berhasil! Silahkan login', 'success');
+  } catch (err) {
+    console.error('[registerCustomer]', err);
+    if (err.message.indexOf('409') >= 0 || err.message.indexOf('already registered') >= 0) {
+      showToast('Email sudah terdaftar', 'error');
+    } else {
+      showToast('Gagal mendaftar: ' + err.message, 'error');
+    }
+  }
 }
 
 function showForgotPasswordModal() {
@@ -172,14 +210,14 @@ function showForgotPasswordModal() {
   `);
 }
 
-function resetPassword() {
-  const email = document.getElementById('forgot-email')?.value;
+async function resetPassword() {
+  var email = document.getElementById('forgot-email')?.value;
   if (!email || !email.trim()) { showToast('Masukkan email Anda', 'warning'); return; }
-  const u = DB.users.find(u => u.email === email.trim());
-  if (!u) { showToast('Email tidak ditemukan', 'error'); return; }
-  u.password = 'password123';
+  try {
+    await API.forgotPassword(email.trim());
+  } catch (e) { console.error('[resetPassword]', e); }
   closeModal();
-  showToast('Password berhasil direset ke "password123"', 'success');
+  showToast('Jika email terdaftar, password telah direset ke "password123"', 'success');
 }
 
 function showMitraRegistrationModal() {
@@ -260,14 +298,14 @@ function selectMitraRole(role) {
 function initMitraRegMap() {
   const el = document.getElementById('map-mitra-reg-position');
   if (!el || _mitraRegMap) return;
-  const cafe = DB.cafe?.location || ARQA_COORDS;
-  _mitraRegPos = { lat: cafe.lat, lng: cafe.lng };
-  _mitraRegMap = L.map(el, { zoomControl: false, attributionControl: false }).setView([cafe.lat, cafe.lng], 19);
+  var cafeLoc = (State._cafe && State._cafe.location) || ARQA_COORDS;
+  _mitraRegPos = { lat: cafeLoc.lat, lng: cafeLoc.lng };
+  _mitraRegMap = L.map(el, { zoomControl: false, attributionControl: false }).setView([cafeLoc.lat, cafeLoc.lng], 19);
   L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, attribution: 'Google' }).addTo(_mitraRegMap);
-  L.marker([cafe.lat, cafe.lng], {
+  L.marker([cafeLoc.lat, cafeLoc.lng], {
     icon: L.divIcon({ html: '<i class="fas fa-store" style="color:#e07a3a;font-size:22px"></i>', className: '', iconSize: [22, 22], iconAnchor: [11, 11] })
   }).addTo(_mitraRegMap).bindPopup('ARQA Coffee');
-  _mitraRegMarker = L.marker([cafe.lat, cafe.lng], {
+  _mitraRegMarker = L.marker([cafeLoc.lat, cafeLoc.lng], {
     draggable: true,
     icon: L.divIcon({
       html: '<div style="width:40px;height:40px;background:#e84393;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);border:3px solid #fff;cursor:grab;animation:pulse 2s infinite"><i class="fas fa-hat-chef" style="color:#fff;font-size:18px"></i></div><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #e84393;margin:-2px auto 0"></div>',
@@ -299,7 +337,7 @@ function updateMitraRegPosDisplay(lat, lng) {
   }
 }
 
-function submitMitraRegistration() {
+async function submitMitraRegistration() {
   const name = document.getElementById('mitra-reg-name')?.value?.trim();
   const business = document.getElementById('mitra-reg-business')?.value?.trim();
   const email = document.getElementById('mitra-reg-email')?.value?.trim();
@@ -310,45 +348,31 @@ function submitMitraRegistration() {
   if (_selectedMitraRole === 'mitra_juru_masak' && !business) { showToast('Nama usaha wajib diisi', 'warning'); return; }
   if (!email) { showToast('Email wajib diisi', 'warning'); return; }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Format email tidak valid', 'warning'); return; }
-  if (DB.users.find(u => u.email === email)) { showToast('Email sudah terdaftar sebagai pengguna', 'error'); return; }
-  if (phone) {
-    const phoneClean = phone.replace(/[\s\-]/g, '');
-    if (!/^(\+62|62|0)8[1-9][0-9]{6,11}$/.test(phoneClean)) { showToast('Nomor telepon tidak valid. Gunakan format Indonesia (08xx atau +628xx)', 'warning'); return; }
+  try {
+    var position = (_selectedMitraRole === 'mitra_juru_masak' && _mitraRegPos) ? _mitraRegPos : null;
+    await API.registerMitra({ name: name, business: business, email: email, phone: phone, address: address, role: _selectedMitraRole, position: position });
+  } catch (err) {
+    console.error('[submitMitraRegistration]', err);
+    if (err.message.indexOf('409') >= 0 || err.message.indexOf('already') >= 0) {
+      showToast('Email sudah terdaftar', 'error');
+    } else {
+      showToast('Gagal mendaftar: ' + err.message, 'error');
+    }
+    return;
   }
-  if (!DB.mitraRegistrations) DB.mitraRegistrations = [];
-  var data = {
-    id: 'mr' + Date.now(),
-    name: name, business: business, email: email, phone: phone, address: address,
-    role: _selectedMitraRole,
-    status: 'pending',
-    created_at: new Date().toISOString(),
-  };
-  if (_selectedMitraRole === 'mitra_juru_masak' && _mitraRegPos) {
-    data.position = _mitraRegPos;
-  }
-  DB.mitraRegistrations.push(data);
   if (_mitraRegMap) { _mitraRegMap.remove(); _mitraRegMap = null; _mitraRegMarker = null; _mitraRegPos = null; }
-  addNotification({
-    title: 'Pendaftaran Mitra Baru',
-    message: name + ' mendaftar sebagai ' + (_selectedMitraRole === 'courier' ? 'Kurir' : 'Mitra Juru Masak'),
-    type: 'info',
-    icon: 'fa-user-plus',
-    targetRoles: ['admin', 'manager'],
-  });
   closeModal();
-  showModal(`
-    <div class="text-center">
-      <div class="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl" style="background:rgba(232,67,147,.12);color:#e84393"><i class="fas fa-clock"></i></div>
-      <h3 class="font-display text-lg font-bold mb-2">Pendaftaran Terkirim!</h3>
-      <p class="text-sm mb-2" style="color:var(--muted)">Terima kasih, <strong>${name}</strong>!</p>
-      <p class="text-sm mb-4" style="color:var(--muted)">Pendaftaran kamu sebagai <strong>${_selectedMitraRole === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}</strong> sedang kami proses.</p>
-      <div class="card mb-4 text-sm" style="background:rgba(232,67,147,.06);border:1px solid rgba(232,67,147,.15)">
-        <i class="fas fa-info-circle mr-1" style="color:var(--accent)"></i>
-        Mohon tunggu konfirmasi dari Admin. Kami akan menghubungi kamu melalui <strong>${email}</strong> atau nomor telepon yang didaftarkan.
-      </div>
-      <button onclick="closeModal()" class="btn-primary w-full text-center">Tutup</button>
-    </div>
-  `);
+  showModal('<div class="text-center">' +
+    '<div class="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl" style="background:rgba(232,67,147,.12);color:#e84393"><i class="fas fa-clock"></i></div>' +
+    '<h3 class="font-display text-lg font-bold mb-2">Pendaftaran Terkirim!</h3>' +
+    '<p class="text-sm mb-2" style="color:var(--muted)">Terima kasih, <strong>' + name + '</strong>!</p>' +
+    '<p class="text-sm mb-4" style="color:var(--muted)">Pendaftaran kamu sebagai <strong>' + (_selectedMitraRole === 'courier' ? 'Kurir' : 'Mitra Juru Masak') + '</strong> sedang kami proses.</p>' +
+    '<div class="card mb-4 text-sm" style="background:rgba(232,67,147,.06);border:1px solid rgba(232,67,147,.15)">' +
+    '<i class="fas fa-info-circle mr-1" style="color:var(--accent)"></i>' +
+    'Mohon tunggu konfirmasi dari Admin. Kami akan menghubungi kamu melalui <strong>' + email + '</strong> atau nomor telepon yang didaftarkan.' +
+    '</div>' +
+    '<button onclick="closeModal()" class="btn-primary w-full text-center">Tutup</button>' +
+    '</div>');
   showToast('Pendaftaran mitra berhasil dikirim!', 'success');
 }
 

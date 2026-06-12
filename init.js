@@ -2,6 +2,15 @@
 // PERMISSION GATE + INITIAL RENDER + AUTO-SAVE
 // ============================================================
 (function init() {
+  var isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';
+
+  if (isLocalhost) {
+    State._geoGranted = true;
+    State._cameraGranted = true;
+    startApp().catch(function(e) { console.error('[init] startApp failed', e); });
+    return;
+  }
+
   var notifOk = !("Notification" in window) || Notification.permission === "granted";
   var notifDenied = "Notification" in window && Notification.permission === "denied";
 
@@ -74,7 +83,7 @@ function renderPermissionGate() {
     setTimeout(function() {
       var el = document.getElementById('permission-gate');
       if (el) el.remove();
-      startApp();
+      startApp().catch(function(e) { console.error('[init] startApp failed', e); });
     }, 600);
   }
 }
@@ -85,7 +94,7 @@ function checkRemainingSilently() {
 
   function done() {
     if (pending > 0) return;
-    if (allGranted && State._geoGranted && State._cameraGranted) startApp();
+    if (allGranted && State._geoGranted && State._cameraGranted) startApp().catch(function(e) { console.error('[init] startApp failed', e); });
     else renderPermissionGate();
   }
 
@@ -195,47 +204,36 @@ function checkPermissions() {
   renderPermissionGate();
 }
 
-function startApp() {
-  loadNotifications();
+async function startApp() {
   try {
-    const raw = sessionStorage.getItem('arqa_session');
+    await loadNotificationsAsync();
+  } catch (e) { console.error('[startApp] loadNotifications failed', e); }
+
+  try {
+    var raw = sessionStorage.getItem('arqa_session');
     if (raw) {
-      const sesh = JSON.parse(raw);
-      const u = DB.users.find(u => u.id === sesh.userId);
-      if (u) {
-        State.currentUser = u;
+      var sesh = JSON.parse(raw);
+      var token = api.getToken();
+      if (token) {
         State.currentView = 'main';
         if (sesh.currentTab) State.currentTab = sesh.currentTab;
+        try {
+          var users = await API.getUsers();
+          var u = users.find(function (u) { return u.id === sesh.userId; });
+          if (u) {
+            State.currentUser = u;
+          } else {
+            api.clearToken();
+            sessionStorage.removeItem('arqa_session');
+          }
+        } catch (e) {
+          console.error('[startApp] Failed to fetch user', e);
+          api.clearToken();
+          sessionStorage.removeItem('arqa_session');
+        }
       }
     }
   } catch (e) {}
-  render();
-  setInterval(saveDB, 1000);
 
-  window.addEventListener('storage', function(e) {
-    if (e.key === 'arqa_db' && e.newValue) {
-      if (e.newValue === JSON.stringify(DB)) return;
-      var fresh = JSON.parse(e.newValue);
-      var incomingTime = fresh._updatedAt || 0;
-      var currentTime = DB._updatedAt || 0;
-      if (incomingTime <= currentTime) return;
-      Object.keys(DB).forEach(function(k) { if (!(k in fresh)) delete DB[k]; });
-      Object.keys(fresh).forEach(function(k) { DB[k] = fresh[k]; });
-      loadNotifications();
-      if (!document.getElementById('modal-overlay')) render();
-    }
-    if (e.key === 'arqa_notifications' && e.newValue) {
-      if (e.newValue === JSON.stringify(State.notifications)) return;
-      var oldCount = getUnreadCount();
-      loadNotifications();
-      var newCount = getUnreadCount();
-      var badge = document.getElementById('notif-badge');
-      if (badge) {
-        if (newCount > 0) { badge.textContent = newCount; badge.style.display = 'flex'; }
-        else badge.style.display = 'none';
-      }
-      if (!document.getElementById('modal-overlay')) render();
-      if (newCount > oldCount) showToast('Notifikasi baru', 'info');
-    }
-  });
+  await render();
 }

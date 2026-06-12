@@ -1,27 +1,56 @@
 // ============================================================
 // ADMIN VIEW — Overview & Users
 // ============================================================
-function renderAdminView() {
-  const tab = State.currentTab.admin || 'overview';
-  if (tab === 'overview') return renderAdminOverview();
-  if (tab === 'users') return renderAdminUsers();
-  if (tab === 'menu-mgmt') return renderAdminMenuMgmt();
-  if (tab === 'tables-mgmt') return renderAdminTablesMgmt();
-  if (tab === 'promos') return renderAdminPromos();
-  if (tab === 'finance') return renderFinanceReport();
-  if (tab === 'stock') return renderStockManagement();
-  if (tab === 'pg-stock') return renderPlaygroundPgStock();
-  if (tab === 'expenses') return renderExpenseManagement();
-  if (tab === 'active-orders') return renderActiveOrders();
-  if (tab === 'active-playground') return renderActivePlaygroundTickets();
-  if (tab === 'service-control') return renderServiceControl();
-  if (tab === 'tarif-group') return renderPengaturanTarif();
-  if (tab === 'courier-finance') return renderAdminCourierFinance();
-  if (tab === 'mitra-finance') return renderAdminMitraFinance();
-  if (tab === 'mitra-approval') return renderAdminMitraApproval();
-  if (tab === 'attendance') return renderAttendance();
-  if (tab === 'profile') return renderGenericProfile();
-  return renderAdminOverview();
+async function renderAdminView() {
+  try {
+    showSkeleton('admin-content', 'overview');
+    var tab = State.currentTab.admin || 'overview';
+    var orders = await API.getOrders();
+    var users = await API.getUsers();
+    var cafe = await API.getCafe();
+    var mitraRegistrations = await API.getMitraRegistrations();
+    var playgroundData = await API.getAllPlaygroundData();
+    var expenses = await API.getExpenses();
+    var menuItems = await API.getMenu();
+    var tables = await API.getTables();
+    DB.orders = orders;
+    DB.users = users;
+    DB.cafe = cafe || {};
+    DB.mitraRegistrations = mitraRegistrations || [];
+    DB.playgroundTickets = (playgroundData && playgroundData.tickets) || [];
+    DB.expenses = expenses || [];
+    DB.menuItems = menuItems;
+    DB.tables = tables;
+    if (!DB.cafe.serviceStatus) DB.cafe.serviceStatus = 'open';
+    if (!DB.cafe.serviceSchedule) {
+      var days = ['Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu', 'Minggu'];
+      DB.cafe.serviceSchedule = days.map(function(n, i) { return { day: i, name: n, open: '08:00', close: '22:00' }; });
+    }
+    hideSkeleton('admin-content');
+    if (tab === 'overview') return renderAdminOverview();
+    if (tab === 'users') return renderAdminUsers();
+    if (tab === 'menu-mgmt') return renderAdminMenuMgmt();
+    if (tab === 'tables-mgmt') return renderAdminTablesMgmt();
+    if (tab === 'promos') return renderAdminPromos();
+    if (tab === 'finance') return renderFinanceReport();
+    if (tab === 'stock') return renderStockManagement();
+    if (tab === 'pg-stock') return renderPlaygroundPgStock();
+    if (tab === 'expenses') return renderExpenseManagement();
+    if (tab === 'active-orders') return renderActiveOrders();
+    if (tab === 'active-playground') return renderActivePlaygroundTickets();
+    if (tab === 'service-control') return renderServiceControl();
+    if (tab === 'tarif-group') return renderPengaturanTarif();
+    if (tab === 'courier-finance') return renderAdminCourierFinance();
+    if (tab === 'mitra-finance') return renderAdminMitraFinance();
+    if (tab === 'mitra-approval') return renderAdminMitraApproval();
+    if (tab === 'attendance') return renderAttendance();
+    if (tab === 'profile') return renderGenericProfile();
+    return renderAdminOverview();
+  } catch (e) {
+    hideSkeleton('admin-content');
+    showToast('Error loading data: ' + e.message, 'error');
+    return '<div class="p-4 text-center" style="color:var(--danger)">Error loading data</div>';
+  }
 }
 
 function renderAdminCourierFinance() {
@@ -168,22 +197,44 @@ function renderAdminMitraApproval() {
   </div>`;
 }
 
-function approveMitraRegistration(id) {
-  const r = DB.mitraRegistrations?.find(x => x.id === id);
-  if (!r) return;
-  r.status = 'approved';
-  const pwd = '123456';
-  DB.users.push({ id: 'u' + Date.now(), name: r.name, business_name: r.business || '', email: r.email, password: pwd, role: r.role, phone: r.phone || '', address: r.address || '', avatar: r.name[0].toUpperCase(), mitra_position: r.position || null });
-  showToast(`${r.name} disetujui sebagai ${r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak'}!`, 'success');
-  render();
+async function approveMitraRegistration(id) {
+  try {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') showBtnSpinner(btn);
+    var r = DB.mitraRegistrations?.find(function(x) { return x.id === id; });
+    if (!r) { if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn); return; }
+    await API.updateMitraRegistration(id, {status: 'approved'});
+    var pwd = '123456';
+    var newUser = { id: 'u' + Date.now(), name: r.name, business_name: r.business || '', email: r.email, password: pwd, role: r.role, phone: r.phone || '', address: r.address || '', avatar: r.name[0].toUpperCase(), mitra_position: r.position || null };
+    await API.createUser(newUser);
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    r.status = 'approved';
+    DB.users.push(newUser);
+    showToast(r.name + ' disetujui sebagai ' + (r.role === 'courier' ? 'Kurir' : 'Mitra Juru Masak') + '!', 'success');
+    render();
+  } catch (e) {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Error: ' + e.message, 'error');
+  }
 }
 
-function rejectMitraRegistration(id) {
-  const r = DB.mitraRegistrations?.find(x => x.id === id);
-  if (!r) return;
-  r.status = 'rejected';
-  showToast(`${r.name} ditolak`, 'info');
-  render();
+async function rejectMitraRegistration(id) {
+  try {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') showBtnSpinner(btn);
+    var r = DB.mitraRegistrations?.find(function(x) { return x.id === id; });
+    if (!r) { if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn); return; }
+    await API.updateMitraRegistration(id, {status: 'rejected'});
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    r.status = 'rejected';
+    showToast(r.name + ' ditolak', 'info');
+    render();
+  } catch (e) {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Error: ' + e.message, 'error');
+  }
 }
 
 
@@ -520,25 +571,39 @@ function renderServiceControl() {
   </div>`;
 }
 
-function toggleServiceStatus() {
-  if (!DB.cafe) DB.cafe = {};
-  if (DB.cafe.serviceStatus === 'force_open') {
-    DB.cafe.serviceStatus = 'open';
-    showToast('Layanan dikembalikan ke mode otomatis', 'info');
-  } else if (DB.cafe.serviceStatus === 'closed') {
-    DB.cafe.serviceStatus = 'open';
-    showToast('Layanan dikembalikan ke mode otomatis', 'info');
-  } else {
-    const inSchedule = isWithinScheduleHours();
-    if (inSchedule) {
-      DB.cafe.serviceStatus = 'closed';
-      showToast('Layanan ditutup', 'warning');
+async function toggleServiceStatus() {
+  try {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') showBtnSpinner(btn);
+    var updates = {};
+    if (DB.cafe.serviceStatus === 'force_open') {
+      updates.serviceStatus = 'open';
+    } else if (DB.cafe.serviceStatus === 'closed') {
+      updates.serviceStatus = 'open';
     } else {
-      DB.cafe.serviceStatus = 'force_open';
+      var inSchedule = isWithinScheduleHours();
+      if (inSchedule) {
+        updates.serviceStatus = 'closed';
+      } else {
+        updates.serviceStatus = 'force_open';
+      }
+    }
+    await API.updateCafe(updates);
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    DB.cafe.serviceStatus = updates.serviceStatus;
+    if (updates.serviceStatus === 'open') {
+      showToast('Layanan dikembalikan ke mode otomatis', 'info');
+    } else if (updates.serviceStatus === 'closed') {
+      showToast('Layanan ditutup', 'warning');
+    } else if (updates.serviceStatus === 'force_open') {
       showToast('Layanan dipaksa buka', 'success');
     }
+    render();
+  } catch (e) {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Error: ' + e.message, 'error');
   }
-  render();
 }
 
 function updateScheduleTime(day, field, value) {
@@ -546,10 +611,19 @@ function updateScheduleTime(day, field, value) {
   DB.cafe.serviceSchedule[day][field] = value;
 }
 
-function saveServiceSchedule() {
-  if (!DB.cafe) DB.cafe = {};
-  showToast('Jadwal layanan tersimpan!', 'success');
-  render();
+async function saveServiceSchedule() {
+  try {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') showBtnSpinner(btn);
+    await API.updateCafe({serviceSchedule: DB.cafe.serviceSchedule});
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Jadwal layanan tersimpan!', 'success');
+    render();
+  } catch (e) {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Error: ' + e.message, 'error');
+  }
 }
 
 function addSpecialDate() {
@@ -576,24 +650,53 @@ function addSpecialDate() {
   `);
 }
 
-function confirmSpecialDate() {
-  const date = document.getElementById('special-date-input')?.value;
-  const closed = document.getElementById('special-date-status')?.value === 'closed';
-  const note = document.getElementById('special-date-note')?.value || '';
-  if (!date) { showToast('Pilih tanggal terlebih dahulu', 'error'); return; }
-  if (!DB.cafe) DB.cafe = {};
-  if (!DB.cafe.specialDates) DB.cafe.specialDates = [];
-  if (DB.cafe.specialDates.some(s => s.date === date)) { showToast('Tanggal sudah ada', 'error'); return; }
-  DB.cafe.specialDates.push({ id: 'sd' + Date.now(), date, closed, note });
-  closeModal();
-  showToast('Tanggal spesial ditambahkan', 'success');
-  render();
+async function confirmSpecialDate() {
+  try {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') showBtnSpinner(btn);
+    var date = document.getElementById('special-date-input')?.value;
+    var closed = document.getElementById('special-date-status')?.value === 'closed';
+    var note = document.getElementById('special-date-note')?.value || '';
+    if (!date) {
+      if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+      showToast('Pilih tanggal terlebih dahulu', 'error');
+      return;
+    }
+    if (!DB.cafe) DB.cafe = {};
+    if (!DB.cafe.specialDates) DB.cafe.specialDates = [];
+    if (DB.cafe.specialDates.some(function(s) { return s.date === date; })) {
+      if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+      showToast('Tanggal sudah ada', 'error');
+      return;
+    }
+    var newEntry = { id: 'sd' + Date.now(), date: date, closed: closed, note: note };
+    DB.cafe.specialDates.push(newEntry);
+    await API.updateCafe({specialDates: DB.cafe.specialDates});
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    closeModal();
+    showToast('Tanggal spesial ditambahkan', 'success');
+    render();
+  } catch (e) {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Error: ' + e.message, 'error');
+  }
 }
 
-function removeSpecialDate(id) {
-  if (!DB.cafe?.specialDates) return;
-  DB.cafe.specialDates = DB.cafe.specialDates.filter(s => s.id !== id);
-  render();
+async function removeSpecialDate(id) {
+  try {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') showBtnSpinner(btn);
+    if (!DB.cafe?.specialDates) { if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn); return; }
+    DB.cafe.specialDates = DB.cafe.specialDates.filter(function(s) { return s.id !== id; });
+    await API.updateCafe({specialDates: DB.cafe.specialDates});
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    render();
+  } catch (e) {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Error: ' + e.message, 'error');
+  }
 }
 
 function showTableDetail(id) {
@@ -658,51 +761,92 @@ function showPilihStokModal() {
 // ============================================================
 // PENGATURAN TARIF
 // ============================================================
-function saveTarifKurir() {
-  if (!DB.cafe) DB.cafe = {};
-  if (!DB.cafe.rates) DB.cafe.rates = {};
-  if (!DB.cafe.rates.courier) DB.cafe.rates.courier = { shipping: { rate_per_km: 3000, min: 5000, max: 50000 }, service_fee: { type: 'percent', value: 5 } };
-  const min = parseInt(document.getElementById('tarif-kurir-min')?.value);
-  const rate = parseInt(document.getElementById('tarif-kurir-rate')?.value);
-  const feeType = document.getElementById('tarif-kurir-fee-type')?.value;
-  const feeValue = parseInt(document.getElementById('tarif-kurir-fee-value')?.value);
-  if (!min || !rate || min < 0 || rate < 0 || feeValue < 0) { showToast('Nilai tidak valid', 'warning'); return; }
-  DB.cafe.rates.courier.shipping.min = min;
-  DB.cafe.rates.courier.shipping.rate_per_km = rate;
-  DB.cafe.rates.courier.service_fee.type = feeType;
-  DB.cafe.rates.courier.service_fee.value = feeValue;
-  // Also update legacy shipping for backward compat
-  DB.cafe.shipping = DB.cafe.shipping || {};
-  DB.cafe.shipping.min = min;
-  DB.cafe.shipping.rate_per_km = rate;
-  showToast('Tarif kurir diperbarui!', 'success');
-  render();
+async function saveTarifKurir() {
+  try {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') showBtnSpinner(btn);
+    var min = parseInt(document.getElementById('tarif-kurir-min')?.value);
+    var rate = parseInt(document.getElementById('tarif-kurir-rate')?.value);
+    var feeType = document.getElementById('tarif-kurir-fee-type')?.value;
+    var feeValue = parseInt(document.getElementById('tarif-kurir-fee-value')?.value);
+    if (!min || !rate || min < 0 || rate < 0 || feeValue < 0) {
+      if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+      showToast('Nilai tidak valid', 'warning');
+      return;
+    }
+    if (!DB.cafe) DB.cafe = {};
+    if (!DB.cafe.rates) DB.cafe.rates = {};
+    if (!DB.cafe.rates.courier) DB.cafe.rates.courier = { shipping: { rate_per_km: 3000, min: 5000, max: 50000 }, service_fee: { type: 'percent', value: 5 } };
+    DB.cafe.rates.courier.shipping.min = min;
+    DB.cafe.rates.courier.shipping.rate_per_km = rate;
+    DB.cafe.rates.courier.service_fee.type = feeType;
+    DB.cafe.rates.courier.service_fee.value = feeValue;
+    DB.cafe.shipping = DB.cafe.shipping || {};
+    DB.cafe.shipping.min = min;
+    DB.cafe.shipping.rate_per_km = rate;
+    await API.updateCafe({rates: DB.cafe.rates, shipping: DB.cafe.shipping});
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Tarif kurir diperbarui!', 'success');
+    render();
+  } catch (e) {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Error: ' + e.message, 'error');
+  }
 }
 
-function saveTarifMitra() {
-  if (!DB.cafe) DB.cafe = {};
-  if (!DB.cafe.rates) DB.cafe.rates = {};
-  if (!DB.cafe.rates.mitra) DB.cafe.rates.mitra = { service_fee: { type: 'percent', value: 5 } };
-  const feeType = document.getElementById('tarif-mitra-fee-type')?.value;
-  const feeValue = parseInt(document.getElementById('tarif-mitra-fee-value')?.value);
-  if (feeValue < 0) { showToast('Nilai tidak valid', 'warning'); return; }
-  DB.cafe.rates.mitra.service_fee.type = feeType;
-  DB.cafe.rates.mitra.service_fee.value = feeValue;
-  showToast('Tarif mitra diperbarui!', 'success');
-  render();
+async function saveTarifMitra() {
+  try {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') showBtnSpinner(btn);
+    var feeType = document.getElementById('tarif-mitra-fee-type')?.value;
+    var feeValue = parseInt(document.getElementById('tarif-mitra-fee-value')?.value);
+    if (feeValue < 0) {
+      if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+      showToast('Nilai tidak valid', 'warning');
+      return;
+    }
+    if (!DB.cafe) DB.cafe = {};
+    if (!DB.cafe.rates) DB.cafe.rates = {};
+    if (!DB.cafe.rates.mitra) DB.cafe.rates.mitra = { service_fee: { type: 'percent', value: 5 } };
+    DB.cafe.rates.mitra.service_fee.type = feeType;
+    DB.cafe.rates.mitra.service_fee.value = feeValue;
+    await API.updateCafe({rates: DB.cafe.rates});
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Tarif mitra diperbarui!', 'success');
+    render();
+  } catch (e) {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Error: ' + e.message, 'error');
+  }
 }
 
-function saveTarifPelanggan() {
-  if (!DB.cafe) DB.cafe = {};
-  if (!DB.cafe.rates) DB.cafe.rates = {};
-  if (!DB.cafe.rates.customer) DB.cafe.rates.customer = { service_fee: { type: 'fixed', value: 1000 } };
-  const feeType = document.getElementById('tarif-pelanggan-fee-type')?.value;
-  const feeValue = parseInt(document.getElementById('tarif-pelanggan-fee-value')?.value);
-  if (feeValue < 0) { showToast('Nilai tidak valid', 'warning'); return; }
-  DB.cafe.rates.customer.service_fee.type = feeType;
-  DB.cafe.rates.customer.service_fee.value = feeValue;
-  showToast('Tarif pelanggan diperbarui!', 'success');
-  render();
+async function saveTarifPelanggan() {
+  try {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') showBtnSpinner(btn);
+    var feeType = document.getElementById('tarif-pelanggan-fee-type')?.value;
+    var feeValue = parseInt(document.getElementById('tarif-pelanggan-fee-value')?.value);
+    if (feeValue < 0) {
+      if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+      showToast('Nilai tidak valid', 'warning');
+      return;
+    }
+    if (!DB.cafe) DB.cafe = {};
+    if (!DB.cafe.rates) DB.cafe.rates = {};
+    if (!DB.cafe.rates.customer) DB.cafe.rates.customer = { service_fee: { type: 'fixed', value: 1000 } };
+    DB.cafe.rates.customer.service_fee.type = feeType;
+    DB.cafe.rates.customer.service_fee.value = feeValue;
+    await API.updateCafe({rates: DB.cafe.rates});
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Tarif pelanggan diperbarui!', 'success');
+    render();
+  } catch (e) {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Error: ' + e.message, 'error');
+  }
 }
 
 function renderTarifKurir() {

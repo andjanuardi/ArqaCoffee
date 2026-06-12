@@ -2,73 +2,73 @@
 // PLAYGROUND — TICKETS VIEW
 // ============================================================
 
-function renderPlaygroundTickets() {
-  if (!isCheckedIn()) {
+async function renderPlaygroundTickets() {
+  try {
+    showSkeleton('playground-tickets', 'list');
+    var tickets = await API.getPlaygroundTickets();
+    DB.playgroundTickets = tickets;
+    try { var attendances = await API.getAttendances(); DB.attendances = attendances; } catch (e) {}
+    if (!isCheckedIn()) {
+      return `
+      <div class="animate-fade-up">
+        <div class="card text-center py-6" style="border-color:rgba(231,76,60,.2)">
+          <i class="fas fa-ticket text-3xl mb-2" style="color:var(--danger)"></i>
+          <p class="text-sm font-semibold mb-1" style="color:var(--danger)">Belum Check-in Hari Ini</p>
+          <p class="text-xs mb-3" style="color:var(--muted)">Lakukan check-in di profil sebelum mengelola tiket</p>
+          <button onclick="showGeoAttendanceModal()" class="btn-primary text-sm px-5 py-2" style="font-size:13px">
+            <i class="fas fa-clock mr-1"></i>Check-in
+          </button>
+        </div>
+      </div>`;
+    }
+    var activeTickets = (DB.playgroundTickets || []).filter(function(t) { return t.status === "active"; }).sort(function(a, b) { return new Date(a.end_time) - new Date(b.end_time); });
+    var historyDate = State._pgHistoryDate || new Date().toLocaleDateString('sv-SE');
+    var allCompleted = (DB.playgroundTickets || []).filter(function(t) { return t.status !== "active"; }).sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+    var completed = allCompleted.filter(function(t) {
+      if (!t.created_at) return false;
+      return new Date(t.created_at).toLocaleDateString('sv-SE') === historyDate;
+    });
+    var completedCount = allCompleted.filter(function(t) { return t.status === "completed"; }).length;
+    var cancelledCount = allCompleted.filter(function(t) { return t.status === "cancelled"; }).length;
+    var now = Date.now();
+    var overtimeCount = activeTickets.filter(function(t) { return new Date(t.end_time).getTime() <= now; }).length;
+
     return `
     <div class="animate-fade-up">
-      <div class="card text-center py-6" style="border-color:rgba(231,76,60,.2)">
-        <i class="fas fa-ticket text-3xl mb-2" style="color:var(--danger)"></i>
-        <p class="text-sm font-semibold mb-1" style="color:var(--danger)">Belum Check-in Hari Ini</p>
-        <p class="text-xs mb-3" style="color:var(--muted)">Lakukan check-in di profil sebelum mengelola tiket</p>
-        <button onclick="showGeoAttendanceModal()" class="btn-primary text-sm px-5 py-2" style="font-size:13px">
-          <i class="fas fa-clock mr-1"></i>Check-in
-        </button>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-display text-xl font-bold">Tiket Aktif</h2>
+        <button onclick="switchTab('create')" class="btn-primary btn-sm flex items-center gap-1.5"><i class="fas fa-plus fa-xs"></i> Buat Tiket</button>
       </div>
-    </div>`;
-  }
-  const tickets = (DB.playgroundTickets || [])
-    .filter((t) => t.status === "active")
-    .sort((a, b) => new Date(a.end_time) - new Date(b.end_time));
-  const historyDate = State._pgHistoryDate || new Date().toLocaleDateString('sv-SE');
-  const allCompleted = (DB.playgroundTickets || [])
-    .filter((t) => t.status !== "active")
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  const completed = allCompleted.filter((t) => {
-    if (!t.created_at) return false;
-    return new Date(t.created_at).toLocaleDateString('sv-SE') === historyDate;
-  });
-  const completedCount = allCompleted.filter(t => t.status === "completed").length;
-  const cancelledCount = allCompleted.filter(t => t.status === "cancelled").length;
-  const now = Date.now();
-  const overtimeCount = tickets.filter(t => new Date(t.end_time).getTime() <= now).length;
-
-  return `
-  <div class="animate-fade-up">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="font-display text-xl font-bold">Tiket Aktif</h2>
-      <button onclick="switchTab('create')" class="btn-primary btn-sm flex items-center gap-1.5"><i class="fas fa-plus fa-xs"></i> Buat Tiket</button>
-    </div>
-    <div class="grid grid-cols-4 gap-3 mb-5">
-      <div class="stat-card text-center" style="cursor:default">
-        <div class="text-lg font-bold" style="color:var(--accent)">${tickets.length}</div>
-        <div class="text-[10px]" style="color:var(--muted)">Tiket Aktif</div>
+      <div class="grid grid-cols-4 gap-3 mb-5">
+        <div class="stat-card text-center" style="cursor:default">
+          <div class="text-lg font-bold" style="color:var(--accent)">${activeTickets.length}</div>
+          <div class="text-[10px]" style="color:var(--muted)">Tiket Aktif</div>
+        </div>
+        <div class="stat-card text-center" style="cursor:default">
+          <div class="text-lg font-bold" style="color:#3498db">${completedCount}</div>
+          <div class="text-[10px]" style="color:var(--muted)">Tiket Terjual</div>
+        </div>
+        <div class="stat-card text-center" style="cursor:default">
+          <div class="text-lg font-bold" style="color:var(--danger)">${cancelledCount}</div>
+          <div class="text-[10px]" style="color:var(--muted)">Tiket Dibatalkan</div>
+        </div>
+        <div class="stat-card text-center" style="cursor:default">
+          <div class="text-lg font-bold" style="color:var(--danger)">${overtimeCount}</div>
+          <div class="text-[10px]" style="color:var(--muted)">Over Time</div>
+        </div>
       </div>
-      <div class="stat-card text-center" style="cursor:default">
-        <div class="text-lg font-bold" style="color:#3498db">${completedCount}</div>
-        <div class="text-[10px]" style="color:var(--muted)">Tiket Terjual</div>
-      </div>
-      <div class="stat-card text-center" style="cursor:default">
-        <div class="text-lg font-bold" style="color:var(--danger)">${cancelledCount}</div>
-        <div class="text-[10px]" style="color:var(--muted)">Tiket Dibatalkan</div>
-      </div>
-      <div class="stat-card text-center" style="cursor:default">
-        <div class="text-lg font-bold" style="color:var(--danger)">${overtimeCount}</div>
-        <div class="text-[10px]" style="color:var(--muted)">Over Time</div>
-      </div>
-    </div>
-    ${tickets.length === 0 ? '<div class="text-center py-12"><i class="fas fa-ticket text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Tidak ada tiket aktif</p></div>' : ""}
-    <div class="space-y-3 mb-8">
-      ${tickets
-        .map((t) => {
-          const start = new Date(t.start_time).getTime();
-          const end = new Date(t.end_time).getTime();
-          const total = end - start;
-          const remaining = end - now;
-          const elapsed = Math.max(0, Math.min(100, ((now - start) / total) * 100));
-          const remainingPct = Math.max(0, Math.min(100, (remaining / total) * 100));
-          const isUrgent = remaining > 0 && remaining < 600000;
-          const isExpired = remaining <= 0;
-          const barColor = isExpired ? "var(--danger)" : isUrgent ? "var(--warning)" : "var(--success)";
+      ${activeTickets.length === 0 ? '<div class="text-center py-12"><i class="fas fa-ticket text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Tidak ada tiket aktif</p></div>' : ""}
+      <div class="space-y-3 mb-8">
+        ${activeTickets.map(function(t) {
+          var start = new Date(t.start_time).getTime();
+          var end = new Date(t.end_time).getTime();
+          var total = end - start;
+          var remaining = end - now;
+          var elapsed = Math.max(0, Math.min(100, ((now - start) / total) * 100));
+          var remainingPct = Math.max(0, Math.min(100, (remaining / total) * 100));
+          var isUrgent = remaining > 0 && remaining < 600000;
+          var isExpired = remaining <= 0;
+          var barColor = isExpired ? "var(--danger)" : isUrgent ? "var(--warning)" : "var(--success)";
           return `
         <div class="card ${isUrgent ? "animate-breathe" : ""}" onclick="showPlaygroundTicketDetail('${t.id}')" style="cursor:pointer;${isExpired ? "border-color:var(--danger)" : isUrgent ? "border-color:var(--warning)" : ""}">
           <div class="flex justify-between items-start mb-2">
@@ -79,11 +79,11 @@ function renderPlaygroundTickets() {
             <span class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(t.total_amount)}</span>
           </div>
           <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-3" style="color:var(--muted)">
-            <span><i class="fas fa-child mr-1"></i>${t.children.map((c) => c.name).join(", ")}</span>
-            ${t.companions && t.companions.length > 0 ? `<span><i class="fas fa-user mr-1"></i>${t.companions.map((c) => c.name).join(", ")}</span>` : t.companion_count > 0 ? `<span><i class="fas fa-user mr-1"></i>${t.companion_count} pendamping</span>` : ""}
+            <span><i class="fas fa-child mr-1"></i>${t.children.map(function(c) { return c.name; }).join(", ")}</span>
+            ${t.companions && t.companions.length > 0 ? '<span><i class="fas fa-user mr-1"></i>' + t.companions.map(function(c) { return c.name; }).join(", ") + '</span>' : t.companion_count > 0 ? '<span><i class="fas fa-user mr-1"></i>' + t.companion_count + ' pendamping</span>' : ""}
             <span><i class="fas fa-clock mr-1"></i>${t.hours} jam</span>
           </div>
-          ${t.items.length > 0 ? `<div class="text-xs mb-3" style="color:var(--muted)"><i class="fas fa-utensils mr-1"></i>${t.items.map((i) => i.name + " x" + i.quantity).join(", ")}</div>` : ""}
+          ${t.items.length > 0 ? '<div class="text-xs mb-3" style="color:var(--muted)"><i class="fas fa-utensils mr-1"></i>' + t.items.map(function(i) { return i.name + " x" + i.quantity; }).join(", ") + '</div>' : ""}
           <div class="time-bar-container mb-3">
             <div class="flex justify-between text-xs mb-1" style="color:var(--muted)">
               <span>${formatTime(new Date(t.start_time))}</span>
@@ -99,22 +99,23 @@ function renderPlaygroundTickets() {
             <button onclick="event.stopPropagation();showAddItemsModal('${t.id}')" class="btn-sm flex-1 text-center" style="background:rgba(224,122,58,.1);color:var(--accent);border:none;border-radius:10px;padding:8px"><i class="fas fa-utensils mr-1"></i>+ Pesanan</button>
           </div>
           <div class="flex gap-2">
-            ${t.payment_status === "paid" ? `<button onclick="event.stopPropagation();confirmCompletePlaygroundTicket('${t.id}')" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-check mr-1"></i>Selesaikan</button>` : ""}
+            ${t.payment_status === "paid" ? '<button onclick="event.stopPropagation();confirmCompletePlaygroundTicket(\'' + t.id + '\')" class="btn-primary btn-sm flex-1 text-center"><i class="fas fa-check mr-1"></i>Selesaikan</button>' : ""}
             <button onclick="event.stopPropagation();confirmCancelPlaygroundTicket('${t.id}')" class="btn-sm flex-1 text-center" style="background:rgba(231,76,60,.1);color:var(--danger);border:none;border-radius:10px;padding:8px"><i class="fas fa-times mr-1"></i>Batalkan</button>
           </div>
         </div>`;
-        })
-        .join("")}
-    </div>
+        }).join("")}
+      </div>
 
-    <div class="flex items-center gap-1.5 mb-3" style="padding:4px 0">
-      <span class="text-sm font-medium" style="color:var(--muted)">Riwayat</span>
-      <span class="text-xs" style="color:var(--muted)">(${completed.length})</span>
-      <input type="date" class="input-field text-xs" style="width:fit-content;padding:4px 8px" value="${historyDate}" onchange="State._pgHistoryDate=this.value;render()">
-      <i class="fas fa-chevron-${State._pgHistoryOpen ? "up" : "down"} text-xs" style="color:var(--muted);cursor:pointer" onclick="State._pgHistoryOpen=!State._pgHistoryOpen;render()"></i>
-    </div>
-    ${State._pgHistoryOpen ? renderPlaygroundHistory(completed) : ''}
-  </div>`;
+      <div class="flex items-center gap-1.5 mb-3" style="padding:4px 0">
+        <span class="text-sm font-medium" style="color:var(--muted)">Riwayat</span>
+        <span class="text-xs" style="color:var(--muted)">(${completed.length})</span>
+        <input type="date" class="input-field text-xs" style="width:fit-content;padding:4px 8px" value="${historyDate}" onchange="State._pgHistoryDate=this.value;render()">
+        <i class="fas fa-chevron-${State._pgHistoryOpen ? "up" : "down"} text-xs" style="color:var(--muted);cursor:pointer" onclick="State._pgHistoryOpen=!State._pgHistoryOpen;render()"></i>
+      </div>
+      ${State._pgHistoryOpen ? renderPlaygroundHistory(completed) : ''}
+    </div>`;
+  } catch(e) { console.error(e); showToast('Gagal memuat tiket', 'error'); return ''; }
+  finally { hideSkeleton('playground-tickets'); }
 }
 
 function renderPlaygroundHistory(completed) {
@@ -123,18 +124,18 @@ function renderPlaygroundHistory(completed) {
   }
   return `
     <div class="space-y-2">
-      ${completed.slice(0, 10).map((t) => `
+      ${completed.slice(0, 10).map(function(t) { return `
         <div class="card flex items-center justify-between" onclick="showPlaygroundTicketDetail('${t.id}')" style="opacity:.7;cursor:pointer">
           <div>
             <span class="font-semibold text-sm">${t.customer_name}</span>
             <span class="badge ${t.status === "completed" ? "badge-completed" : "badge-pending"} ml-2">${t.status === "completed" ? "Selesai" : "Dibatalkan"}</span>${t.was_overtime ? '<span class="badge badge-pending ml-1" style="background:rgba(231,76,60,.15);color:var(--danger)">Over Time</span>' : ''}
-            <div class="text-xs mt-1" style="color:var(--muted)">${t.children.map((c) => c.name).join(", ")} — ${t.hours} jam${t.cancel_reason ? ' <span style="color:var(--danger)">· ' + t.cancel_reason + '</span>' : ''}${t.was_overtime && t.overtime_minutes ? ' <span style="color:var(--danger)">· +' + Math.floor(t.overtime_minutes / 60) + 'j ' + (t.overtime_minutes % 60) + 'm overtime</span>' : ''}</div>
+            <div class="text-xs mt-1" style="color:var(--muted)">${t.children.map(function(c) { return c.name; }).join(", ")} — ${t.hours} jam${t.cancel_reason ? ' <span style="color:var(--danger)">· ' + t.cancel_reason + '</span>' : ''}${t.was_overtime && t.overtime_minutes ? ' <span style="color:var(--danger)">· +' + Math.floor(t.overtime_minutes / 60) + 'j ' + (t.overtime_minutes % 60) + 'm overtime</span>' : ''}</div>
           </div>
           <div class="text-right">
             <div class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(t.total_amount)}</div>
             <div class="text-xs" style="color:var(--muted)">${t.payment_status === "paid" ? "Lunas" : "Belum"}</div>
           </div>
-        </div>`).join('')}
+        </div>`; }).join('')}
     </div>`;
 }
 
@@ -143,7 +144,7 @@ function renderPlaygroundHistory(completed) {
 // ============================================================
 
 function confirmCompletePlaygroundTicket(id) {
-  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
+  var t = (DB.playgroundTickets || []).find(function(x) { return x.id === id; });
   if (!t) return;
   showModal(`
     <div class="text-center">
@@ -165,22 +166,28 @@ function confirmCompletePlaygroundTicket(id) {
   `);
 }
 
-function completePlaygroundTicket(id) {
-  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
-  if (!t) return;
-  t.status = "completed";
-  const now = Date.now();
-  const end = new Date(t.end_time).getTime();
-  t.was_overtime = end <= now;
-  if (t.was_overtime) {
-    t.overtime_minutes = Math.round((now - end) / 60000);
-  }
-  showToast("Tiket " + t.customer_name + " selesai", "success");
-  render();
+async function completePlaygroundTicket(id) {
+  try {
+    var t = (DB.playgroundTickets || []).find(function(x) { return x.id === id; });
+    if (!t) return;
+    var now = Date.now();
+    var end = new Date(t.end_time).getTime();
+    var was_overtime = end <= now;
+    var overtime_minutes = was_overtime ? Math.round((now - end) / 60000) : 0;
+    var updateData = {
+      status: "completed",
+      was_overtime: was_overtime,
+      overtime_minutes: overtime_minutes
+    };
+    await API.updatePlaygroundTicket(id, updateData);
+    DB.playgroundTickets = await API.getPlaygroundTickets();
+    showToast("Tiket " + t.customer_name + " selesai", "success");
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal menyelesaikan tiket', 'error'); }
 }
 
 function confirmCancelPlaygroundTicket(id) {
-  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
+  var t = (DB.playgroundTickets || []).find(function(x) { return x.id === id; });
   if (!t) return;
   showModal(`
     <div class="text-center">
@@ -211,24 +218,23 @@ function confirmCancelPlaygroundTicket(id) {
   `);
 }
 
-function cancelPlaygroundTicket(id) {
-  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
-  if (!t) return;
-  const reasonEl = document.getElementById("pg-cancel-reason");
-  let reason = reasonEl ? reasonEl.value : "";
-  if (reason === "Lainnya") {
-    const otherEl = document.getElementById("pg-cancel-other");
-    reason = otherEl ? otherEl.value.trim() : "";
-  }
-  if (!reason) {
-    showToast("Silakan pilih alasan pembatalan", "warning");
-    return;
-  }
-  closeModal();
-  t.status = "cancelled";
-  t.cancel_reason = reason;
-  showToast("Tiket " + t.customer_name + " dibatalkan", "info");
-  render();
+async function cancelPlaygroundTicket(id) {
+  try {
+    var t = (DB.playgroundTickets || []).find(function(x) { return x.id === id; });
+    if (!t) return;
+    var reasonEl = document.getElementById("pg-cancel-reason");
+    var reason = reasonEl ? reasonEl.value : "";
+    if (reason === "Lainnya") {
+      var otherEl = document.getElementById("pg-cancel-other");
+      reason = otherEl ? otherEl.value.trim() : "";
+    }
+    if (!reason) { showToast("Silakan pilih alasan pembatalan", "warning"); return; }
+    closeModal();
+    await API.updatePlaygroundTicket(id, { status: "cancelled", cancel_reason: reason });
+    DB.playgroundTickets = await API.getPlaygroundTickets();
+    showToast("Tiket " + t.customer_name + " dibatalkan", "info");
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal membatalkan tiket', 'error'); }
 }
 
 // ============================================================
@@ -236,22 +242,14 @@ function cancelPlaygroundTicket(id) {
 // ============================================================
 
 function showPlaygroundTicketDetail(id) {
-  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
+  var t = (DB.playgroundTickets || []).find(function(x) { return x.id === id; });
   if (!t) return;
-  const socksCount = (t.socks_per_child || []).filter(Boolean).length;
-  const childNames = t.children.map((c) => c.name).join(", ");
-  const companionNames = t.companions && t.companions.length > 0
-    ? t.companions.map((c) => c.name).join(", ")
-    : t.companion_count > 0 ? t.companion_count + " org" : "";
-  const statusBadge = t.status === "active"
-    ? '<span class="badge badge-cooking">Aktif</span>'
-    : t.status === "completed"
-      ? '<span class="badge badge-completed">Selesai</span>'
-      : '<span class="badge badge-pending">Dibatalkan</span>';
-  const methodLabel = t.payment_method === "qris" ? "QRIS"
-    : t.payment_method === "transfer" ? "Transfer"
-    : t.payment_method === "cash" ? "Tunai" : t.payment_method || "-";
-  const isCancelled = t.status === "cancelled";
+  var socksCount = (t.socks_per_child || []).filter(Boolean).length;
+  var childNames = t.children.map(function(c) { return c.name; }).join(", ");
+  var companionNames = t.companions && t.companions.length > 0 ? t.companions.map(function(c) { return c.name; }).join(", ") : t.companion_count > 0 ? t.companion_count + " org" : "";
+  var statusBadge = t.status === "active" ? '<span class="badge badge-cooking">Aktif</span>' : t.status === "completed" ? '<span class="badge badge-completed">Selesai</span>' : '<span class="badge badge-pending">Dibatalkan</span>';
+  var methodLabel = t.payment_method === "qris" ? "QRIS" : t.payment_method === "transfer" ? "Transfer" : t.payment_method === "cash" ? "Tunai" : t.payment_method || "-";
+  var isCancelled = t.status === "cancelled";
 
   showModal(`
     <div>
@@ -275,34 +273,20 @@ function showPlaygroundTicketDetail(id) {
           <span>${t.children.length} anak × ${formatCurrency(PG_CHILD_PRICE)}/jam × ${t.hours} jam</span>
           <span>${formatCurrency(PG_CHILD_PRICE * t.children.length * t.hours)}</span>
         </div>
-        ${t.companion_count > 0 ? `<div class="flex justify-between text-sm mb-1">
-          <span>${t.companion_count} pendamping × ${formatCurrency(PG_COMPANION_PRICE)}/jam × ${t.hours} jam</span>
-          <span>${formatCurrency(PG_COMPANION_PRICE * t.companion_count * t.hours)}</span>
-        </div>` : ""}
-        ${socksCount > 0 ? `<div class="flex justify-between text-sm mb-1">
-          <span>Kaos kaki ${socksCount} pasang × ${formatCurrency(PG_SOCKS_PRICE)}</span>
-          <span>${formatCurrency(t.socks_total)}</span>
-        </div>` : ""}
+        ${t.companion_count > 0 ? '<div class="flex justify-between text-sm mb-1"><span>' + t.companion_count + ' pendamping × ' + formatCurrency(PG_COMPANION_PRICE) + '/jam × ' + t.hours + ' jam</span><span>' + formatCurrency(PG_COMPANION_PRICE * t.companion_count * t.hours) + '</span></div>' : ""}
+        ${socksCount > 0 ? '<div class="flex justify-between text-sm mb-1"><span>Kaos kaki ' + socksCount + ' pasang × ' + formatCurrency(PG_SOCKS_PRICE) + '</span><span>' + formatCurrency(t.socks_total) + '</span></div>' : ""}
         <div class="border-t pt-2 mt-2 flex justify-between font-bold text-sm" style="border-color:var(--border)">
           <span>Subtotal Tiket</span>
           <span style="color:var(--accent)">${formatCurrency(t.subtotal)}</span>
         </div>
       </div>
 
-      ${t.items && t.items.length > 0 ? `
-      <div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px">
-        <div class="text-xs font-semibold mb-2" style="color:var(--accent)">PESANAN</div>
-        ${t.items.map((i) => `
-        <div class="flex justify-between text-sm mb-1">
-          <span>${i.name} ×${i.quantity}</span>
-          <span>${formatCurrency(i.unit_price * i.quantity)}</span>
-        </div>`).join("")}
-      </div>` : ""}
+      ${t.items && t.items.length > 0 ? '<div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px"><div class="text-xs font-semibold mb-2" style="color:var(--accent)">PESANAN</div>' + t.items.map(function(i) { return '<div class="flex justify-between text-sm mb-1"><span>' + i.name + ' ×' + i.quantity + '</span><span>' + formatCurrency(i.unit_price * i.quantity) + '</span></div>'; }).join("") + '</div>' : ""}
 
       <div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:16px">
         <div class="flex justify-between text-sm mb-1"><span>Subtotal Tiket</span><span>${formatCurrency(t.subtotal)}</span></div>
-        ${t.socks_total > 0 ? `<div class="flex justify-between text-sm mb-1"><span>Kaos Kaki</span><span>${formatCurrency(t.socks_total)}</span></div>` : ""}
-        ${t.items_total > 0 ? `<div class="flex justify-between text-sm mb-1"><span>Pesanan</span><span>${formatCurrency(t.items_total)}</span></div>` : ""}
+        ${t.socks_total > 0 ? '<div class="flex justify-between text-sm mb-1"><span>Kaos Kaki</span><span>' + formatCurrency(t.socks_total) + '</span></div>' : ""}
+        ${t.items_total > 0 ? '<div class="flex justify-between text-sm mb-1"><span>Pesanan</span><span>' + formatCurrency(t.items_total) + '</span></div>' : ""}
         <div class="border-t pt-2 mt-2 flex justify-between font-bold" style="border-color:var(--border)">
           <span>Total</span>
           <span style="color:var(--accent);font-size:16px">${formatCurrency(t.total_amount)}</span>
@@ -318,7 +302,7 @@ function showPlaygroundTicketDetail(id) {
       </div>
 
       <div class="flex gap-2">
-        ${!isCancelled ? `<button onclick="closeModal();printPlaygroundInvoice('${id}')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i> Cetak Invoice</button>` : ""}
+        ${!isCancelled ? '<button onclick="closeModal();printPlaygroundInvoice(\'' + id + '\')" class="btn-primary flex-1 text-center"><i class="fas fa-print mr-1"></i> Cetak Invoice</button>' : ""}
         <button onclick="closeModal()" class="btn-secondary flex-1 text-center">Tutup</button>
       </div>
     </div>
@@ -330,18 +314,14 @@ function showPlaygroundTicketDetail(id) {
 // ============================================================
 
 function printPlaygroundInvoice(id) {
-  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
+  var t = (DB.playgroundTickets || []).find(function(x) { return x.id === id; });
   if (!t) return;
-  const socksCount = (t.socks_per_child || []).filter(Boolean).length;
-  const childNames = t.children.map((c) => c.name).join(", ");
-  const companionNames = t.companions && t.companions.length > 0
-    ? t.companions.map((c) => c.name).join(", ")
-    : t.companion_count > 0 ? t.companion_count + " orang" : "";
-  const methodLabel = t.payment_method === "qris" ? "QRIS"
-    : t.payment_method === "transfer" ? "Transfer"
-    : t.payment_method === "cash" ? "Tunai" : t.payment_method || "-";
+  var socksCount = (t.socks_per_child || []).filter(Boolean).length;
+  var childNames = t.children.map(function(c) { return c.name; }).join(", ");
+  var companionNames = t.companions && t.companions.length > 0 ? t.companions.map(function(c) { return c.name; }).join(", ") : t.companion_count > 0 ? t.companion_count + " orang" : "";
+  var methodLabel = t.payment_method === "qris" ? "QRIS" : t.payment_method === "transfer" ? "Transfer" : t.payment_method === "cash" ? "Tunai" : t.payment_method || "-";
 
-  const win = window.open("", "_blank");
+  var win = window.open("", "_blank");
   win.document.write(`
     <html><head>
       <title>Invoice Tiket #${t.id.slice(-4).toUpperCase()}</title>
@@ -376,9 +356,7 @@ function printPlaygroundInvoice(id) {
       ${t.companion_count > 0 ? '<div class="item"><span>' + t.companion_count + " pendamping × " + formatCurrency(PG_COMPANION_PRICE) + "/jam</span><span>" + formatCurrency(PG_COMPANION_PRICE * t.companion_count * t.hours) + "</span></div>" : ""}
       ${socksCount > 0 ? '<div class="item"><span>Kaos kaki ' + socksCount + " pasang</span><span>" + formatCurrency(t.socks_total) + "</span></div>" : ""}
       <div class="item" style="font-weight:bold"><span>Subtotal Tiket</span><span>${formatCurrency(t.subtotal)}</span></div>
-      ${t.items && t.items.length > 0 ? `
-      <div class="section-label">Pesanan</div>
-      ${t.items.map((i) => '<div class="item"><span>' + i.name + " ×" + i.quantity + "</span><span>" + formatCurrency(i.unit_price * i.quantity) + "</span></div>").join("")}` : ""}
+      ${t.items && t.items.length > 0 ? '<div class="section-label">Pesanan</div>' + t.items.map(function(i) { return '<div class="item"><span>' + i.name + " ×" + i.quantity + "</span><span>" + formatCurrency(i.unit_price * i.quantity) + "</span></div>"; }).join("") : ""}
       <div class="divider"></div>
       <div class="totals">
         <div><span>Subtotal Tiket</span><span>${formatCurrency(t.subtotal)}</span></div>
@@ -390,7 +368,7 @@ function printPlaygroundInvoice(id) {
       </div>
       <div class="divider"></div>
       <div class="footer">Terima kasih telah bermain di ARQA Coffee Playground</div>
-      <script>window.print()</script>
+      <script>window.print()<${"/"}script>
     </body></html>
   `);
   win.document.close();
@@ -400,12 +378,12 @@ function printPlaygroundInvoice(id) {
 // EXTRA PAYMENT CONFIRMATION
 // ============================================================
 
-let _pgPendingPayment = null;
+var _pgPendingPayment = null;
 
 function showPgExtraPaymentConfirm(label, amount, method) {
-  const totalStr = formatCurrency(amount);
+  var totalStr = formatCurrency(amount);
   if (method === "qris") {
-    const qrData = encodeURIComponent("ARQA-COFFEE:PG:" + label + ":" + amount);
+    var qrData = encodeURIComponent("ARQA-COFFEE:PG:" + label + ":" + amount);
     showModal(`
       <div class="p-6 text-center">
         <h3 class="font-display text-xl mb-4">Pembayaran QRIS</h3>
@@ -437,56 +415,75 @@ function showPgExtraPaymentConfirm(label, amount, method) {
   }
 }
 
-function pgConfirmExtraPayment() {
-  const p = _pgPendingPayment;
-  if (!p) return;
-  _pgPendingPayment = null;
-  if (p.type === "time") {
-    const t = (DB.playgroundTickets || []).find((x) => x.id === p.id);
-    if (!t) return;
-    t.hours = (t.hours || 0) + p.hours;
-    const end = new Date(t.end_time);
-    end.setTime(end.getTime() + p.hours * 3600000);
-    t.end_time = end.toISOString();
-    t.subtotal = (t.subtotal || 0) + p.cost;
-    t.total_amount = (t.total_amount || 0) + p.cost;
-    t.pgTransactions = t.pgTransactions || [];
-    t.pgTransactions.push({
-      id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
-      type: 'extra_time',
-      description: '+' + p.hours + ' jam',
-      amount: p.cost,
-      method: p.method,
-      created_at: new Date().toISOString()
-    });
-    showToast("Waktu ditambah " + p.hours + " jam — " + formatCurrency(p.cost) + " (" + (p.method === "qris" ? "QRIS" : p.method === "transfer" ? "Transfer" : "Tunai") + ")", "success");
-    render();
-  } else if (p.type === "items") {
-    const t = (DB.playgroundTickets || []).find((x) => x.id === p.id);
-    if (!t) return;
-    let total = 0;
-    const descParts = [];
-    (p.entries || []).forEach(([itemId, qty]) => {
-      const item = (DB.pgStockItems || []).find(x => x.id === itemId);
-      if (!item) return;
-      t.items.push({ menu_item_id: itemId, name: item.name, quantity: qty, unit_price: item.price });
-      total += item.price * qty;
-      descParts.push(item.name + ' x' + qty);
-    });
-    t.items_total = (t.items_total || 0) + total;
-    t.total_amount = (t.total_amount || 0) + total;
-    t.pgTransactions = t.pgTransactions || [];
-    t.pgTransactions.push({
-      id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
-      type: 'extra_items',
-      description: descParts.join(', '),
-      amount: total,
-      method: p.method,
-      created_at: new Date().toISOString()
-    });
-    showToast("Pesanan ditambahkan — " + formatCurrency(total) + " (" + (p.method === "qris" ? "QRIS" : p.method === "transfer" ? "Transfer" : "Tunai") + ")", "success");
-    render();
-  }
+async function pgConfirmExtraPayment() {
+  try {
+    var p = _pgPendingPayment;
+    if (!p) return;
+    _pgPendingPayment = null;
+    if (p.type === "time") {
+      var t = (DB.playgroundTickets || []).find(function(x) { return x.id === p.id; });
+      if (!t) return;
+      var newHours = (t.hours || 0) + p.hours;
+      var end = new Date(t.end_time);
+      end.setTime(end.getTime() + p.hours * 3600000);
+      var newSubtotal = (t.subtotal || 0) + p.cost;
+      var newTotal = (t.total_amount || 0) + p.cost;
+      var pgTxs = t.pgTransactions || [];
+      pgTxs.push({
+        id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
+        type: 'extra_time',
+        description: '+' + p.hours + ' jam',
+        amount: p.cost,
+        method: p.method,
+        created_at: new Date().toISOString()
+      });
+      await API.updatePlaygroundTicket(p.id, {
+        hours: newHours,
+        end_time: end.toISOString(),
+        subtotal: newSubtotal,
+        total_amount: newTotal,
+        pgTransactions: pgTxs
+      });
+      DB.playgroundTickets = await API.getPlaygroundTickets();
+      showToast("Waktu ditambah " + p.hours + " jam — " + formatCurrency(p.cost) + " (" + (p.method === "qris" ? "QRIS" : p.method === "transfer" ? "Transfer" : "Tunai") + ")", "success");
+      await render();
+    } else if (p.type === "items") {
+      var t2 = (DB.playgroundTickets || []).find(function(x) { return x.id === p.id; });
+      if (!t2) return;
+      var total2 = 0;
+      var descParts = [];
+      var updatedItems = t2.items ? t2.items.slice() : [];
+      (p.entries || []).forEach(function(entry) {
+        var itemId = entry[0];
+        var qty = entry[1];
+        var item = (DB.pgStockItems || []).find(function(x) { return x.id === itemId; });
+        if (!item) return;
+        updatedItems.push({ menu_item_id: itemId, name: item.name, quantity: qty, unit_price: item.price });
+        total2 += item.price * qty;
+        descParts.push(item.name + ' x' + qty);
+      });
+      var newItemsTotal = (t2.items_total || 0) + total2;
+      var newTotalAmount = (t2.total_amount || 0) + total2;
+      var pgTxs2 = t2.pgTransactions || [];
+      pgTxs2.push({
+        id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
+        type: 'extra_items',
+        description: descParts.join(', '),
+        amount: total2,
+        method: p.method,
+        created_at: new Date().toISOString()
+      });
+      await API.updatePlaygroundTicket(p.id, {
+        items: updatedItems,
+        items_total: newItemsTotal,
+        total_amount: newTotalAmount,
+        pgTransactions: pgTxs2
+      });
+      DB.playgroundTickets = await API.getPlaygroundTickets();
+      showToast("Pesanan ditambahkan — " + formatCurrency(total2) + " (" + (p.method === "qris" ? "QRIS" : p.method === "transfer" ? "Transfer" : "Tunai") + ")", "success");
+      await render();
+    }
+  } catch(e) { console.error(e); showToast('Gagal memproses pembayaran', 'error'); }
 }
 
 // ============================================================
@@ -494,14 +491,14 @@ function pgConfirmExtraPayment() {
 // ============================================================
 
 function showAddTimeModal(id) {
-  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
+  var t = (DB.playgroundTickets || []).find(function(x) { return x.id === id; });
   if (!t) return;
   window._pgExtraDuration = 1;
   window._pgExtraPayMethod = "qris";
-  const children = t.children || [];
-  const companions = t.companions || [];
-  const companionCount = t.companion_count || companions.length;
-  const pricePerHour = children.length * PG_CHILD_PRICE + companionCount * PG_COMPANION_PRICE;
+  var children = t.children || [];
+  var companions = t.companions || [];
+  var companionCount = t.companion_count || companions.length;
+  var pricePerHour = children.length * PG_CHILD_PRICE + companionCount * PG_COMPANION_PRICE;
   showModal(`
     <div>
       <div class="text-center mb-4">
@@ -513,17 +510,17 @@ function showAddTimeModal(id) {
       </div>
       <label class="text-xs font-semibold mb-2 block" style="color:var(--muted)">Durasi Tambahan</label>
       <div class="grid grid-cols-4 gap-2 mb-4">
-        ${[1, 2, 3].map((h, i) => `
-        <div class="pg-dur-card card text-center py-3 cursor-pointer text-sm" onclick="document.querySelectorAll('.pg-dur-card').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='#3498db';window._pgExtraDuration=${h};window._pgExtraDurationCustom=0;document.getElementById('pg-custom-val').textContent='0';document.getElementById('pg-extra-cost').textContent='${formatCurrency(Math.round(h * pricePerHour))}'" style="border-color:${i === 0 ? '#3498db' : 'var(--border)'}">
+        ${[1, 2, 3].map(function(h, i) { return `
+        <div class="pg-dur-card card text-center py-3 cursor-pointer text-sm" onclick="document.querySelectorAll('.pg-dur-card').forEach(function(e){e.style.borderColor='var(--border)';});this.style.borderColor='#3498db';window._pgExtraDuration=${h};window._pgExtraDurationCustom=0;document.getElementById('pg-custom-val').textContent='0';document.getElementById('pg-extra-cost').textContent='${formatCurrency(Math.round(h * pricePerHour))}'" style="border-color:${i === 0 ? '#3498db' : 'var(--border)'}">
           <div class="font-bold" style="color:#3498db">${h} Jam</div>
           <div class="text-xs mt-1" style="color:var(--muted)">${formatCurrency(Math.round(h * pricePerHour))}</div>
-        </div>`).join('')}
+        </div>`; }).join('')}
         <div class="card text-center py-3" style="border-color:var(--border)">
           <div class="text-xs mb-1" style="color:var(--muted)">Custom</div>
           <div class="flex items-center justify-center gap-1">
-            <button onclick="var cur=window._pgExtraDurationCustom;if(cur==null||cur<0)cur=0;var v=Math.max(0,cur-1);window._pgExtraDurationCustom=v;window._pgExtraDuration=v||0;document.getElementById('pg-custom-val').textContent=v;document.querySelectorAll('.pg-dur-card').forEach(e=>e.style.borderColor='var(--border)');document.getElementById('pg-extra-cost').textContent=v<1?'Rp 0':'Rp '+(v*${pricePerHour}).toLocaleString('id-ID')" class="qty-btn" style="width:24px;height:24px;font-size:14px;padding:0;line-height:24px">−</button>
+            <button onclick="var cur=window._pgExtraDurationCustom;if(cur==null||cur<0)cur=0;var v=Math.max(0,cur-1);window._pgExtraDurationCustom=v;window._pgExtraDuration=v||0;document.getElementById('pg-custom-val').textContent=v;document.querySelectorAll('.pg-dur-card').forEach(function(e){e.style.borderColor='var(--border)';});document.getElementById('pg-extra-cost').textContent=v<1?'Rp 0':'Rp '+(v*${pricePerHour}).toLocaleString('id-ID')" class="qty-btn" style="width:24px;height:24px;font-size:14px;padding:0;line-height:24px">−</button>
             <span id="pg-custom-val" class="text-sm font-bold" style="min-width:20px">0</span>
-            <button onclick="var cur=window._pgExtraDurationCustom;if(cur==null||cur<0)cur=0;var v=cur+1;window._pgExtraDurationCustom=v;window._pgExtraDuration=v;document.getElementById('pg-custom-val').textContent=v;document.querySelectorAll('.pg-dur-card').forEach(e=>e.style.borderColor='var(--border)');document.getElementById('pg-extra-cost').textContent='Rp '+(v*${pricePerHour}).toLocaleString('id-ID')" class="qty-btn" style="width:24px;height:24px;font-size:14px;padding:0;line-height:24px">+</button>
+            <button onclick="var cur=window._pgExtraDurationCustom;if(cur==null||cur<0)cur=0;var v=cur+1;window._pgExtraDurationCustom=v;window._pgExtraDuration=v;document.getElementById('pg-custom-val').textContent=v;document.querySelectorAll('.pg-dur-card').forEach(function(e){e.style.borderColor='var(--border)';});document.getElementById('pg-extra-cost').textContent='Rp '+(v*${pricePerHour}).toLocaleString('id-ID')" class="qty-btn" style="width:24px;height:24px;font-size:14px;padding:0;line-height:24px">+</button>
           </div>
         </div>
       </div>
@@ -533,9 +530,9 @@ function showAddTimeModal(id) {
       </div>
       <label class="text-xs font-semibold mb-2 block" style="color:var(--muted)">Metode Pembayaran</label>
       <div class="grid grid-cols-3 gap-2 mb-4">
-        <div class="pg-pay-card card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='var(--success)';window._pgExtraPayMethod='qris'" style="border-color:var(--success)"><i class="fas fa-qrcode mb-1" style="color:var(--accent)"></i><br>QRIS</div>
-        <div class="pg-pay-card card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='var(--success)';window._pgExtraPayMethod='transfer'" style="border-color:var(--border)"><i class="fas fa-university mb-1" style="color:var(--accent)"></i><br>Transfer</div>
-        <div class="pg-pay-card card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='var(--success)';window._pgExtraPayMethod='cash'" style="border-color:var(--border)"><i class="fas fa-money-bill mb-1" style="color:var(--success)"></i><br>Tunai</div>
+        <div class="pg-pay-card card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card').forEach(function(e){e.style.borderColor='var(--border)';});this.style.borderColor='var(--success)';window._pgExtraPayMethod='qris'" style="border-color:var(--success)"><i class="fas fa-qrcode mb-1" style="color:var(--accent)"></i><br>QRIS</div>
+        <div class="pg-pay-card card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card').forEach(function(e){e.style.borderColor='var(--border)';});this.style.borderColor='var(--success)';window._pgExtraPayMethod='transfer'" style="border-color:var(--border)"><i class="fas fa-university mb-1" style="color:var(--accent)"></i><br>Transfer</div>
+        <div class="pg-pay-card card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card').forEach(function(e){e.style.borderColor='var(--border)';});this.style.borderColor='var(--success)';window._pgExtraPayMethod='cash'" style="border-color:var(--border)"><i class="fas fa-money-bill mb-1" style="color:var(--success)"></i><br>Tunai</div>
       </div>
       <div class="flex gap-2">
         <button onclick="closeModal()" class="btn-secondary btn-sm flex-1 text-center">Batal</button>
@@ -545,37 +542,46 @@ function showAddTimeModal(id) {
   `);
 }
 
-function confirmAddTime(id, pricePerHour) {
-  const h = window._pgExtraDuration;
-  if (!h || h <= 0) { showToast("Pilih durasi tambahan", "warning"); return; }
-  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
-  if (!t) return;
-  const cost = Math.round(h * pricePerHour);
-  const method = window._pgExtraPayMethod || "qris";
-  if (method === "cash") {
-    t.hours = (t.hours || 0) + h;
-    const end = new Date(t.end_time);
-    end.setTime(end.getTime() + h * 3600000);
-    t.end_time = end.toISOString();
-    t.subtotal = (t.subtotal || 0) + cost;
-    t.total_amount = (t.total_amount || 0) + cost;
-    t.pgTransactions = t.pgTransactions || [];
-    t.pgTransactions.push({
-      id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
-      type: 'extra_time',
-      description: '+' + h + ' jam',
-      amount: cost,
-      method: method,
-      created_at: new Date().toISOString()
-    });
-    closeModal();
-    showToast("Waktu ditambah " + h + " jam — " + formatCurrency(cost) + " (Tunai)", "success");
-    render();
-  } else {
-    _pgPendingPayment = { type: "time", id, hours: h, cost, method };
-    closeModal();
-    showPgExtraPaymentConfirm("Tambah Waktu", cost, method);
-  }
+async function confirmAddTime(id, pricePerHour) {
+  try {
+    var h = window._pgExtraDuration;
+    if (!h || h <= 0) { showToast("Pilih durasi tambahan", "warning"); return; }
+    var t = (DB.playgroundTickets || []).find(function(x) { return x.id === id; });
+    if (!t) return;
+    var cost = Math.round(h * pricePerHour);
+    var method = window._pgExtraPayMethod || "qris";
+    if (method === "cash") {
+      var newHours = (t.hours || 0) + h;
+      var end = new Date(t.end_time);
+      end.setTime(end.getTime() + h * 3600000);
+      var newSubtotal = (t.subtotal || 0) + cost;
+      var newTotal = (t.total_amount || 0) + cost;
+      var pgTxs = t.pgTransactions || [];
+      pgTxs.push({
+        id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
+        type: 'extra_time',
+        description: '+' + h + ' jam',
+        amount: cost,
+        method: method,
+        created_at: new Date().toISOString()
+      });
+      await API.updatePlaygroundTicket(id, {
+        hours: newHours,
+        end_time: end.toISOString(),
+        subtotal: newSubtotal,
+        total_amount: newTotal,
+        pgTransactions: pgTxs
+      });
+      DB.playgroundTickets = await API.getPlaygroundTickets();
+      closeModal();
+      showToast("Waktu ditambah " + h + " jam — " + formatCurrency(cost) + " (Tunai)", "success");
+      await render();
+    } else {
+      _pgPendingPayment = { type: "time", id: id, hours: h, cost: cost, method: method };
+      closeModal();
+      showPgExtraPaymentConfirm("Tambah Waktu", cost, method);
+    }
+  } catch(e) { console.error(e); showToast('Gagal menambah waktu', 'error'); }
 }
 
 // ============================================================
@@ -583,7 +589,7 @@ function confirmAddTime(id, pricePerHour) {
 // ============================================================
 
 function showAddItemsModal(id) {
-  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
+  var t = (DB.playgroundTickets || []).find(function(x) { return x.id === id; });
   if (!t) return;
   window._pgExtraTicketId = id;
   window._pgExtraItems = {};
@@ -610,9 +616,9 @@ function showAddItemsModal(id) {
       </div>
       <label class="text-xs font-semibold mb-2 block" style="color:var(--muted)">Metode Pembayaran</label>
       <div class="grid grid-cols-3 gap-2 mb-4">
-        <div class="pg-pay-card2 card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card2').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='var(--success)';window._pgExtraPayMethod='qris'" style="border-color:var(--success)"><i class="fas fa-qrcode mb-1" style="color:var(--accent)"></i><br>QRIS</div>
-        <div class="pg-pay-card2 card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card2').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='var(--success)';window._pgExtraPayMethod='transfer'" style="border-color:var(--border)"><i class="fas fa-university mb-1" style="color:var(--accent)"></i><br>Transfer</div>
-        <div class="pg-pay-card2 card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card2').forEach(e=>e.style.borderColor='var(--border)');this.style.borderColor='var(--success)';window._pgExtraPayMethod='cash'" style="border-color:var(--border)"><i class="fas fa-money-bill mb-1" style="color:var(--success)"></i><br>Tunai</div>
+        <div class="pg-pay-card2 card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card2').forEach(function(e){e.style.borderColor='var(--border)';});this.style.borderColor='var(--success)';window._pgExtraPayMethod='qris'" style="border-color:var(--success)"><i class="fas fa-qrcode mb-1" style="color:var(--accent)"></i><br>QRIS</div>
+        <div class="pg-pay-card2 card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card2').forEach(function(e){e.style.borderColor='var(--border)';});this.style.borderColor='var(--success)';window._pgExtraPayMethod='transfer'" style="border-color:var(--border)"><i class="fas fa-university mb-1" style="color:var(--accent)"></i><br>Transfer</div>
+        <div class="pg-pay-card2 card text-center py-2.5 cursor-pointer text-xs" onclick="document.querySelectorAll('.pg-pay-card2').forEach(function(e){e.style.borderColor='var(--border)';});this.style.borderColor='var(--success)';window._pgExtraPayMethod='cash'" style="border-color:var(--border)"><i class="fas fa-money-bill mb-1" style="color:var(--success)"></i><br>Tunai</div>
       </div>
       <div class="flex gap-2">
         <button onclick="closeModal()" class="btn-secondary btn-sm flex-1 text-center">Batal</button>
@@ -623,11 +629,11 @@ function showAddItemsModal(id) {
 }
 
 function pgRenderExtraItems() {
-  const all = (DB.pgStockItems || []).filter(s => s.category !== "Perlengkapan");
-  const q = (window._pgExtraSearch || "").toLowerCase();
-  const filtered = !q ? all : all.filter(s => s.name.toLowerCase().includes(q));
-  return filtered.map(s => {
-    const cq = window._pgExtraItems[s.id] || 0;
+  var all = (DB.pgStockItems || []).filter(function(s) { return s.category !== "Perlengkapan"; });
+  var q = (window._pgExtraSearch || "").toLowerCase();
+  var filtered = !q ? all : all.filter(function(s) { return s.name.toLowerCase().indexOf(q) !== -1; });
+  return filtered.map(function(s) {
+    var cq = window._pgExtraItems[s.id] || 0;
     return '<div class="flex items-center justify-between py-2 px-3 rounded-xl" style="background:var(--bg2)">' +
       '<div class="flex-1 min-w-0">' +
       '<div class="text-sm font-medium truncate">' + s.name + '</div>' +
@@ -643,66 +649,78 @@ function pgRenderExtraItems() {
 
 function pgIncExtraItem(id) {
   window._pgExtraItems[id] = (window._pgExtraItems[id] || 0) + 1;
-  const el = document.getElementById('pg-items-modal');
+  var el = document.getElementById('pg-items-modal');
   if (el) el.innerHTML = pgRenderExtraItems();
   pgUpdateExtraTotal();
 }
 
 function pgDecExtraItem(id) {
   window._pgExtraItems[id] = Math.max(0, (window._pgExtraItems[id] || 0) - 1);
-  const el = document.getElementById('pg-items-modal');
+  var el = document.getElementById('pg-items-modal');
   if (el) el.innerHTML = pgRenderExtraItems();
   pgUpdateExtraTotal();
 }
 
 function pgUpdateExtraTotal() {
-  const total = Object.entries(window._pgExtraItems || {}).reduce((s, [id, qty]) => {
-    const item = (DB.pgStockItems || []).find(x => x.id === id);
+  var total = Object.entries(window._pgExtraItems || {}).reduce(function(s, entry) {
+    var id = entry[0];
+    var qty = entry[1];
+    var item = (DB.pgStockItems || []).find(function(x) { return x.id === id; });
     return s + (item ? item.price * qty : 0);
   }, 0);
-  const el = document.getElementById('pg-items-total');
+  var el = document.getElementById('pg-items-total');
   if (el) el.textContent = formatCurrency(total);
 }
 
-function confirmAddItems(id) {
-  const t = (DB.playgroundTickets || []).find((x) => x.id === id);
-  if (!t) return;
-  const entries = Object.entries(window._pgExtraItems || {}).filter(([_, q]) => q > 0);
-  if (entries.length === 0) { showToast("Pilih minimal satu item", "warning"); return; }
-  const method = window._pgExtraPayMethod || "qris";
-  if (method === "cash") {
-    let total = 0;
-    const descParts = [];
-    entries.forEach(([itemId, qty]) => {
-      const item = (DB.pgStockItems || []).find(x => x.id === itemId);
-      if (!item) return;
-      t.items.push({ menu_item_id: itemId, name: item.name, quantity: qty, unit_price: item.price });
-      total += item.price * qty;
-      descParts.push(item.name + ' x' + qty);
-    });
-    t.items_total = (t.items_total || 0) + total;
-    t.total_amount = (t.total_amount || 0) + total;
-    t.pgTransactions = t.pgTransactions || [];
-    t.pgTransactions.push({
-      id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
-      type: 'extra_items',
-      description: descParts.join(', '),
-      amount: total,
-      method: method,
-      created_at: new Date().toISOString()
-    });
-    closeModal();
-    showToast("Pesanan ditambahkan — " + formatCurrency(total) + " (Tunai)", "success");
-    render();
-  } else {
-    const preTotal = entries.reduce((s, [itemId, qty]) => {
-      const item = (DB.pgStockItems || []).find(x => x.id === itemId);
-      return s + (item ? item.price * qty : 0);
-    }, 0);
-    _pgPendingPayment = { type: "items", id, entries, method };
-    closeModal();
-    showPgExtraPaymentConfirm("Pesanan", preTotal, method);
-  }
+async function confirmAddItems(id) {
+  try {
+    var t = (DB.playgroundTickets || []).find(function(x) { return x.id === id; });
+    if (!t) return;
+    var entries = Object.entries(window._pgExtraItems || {}).filter(function(e) { return e[1] > 0; });
+    if (entries.length === 0) { showToast("Pilih minimal satu item", "warning"); return; }
+    var method = window._pgExtraPayMethod || "qris";
+    if (method === "cash") {
+      var total = 0;
+      var descParts = [];
+      var updatedItems = t.items ? t.items.slice() : [];
+      entries.forEach(function(entry) {
+        var itemId = entry[0];
+        var qty = entry[1];
+        var item = (DB.pgStockItems || []).find(function(x) { return x.id === itemId; });
+        if (!item) return;
+        updatedItems.push({ menu_item_id: itemId, name: item.name, quantity: qty, unit_price: item.price });
+        total += item.price * qty;
+        descParts.push(item.name + ' x' + qty);
+      });
+      var newItemsTotal = (t.items_total || 0) + total;
+      var newTotalAmount = (t.total_amount || 0) + total;
+      var pgTxs = t.pgTransactions || [];
+      pgTxs.push({
+        id: 'pgtx' + Date.now() + Math.random().toString(36).slice(2,6),
+        type: 'extra_items',
+        description: descParts.join(', '),
+        amount: total,
+        method: method,
+        created_at: new Date().toISOString()
+      });
+      await API.updatePlaygroundTicket(id, {
+        items: updatedItems,
+        items_total: newItemsTotal,
+        total_amount: newTotalAmount,
+        pgTransactions: pgTxs
+      });
+      DB.playgroundTickets = await API.getPlaygroundTickets();
+      closeModal();
+      showToast("Pesanan ditambahkan — " + formatCurrency(total) + " (Tunai)", "success");
+      await render();
+    } else {
+      var preTotal = entries.reduce(function(s, entry) {
+        var item = (DB.pgStockItems || []).find(function(x) { return x.id === entry[0]; });
+        return s + (item ? item.price * entry[1] : 0);
+      }, 0);
+      _pgPendingPayment = { type: "items", id: id, entries: entries, method: method };
+      closeModal();
+      showPgExtraPaymentConfirm("Pesanan", preTotal, method);
+    }
+  } catch(e) { console.error(e); showToast('Gagal menambah pesanan', 'error'); }
 }
-
-

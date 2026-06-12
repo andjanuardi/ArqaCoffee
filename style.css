@@ -786,6 +786,25 @@
   background: rgba(255,255,255,.3);
 }
 
+/* ──── SKELETON LOADERS ──── */
+.skeleton { background: var(--card); border-radius: 12px; overflow: hidden; position: relative; }
+.skeleton-shimmer { animation: shimmer 1.5s infinite; background: linear-gradient(90deg, var(--card) 25%, var(--card2) 50%, var(--card) 75%); background-size: 200% 100%; position: absolute; inset: 0; }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+/* ──── BUTTON SPINNER ──── */
+.btn-spinner { display: inline-block; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ──── ERROR STATE ──── */
+.error-state { text-align: center; padding: 3rem 1rem; }
+.error-state i { font-size: 2.5rem; color: var(--danger); margin-bottom: 0.75rem; }
+.error-state p { color: var(--muted); font-size: 0.875rem; }
+.error-state button { margin-top: 1rem; }
+
+/* ──── LOADING OVERLAY ──── */
+.loading-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(10,26,31,.7); display: flex; align-items: center; justify-content: center; }
+.loading-overlay .spinner-big { width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+
 @media(max-width:768px) {
             .side-drawer {
                 width: 240px

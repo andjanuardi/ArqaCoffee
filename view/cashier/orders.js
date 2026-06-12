@@ -99,16 +99,27 @@ function showCashierTransfer(id) {
   `);
 }
 
-function confirmCashierPayment(id, method) {
-  const o = DB.orders.find((x) => x.id === id);
-  if (!o) return;
-  o.payment_status = "paid";
-  o.payment_method = method;
-  const label = method === "qris" ? "QRIS" : "Transfer Bank";
-  notifyPayment(o, label);
-  closeModal();
-  showToast(`Pembayaran #${o.id.slice(-5).toUpperCase()} berhasil (${label})`, "success");
-  render();
+async function confirmCashierPayment(id, method) {
+  try {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') showBtnSpinner(btn);
+    await API.updateOrder(id, {payment_status: "paid", payment_method: method});
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    var o = DB.orders.find(function(x) { return x.id === id; });
+    if (o) {
+      o.payment_status = "paid";
+      o.payment_method = method;
+    }
+    var label = method === "qris" ? "QRIS" : "Transfer Bank";
+    notifyPayment(o, label);
+    closeModal();
+    showToast('Pembayaran #' + o.id.slice(-5).toUpperCase() + ' berhasil (' + label + ')', "success");
+    render();
+  } catch (e) {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Error: ' + e.message, 'error');
+  }
 }
 
 function confirmCompleteOrder(id) {
@@ -129,34 +140,65 @@ function confirmCompleteOrder(id) {
   `);
 }
 
-function doCompleteOrder(id) {
-  const o = DB.orders.find((x) => x.id === id);
-  if (!o) return;
-  o.status = "completed";
-  if (o.table_id && o.order_type !== "delivery") {
-    const hasOther = DB.orders.some(x =>
-      x.id !== id && x.table_id === o.table_id &&
-      !['completed', 'cancelled', 'rejected'].includes(x.status)
-    );
-    if (!hasOther) {
-      const t = getTable(o.table_id);
-      if (t) t.status = "available";
+async function doCompleteOrder(id) {
+  try {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') showBtnSpinner(btn);
+    var o = DB.orders.find(function(x) { return x.id === id; });
+    if (!o) { if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn); return; }
+    await API.updateOrder(id, {status: "completed"});
+    if (o.table_id && o.order_type !== "delivery") {
+      var hasOther = DB.orders.some(function(x) {
+        return x.id !== id && x.table_id === o.table_id &&
+          !['completed', 'cancelled', 'rejected'].includes(x.status);
+      });
+      if (!hasOther) {
+        await API.updateTable(o.table_id, {status: "available"});
+        var t = getTable(o.table_id);
+        if (t) t.status = "available";
+      }
     }
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    o.status = "completed";
+    notifyStatusChange(o, "completed");
+    showToast("Pesanan #" + o.id.slice(-5).toUpperCase() + " selesai", "success");
+    render();
+  } catch (e) {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Error: ' + e.message, 'error');
   }
-  notifyStatusChange(o, "completed");
-  showToast("Pesanan #" + o.id.slice(-5).toUpperCase() + " selesai", "success");
-  render();
 }
 
-function renderCashierView() {
-  const tab = State.currentTab.cashier || "orders";
-  if (tab === "orders") return renderCashierOrders();
-  if (tab === "payment") return renderCashierPayment();
-  if (tab === "report") return renderCashierReport();
-  if (tab === "profile") return renderCashierProfile();
-  if (tab === "create") return renderCashierCreateOrder();
-  if (tab === "tables-mgmt") return renderAdminTablesMgmt();
-  return renderCashierOrders();
+async function renderCashierView() {
+  try {
+    showSkeleton('cashier-content', 'orders');
+    var tab = State.currentTab.cashier || "orders";
+    var orders = await API.getOrders();
+    var tables = await API.getTables();
+    var users = await API.getUsers();
+    var mitraPayouts = await API.getMitraPayouts();
+    var menuItems = await API.getMenu();
+    var attendances = await API.getAttendances();
+    DB.orders = orders;
+    DB.tables = tables;
+    DB.users = users;
+    DB.mitraPayouts = mitraPayouts;
+    DB.menuItems = menuItems;
+    DB.attendances = attendances;
+    hideSkeleton('cashier-content');
+    if (tab === "orders") return renderCashierOrders();
+    if (tab === "payment") return renderCashierPayment();
+    if (tab === "report") return renderCashierReport();
+    if (tab === "profile") return renderCashierProfile();
+    if (tab === "create") return renderCashierCreateOrder();
+    if (tab === "tables-mgmt") return renderAdminTablesMgmt();
+    return renderCashierOrders();
+  } catch (e) {
+    hideSkeleton('cashier-content');
+    showToast('Error loading data: ' + e.message, 'error');
+    return '<div class="p-4 text-center" style="color:var(--danger)">Error loading data</div>';
+  }
 }
 
 function renderCashierOrders() {
@@ -850,25 +892,42 @@ function handleCashierQRResult(code, orderId) {
   selectCashierTable(orderId, table.id);
 }
 
-function selectCashierTable(orderId, tableId) {
-  const o = DB.orders.find((x) => x.id === orderId);
-  if (!o) return;
-  if (o.table_id === tableId) { closeModal(); return; }
-  if (o.table_id) {
-    const oldT = getTable(o.table_id);
-    const hasOtherOrders = DB.orders.some(
-      (x) => x.id !== o.id && x.table_id === o.table_id && x.status !== "completed" && x.status !== "cancelled" && x.status !== "rejected",
-    );
-    if (oldT && !hasOtherOrders) oldT.status = "available";
+async function selectCashierTable(orderId, tableId) {
+  try {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') showBtnSpinner(btn);
+    var o = DB.orders.find(function(x) { return x.id === orderId; });
+    if (!o) { if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn); return; }
+    if (o.table_id === tableId) { if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn); closeModal(); return; }
+    var oldTableId = o.table_id;
+    await API.updateOrder(orderId, {table_id: tableId});
+    if (oldTableId) {
+      var oldT = getTable(oldTableId);
+      var hasOtherOrders = DB.orders.some(
+        function(x) { return x.id !== o.id && x.table_id === oldTableId && x.status !== "completed" && x.status !== "cancelled" && x.status !== "rejected"; },
+      );
+      if (oldT && !hasOtherOrders) {
+        await API.updateTable(oldTableId, {status: "available"});
+        oldT.status = "available";
+      }
+    }
+    if (tableId) {
+      var newT = getTable(tableId);
+      if (newT) {
+        await API.updateTable(tableId, {status: "occupied"});
+        newT.status = "occupied";
+      }
+    }
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    o.table_id = tableId;
+    showToast('Meja pesanan #' + o.id.slice(-5).toUpperCase() + ' berhasil diubah', "success");
+    closeModal();
+    render();
+  } catch (e) {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Error: ' + e.message, 'error');
   }
-  o.table_id = tableId;
-  if (tableId) {
-    const newT = getTable(tableId);
-    if (newT) newT.status = "occupied";
-  }
-  showToast(`Meja pesanan #${o.id.slice(-5).toUpperCase()} berhasil diubah`, "success");
-  closeModal();
-  render();
 }
 
 function confirmSettleDelivery(id) {
@@ -1091,32 +1150,42 @@ function confirmPayMitraPayout(payoutId) {
   `);
 }
 
-function processMitraPayout(payoutId) {
-  const p = DB.mitraPayouts.find(x => x.id === payoutId);
-  if (!p || p.status !== 'unpaid') return;
-  p.status = 'paid';
-  p.paid_at = new Date().toISOString();
-  p.paid_by = State.currentUser.id;
-  DB.expenses.push({
-    id: 'e' + Date.now(),
-    date: new Date().toLocaleDateString('sv-SE'),
-    time: new Date().toTimeString().slice(0, 5),
-    category: 'Mitra',
-    amount: p.amount,
-    note: 'Pembayaran mitra #' + p.order_id.slice(-5).toUpperCase() + ' — ' + p.mitra_name,
-    source: 'Cafe',
-    orderType: 'mitra_payout',
-    paymentMethod: 'cash',
-  });
-  addNotification({
-    title: 'Pembayaran Mitra',
-    message: formatCurrency(p.amount) + ' telah dibayarkan ke ' + p.mitra_name + ' — #' + p.order_id.slice(-5).toUpperCase(),
-    type: 'payment',
-    icon: 'fa-hat-chef',
-    targetRoles: ['admin', 'manager', 'mitra_juru_masak'],
-    relatedOrderId: p.order_id,
-  });
-  closeModal();
-  showToast('Pembayaran ' + formatCurrency(p.amount) + ' ke ' + p.mitra_name + ' berhasil — menunggu konfirmasi mitra', 'success');
-  render();
+async function processMitraPayout(payoutId) {
+  try {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') showBtnSpinner(btn);
+    var p = DB.mitraPayouts.find(function(x) { return x.id === payoutId; });
+    if (!p || p.status !== 'unpaid') { if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn); return; }
+    await API.updateMitraPayout(payoutId, {status: 'paid', paid_at: new Date().toISOString(), paid_by: State.currentUser.id});
+    await API.createExpense({
+      id: 'e' + Date.now(),
+      date: new Date().toLocaleDateString('sv-SE'),
+      time: new Date().toTimeString().slice(0, 5),
+      category: 'Mitra',
+      amount: p.amount,
+      note: 'Pembayaran mitra #' + p.order_id.slice(-5).toUpperCase() + ' — ' + p.mitra_name,
+      source: 'Cafe',
+      orderType: 'mitra_payout',
+      paymentMethod: 'cash',
+    });
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    p.status = 'paid';
+    p.paid_at = new Date().toISOString();
+    p.paid_by = State.currentUser.id;
+    addNotification({
+      title: 'Pembayaran Mitra',
+      message: formatCurrency(p.amount) + ' telah dibayarkan ke ' + p.mitra_name + ' — #' + p.order_id.slice(-5).toUpperCase(),
+      type: 'payment',
+      icon: 'fa-hat-chef',
+      targetRoles: ['admin', 'manager', 'mitra_juru_masak'],
+      relatedOrderId: p.order_id,
+    });
+    closeModal();
+    showToast('Pembayaran ' + formatCurrency(p.amount) + ' ke ' + p.mitra_name + ' berhasil — menunggu konfirmasi mitra', 'success');
+    render();
+  } catch (e) {
+    var btn = document.activeElement;
+    if (btn && btn.tagName === 'BUTTON') hideBtnSpinner(btn);
+    showToast('Error: ' + e.message, 'error');
+  }
 }

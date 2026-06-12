@@ -1,124 +1,132 @@
 // ------------------------------------------------------------------
 // EXPENSE MANAGEMENT (shared: admin + manager)
 // ------------------------------------------------------------------
-const EXPENSE_CATS = ["Stok", "Operasional", "Gaji", "Lainnya"];
-const EXPENSE_COLORS = {
+var EXPENSE_CATS = ["Stok", "Operasional", "Gaji", "Lainnya"];
+var EXPENSE_COLORS = {
   Stok: "#2ecc71",
   Operasional: "#1abc9c",
   Gaji: "#e74c3c",
   Lainnya: "#f39c12",
 };
-const EXPENSE_ICONS = {
+var EXPENSE_ICONS = {
   Stok: "fa-box",
   Operasional: "fa-bolt",
   Gaji: "fa-wallet",
   Lainnya: "fa-receipt",
 };
 
-function renderExpenseManagement() {
-  const isAdmin = State.currentUser?.role === 'admin';
-  if (!State.expenseSearch) State.expenseSearch = "";
-  if (!State.expenseCategory) State.expenseCategory = "all";
-  if (isAdmin) {
-    if (!State.expenseStart) State.expenseStart = new Date().toLocaleDateString('sv-SE');
-    if (!State.expenseEnd) State.expenseEnd = new Date().toLocaleDateString('sv-SE');
-  } else {
-    if (!State.expenseDate) State.expenseDate = new Date().toLocaleDateString('sv-SE');
-  }
-  const expenses = DB.expenses || [];
-  const filtered = expenses.filter((e) => {
-    if (!e.date) return false;
+async function renderExpenseManagement() {
+  try {
+    showSkeleton('expense-management', 'list');
+    DB.expenses = await API.getExpenses();
+    var isAdmin = State.currentUser?.role === 'admin';
+    if (!State.expenseSearch) State.expenseSearch = "";
+    if (!State.expenseCategory) State.expenseCategory = "all";
     if (isAdmin) {
-      if (e.date < State.expenseStart || e.date > State.expenseEnd) return false;
+      if (!State.expenseStart) State.expenseStart = new Date().toLocaleDateString('sv-SE');
+      if (!State.expenseEnd) State.expenseEnd = new Date().toLocaleDateString('sv-SE');
     } else {
-      if (e.date !== State.expenseDate) return false;
+      if (!State.expenseDate) State.expenseDate = new Date().toLocaleDateString('sv-SE');
     }
-    if (State.expenseCategory !== "all") {
-      if (State.expenseCategory === "Stok") {
-        if (e.category !== "Bahan Baku" && e.category !== "Item Include") return false;
-      } else if (e.category !== State.expenseCategory) return false;
-    }
-    if (State.expenseSearch && !e.note?.toLowerCase().includes(State.expenseSearch.toLowerCase()) && !e.category?.toLowerCase().includes(State.expenseSearch.toLowerCase())) return false;
-    return true;
-  });
-  const totalFiltered = filtered.reduce((s, e) => s + e.amount, 0);
-  return `
-  <div class="animate-fade-up">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="font-display text-xl font-bold">Pengeluaran</h2>
-      <button onclick="showAddExpenseModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
-    </div>
-    <div class="mb-4">
-      <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">${isAdmin ? 'Filter Rentang Tanggal' : 'Filter Tanggal'}</label>
-      ${isAdmin ? `
-      <div class="flex items-center gap-2 flex-wrap">
-        <input type="date" id="expense-start" class="input-field" style="flex:1;min-width:130px" value="${State.expenseStart}" onchange="State.expenseStart=this.value;render()">
-        <span class="text-xs" style="color:var(--muted)">s/d</span>
-        <input type="date" id="expense-end" class="input-field" style="flex:1;min-width:130px" value="${State.expenseEnd}" onchange="State.expenseEnd=this.value;render()">
-      </div>` : `
-      <input type="date" id="expense-date" class="input-field" style="max-width:260px" value="${State.expenseDate}" onchange="State.expenseDate=this.value;render()">`
+    var expenses = DB.expenses || [];
+    var filtered = expenses.filter(function(e) {
+      if (!e.date) return false;
+      if (isAdmin) {
+        if (e.date < State.expenseStart || e.date > State.expenseEnd) return false;
+      } else {
+        if (e.date !== State.expenseDate) return false;
       }
-    </div>
-    <div class="grid grid-cols-2 gap-3 mb-4">
-      <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showExpenseTable=true;State.currentTab.${State.currentUser.role}='finance';render()"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-base font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalFiltered)}</div></div>
-      <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Jumlah Transaksi</div><div class="text-base font-bold mt-1">${filtered.length}</div></div>
-    </div>
-    <div class="card mb-4" style="padding:10px">
-      <input type="text" class="input-field text-sm w-full" placeholder="Cari pengeluaran..." value="${State.expenseSearch}" oninput="State.expenseSearch=this.value;render()">
-    </div>
-    <div class="flex flex-wrap gap-2 mb-4">
-      <button class="category-chip ${State.expenseCategory === "all" ? "active" : ""}" onclick="State.expenseCategory='all';render()">Semua</button>
-      ${EXPENSE_CATS.map(
-        (c) => `
-        <button class="category-chip ${State.expenseCategory === c ? "active" : ""}" onclick="State.expenseCategory='${c}';render()" style="${State.expenseCategory === c ? "background:" + EXPENSE_COLORS[c] + ";color:#fff" : ""}">${c}</button>
-      `,
-      ).join("")}
-    </div>
-    <div class="space-y-3">
-      ${
-        filtered.length
-          ? filtered
-              .sort(
-                (a, b) =>
-                  b.date.localeCompare(a.date) || b.id?.localeCompare(a.id),
-              )
-              .map((e) => {
-                const color = EXPENSE_COLORS[e.category] || "var(--muted)";
-                const icon = EXPENSE_ICONS[e.category] || "fa-receipt";
-                return `
-        <div class="card relative overflow-hidden">
-          <div class="absolute left-0 top-0 bottom-0 w-1" style="background:${color}"></div>
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-start gap-3 flex-1 min-w-0">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:${color}22;color:${color}">
-                <i class="fas ${icon}"></i>
-              </div>
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-xs font-semibold px-2 py-0.5 rounded-full" style="background:${color}22;color:${color}">${e.category}</span>
-                  ${e.source ? `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${e.source === 'Cafe' ? 'rgba(224,122,58,.15)' : 'rgba(155,89,182,.15)'};color:${e.source === 'Cafe' ? 'var(--accent)' : '#9b59b6'}">${e.source}</span>` : ''}
-                  ${e.note && e.note.startsWith('Ongkir kurir') ? `
-                    <span class="text-[10px] px-1.5 py-0.5 rounded" style="background:rgba(52,152,219,.15);color:#3498db"><i class="fas fa-truck mr-0.5"></i>Delivery</span>
-                    <span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${e.paymentMethod === 'cod' ? 'rgba(39,174,96,.15);color:#27ae60' : 'rgba(155,89,182,.15);color:#9b59b6'};white-space:nowrap"><i class="fas ${e.paymentMethod === 'cod' ? 'fa-money-bill' : 'fa-wallet'} mr-0.5"></i>${e.paymentMethod === 'cod' ? 'Tunai/COD' : 'Digital'}</span>
-                  ` : ''}
-                  <span class="text-xs" style="color:var(--muted)">${e.date || "-"}${e.time ? " " + e.time : ""}</span>
+      if (State.expenseCategory !== "all") {
+        if (State.expenseCategory === "Stok") {
+          if (e.category !== "Bahan Baku" && e.category !== "Item Include") return false;
+        } else if (e.category !== State.expenseCategory) return false;
+      }
+      if (State.expenseSearch && !e.note?.toLowerCase().includes(State.expenseSearch.toLowerCase()) && !e.category?.toLowerCase().includes(State.expenseSearch.toLowerCase())) return false;
+      return true;
+    });
+    var totalFiltered = filtered.reduce(function(s, e) { return s + e.amount; }, 0);
+    return `
+    <div class="animate-fade-up">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="font-display text-xl font-bold">Pengeluaran</h2>
+        <button onclick="showAddExpenseModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
+      </div>
+      <div class="mb-4">
+        <label class="text-xs font-medium mb-1 block" style="color:var(--muted)">${isAdmin ? 'Filter Rentang Tanggal' : 'Filter Tanggal'}</label>
+        ${isAdmin ? `
+        <div class="flex items-center gap-2 flex-wrap">
+          <input type="date" id="expense-start" class="input-field" style="flex:1;min-width:130px" value="${State.expenseStart}" onchange="State.expenseStart=this.value;render()">
+          <span class="text-xs" style="color:var(--muted)">s/d</span>
+          <input type="date" id="expense-end" class="input-field" style="flex:1;min-width:130px" value="${State.expenseEnd}" onchange="State.expenseEnd=this.value;render()">
+        </div>` : `
+        <input type="date" id="expense-date" class="input-field" style="max-width:260px" value="${State.expenseDate}" onchange="State.expenseDate=this.value;render()">`
+        }
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="stat-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="State.showExpenseTable=true;State.currentTab.${State.currentUser.role}='finance';render()"><div class="text-xs" style="color:var(--muted)">Total Pengeluaran</div><div class="text-base font-bold mt-1" style="color:var(--danger)">${formatCurrency(totalFiltered)}</div></div>
+        <div class="stat-card"><div class="text-xs" style="color:var(--muted)">Jumlah Transaksi</div><div class="text-base font-bold mt-1">${filtered.length}</div></div>
+      </div>
+      <div class="card mb-4" style="padding:10px">
+        <input type="text" class="input-field text-sm w-full" placeholder="Cari pengeluaran..." value="${State.expenseSearch}" oninput="State.expenseSearch=this.value;render()">
+      </div>
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button class="category-chip ${State.expenseCategory === "all" ? "active" : ""}" onclick="State.expenseCategory='all';render()">Semua</button>
+        ${EXPENSE_CATS.map(
+          function(c) {
+            return `
+            <button class="category-chip ${State.expenseCategory === c ? "active" : ""}" onclick="State.expenseCategory='${c}';render()" style="${State.expenseCategory === c ? "background:" + EXPENSE_COLORS[c] + ";color:#fff" : ""}">${c}</button>
+          `;
+          },
+        ).join("")}
+      </div>
+      <div class="space-y-3">
+        ${
+          filtered.length
+            ? filtered
+                .sort(
+                  function(a, b) {
+                    return b.date.localeCompare(a.date) || b.id?.localeCompare(a.id);
+                  },
+                )
+                .map(function(e) {
+                  var color = EXPENSE_COLORS[e.category] || "var(--muted)";
+                  var icon = EXPENSE_ICONS[e.category] || "fa-receipt";
+                  return `
+          <div class="card relative overflow-hidden">
+            <div class="absolute left-0 top-0 bottom-0 w-1" style="background:${color}"></div>
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3 flex-1 min-w-0">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:${color}22;color:${color}">
+                  <i class="fas ${icon}"></i>
                 </div>
-                <div class="text-sm font-semibold mt-1" style="color:var(--danger)">${formatCurrency(e.amount)}${e.volume && e.unitPrice ? ` <span class="text-xs font-normal" style="color:var(--muted)">(${e.volume} ${e.unit || "unit"} x ${formatCurrency(e.unitPrice)})</span>` : ""}</div>
-                <div class="text-xs mt-0.5 truncate" style="color:var(--muted)">${e.note || "-"}</div>
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full" style="background:${color}22;color:${color}">${e.category}</span>
+                    ${e.source ? `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${e.source === 'Cafe' ? 'rgba(224,122,58,.15)' : 'rgba(155,89,182,.15)'};color:${e.source === 'Cafe' ? 'var(--accent)' : '#9b59b6'}">${e.source}</span>` : ''}
+                    ${e.note && e.note.startsWith('Ongkir kurir') ? `
+                      <span class="text-[10px] px-1.5 py-0.5 rounded" style="background:rgba(52,152,219,.15);color:#3498db"><i class="fas fa-truck mr-0.5"></i>Delivery</span>
+                      <span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${e.paymentMethod === 'cod' ? 'rgba(39,174,96,.15);color:#27ae60' : 'rgba(155,89,182,.15);color:#9b59b6'};white-space:nowrap"><i class="fas ${e.paymentMethod === 'cod' ? 'fa-money-bill' : 'fa-wallet'} mr-0.5"></i>${e.paymentMethod === 'cod' ? 'Tunai/COD' : 'Digital'}</span>
+                    ` : ''}
+                    <span class="text-xs" style="color:var(--muted)">${e.date || "-"}${e.time ? " " + e.time : ""}</span>
+                  </div>
+                  <div class="text-sm font-semibold mt-1" style="color:var(--danger)">${formatCurrency(e.amount)}${e.volume && e.unitPrice ? ` <span class="text-xs font-normal" style="color:var(--muted)">(${e.volume} ${e.unit || "unit"} x ${formatCurrency(e.unitPrice)})</span>` : ""}</div>
+                  <div class="text-xs mt-0.5 truncate" style="color:var(--muted)">${e.note || "-"}</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                ${e.category !== "Bahan Baku" && e.category !== "Item Include" && !(e.category === "Operasional" && e.note && e.note.startsWith("Ongkir kurir")) ? `<button onclick="event.stopPropagation();showEditExpenseModal('${e.id}')" class="btn-sm" style="background:rgba(224,122,58,.12);color:var(--accent);border:none;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:12px"><i class="fas fa-pen"></i></button>` : ''}
+                <button onclick="event.stopPropagation();deleteExpense('${e.id}')" class="btn-sm" style="background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:12px"><i class="fas fa-trash"></i></button>
               </div>
             </div>
-            <div class="flex items-center gap-1 shrink-0">
-              ${e.category !== "Bahan Baku" && e.category !== "Item Include" && !(e.category === "Operasional" && e.note && e.note.startsWith("Ongkir kurir")) ? `<button onclick="event.stopPropagation();showEditExpenseModal('${e.id}')" class="btn-sm" style="background:rgba(224,122,58,.12);color:var(--accent);border:none;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:12px"><i class="fas fa-pen"></i></button>` : ''}
-              <button onclick="event.stopPropagation();deleteExpense('${e.id}')" class="btn-sm" style="background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:12px"><i class="fas fa-trash"></i></button>
-            </div>
-          </div>
-        </div>`;
-              })
-              .join("")
-          : `<div class="text-sm py-10 text-center" style="color:var(--muted)"><i class="fas fa-receipt mr-2"></i>Tidak ada pengeluaran</div>`
-      }
-    </div>
-  </div>`;
+          </div>`;
+                })
+                .join("")
+            : `<div class="text-sm py-10 text-center" style="color:var(--muted)"><i class="fas fa-receipt mr-2"></i>Tidak ada pengeluaran</div>`
+        }
+      </div>
+    </div>`;
+  } catch(e) { console.error(e); showToast('Gagal memuat pengeluaran', 'error'); return ''; }
+  finally { hideSkeleton('expense-management'); }
 }
 
 function showAddExpenseModal() {
@@ -136,7 +144,7 @@ function showAddExpenseModal() {
         </div>
         <div>
           <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kategori</label>
-          <select id="new-expense-cat" class="input-field text-sm w-full"><option value="" disabled selected>Silahkan Pilih Katagori</option>${EXPENSE_CATS.map((c) => `<option value="${c}">${c}</option>`).join("")}</select>
+          <select id="new-expense-cat" class="input-field text-sm w-full"><option value="" disabled selected>Silahkan Pilih Katagori</option>${EXPENSE_CATS.map(function(c) { return `<option value="${c}">${c}</option>`; }).join("")}</select>
         </div>
         <div class="grid grid-cols-3 gap-2">
           <div>
@@ -167,56 +175,60 @@ function showAddExpenseModal() {
 }
 
 function calcExpenseTotal(prefix) {
-  const vol = parseFloat(
+  var vol = parseFloat(
     document.getElementById(prefix + "-expense-volume")?.value || "0",
   );
-  const price = parseFloat(
+  var price = parseFloat(
     document.getElementById(prefix + "-expense-unitprice")?.value || "0",
   );
-  const total = document.getElementById(prefix + "-expense-amount");
+  var total = document.getElementById(prefix + "-expense-amount");
   if (total) total.value = Math.round(vol * price);
 }
 
-function addExpense() {
-  const date = document.getElementById("new-expense-date")?.value;
-  if (!date) {
-    showToast("Tanggal wajib diisi", "warning");
-    return;
-  }
-  const time = document.getElementById("new-expense-time")?.value || "";
-  const volume = parseFloat(
-    document.getElementById("new-expense-volume")?.value || "0",
-  );
-  const unit = document.getElementById("new-expense-unit")?.value || "";
-  const unitPrice = parseFloat(
-    document.getElementById("new-expense-unitprice")?.value || "0",
-  );
-  const amount = Math.round(volume * unitPrice);
-  if (amount <= 0) {
-    showToast("Total harus lebih dari 0", "warning");
-    return;
-  }
-  const category =
-    document.getElementById("new-expense-cat")?.value || "Lainnya";
-  const note = document.getElementById("new-expense-note")?.value || "";
-  DB.expenses.push({
-    id: "e" + Date.now(),
-    date,
-    time,
-    category,
-    amount,
-    note,
-    volume,
-    unit,
-    unitPrice,
-  });
-  closeModal();
-  showToast("Pengeluaran ditambahkan", "success");
-  render();
+async function addExpense() {
+  try {
+    var btn = document.querySelector('#modal-content .btn-primary');
+    if (btn) showBtnSpinner(btn);
+    var date = document.getElementById("new-expense-date")?.value;
+    if (!date) {
+      showToast("Tanggal wajib diisi", "warning");
+      return;
+    }
+    var time = document.getElementById("new-expense-time")?.value || "";
+    var volume = parseFloat(
+      document.getElementById("new-expense-volume")?.value || "0",
+    );
+    var unit = document.getElementById("new-expense-unit")?.value || "";
+    var unitPrice = parseFloat(
+      document.getElementById("new-expense-unitprice")?.value || "0",
+    );
+    var amount = Math.round(volume * unitPrice);
+    if (amount <= 0) {
+      showToast("Total harus lebih dari 0", "warning");
+      return;
+    }
+    var category =
+      document.getElementById("new-expense-cat")?.value || "Lainnya";
+    var note = document.getElementById("new-expense-note")?.value || "";
+    await API.createExpense({
+      date: date,
+      time: time,
+      category: category,
+      amount: amount,
+      note: note,
+      volume: volume,
+      unit: unit,
+      unitPrice: unitPrice,
+    });
+    closeModal();
+    showToast("Pengeluaran ditambahkan", "success");
+    render();
+  } catch(e) { console.error(e); showToast('Gagal menambah pengeluaran', 'error'); }
+  finally { var btn2 = document.querySelector('#modal-content .btn-primary'); if (btn2) hideBtnSpinner(btn2); }
 }
 
 function showEditExpenseModal(id) {
-  const e = DB.expenses.find((x) => x.id === id);
+  var e = DB.expenses.find(function(x) { return x.id === id; });
   if (!e) return;
   showModal(`
     <div style="max-width:420px">
@@ -232,7 +244,7 @@ function showEditExpenseModal(id) {
         </div>
         <div>
           <label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Kategori</label>
-          <select id="edit-expense-cat" class="input-field text-sm w-full">${EXPENSE_CATS.map((c) => `<option value="${c}" ${c === e.category ? "selected" : ""}>${c}</option>`).join("")}</select>
+          <select id="edit-expense-cat" class="input-field text-sm w-full">${EXPENSE_CATS.map(function(c) { return `<option value="${c}" ${c === e.category ? "selected" : ""}>${c}</option>`; }).join("")}</select>
         </div>
         <div class="grid grid-cols-3 gap-2">
           <div>
@@ -262,41 +274,49 @@ function showEditExpenseModal(id) {
   `);
 }
 
-function saveEditExpense(id) {
-  const e = DB.expenses.find((x) => x.id === id);
-  if (!e) return;
-  const date = document.getElementById("edit-expense-date")?.value;
-  if (!date) {
-    showToast("Tanggal wajib diisi", "warning");
-    return;
-  }
-  const volume = parseFloat(
-    document.getElementById("edit-expense-volume")?.value || "0",
-  );
-  const unit = document.getElementById("edit-expense-unit")?.value || "";
-  const unitPrice = parseFloat(
-    document.getElementById("edit-expense-unitprice")?.value || "0",
-  );
-  const amount = Math.round(volume * unitPrice);
-  if (amount <= 0) {
-    showToast("Total harus lebih dari 0", "warning");
-    return;
-  }
-  e.date = date;
-  e.time = document.getElementById("edit-expense-time")?.value || "";
-  e.category = document.getElementById("edit-expense-cat")?.value || "Lainnya";
-  e.amount = amount;
-  e.volume = volume;
-  e.unit = unit;
-  e.unitPrice = unitPrice;
-  e.note = document.getElementById("edit-expense-note")?.value || "";
-  closeModal();
-  showToast("Pengeluaran diperbarui", "success");
-  render();
+async function saveEditExpense(id) {
+  try {
+    var btn = document.querySelector('#modal-content .btn-primary');
+    if (btn) showBtnSpinner(btn);
+    var date = document.getElementById("edit-expense-date")?.value;
+    if (!date) {
+      showToast("Tanggal wajib diisi", "warning");
+      return;
+    }
+    var volume = parseFloat(
+      document.getElementById("edit-expense-volume")?.value || "0",
+    );
+    var unit = document.getElementById("edit-expense-unit")?.value || "";
+    var unitPrice = parseFloat(
+      document.getElementById("edit-expense-unitprice")?.value || "0",
+    );
+    var amount = Math.round(volume * unitPrice);
+    if (amount <= 0) {
+      showToast("Total harus lebih dari 0", "warning");
+      return;
+    }
+    var time = document.getElementById("edit-expense-time")?.value || "";
+    var category = document.getElementById("edit-expense-cat")?.value || "Lainnya";
+    var note = document.getElementById("edit-expense-note")?.value || "";
+    await API.updateExpense(id, {
+      date: date,
+      time: time,
+      category: category,
+      amount: amount,
+      volume: volume,
+      unit: unit,
+      unitPrice: unitPrice,
+      note: note,
+    });
+    closeModal();
+    showToast("Pengeluaran diperbarui", "success");
+    render();
+  } catch(e) { console.error(e); showToast('Gagal menyimpan pengeluaran', 'error'); }
+  finally { var btn2 = document.querySelector('#modal-content .btn-primary'); if (btn2) hideBtnSpinner(btn2); }
 }
 
 function deleteExpense(id) {
-  const e = DB.expenses.find((x) => x.id === id);
+  var e = DB.expenses.find(function(x) { return x.id === id; });
   if (!e) return;
   showModal(`
     <div style="max-width:380px">
@@ -310,28 +330,33 @@ function deleteExpense(id) {
   `);
 }
 
-function confirmDeleteExpense(id) {
-  DB.expenses = DB.expenses.filter((x) => x.id !== id);
-  closeModal();
-  showToast("Pengeluaran dihapus", "info");
-  render();
+async function confirmDeleteExpense(id) {
+  try {
+    var btn = document.querySelector('#modal-content button[onclick*="confirmDeleteExpense"]');
+    if (btn) showBtnSpinner(btn);
+    await API.deleteExpense(id);
+    closeModal();
+    showToast("Pengeluaran dihapus", "info");
+    render();
+  } catch(e) { console.error(e); showToast('Gagal menghapus pengeluaran', 'error'); }
+  finally { var btn2 = document.querySelector('#modal-content button[onclick*="confirmDeleteExpense"]'); if (btn2) hideBtnSpinner(btn2); }
 }
 
 // ------------------------------------------------------------------
 // ACTIVE ORDERS (shared: admin + manager)
 // ------------------------------------------------------------------
 function showActiveOrderDetail(orderId) {
-  const o = DB.orders.find((x) => x.id === orderId);
+  var o = DB.orders.find(function(x) { return x.id === orderId; });
   if (!o) return;
-  const t = o.table_id ? getTable(o.table_id) : null;
-  const tax = Math.round(calcItemTax(o.items));
-  const subtotal = o.items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
-  const dineInFee = calcCustomerFee(subtotal, o.order_type);
-  const isDeliverOrder = o.order_type === "delivery";
-  const isDelivered = o.status === "delivered" && isDeliverOrder;
-  const isCompletedDelivery = o.status === "completed" && isDeliverOrder;
-  const kurir = (isDelivered || isCompletedDelivery) ? getUser(o.courier_id) : null;
-  const netOngkir = (isDelivered || isCompletedDelivery) && o.shipping_cost ? o.shipping_cost - calcCourierFee(o.shipping_cost) : 0;
+  var t = o.table_id ? getTable(o.table_id) : null;
+  var tax = Math.round(calcItemTax(o.items));
+  var subtotal = o.items.reduce(function(s, i) { return s + i.unit_price * i.quantity; }, 0);
+  var dineInFee = calcCustomerFee(subtotal, o.order_type);
+  var isDeliverOrder = o.order_type === "delivery";
+  var isDelivered = o.status === "delivered" && isDeliverOrder;
+  var isCompletedDelivery = o.status === "completed" && isDeliverOrder;
+  var kurir = (isDelivered || isCompletedDelivery) ? getUser(o.courier_id) : null;
+  var netOngkir = (isDelivered || isCompletedDelivery) && o.shipping_cost ? o.shipping_cost - calcCourierFee(o.shipping_cost) : 0;
   showModal(`
 <div>
   ${isDeliverOrder ? `
@@ -369,8 +394,8 @@ function showActiveOrderDetail(orderId) {
       <i class="fas fa-receipt"></i> Rincian Pesanan
     </div>
     <div class="space-y-1.5">
-      ${(isDelivered ? o.items.filter(i => i.status !== "rejected") : o.items).map((i) => {
-        const mi = getMenuItem(i.menu_item_id);
+      ${(isDelivered ? o.items.filter(function(i) { return i.status !== "rejected"; }) : o.items).map(function(i) {
+        var mi = getMenuItem(i.menu_item_id);
         return mi ? `
       <div class="flex justify-between text-xs">
         <span>${mi.name} x${i.quantity}${i.notes ? ' <span style="color:var(--muted)">(' + i.notes + ")</span>" : ""}</span>
@@ -398,10 +423,10 @@ function showActiveOrderDetail(orderId) {
     ` : ""}
     <div class="flex justify-between text-xs" style="color:var(--muted)"><span>Waktu Selesai</span><span>${formatTime(o.created_at)}</span></div>
     ${o.delivery_location && o.delivery_location.lat ? (function() {
-      const d = calcDistance(DB.cafe.location.lat, DB.cafe.location.lng, o.delivery_location.lat, o.delivery_location.lng);
-      const meter = Math.round(d).toLocaleString('id-ID');
-      const km = (d / 1000).toFixed(1).replace('.', ',');
-      const label = d < 1000 ? meter + ' meter' : meter + ' m (' + km + ' km)';
+      var d = calcDistance(DB.cafe.location.lat, DB.cafe.location.lng, o.delivery_location.lat, o.delivery_location.lng);
+      var meter = Math.round(d).toLocaleString('id-ID');
+      var km = (d / 1000).toFixed(1).replace('.', ',');
+      var label = d < 1000 ? meter + ' meter' : meter + ' m (' + km + ' km)';
       return `<div class="flex justify-between text-xs mt-1" style="color:var(--accent)"><span><i class="fas fa-store mr-1"></i>Cafe → Pelanggan</span><span>${label}</span></div>`;
     })() : ""}
   </div>
@@ -425,415 +450,429 @@ function showActiveOrderDetail(orderId) {
   `);
 }
 
-function renderActiveOrders() {
-  if (!State.activeOrderStart) {
-    const d = new Date(); d.setDate(d.getDate() - 30);
-    State.activeOrderStart = d.toLocaleDateString('sv-SE');
-  }
-  if (!State.activeOrderEnd) State.activeOrderEnd = new Date().toLocaleDateString('sv-SE');
-  const raw = DB.orders.filter(o => !['completed', 'cancelled', 'rejected'].includes(o.status) && !(o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery") && o.payment_status !== "collected");
-  const dateFiltered = raw.filter(o => {
-    if (!o.created_at) return false;
-    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
-    return d >= State.activeOrderStart && d <= State.activeOrderEnd;
-  });
-  const countByStatus = {
-    pending: dateFiltered.filter(o => o.status === 'pending').length,
-    cooking: dateFiltered.filter(o => o.status === 'cooking').length,
-    ready: dateFiltered.filter(o => o.status === 'ready').length,
-    delivering: dateFiltered.filter(o => o.status === 'delivering').length,
-    delivered: dateFiltered.filter(o => o.status === 'delivered').length,
-  };
-  const q = (State.activeOrderSearch || '').toLowerCase();
-  const filtered = dateFiltered.filter(o => {
-    if (!q) return true;
-    const idMatch = o.id.toLowerCase().includes(q);
-    const nameMatch = (o.customer_name || '').toLowerCase().includes(q);
-    const statusMatch = getStatusLabel(o.status).toLowerCase().includes(q);
-    return idMatch || nameMatch || statusMatch;
-  });
-  const cancelled = DB.orders.filter(o =>
-    ['cancelled', 'rejected'].includes(o.status) && o.created_at
-  ).filter(o => {
-    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
-    return d >= State.activeOrderStart && d <= State.activeOrderEnd;
-  }).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
-  const history = DB.orders.filter(o =>
-    o.status === 'completed' && o.created_at
-  ).filter(o => {
-    const d = new Date(o.created_at).toLocaleDateString('sv-SE');
-    return d >= State.activeOrderStart && d <= State.activeOrderEnd;
-  }).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
-  return `
-  <div class="animate-fade-up">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="font-display text-xl font-bold">Pesanan Aktif</h2>
-      <span class="text-xs" style="color:var(--muted)">${dateFiltered.length} pesanan</span>
-    </div>
-    <div class="grid grid-cols-5 gap-2 mb-5">
-      <div class="stat-card text-center"><div class="text-lg font-bold" style="color:var(--warning)">${countByStatus.pending}</div><div class="text-[10px]" style="color:var(--muted)">Menunggu</div></div>
-      <div class="stat-card text-center"><div class="text-lg font-bold" style="color:var(--accent)">${countByStatus.cooking}</div><div class="text-[10px]" style="color:var(--muted)">Dimasak</div></div>
-      <div class="stat-card text-center"><div class="text-lg font-bold" style="color:var(--success)">${countByStatus.ready}</div><div class="text-[10px]" style="color:var(--muted)">Siap Saji</div></div>
-      <div class="stat-card text-center" style="border-color:rgba(52,152,219,.3)"><div class="text-lg font-bold" style="color:#3498db">${countByStatus.delivering}</div><div class="text-[10px]" style="color:var(--muted)">Diantar</div></div>
-      <div class="stat-card text-center" style="border-color:rgba(155,89,182,.3)"><div class="text-lg font-bold" style="color:#9b59b6">${countByStatus.delivered}</div><div class="text-[10px]" style="color:var(--muted)">Diterima</div></div>
-    </div>
-    <div class="flex flex-wrap items-center gap-2 mb-3">
-      <input type="date" id="active-order-start" value="${State.activeOrderStart}" class="input-field text-sm" style="flex:1;min-width:130px" onchange="State.activeOrderStart=this.value;render()">
-      <span class="text-xs" style="color:var(--muted)">s/d</span>
-      <input type="date" id="active-order-end" value="${State.activeOrderEnd}" class="input-field text-sm" style="flex:1;min-width:130px" onchange="State.activeOrderEnd=this.value;render()">
-    </div>
-    <div class="card mb-4" style="padding:10px">
-      <input type="text" class="input-field text-sm w-full" placeholder="Cari ID, nama pelanggan, atau status..." value="${State.activeOrderSearch || ''}" oninput="State.activeOrderSearch=this.value;render()">
-    </div>
-    <div class="space-y-3">
-      ${filtered.length === 0 ? '<p class="text-sm text-center py-10" style="color:var(--muted)"><i class="fas fa-inbox mr-2"></i>Tidak ada pesanan aktif</p>' : ''}
-      ${filtered.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')).map(o => {
-        const t = o.table_id ? getTable(o.table_id) : null;
-        const tax = Math.round(calcItemTax(o.items));
-        const itemTotal = o.items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
-        const dineInFee = calcCustomerFee(itemTotal, o.order_type);
-        const displayServiceFee = dineInFee || o.service_fee || 0;
-        const netOngkir = o.shipping_cost ? o.shipping_cost - calcCourierFee(o.shipping_cost) : 0;
-        const isDelivered = o.status === "delivered" && o.order_type === "delivery";
-        const breakdownHtml = isDelivered
-          ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--danger)"><i class="fas fa-wallet"></i>Pendapatan Kurir: <b>${formatCurrency(netOngkir)}</b></div>`
-          : `${o.promo_discount ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon promo: <b>-${formatCurrency(o.promo_discount)}</b></div>` : ""}${o.shipping_cost && o.shipping_cost > 0 ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--accent)"><i class="fas fa-truck"></i>Ongkos Kirim: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ""}${displayServiceFee > 0 ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:#e07a3a"><i class="fas fa-hand-holding-usd"></i>Biaya Layanan: <b>${formatCurrency(displayServiceFee)}</b></div>` : ""}${tax > 0 ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--accent)"><i class="fas fa-receipt"></i>Pajak: <b>${formatCurrency(tax)}</b></div>` : ""}`;
-        const amountColor = isDelivered ? 'var(--success)' : 'var(--accent)';
-        const amountValue = isDelivered ? formatCurrency(o.total_amount - netOngkir) : formatCurrency(o.total_amount);
-        return `
-      <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showActiveOrderDetail('${o.id}')">
-        <div class="flex justify-between items-start mb-2">
-          <div>
-            <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
-            <span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>
-            <span class="badge ${o.payment_status === 'paid' ? 'badge-paid' : o.payment_status === 'collected' ? '' : 'badge-unpaid'} ml-1">${o.payment_status === 'paid' ? 'Lunas' : o.payment_status === 'collected' ? 'Menunggu Setoran' : 'Belum Bayar'}</span>
-            ${o.payment_status === 'collected' && o.order_type === 'dine-in' ? `<span class="badge ml-1" style="background:rgba(241,196,15,.15);color:#f1c40f">Dikumpulkan Waiter</span>` : isDelivered ? `<span class="badge ml-1" style="background:rgba(52,152,219,.15);color:#3498db">Belum Setor</span>` : ''}
-          </div>
-          <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
-        </div>
-        <div class="text-xs mb-2" style="color:var(--muted)">
-          <i class="fas ${o.order_type === 'dine-in' ? 'fa-chair' : 'fa-motorcycle'} mr-1"></i>${getOrderTypeName(o.order_type)}${t && o.order_type !== "delivery" ? " — Meja " + t.number : ""}${isDelivered ? " — " + (o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')) : o.customer_name ? " — " + o.customer_name : ""}${!isDelivered && o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}${o.waiter_id && getUser(o.waiter_id) ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-user-tie"></i> ' + getUser(o.waiter_id).name + '</span>' : ''}${o.courier_id && getUser(o.courier_id) ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-motorcycle"></i> ' + getUser(o.courier_id).name + '</span>' : ''}
-        </div>
-        <div class="text-xs mb-3">${(() => {
-          const names = o.items.map(i => { const mi = getMenuItem(i.menu_item_id); return mi ? mi.name + ' x' + i.quantity : ''; }).filter(Boolean);
-          return names.length <= 3 ? names.join(', ') : names.slice(0, 3).join(', ') + ' <span style="color:var(--muted)">+' + (names.length - 3) + ' lainnya</span>';
-        })()}</div>
-        ${breakdownHtml}
-        <div class="flex justify-between items-center">
-          <span class="font-bold" style="color:${amountColor}">${amountValue}</span>
-          <div class="flex gap-2">
-            ${o.status === "pending" && !o.accepted ? `
-            <button onclick="event.stopPropagation();cancelCashierOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded" style="color:var(--danger); background:rgba(231,76,60,.1)">Batal</button>
-            <button onclick="event.stopPropagation();editCashierOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded" style="color:var(--accent); background:rgba(224,122,58,.1)">Edit</button>
-            <button onclick="event.stopPropagation();acceptCashierOrder('${o.id}')" class="btn-primary btn-sm">Terima</button>
-            ` : ""}
-            ${o.status === "pending" && o.accepted ? `<span class="badge" style="background:rgba(46,204,113,.15);color:var(--success)">Diterima</span>` : ""}
-            ${(o.status === "ready" || (o.status === "delivered" && o.order_type !== "delivery")) && o.payment_status === "unpaid" ? `<button onclick="event.stopPropagation();showPaymentModal('${o.id}')" class="btn-primary btn-sm">Bayar</button>` : ""}
-            ${(o.status === "ready" || (o.status === "delivered" && o.order_type !== "delivery")) && o.payment_status === "paid" ? `<button onclick="event.stopPropagation();confirmCompleteOrder('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
-            ${o.status === "delivered" && o.payment_status === "collected" && o.order_type === "dine-in" ? `<button onclick="event.stopPropagation();confirmSettleDineIn('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#27ae60,#1e8449)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran Waiter</button>` : ""}
-          </div>
-        </div>
-      </div>`;
-      }).join('')}
-    </div>
-    ${(() => {
-      const setoranOrders = DB.orders.filter(o => {
-        if (o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery" && o.shipping_cost > 0) return true;
-        if (o.status === "delivered" && o.payment_status === "paid" && o.order_type === "delivery" && o.shipping_cost > 0) return true;
-        if (o.ongkir_status !== "confirmed" && o.courier_id && o.shipping_cost > 0 && o.status === "completed" && o.payment_method !== "cod") return true;
-        if (o.status === "delivered" && o.payment_status === "collected" && o.order_type === "dine-in") return true;
-        return false;
-      });
-      if (setoranOrders.length === 0) return '';
-      return `
-    <h3 class="font-semibold text-sm mb-3 mt-6">Bayar / Terima Setoran</h3>
-    <div class="space-y-3 mb-6">
-      ${setoranOrders.map(o => {
-        const isUnpaidDelivery = o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery";
-        const isCollectedDineIn = o.status === "delivered" && o.payment_status === "collected" && o.order_type === "dine-in";
-        const kurir = getUser(o.courier_id);
-        const netOngkir = o.shipping_cost - calcCourierFee(o.shipping_cost);
-        if (isCollectedDineIn) {
-          const t = o.table_id ? getTable(o.table_id) : null;
-          const waiter = o.waiter_id ? getUser(o.waiter_id) : null;
-          return `
-      <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showActiveOrderDetail('${o.id}')">
-        <div class="flex justify-between items-start mb-2">
-          <div>
-            <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
-            <span class="badge ml-1" style="background:rgba(241,196,15,.15);color:#f1c40f">Menunggu Setoran</span>
-            <span class="badge ml-1" style="background:rgba(224,122,58,.1);color:var(--accent)"><i class="fas fa-user-tie mr-1"></i>${waiter ? waiter.name : '—'}</span>
-          </div>
-          <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
-        </div>
-        <div class="text-xs mb-2" style="color:var(--muted)">
-          <i class="fas fa-chair mr-1"></i>Dine-In${t ? ' — Meja ' + t.number : ''}${waiter ? ' — ' + waiter.name : ''}
-        </div>
-        <div class="text-xs mb-3">${(() => {
-          const names = o.items.map(i => { const mi = getMenuItem(i.menu_item_id); return mi ? mi.name + ' x' + i.quantity : ''; }).filter(Boolean);
-          return names.length <= 3 ? names.join(', ') : names.slice(0, 3).join(', ') + ' <span style="color:var(--muted)">+' + (names.length - 3) + ' lainnya</span>';
-        })()}</div>
-        <div class="flex justify-between items-center">
-          <span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
-          <button onclick="event.stopPropagation();confirmSettleDineIn('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#27ae60,#1e8449)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran Waiter</button>
-        </div>
-      </div>`;
-        }
-        if (isUnpaidDelivery) {
-          return `
-      <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showActiveOrderDetail('${o.id}')">
-        <div class="flex justify-between items-start mb-2">
-          <div>
-            <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
-            <span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>
-            <span class="badge badge-unpaid ml-1">Belum Bayar</span>
-            <span class="badge ml-1" style="background:rgba(52,152,219,.15);color:#3498db">Belum Setor</span>
-          </div>
-          <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
-        </div>
-        <div class="text-xs mb-2" style="color:var(--muted)">
-          <i class="fas fa-motorcycle mr-1"></i>Delivery — ${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}${kurir ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-motorcycle"></i> ' + kurir.name + '</span>' : ''}
-        </div>
-        <div class="text-xs mb-3">${(() => {
-          const names = o.items.map(i => { const mi = getMenuItem(i.menu_item_id); return mi ? mi.name + ' x' + i.quantity : ''; }).filter(Boolean);
-          return names.length <= 3 ? names.join(', ') : names.slice(0, 3).join(', ') + ' <span style="color:var(--muted)">+' + (names.length - 3) + ' lainnya</span>';
-        })()}</div>
-        <div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--danger)"><i class="fas fa-wallet"></i>Pendapatan Kurir: <b>${formatCurrency(netOngkir)}</b></div>
-        <div class="flex justify-between items-center">
-          <span class="font-bold" style="color:var(--success)">${formatCurrency(o.total_amount - netOngkir)}</span>
-          <button onclick="event.stopPropagation();settleDelivery('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#3498db,#2980b9)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran</button>
-        </div>
-      </div>`;
-        }
-        return `
-      <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showOngkirPaymentModal('${o.id}')">
-        <div class="flex justify-between items-start mb-2">
-          <div>
-            <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
-            <span class="badge ml-1" style="font-size:9px;background:rgba(52,152,219,.15);color:#3498db">Telah Diantar</span>
-            <span class="badge ml-1" style="${o.ongkir_status === "paid" ? 'background:rgba(52,152,219,.15);color:#3498db' : 'background:rgba(241,196,15,.15);color:#f1c40f'}">${o.ongkir_status === "paid" ? "Siap Diambil" : "Belum Diambil"}</span>
-          </div>
-          <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
-        </div>
-        <div class="text-xs mb-2" style="color:var(--muted)">
-          <i class="fas fa-motorcycle mr-1"></i>Delivery — ${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}${kurir ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-motorcycle"></i> ' + kurir.name + '</span>' : ''}
-        </div>
-        <div class="text-xs mb-3">${(() => {
-          const names = o.items.map(i => { const mi = getMenuItem(i.menu_item_id); return mi ? mi.name + ' x' + i.quantity : ''; }).filter(Boolean);
-          return names.length <= 3 ? names.join(', ') : names.slice(0, 3).join(', ') + ' <span style="color:var(--muted)">+' + (names.length - 3) + ' lainnya</span>';
-        })()}</div>
-        <div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--danger)"><i class="fas fa-wallet"></i>Pendapatan Kurir: <b>${formatCurrency(netOngkir)}</b></div>
-        <div class="flex justify-between items-center">
-          <span class="font-bold" style="color:var(--success)">${formatCurrency(o.total_amount - netOngkir)}</span>
-          <div>
-            ${o.ongkir_status === "paid"
-              ? `<span class="text-xs font-medium px-3 py-1.5 rounded" style="background:rgba(52,152,219,.15);color:#3498db"><i class="fas fa-clock mr-1"></i>Menunggu Konfirmasi Kurir</span>`
-              : `<button onclick="event.stopPropagation();confirmPayOngkir('${o.id}')" class="btn-primary btn-sm"><i class="fas fa-hand-holding-dollar mr-1"></i>Bayar Ongkir</button>`}
-          </div>
-        </div>
-      </div>`;
-      }).join('')}
-    </div>`; })()}
-    ${history.length > 0 ? `
-    <div class="mt-6">
-      <div class="flex items-center gap-2 mb-3 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')" style="user-select:none">
-        <h3 class="font-semibold text-sm" style="color:var(--success)">Riwayat Pesanan</h3>
-        <span class="text-xs" style="color:var(--muted)">${history.length}</span>
-        <div class="text-xs transition-transform" style="color:var(--muted)"><i class="fas fa-chevron-down"></i></div>
+async function renderActiveOrders() {
+  try {
+    showSkeleton('active-orders', 'list');
+    DB.orders = await API.getOrders();
+    DB.menuItems = await API.getMenu();
+    DB.users = await API.getUsers();
+    DB.tables = await API.getTables();
+    DB.cafe = await API.getCafe();
+    if (!State.activeOrderStart) {
+      var d = new Date(); d.setDate(d.getDate() - 30);
+      State.activeOrderStart = d.toLocaleDateString('sv-SE');
+    }
+    if (!State.activeOrderEnd) State.activeOrderEnd = new Date().toLocaleDateString('sv-SE');
+    var raw = DB.orders.filter(function(o) { return !['completed', 'cancelled', 'rejected'].includes(o.status) && !(o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery") && o.payment_status !== "collected"; });
+    var dateFiltered = raw.filter(function(o) {
+      if (!o.created_at) return false;
+      var d2 = new Date(o.created_at).toLocaleDateString('sv-SE');
+      return d2 >= State.activeOrderStart && d2 <= State.activeOrderEnd;
+    });
+    var countByStatus = {
+      pending: dateFiltered.filter(function(o) { return o.status === 'pending'; }).length,
+      cooking: dateFiltered.filter(function(o) { return o.status === 'cooking'; }).length,
+      ready: dateFiltered.filter(function(o) { return o.status === 'ready'; }).length,
+      delivering: dateFiltered.filter(function(o) { return o.status === 'delivering'; }).length,
+      delivered: dateFiltered.filter(function(o) { return o.status === 'delivered'; }).length,
+    };
+    var q = (State.activeOrderSearch || '').toLowerCase();
+    var filtered = dateFiltered.filter(function(o) {
+      if (!q) return true;
+      var idMatch = o.id.toLowerCase().includes(q);
+      var nameMatch = (o.customer_name || '').toLowerCase().includes(q);
+      var statusMatch = getStatusLabel(o.status).toLowerCase().includes(q);
+      return idMatch || nameMatch || statusMatch;
+    });
+    var cancelled = DB.orders.filter(function(o) {
+      return ['cancelled', 'rejected'].includes(o.status) && o.created_at;
+    }).filter(function(o) {
+      var d2 = new Date(o.created_at).toLocaleDateString('sv-SE');
+      return d2 >= State.activeOrderStart && d2 <= State.activeOrderEnd;
+    }).sort(function(a, b) { return (b.created_at || '').localeCompare(a.created_at || ''); });
+    var history = DB.orders.filter(function(o) {
+      return o.status === 'completed' && o.created_at;
+    }).filter(function(o) {
+      var d2 = new Date(o.created_at).toLocaleDateString('sv-SE');
+      return d2 >= State.activeOrderStart && d2 <= State.activeOrderEnd;
+    }).sort(function(a, b) { return (b.created_at || '').localeCompare(a.created_at || ''); });
+    return `
+    <div class="animate-fade-up">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="font-display text-xl font-bold">Pesanan Aktif</h2>
+        <span class="text-xs" style="color:var(--muted)">${dateFiltered.length} pesanan</span>
       </div>
-      <div class="space-y-2 hidden">
-        ${history.map(o => {
-          const t = o.table_id ? getTable(o.table_id) : null;
+      <div class="grid grid-cols-5 gap-2 mb-5">
+        <div class="stat-card text-center"><div class="text-lg font-bold" style="color:var(--warning)">${countByStatus.pending}</div><div class="text-[10px]" style="color:var(--muted)">Menunggu</div></div>
+        <div class="stat-card text-center"><div class="text-lg font-bold" style="color:var(--accent)">${countByStatus.cooking}</div><div class="text-[10px]" style="color:var(--muted)">Dimasak</div></div>
+        <div class="stat-card text-center"><div class="text-lg font-bold" style="color:var(--success)">${countByStatus.ready}</div><div class="text-[10px]" style="color:var(--muted)">Siap Saji</div></div>
+        <div class="stat-card text-center" style="border-color:rgba(52,152,219,.3)"><div class="text-lg font-bold" style="color:#3498db">${countByStatus.delivering}</div><div class="text-[10px]" style="color:var(--muted)">Diantar</div></div>
+        <div class="stat-card text-center" style="border-color:rgba(155,89,182,.3)"><div class="text-lg font-bold" style="color:#9b59b6">${countByStatus.delivered}</div><div class="text-[10px]" style="color:var(--muted)">Diterima</div></div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <input type="date" id="active-order-start" value="${State.activeOrderStart}" class="input-field text-sm" style="flex:1;min-width:130px" onchange="State.activeOrderStart=this.value;render()">
+        <span class="text-xs" style="color:var(--muted)">s/d</span>
+        <input type="date" id="active-order-end" value="${State.activeOrderEnd}" class="input-field text-sm" style="flex:1;min-width:130px" onchange="State.activeOrderEnd=this.value;render()">
+      </div>
+      <div class="card mb-4" style="padding:10px">
+        <input type="text" class="input-field text-sm w-full" placeholder="Cari ID, nama pelanggan, atau status..." value="${State.activeOrderSearch || ''}" oninput="State.activeOrderSearch=this.value;render()">
+      </div>
+      <div class="space-y-3">
+        ${filtered.length === 0 ? '<p class="text-sm text-center py-10" style="color:var(--muted)"><i class="fas fa-inbox mr-2"></i>Tidak ada pesanan aktif</p>' : ''}
+        ${filtered.sort(function(a, b) { return (b.created_at || '').localeCompare(a.created_at || ''); }).map(function(o) {
+          var t = o.table_id ? getTable(o.table_id) : null;
+          var tax = Math.round(calcItemTax(o.items));
+          var itemTotal = o.items.reduce(function(s, i) { return s + i.unit_price * i.quantity; }, 0);
+          var dineInFee = calcCustomerFee(itemTotal, o.order_type);
+          var displayServiceFee = dineInFee || o.service_fee || 0;
+          var netOngkir = o.shipping_cost ? o.shipping_cost - calcCourierFee(o.shipping_cost) : 0;
+          var isDelivered = o.status === "delivered" && o.order_type === "delivery";
+          var breakdownHtml = isDelivered
+            ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--danger)"><i class="fas fa-wallet"></i>Pendapatan Kurir: <b>${formatCurrency(netOngkir)}</b></div>`
+            : `${o.promo_discount ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--success)"><i class="fas fa-tag"></i>Diskon promo: <b>-${formatCurrency(o.promo_discount)}</b></div>` : ""}${o.shipping_cost && o.shipping_cost > 0 ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--accent)"><i class="fas fa-truck"></i>Ongkos Kirim: <b>${formatCurrency(o.shipping_cost)}</b></div>` : ""}${displayServiceFee > 0 ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:#e07a3a"><i class="fas fa-hand-holding-usd"></i>Biaya Layanan: <b>${formatCurrency(displayServiceFee)}</b></div>` : ""}${tax > 0 ? `<div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--accent)"><i class="fas fa-receipt"></i>Pajak: <b>${formatCurrency(tax)}</b></div>` : ""}`;
+          var amountColor = isDelivered ? 'var(--success)' : 'var(--accent)';
+          var amountValue = isDelivered ? formatCurrency(o.total_amount - netOngkir) : formatCurrency(o.total_amount);
           return `
-        <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showActiveOrderDetail('${o.id}')" style="border-color:rgba(39,174,96,.2)">
-          <div class="flex justify-between items-start mb-1">
+        <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showActiveOrderDetail('${o.id}')">
+          <div class="flex justify-between items-start mb-2">
             <div>
               <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
-              <span class="badge badge-completed ml-2">${getStatusLabel(o.status)}</span>
-              <span class="badge ${o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid'} ml-1">${o.payment_status === 'paid' ? 'Lunas' : 'Belum Bayar'}</span>
+              <span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>
+              <span class="badge ${o.payment_status === 'paid' ? 'badge-paid' : o.payment_status === 'collected' ? '' : 'badge-unpaid'} ml-1">${o.payment_status === 'paid' ? 'Lunas' : o.payment_status === 'collected' ? 'Menunggu Setoran' : 'Belum Bayar'}</span>
+              ${o.payment_status === 'collected' && o.order_type === 'dine-in' ? `<span class="badge ml-1" style="background:rgba(241,196,15,.15);color:#f1c40f">Dikumpulkan Waiter</span>` : isDelivered ? `<span class="badge ml-1" style="background:rgba(52,152,219,.15);color:#3498db">Belum Setor</span>` : ''}
             </div>
             <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
           </div>
-          <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-user mr-1" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</div>
-          <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-phone mr-1" style="color:var(--accent)"></i>${o.customer_phone || (getUser(o.user_id)?.phone || '—')}</div>
-          <div class="text-xs mb-2" style="color:var(--muted)">${getOrderTypeName(o.order_type)}${t ? ' — Meja ' + t.number : ''}</div>
-          <div class="flex justify-between items-center">
-            <span class="text-xs" style="color:var(--muted)">${formatDate(o.created_at)}</span>
-            <span class="font-bold text-sm" style="color:var(--success)">${formatCurrency(effectiveAmount(o))}</span>
+          <div class="text-xs mb-2" style="color:var(--muted)">
+            <i class="fas ${o.order_type === 'dine-in' ? 'fa-chair' : 'fa-motorcycle'} mr-1"></i>${getOrderTypeName(o.order_type)}${t && o.order_type !== "delivery" ? " — Meja " + t.number : ""}${isDelivered ? " — " + (o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')) : o.customer_name ? " — " + o.customer_name : ""}${!isDelivered && o.user_id && o.user_id !== 'walk-in' && getUser(o.user_id) ? ' (' + getUser(o.user_id).email + ')' : ''}${o.waiter_id && getUser(o.waiter_id) ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-user-tie"></i> ' + getUser(o.waiter_id).name + '</span>' : ''}${o.courier_id && getUser(o.courier_id) ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-motorcycle"></i> ' + getUser(o.courier_id).name + '</span>' : ''}
           </div>
-        </div>`;}).join('')}
+          <div class="text-xs mb-3">${(function() {
+            var names = o.items.map(function(i) { var mi = getMenuItem(i.menu_item_id); return mi ? mi.name + ' x' + i.quantity : ''; }).filter(Boolean);
+            return names.length <= 3 ? names.join(', ') : names.slice(0, 3).join(', ') + ' <span style="color:var(--muted)">+' + (names.length - 3) + ' lainnya</span>';
+          })()}</div>
+          ${breakdownHtml}
+          <div class="flex justify-between items-center">
+            <span class="font-bold" style="color:${amountColor}">${amountValue}</span>
+            <div class="flex gap-2">
+              ${o.status === "pending" && !o.accepted ? `
+              <button onclick="event.stopPropagation();cancelCashierOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded" style="color:var(--danger); background:rgba(231,76,60,.1)">Batal</button>
+              <button onclick="event.stopPropagation();editCashierOrder('${o.id}')" class="text-xs font-bold px-3 py-1.5 rounded" style="color:var(--accent); background:rgba(224,122,58,.1)">Edit</button>
+              <button onclick="event.stopPropagation();acceptCashierOrder('${o.id}')" class="btn-primary btn-sm">Terima</button>
+              ` : ""}
+              ${o.status === "pending" && o.accepted ? `<span class="badge" style="background:rgba(46,204,113,.15);color:var(--success)">Diterima</span>` : ""}
+              ${(o.status === "ready" || (o.status === "delivered" && o.order_type !== "delivery")) && o.payment_status === "unpaid" ? `<button onclick="event.stopPropagation();showPaymentModal('${o.id}')" class="btn-primary btn-sm">Bayar</button>` : ""}
+              ${(o.status === "ready" || (o.status === "delivered" && o.order_type !== "delivery")) && o.payment_status === "paid" ? `<button onclick="event.stopPropagation();confirmCompleteOrder('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,var(--success),#1e8449)">Selesai</button>` : ""}
+              ${o.status === "delivered" && o.payment_status === "collected" && o.order_type === "dine-in" ? `<button onclick="event.stopPropagation();confirmSettleDineIn('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#27ae60,#1e8449)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran Waiter</button>` : ""}
+            </div>
+          </div>
+        </div>`;
+        }).join('')}
       </div>
-    </div>` : ''}
-    ${cancelled.length > 0 ? `
-    <div class="mt-6">
-      <div class="flex items-center gap-2 mb-3 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')" style="user-select:none">
-        <h3 class="font-semibold text-sm" style="color:var(--danger)">Riwayat Pembatalan</h3>
-        <span class="text-xs" style="color:var(--muted)">${cancelled.length}</span>
-        <div class="text-xs transition-transform" style="color:var(--muted)"><i class="fas fa-chevron-down"></i></div>
-      </div>
-      <div class="space-y-2 hidden">
-        ${cancelled.map(o => {
-          const t = o.table_id ? getTable(o.table_id) : null;
-          let label = 'Ditolak';
-          let pelaku = 'Dapur';
-          if (o.status === 'cancelled') {
-            label = 'Dibatalkan';
-            pelaku = o.reject_reason && o.reject_reason.startsWith('Dibatalkan Pelanggan:') ? 'Pelanggan' : 'Kasir';
+      ${(function() {
+        var setoranOrders = DB.orders.filter(function(o) {
+          if (o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery" && o.shipping_cost > 0) return true;
+          if (o.status === "delivered" && o.payment_status === "paid" && o.order_type === "delivery" && o.shipping_cost > 0) return true;
+          if (o.ongkir_status !== "confirmed" && o.courier_id && o.shipping_cost > 0 && o.status === "completed" && o.payment_method !== "cod") return true;
+          if (o.status === "delivered" && o.payment_status === "collected" && o.order_type === "dine-in") return true;
+          return false;
+        });
+        if (setoranOrders.length === 0) return '';
+        return `
+      <h3 class="font-semibold text-sm mb-3 mt-6">Bayar / Terima Setoran</h3>
+      <div class="space-y-3 mb-6">
+        ${setoranOrders.map(function(o) {
+          var isUnpaidDelivery = o.status === "delivered" && o.payment_status === "unpaid" && o.order_type === "delivery";
+          var isCollectedDineIn = o.status === "delivered" && o.payment_status === "collected" && o.order_type === "dine-in";
+          var kurir = getUser(o.courier_id);
+          var netOngkir = o.shipping_cost - calcCourierFee(o.shipping_cost);
+          if (isCollectedDineIn) {
+            var t = o.table_id ? getTable(o.table_id) : null;
+            var waiter = o.waiter_id ? getUser(o.waiter_id) : null;
+            return `
+        <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showActiveOrderDetail('${o.id}')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
+              <span class="badge ml-1" style="background:rgba(241,196,15,.15);color:#f1c40f">Menunggu Setoran</span>
+              <span class="badge ml-1" style="background:rgba(224,122,58,.1);color:var(--accent)"><i class="fas fa-user-tie mr-1"></i>${waiter ? waiter.name : '—'}</span>
+            </div>
+            <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
+          </div>
+          <div class="text-xs mb-2" style="color:var(--muted)">
+            <i class="fas fa-chair mr-1"></i>Dine-In${t ? ' — Meja ' + t.number : ''}${waiter ? ' — ' + waiter.name : ''}
+          </div>
+          <div class="text-xs mb-3">${(function() {
+            var names = o.items.map(function(i) { var mi = getMenuItem(i.menu_item_id); return mi ? mi.name + ' x' + i.quantity : ''; }).filter(Boolean);
+            return names.length <= 3 ? names.join(', ') : names.slice(0, 3).join(', ') + ' <span style="color:var(--muted)">+' + (names.length - 3) + ' lainnya</span>';
+          })()}</div>
+          <div class="flex justify-between items-center">
+            <span class="font-bold" style="color:var(--accent)">${formatCurrency(o.total_amount)}</span>
+            <button onclick="event.stopPropagation();confirmSettleDineIn('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#27ae60,#1e8449)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran Waiter</button>
+          </div>
+        </div>`;
           }
-          else if (o.reject_reason && o.reject_reason.startsWith('Ditolak Kurir:')) pelaku = 'Kurir';
-          return `
-        <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showActiveOrderDetail('${o.id}')" style="border-color:rgba(231,76,60,.3)">
-          <div class="flex justify-between items-start mb-1">
+          if (isUnpaidDelivery) {
+            return `
+        <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showActiveOrderDetail('${o.id}')">
+          <div class="flex justify-between items-start mb-2">
             <div>
               <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
-              <span class="badge badge-danger ml-2">${label}</span>
-              <span class="text-xs ml-1 px-2 py-0.5 rounded" style="background:rgba(231,76,60,.1);color:var(--danger)"><i class="fas fa-user mr-1"></i>${pelaku}</span>
+              <span class="badge ${getStatusBadge(o.status)} ml-2">${getStatusLabel(o.status)}</span>
+              <span class="badge badge-unpaid ml-1">Belum Bayar</span>
+              <span class="badge ml-1" style="background:rgba(52,152,219,.15);color:#3498db">Belum Setor</span>
             </div>
             <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
           </div>
-          <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-user mr-1" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</div>
-          <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-phone mr-1" style="color:var(--accent)"></i>${o.customer_phone || (getUser(o.user_id)?.phone || '—')}</div>
-          <div class="text-xs mb-2" style="color:var(--muted)">${getOrderTypeName(o.order_type)}${t ? ' — Meja ' + t.number : ''}</div>
-          ${o.reject_reason ? `<div class="text-xs mb-2 p-2 rounded" style="background:rgba(231,76,60,.08);color:var(--danger)"><i class="fas fa-ban mr-1"></i>${o.reject_reason}</div>` : ''}
-          <div class="flex justify-between items-center">
-            <span class="text-xs" style="color:var(--muted)">${formatDate(o.created_at)}</span>
-            <span class="font-bold text-sm" style="color:var(--danger)">${formatCurrency(o.total_amount)}</span>
+          <div class="text-xs mb-2" style="color:var(--muted)">
+            <i class="fas fa-motorcycle mr-1"></i>Delivery — ${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}${kurir ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-motorcycle"></i> ' + kurir.name + '</span>' : ''}
           </div>
-        </div>`;}).join('')}
-      </div>
-    </div>` : ''}
-  </div>`;
+          <div class="text-xs mb-3">${(function() {
+            var names = o.items.map(function(i) { var mi = getMenuItem(i.menu_item_id); return mi ? mi.name + ' x' + i.quantity : ''; }).filter(Boolean);
+            return names.length <= 3 ? names.join(', ') : names.slice(0, 3).join(', ') + ' <span style="color:var(--muted)">+' + (names.length - 3) + ' lainnya</span>';
+          })()}</div>
+          <div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--danger)"><i class="fas fa-wallet"></i>Pendapatan Kurir: <b>${formatCurrency(netOngkir)}</b></div>
+          <div class="flex justify-between items-center">
+            <span class="font-bold" style="color:var(--success)">${formatCurrency(o.total_amount - netOngkir)}</span>
+            <button onclick="event.stopPropagation();settleDelivery('${o.id}')" class="btn-primary btn-sm" style="background:linear-gradient(135deg,#3498db,#2980b9)"><i class="fas fa-hand-holding-dollar mr-1"></i>Terima Setoran</button>
+          </div>
+        </div>`;
+          }
+          return `
+        <div class="order-card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showOngkirPaymentModal('${o.id}')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
+              <span class="badge ml-1" style="font-size:9px;background:rgba(52,152,219,.15);color:#3498db">Telah Diantar</span>
+              <span class="badge ml-1" style="${o.ongkir_status === "paid" ? 'background:rgba(52,152,219,.15);color:#3498db' : 'background:rgba(241,196,15,.15);color:#f1c40f'}">${o.ongkir_status === "paid" ? "Siap Diambil" : "Belum Diambil"}</span>
+            </div>
+            <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
+          </div>
+          <div class="text-xs mb-2" style="color:var(--muted)">
+            <i class="fas fa-motorcycle mr-1"></i>Delivery — ${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}${kurir ? ' <span style="color:var(--accent);font-size:10px"><i class="fas fa-motorcycle"></i> ' + kurir.name + '</span>' : ''}
+          </div>
+          <div class="text-xs mb-3">${(function() {
+            var names = o.items.map(function(i) { var mi = getMenuItem(i.menu_item_id); return mi ? mi.name + ' x' + i.quantity : ''; }).filter(Boolean);
+            return names.length <= 3 ? names.join(', ') : names.slice(0, 3).join(', ') + ' <span style="color:var(--muted)">+' + (names.length - 3) + ' lainnya</span>';
+          })()}</div>
+          <div class="text-[10px] mb-1 flex items-center gap-1" style="color:var(--danger)"><i class="fas fa-wallet"></i>Pendapatan Kurir: <b>${formatCurrency(netOngkir)}</b></div>
+          <div class="flex justify-between items-center">
+            <span class="font-bold" style="color:var(--success)">${formatCurrency(o.total_amount - netOngkir)}</span>
+            <div>
+              ${o.ongkir_status === "paid"
+                ? `<span class="text-xs font-medium px-3 py-1.5 rounded" style="background:rgba(52,152,219,.15);color:#3498db"><i class="fas fa-clock mr-1"></i>Menunggu Konfirmasi Kurir</span>`
+                : `<button onclick="event.stopPropagation();confirmPayOngkir('${o.id}')" class="btn-primary btn-sm"><i class="fas fa-hand-holding-dollar mr-1"></i>Bayar Ongkir</button>`}
+            </div>
+          </div>
+        </div>`;
+        }).join('')}
+      </div>`; })()}
+      ${history.length > 0 ? `
+      <div class="mt-6">
+        <div class="flex items-center gap-2 mb-3 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')" style="user-select:none">
+          <h3 class="font-semibold text-sm" style="color:var(--success)">Riwayat Pesanan</h3>
+          <span class="text-xs" style="color:var(--muted)">${history.length}</span>
+          <div class="text-xs transition-transform" style="color:var(--muted)"><i class="fas fa-chevron-down"></i></div>
+        </div>
+        <div class="space-y-2 hidden">
+          ${history.map(function(o) {
+            var t = o.table_id ? getTable(o.table_id) : null;
+            return `
+          <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showActiveOrderDetail('${o.id}')" style="border-color:rgba(39,174,96,.2)">
+            <div class="flex justify-between items-start mb-1">
+              <div>
+                <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
+                <span class="badge badge-completed ml-2">${getStatusLabel(o.status)}</span>
+                <span class="badge ${o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid'} ml-1">${o.payment_status === 'paid' ? 'Lunas' : 'Belum Bayar'}</span>
+              </div>
+              <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
+            </div>
+            <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-user mr-1" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</div>
+            <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-phone mr-1" style="color:var(--accent)"></i>${o.customer_phone || (getUser(o.user_id)?.phone || '—')}</div>
+            <div class="text-xs mb-2" style="color:var(--muted)">${getOrderTypeName(o.order_type)}${t ? ' — Meja ' + t.number : ''}</div>
+            <div class="flex justify-between items-center">
+              <span class="text-xs" style="color:var(--muted)">${formatDate(o.created_at)}</span>
+              <span class="font-bold text-sm" style="color:var(--success)">${formatCurrency(effectiveAmount(o))}</span>
+            </div>
+          </div>`;}).join('')}
+        </div>
+      </div>` : ''}
+      ${cancelled.length > 0 ? `
+      <div class="mt-6">
+        <div class="flex items-center gap-2 mb-3 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')" style="user-select:none">
+          <h3 class="font-semibold text-sm" style="color:var(--danger)">Riwayat Pembatalan</h3>
+          <span class="text-xs" style="color:var(--muted)">${cancelled.length}</span>
+          <div class="text-xs transition-transform" style="color:var(--muted)"><i class="fas fa-chevron-down"></i></div>
+        </div>
+        <div class="space-y-2 hidden">
+          ${cancelled.map(function(o) {
+            var t = o.table_id ? getTable(o.table_id) : null;
+            var label = 'Ditolak';
+            var pelaku = 'Dapur';
+            if (o.status === 'cancelled') {
+              label = 'Dibatalkan';
+              pelaku = o.reject_reason && o.reject_reason.startsWith('Dibatalkan Pelanggan:') ? 'Pelanggan' : 'Kasir';
+            }
+            else if (o.reject_reason && o.reject_reason.startsWith('Ditolak Kurir:')) pelaku = 'Kurir';
+            return `
+          <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showActiveOrderDetail('${o.id}')" style="border-color:rgba(231,76,60,.3)">
+            <div class="flex justify-between items-start mb-1">
+              <div>
+                <span class="font-bold text-sm">#${o.id.slice(-5).toUpperCase()}</span>
+                <span class="badge badge-danger ml-2">${label}</span>
+                <span class="text-xs ml-1 px-2 py-0.5 rounded" style="background:rgba(231,76,60,.1);color:var(--danger)"><i class="fas fa-user mr-1"></i>${pelaku}</span>
+              </div>
+              <span class="text-xs" style="color:var(--muted)">${formatTime(o.created_at)}</span>
+            </div>
+            <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-user mr-1" style="color:var(--accent)"></i>${o.customer_name || (getUser(o.user_id)?.name || getUser(o.user_id)?.email || '—')}</div>
+            <div class="text-xs mb-1" style="color:var(--muted)"><i class="fas fa-phone mr-1" style="color:var(--accent)"></i>${o.customer_phone || (getUser(o.user_id)?.phone || '—')}</div>
+            <div class="text-xs mb-2" style="color:var(--muted)">${getOrderTypeName(o.order_type)}${t ? ' — Meja ' + t.number : ''}</div>
+            ${o.reject_reason ? `<div class="text-xs mb-2 p-2 rounded" style="background:rgba(231,76,60,.08);color:var(--danger)"><i class="fas fa-ban mr-1"></i>${o.reject_reason}</div>` : ''}
+            <div class="flex justify-between items-center">
+              <span class="text-xs" style="color:var(--muted)">${formatDate(o.created_at)}</span>
+              <span class="font-bold text-sm" style="color:var(--danger)">${formatCurrency(o.total_amount)}</span>
+            </div>
+          </div>`;}).join('')}
+        </div>
+      </div>` : ''}
+    </div>`;
+  } catch(e) { console.error(e); showToast('Gagal memuat pesanan aktif', 'error'); return ''; }
+  finally { hideSkeleton('active-orders'); }
 }
 
 // ============================================================
 // ACTIVE PLAYGROUND TICKETS (shared: admin + manager)
 // ============================================================
-function renderActivePlaygroundTickets() {
-  if (!State.activePlaygroundStart) {
-    const d = new Date(); d.setDate(d.getDate() - 30);
-    State.activePlaygroundStart = d.toLocaleDateString('sv-SE');
-  }
-  if (!State.activePlaygroundEnd) State.activePlaygroundEnd = new Date().toLocaleDateString('sv-SE');
+async function renderActivePlaygroundTickets() {
+  try {
+    showSkeleton('active-playground', 'list');
+    DB.playgroundTickets = await API.getPlaygroundTickets();
+    if (!State.activePlaygroundStart) {
+      var d = new Date(); d.setDate(d.getDate() - 30);
+      State.activePlaygroundStart = d.toLocaleDateString('sv-SE');
+    }
+    if (!State.activePlaygroundEnd) State.activePlaygroundEnd = new Date().toLocaleDateString('sv-SE');
 
-  const rawTickets = (DB.playgroundTickets || []).filter(t => {
-    if (!t.created_at) return false;
-    const d = new Date(t.created_at).toLocaleDateString('sv-SE');
-    return d >= State.activePlaygroundStart && d <= State.activePlaygroundEnd;
-  });
+    var rawTickets = (DB.playgroundTickets || []).filter(function(t) {
+      if (!t.created_at) return false;
+      var d2 = new Date(t.created_at).toLocaleDateString('sv-SE');
+      return d2 >= State.activePlaygroundStart && d2 <= State.activePlaygroundEnd;
+    });
 
-  const tickets = rawTickets
-    .filter(t => t.status === "active")
-    .sort((a, b) => new Date(a.end_time) - new Date(b.end_time));
-  const completed = rawTickets
-    .filter(t => t.status === "completed" || t.status === "cancelled")
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  const q = (State.activePlaygroundSearch || '').toLowerCase();
-  const now = Date.now();
+    var tickets = rawTickets
+      .filter(function(t) { return t.status === "active"; })
+      .sort(function(a, b) { return new Date(a.end_time) - new Date(b.end_time); });
+    var completed = rawTickets
+      .filter(function(t) { return t.status === "completed" || t.status === "cancelled"; })
+      .sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+    var q = (State.activePlaygroundSearch || '').toLowerCase();
+    var now = Date.now();
 
-  const totalActive = tickets.length;
-  const totalSold = rawTickets.filter(t => t.payment_status === "paid").length;
-  const totalCancelled = rawTickets.filter(t => t.status === "cancelled").length;
-  const overtimeCount = tickets.filter(t => new Date(t.end_time).getTime() <= now).length;
+    var totalActive = tickets.length;
+    var totalSold = rawTickets.filter(function(t) { return t.payment_status === "paid"; }).length;
+    var totalCancelled = rawTickets.filter(function(t) { return t.status === "cancelled"; }).length;
+    var overtimeCount = tickets.filter(function(t) { return new Date(t.end_time).getTime() <= now; }).length;
 
-  const filtered = tickets.filter(t =>
-    !q || t.customer_name?.toLowerCase().includes(q) ||
-    t.id?.toLowerCase().includes(q) ||
-    (t.children || []).some(c => c.name?.toLowerCase().includes(q))
-  );
+    var filtered = tickets.filter(function(t) {
+      return !q || t.customer_name?.toLowerCase().includes(q) ||
+      t.id?.toLowerCase().includes(q) ||
+      (t.children || []).some(function(c) { return c.name?.toLowerCase().includes(q); });
+    });
 
-  return `
-  <div class="animate-fade-up">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="font-display text-xl font-bold">Tiket Aktif Playground</h2>
-      <span class="text-xs" style="color:var(--muted)">${totalActive} tiket</span>
-    </div>
-    <div class="grid grid-cols-4 gap-3 mb-3">
-      <div class="stat-card text-center">
-        <div class="text-lg font-bold" style="color:var(--accent)">${totalActive}</div>
-        <div class="text-[10px]" style="color:var(--muted)">Tiket Aktif</div>
+    return `
+    <div class="animate-fade-up">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="font-display text-xl font-bold">Tiket Aktif Playground</h2>
+        <span class="text-xs" style="color:var(--muted)">${totalActive} tiket</span>
       </div>
-      <div class="stat-card text-center">
-        <div class="text-lg font-bold" style="color:#3498db">${totalSold}</div>
-        <div class="text-[10px]" style="color:var(--muted)">Tiket Terjual</div>
-      </div>
-      <div class="stat-card text-center">
-        <div class="text-lg font-bold" style="color:var(--danger)">${totalCancelled}</div>
-        <div class="text-[10px]" style="color:var(--muted)">Tiket Dibatalkan</div>
-      </div>
-      <div class="stat-card text-center">
-        <div class="text-lg font-bold" style="color:var(--danger)">${overtimeCount}</div>
-        <div class="text-[10px]" style="color:var(--muted)">Over Time</div>
-      </div>
-    </div>
-    <div class="flex flex-wrap items-center gap-2 mb-3">
-      <input type="date" value="${State.activePlaygroundStart}" class="input-field text-sm" style="flex:1;min-width:130px" onchange="State.activePlaygroundStart=this.value;render()">
-      <span class="text-xs" style="color:var(--muted)">s/d</span>
-      <input type="date" value="${State.activePlaygroundEnd}" class="input-field text-sm" style="flex:1;min-width:130px" onchange="State.activePlaygroundEnd=this.value;render()">
-    </div>
-    <div class="card mb-4" style="padding:10px">
-      <input type="text" class="input-field text-sm w-full" placeholder="Cari nama pelanggan, ID tiket, atau nama anak..." value="${State.activePlaygroundSearch || ''}" oninput="State.activePlaygroundSearch=this.value;render()">
-    </div>
-    <div class="space-y-3">
-      ${filtered.length === 0 ? '<div class="text-center py-12"><i class="fas fa-ticket text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Tidak ada tiket aktif</p></div>' : ''}
-      ${filtered.map(t => {
-        const start = new Date(t.start_time).getTime();
-        const end = new Date(t.end_time).getTime();
-        const total = end - start;
-        const remaining = end - now;
-        const elapsed = Math.max(0, Math.min(100, ((now - start) / total) * 100));
-        const isUrgent = remaining > 0 && remaining < 600000;
-        const isExpired = remaining <= 0;
-        const timeColor = isExpired ? "var(--danger)" : isUrgent ? "var(--warning)" : "var(--success)";
-        return `
-      <div class="card ${isUrgent ? "animate-breathe" : ""}" onclick="showPlaygroundTicketDetail('${t.id}')" style="cursor:pointer;${isExpired ? "border-color:var(--danger)" : isUrgent ? "border-color:var(--warning)" : ""}">
-        <div class="flex justify-between items-start mb-2">
-          <div>
-            <span class="font-bold text-sm">${t.customer_name}</span>
-            <span class="badge ${isExpired ? "badge-pending" : "badge-cooking"} ml-2">${isExpired ? "Over Time" : "Aktif"}</span>
-            <span class="badge ${t.payment_status === "paid" ? "badge-paid" : "badge-unpaid"} ml-1">${t.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span>
-          </div>
-          <span class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(t.total_amount)}</span>
+      <div class="grid grid-cols-4 gap-3 mb-3">
+        <div class="stat-card text-center">
+          <div class="text-lg font-bold" style="color:var(--accent)">${totalActive}</div>
+          <div class="text-[10px]" style="color:var(--muted)">Tiket Aktif</div>
         </div>
-        <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-2" style="color:var(--muted)">
-          <span><i class="fas fa-child mr-1"></i>${(t.children || []).map(c => c.name).join(", ")}</span>
-          ${t.companion_count > 0 ? `<span><i class="fas fa-user mr-1"></i>${t.companion_count} pendamping</span>` : ""}
-          <span><i class="fas fa-clock mr-1"></i>${t.hours} jam</span>
+        <div class="stat-card text-center">
+          <div class="text-lg font-bold" style="color:#3498db">${totalSold}</div>
+          <div class="text-[10px]" style="color:var(--muted)">Tiket Terjual</div>
         </div>
-        ${t.items && t.items.length > 0 ? `<div class="text-xs mb-2" style="color:var(--muted)"><i class="fas fa-utensils mr-1"></i>${t.items.map(i => i.name + " x" + i.quantity).join(", ")}</div>` : ""}
-        <div class="time-bar-container mb-1">
-          <div class="flex justify-between text-xs mb-1" style="color:var(--muted)">
-            <span>${formatTime(new Date(t.start_time))}</span>
-            <span class="pg-remaining" data-start="${t.start_time}" data-end="${t.end_time}" data-over="${isExpired}" style="color:${timeColor};font-weight:600">${isExpired ? "-" + formatRemaining(Math.abs(remaining)) : formatRemaining(remaining)}</span>
-            <span>${formatTime(new Date(t.end_time))}</span>
-          </div>
-          <div class="time-bar-bg">
-            <div class="time-bar-fill" style="width:${Math.min(100, elapsed)}%;background:${timeColor}"></div>
-          </div>
+        <div class="stat-card text-center">
+          <div class="text-lg font-bold" style="color:var(--danger)">${totalCancelled}</div>
+          <div class="text-[10px]" style="color:var(--muted)">Tiket Dibatalkan</div>
         </div>
-      </div>`;
-      }).join('')}
-    </div>
-    ${completed.length > 0 ? `
-    <div class="mt-6">
-      <div class="flex items-center gap-2 mb-3 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')" style="user-select:none">
-        <h3 class="font-semibold text-sm" style="color:var(--success)">Riwayat Tiket</h3>
-        <span class="text-xs" style="color:var(--muted)">${completed.length}</span>
-        <div class="text-xs transition-transform" style="color:var(--muted)"><i class="fas fa-chevron-down"></i></div>
+        <div class="stat-card text-center">
+          <div class="text-lg font-bold" style="color:var(--danger)">${overtimeCount}</div>
+          <div class="text-[10px]" style="color:var(--muted)">Over Time</div>
+        </div>
       </div>
-      <div class="space-y-2 hidden">
-        ${completed.slice(0, 20).map(t => `
-        <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showPlaygroundTicketDetail('${t.id}')" style="border-color:rgba(39,174,96,.2)">
-          <div class="flex justify-between items-start mb-1">
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <input type="date" value="${State.activePlaygroundStart}" class="input-field text-sm" style="flex:1;min-width:130px" onchange="State.activePlaygroundStart=this.value;render()">
+        <span class="text-xs" style="color:var(--muted)">s/d</span>
+        <input type="date" value="${State.activePlaygroundEnd}" class="input-field text-sm" style="flex:1;min-width:130px" onchange="State.activePlaygroundEnd=this.value;render()">
+      </div>
+      <div class="card mb-4" style="padding:10px">
+        <input type="text" class="input-field text-sm w-full" placeholder="Cari nama pelanggan, ID tiket, atau nama anak..." value="${State.activePlaygroundSearch || ''}" oninput="State.activePlaygroundSearch=this.value;render()">
+      </div>
+      <div class="space-y-3">
+        ${filtered.length === 0 ? '<div class="text-center py-12"><i class="fas fa-ticket text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Tidak ada tiket aktif</p></div>' : ''}
+        ${filtered.map(function(t) {
+          var start = new Date(t.start_time).getTime();
+          var end = new Date(t.end_time).getTime();
+          var total = end - start;
+          var remaining = end - now;
+          var elapsed = Math.max(0, Math.min(100, ((now - start) / total) * 100));
+          var isUrgent = remaining > 0 && remaining < 600000;
+          var isExpired = remaining <= 0;
+          var timeColor = isExpired ? "var(--danger)" : isUrgent ? "var(--warning)" : "var(--success)";
+          return `
+        <div class="card ${isUrgent ? "animate-breathe" : ""}" onclick="showPlaygroundTicketDetail('${t.id}')" style="cursor:pointer;${isExpired ? "border-color:var(--danger)" : isUrgent ? "border-color:var(--warning)" : ""}">
+          <div class="flex justify-between items-start mb-2">
             <div>
               <span class="font-bold text-sm">${t.customer_name}</span>
-              <span class="badge ${t.status === "completed" ? "badge-completed" : "badge-pending"} ml-2">${t.status === "completed" ? "Selesai" : "Dibatalkan"}</span>${t.was_overtime ? '<span class="badge badge-pending ml-1" style="background:rgba(231,76,60,.15);color:var(--danger)">Over Time</span>' : ''}
-              <span class="badge ${t.payment_status === "paid" ? "badge-paid" : "badge-unpaid"} ml-1">${t.payment_status === "paid" ? "Lunas" : "Belum"}</span>
+              <span class="badge ${isExpired ? "badge-pending" : "badge-cooking"} ml-2">${isExpired ? "Over Time" : "Aktif"}</span>
+              <span class="badge ${t.payment_status === "paid" ? "badge-paid" : "badge-unpaid"} ml-1">${t.payment_status === "paid" ? "Lunas" : "Belum Bayar"}</span>
             </div>
             <span class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(t.total_amount)}</span>
           </div>
-          <div class="text-xs mt-1" style="color:var(--muted)">${(t.children || []).map(c => c.name).join(", ")} — ${t.hours} jam${t.cancel_reason ? ' <span style="color:var(--danger)">· ' + t.cancel_reason + '</span>' : ''}${t.was_overtime && t.overtime_minutes ? ' <span style="color:var(--danger)">· +' + Math.floor(t.overtime_minutes / 60) + 'j ' + (t.overtime_minutes % 60) + 'm overtime</span>' : ''}</div>
-        </div>`).join('')}
+          <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-2" style="color:var(--muted)">
+            <span><i class="fas fa-child mr-1"></i>${(t.children || []).map(function(c) { return c.name; }).join(", ")}</span>
+            ${t.companion_count > 0 ? `<span><i class="fas fa-user mr-1"></i>${t.companion_count} pendamping</span>` : ""}
+            <span><i class="fas fa-clock mr-1"></i>${t.hours} jam</span>
+          </div>
+          ${t.items && t.items.length > 0 ? `<div class="text-xs mb-2" style="color:var(--muted)"><i class="fas fa-utensils mr-1"></i>${t.items.map(function(i) { return i.name + " x" + i.quantity; }).join(", ")}</div>` : ""}
+          <div class="time-bar-container mb-1">
+            <div class="flex justify-between text-xs mb-1" style="color:var(--muted)">
+              <span>${formatTime(new Date(t.start_time))}</span>
+              <span class="pg-remaining" data-start="${t.start_time}" data-end="${t.end_time}" data-over="${isExpired}" style="color:${timeColor};font-weight:600">${isExpired ? "-" + formatRemaining(Math.abs(remaining)) : formatRemaining(remaining)}</span>
+              <span>${formatTime(new Date(t.end_time))}</span>
+            </div>
+            <div class="time-bar-bg">
+              <div class="time-bar-fill" style="width:${Math.min(100, elapsed)}%;background:${timeColor}"></div>
+            </div>
+          </div>
+        </div>`;
+        }).join('')}
       </div>
-    </div>` : ''}
-  </div>`;
+      ${completed.length > 0 ? `
+      <div class="mt-6">
+        <div class="flex items-center gap-2 mb-3 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')" style="user-select:none">
+          <h3 class="font-semibold text-sm" style="color:var(--success)">Riwayat Tiket</h3>
+          <span class="text-xs" style="color:var(--muted)">${completed.length}</span>
+          <div class="text-xs transition-transform" style="color:var(--muted)"><i class="fas fa-chevron-down"></i></div>
+        </div>
+        <div class="space-y-2 hidden">
+          ${completed.slice(0, 20).map(function(t) { return `
+          <div class="card cursor-pointer hover:scale-[1.02] transition-transform" onclick="showPlaygroundTicketDetail('${t.id}')" style="border-color:rgba(39,174,96,.2)">
+            <div class="flex justify-between items-start mb-1">
+              <div>
+                <span class="font-bold text-sm">${t.customer_name}</span>
+                <span class="badge ${t.status === "completed" ? "badge-completed" : "badge-pending"} ml-2">${t.status === "completed" ? "Selesai" : "Dibatalkan"}</span>${t.was_overtime ? '<span class="badge badge-pending ml-1" style="background:rgba(231,76,60,.15);color:var(--danger)">Over Time</span>' : ''}
+                <span class="badge ${t.payment_status === "paid" ? "badge-paid" : "badge-unpaid"} ml-1">${t.payment_status === "paid" ? "Lunas" : "Belum"}</span>
+              </div>
+              <span class="font-bold text-sm" style="color:var(--accent)">${formatCurrency(t.total_amount)}</span>
+            </div>
+            <div class="text-xs mt-1" style="color:var(--muted)">${(t.children || []).map(function(c) { return c.name; }).join(", ")} — ${t.hours} jam${t.cancel_reason ? ' <span style="color:var(--danger)">· ' + t.cancel_reason + '</span>' : ''}${t.was_overtime && t.overtime_minutes ? ' <span style="color:var(--danger)">· +' + Math.floor(t.overtime_minutes / 60) + 'j ' + (t.overtime_minutes % 60) + 'm overtime</span>' : ''}</div>
+          </div>`; }).join('')}
+        </div>
+      </div>` : ''}
+    </div>`;
+  } catch(e) { console.error(e); showToast('Gagal memuat tiket playground', 'error'); return ''; }
+  finally { hideSkeleton('active-playground'); }
 }

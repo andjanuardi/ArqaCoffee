@@ -1,24 +1,32 @@
 // ============================================================
 // CUSTOMER VIEW — Menu
 // ============================================================
-function renderCustomerView() {
-  const tab = State.currentTab.customer || "menu";
-  if (tab === "menu") return renderCustomerMenu();
-  if (tab === "cart") return renderCustomerCart();
-  if (tab === "orders") return renderCustomerOrders();
-  if (tab === "profile") return renderCustomerProfile();
-  return renderCustomerMenu();
+async function renderCustomerView() {
+  var tab = State.currentTab.customer || "menu";
+  if (tab === "menu") return await renderCustomerMenu();
+  if (tab === "cart") return await renderCustomerCart();
+  if (tab === "orders") return await renderCustomerOrders();
+  if (tab === "profile") return await renderCustomerProfile();
+  return await renderCustomerMenu();
 }
 
-function renderCustomerMenu() {
-  const cats = [
-    { id: "all", label: "Semua" },
-    { id: "coffee", label: "Kopi" },
-    { id: "non-coffee", label: "Non-Kopi" },
-    { id: "food", label: "Makanan" },
-    { id: "snack", label: "Snack" },
-  ];
-  let items = DB.menuItems.filter((m) => m.is_approved !== false);
+async function renderCustomerMenu() {
+  try {
+    showSkeleton('customer-menu-grid', 'menu');
+    var menuItems = await API.getMenu();
+    var promos = await API.getPromos();
+    var orders = await API.getOrders();
+    var users = await API.getUsers();
+    hideSkeleton('customer-menu-grid');
+
+    var cats = [
+      { id: "all", label: "Semua" },
+      { id: "coffee", label: "Kopi" },
+      { id: "non-coffee", label: "Non-Kopi" },
+      { id: "food", label: "Makanan" },
+      { id: "snack", label: "Snack" },
+    ];
+    var items = menuItems.filter((m) => m.is_approved !== false);
   if (State.selectedCategory !== "all")
     items = items.filter((m) => m.category === State.selectedCategory);
   if (State.searchQuery)
@@ -47,7 +55,7 @@ function renderCustomerMenu() {
       ${
         State.activePromoId
           ? (() => {
-              const activeP = DB.promos.find(x => x.id === State.activePromoId);
+              var activeP = promos.find(x => x.id === State.activePromoId);
               return activeP ? `
     <div class="flex items-center gap-2 mb-4 text-xs p-3 rounded-xl" style="background:rgba(39,174,96,.1);color:var(--success)">
       <i class="fas fa-tag"></i>
@@ -58,12 +66,11 @@ function renderCustomerMenu() {
           : ""
       }
       ${
-        DB.promos && DB.promos.filter((p) => p.is_active && isPromoActiveByDate(p) && !isPromoUsedByUser(p.id) && p.id !== State.activePromoId).length > 0
+        promos && promos.filter((p) => p.is_active && isPromoActiveByDate(p) && !orders.some(o => o.user_id === State.currentUser.id && o.promo_id === p.id) && p.id !== State.activePromoId).length > 0
           ? `
     <div class="promo-carousel" id="promo-carousel">
       <div class="promo-track" id="promo-track">
-        ${DB.promos
-          .filter((p) => p.is_active && isPromoActiveByDate(p) && !isPromoUsedByUser(p.id) && p.id !== State.activePromoId)
+        ${promos.filter((p) => p.is_active && isPromoActiveByDate(p) && !orders.some(o => o.user_id === State.currentUser.id && o.promo_id === p.id) && p.id !== State.activePromoId)
           .map(
             (p) => {
               const discLabel = p.discount_type === 'fixed' ? formatCurrency(p.discount_value) : p.discount_value + '%';
@@ -81,19 +88,19 @@ function renderCustomerMenu() {
           )
           .join("")}
       </div>
-      ${DB.promos.filter((p) => p.is_active && isPromoActiveByDate(p) && !isPromoUsedByUser(p.id) && p.id !== State.activePromoId).length > 1 ? '<div class="promo-dots" id="promo-dots"></div>' : ''}
+      ${promos.filter((p) => p.is_active && isPromoActiveByDate(p) && !orders.some(o => o.user_id === State.currentUser.id && o.promo_id === p.id) && p.id !== State.activePromoId).length > 1 ? '<div class="promo-dots" id="promo-dots"></div>' : ''}
     </div>`
           : ""
       }
     <div class="flex gap-2 mb-5 overflow-x-auto pb-2" style="-webkit-overflow-scrolling:touch;     scrollbar-width: none;">
       ${cats.map((c) => `<div class="category-chip ${State.selectedCategory === c.id ? "active" : ""}" onclick="State.selectedCategory='${c.id}';render()">${c.label}</div>`).join("")}
     </div>
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4" id="customer-menu-grid">
       ${items
         .map(
           (m) => {
             const hasPromo = State.activePromoId && (() => {
-              const p = DB.promos.find(x => x.id === State.activePromoId);
+              var p = promos.find(x => x.id === State.activePromoId);
               if (!p || !p.is_active) return false;
               return !p.menu_ids || !p.menu_ids.length || p.menu_ids.includes(m.id);
             })();
@@ -105,7 +112,7 @@ function renderCustomerMenu() {
           <img src="${m.image}" alt="${m.name}" loading="lazy" onerror="this.src='https://picsum.photos/seed/${m.id}/400/300'">
           ${hasPromo ? '<div class="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:var(--success);color:#fff"><i class="fas fa-tag mr-1" style="font-size:8px"></i>Diskon</div>' : ''}
           ${!available ? '<div class="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:rgba(100,100,100,.85);color:#fff"><i class="fas fa-circle mr-1" style="font-size:6px"></i>Tidak Tersedia</div>' : ''}
-          ${m.submitted_by ? (() => { const u = DB.users.find(x => x.name === m.submitted_by); const lbl = u?.business_name || m.submitted_by; return '<div class="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:rgba(232,67,147,.9);color:#fff"><i class="fas fa-handshake mr-1" style="font-size:8px"></i>' + lbl + '</div>'; })() : '<div class="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:rgba(224,122,58,.9);color:#fff"><i class="fas fa-check-circle mr-1" style="font-size:8px"></i>Arqa</div>'}
+          ${m.submitted_by ? (() => { var u = users.find(x => x.name === m.submitted_by); var lbl = u?.business_name || m.submitted_by; return '<div class="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:rgba(232,67,147,.9);color:#fff"><i class="fas fa-handshake mr-1" style="font-size:8px"></i>' + lbl + '</div>'; })() : '<div class="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:rgba(224,122,58,.9);color:#fff"><i class="fas fa-check-circle mr-1" style="font-size:8px"></i>Arqa</div>'}
         </div>
         <div class="p-3 ${!available ? 'opacity-60' : ''}">
           <div class="font-semibold text-sm mb-1 truncate">${m.name}</div>
@@ -117,6 +124,12 @@ function renderCustomerMenu() {
     </div>
     ${items.length === 0 ? '<div class="text-center py-12"><i class="fas fa-mug-saucer text-4xl mb-3" style="color:var(--border)"></i><p style="color:var(--muted)">Menu tidak ditemukan</p></div>' : ""}
   </div>`;
+  } catch (err) {
+    console.error('Failed to load menu:', err);
+    showToast('Gagal memuat menu', 'error');
+    hideSkeleton('customer-menu-grid');
+    return '<div class="text-center py-12 animate-fade-up"><i class="fas fa-exclamation-triangle text-4xl mb-3" style="color:var(--danger)"></i><p style="color:var(--muted)">Gagal memuat menu</p></div>';
+  }
 }
 
 function isPromoUsedByUser(promoId) {

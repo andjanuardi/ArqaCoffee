@@ -1,19 +1,36 @@
 // ============================================================
-// NOTIFICATION SYSTEM
+// NOTIFICATION SYSTEM (API-backed)
 // ============================================================
-const NOTIF_KEY = 'arqa_notifications';
+
+async function loadNotificationsAsync() {
+  if (!api.getToken()) return;
+  try {
+    var role = State.currentUser ? State.currentUser.role : null;
+    var rawList = await API.getNotifications(role ? { target_role: role } : null);
+    State.notifications = (rawList || []).map(function (n) {
+      return {
+        id: n.id,
+        title: n.title,
+        message: n.message,
+        type: n.type || 'info',
+        icon: n.icon || 'fa-bell',
+        targetRoles: typeof n.target_roles === 'string' ? JSON.parse(n.target_roles) : (n.targetRoles || n.target_roles || []),
+        relatedOrderId: n.related_order_id,
+        read: typeof n.read === 'string' ? JSON.parse(n.read) : (n.read || {}),
+        timestamp: n.created_at || new Date().toISOString()
+      };
+    });
+  } catch (e) {
+    console.error('[loadNotificationsAsync]', e);
+  }
+}
 
 function loadNotifications() {
-  try {
-    const raw = localStorage.getItem(NOTIF_KEY);
-    if (raw) State.notifications = JSON.parse(raw);
-  } catch (e) {}
+  loadNotificationsAsync().catch(function (e) { console.error(e); });
 }
 
 function saveNotifications() {
-  try {
-    localStorage.setItem(NOTIF_KEY, JSON.stringify(State.notifications));
-  } catch (e) {}
+  // No-op — notifications are stored server-side via API
 }
 
 function sendBrowserNotification(title, body) {

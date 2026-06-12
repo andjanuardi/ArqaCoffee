@@ -1,21 +1,26 @@
 // ============================================================
 // MAIN APP SHELL
 // ============================================================
-function renderMainApp() {
-  const u = State.currentUser;
-  const role = u.role;
-  let content = '';
-  if (role === 'customer') content = renderCustomerView();
-  else if (role === 'waiter') content = renderWaiterView();
-  else if (role === 'playground') content = renderPlaygroundView();
-  else if (role === 'cashier') content = renderCashierView();
-  else if (role === 'kitchen') content = renderKitchenView();
-  else if (role === 'courier') content = renderCourierView();
-  else if (role === 'manager') content = renderManagerView();
-  else if (role === 'admin') content = renderAdminView();
-  else if (role === 'mitra_juru_masak') content = renderMitraView();
+async function renderMainApp() {
+  var u = State.currentUser;
+  var role = u.role;
+  var content = '';
+  try {
+    if (role === 'customer') content = await renderCustomerView();
+    else if (role === 'waiter') content = await renderWaiterView();
+    else if (role === 'playground') content = await renderPlaygroundView();
+    else if (role === 'cashier') content = await renderCashierView();
+    else if (role === 'kitchen') content = await renderKitchenView();
+    else if (role === 'courier') content = await renderCourierView();
+    else if (role === 'manager') content = await renderManagerView();
+    else if (role === 'admin') content = await renderAdminView();
+    else if (role === 'mitra_juru_masak') content = await renderMitraView();
+  } catch (e) {
+    console.error('[renderMainApp]', e);
+    content = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>Gagal memuat tampilan</p><p style="font-size:0.75rem;margin-top:0.5rem">' + e.message + '</p></div>';
+  }
 
-  const useDrawer = ['admin', 'manager'].includes(role);
+  var useDrawer = ['admin', 'manager'].includes(role);
 
   return `
   <div class="min-h-screen" style="background:var(--bg)">
@@ -172,14 +177,15 @@ function renderSideDrawer(role) {
 function toggleDrawer() { State.sidebarOpen = !State.sidebarOpen; render(); }
 function switchTab(id) { State.currentTab[State.currentUser.role] = id; render(); }
 function handleLogout() {
+  api.clearToken();
   sessionStorage.removeItem('arqa_session');
   State.currentUser = null;
   State.currentView = 'login';
   State.cart = [];
   State.sidebarOpen = false;
-  Object.values(State.mapInstances).forEach(m => { try { m.remove() } catch (e) { } });
+  Object.values(State.mapInstances).forEach(function (m) { try { m.remove() } catch (e) { } });
   State.mapInstances = {};
-  Object.values(State.chartInstances).forEach(c => { try { c.destroy() } catch (e) { } });
+  Object.values(State.chartInstances).forEach(function (c) { try { c.destroy() } catch (e) { } });
   State.chartInstances = {};
   render();
 }

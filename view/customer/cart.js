@@ -215,22 +215,28 @@ function renderPlaceOrderButton() {
   </button>`;
 }
 
-function renderCustomerCart() {
-  if (State.cart.length === 0) return renderEmptyCart();
-  const activePromo = getActivePromo();
-  const hasMitraItem = State.cart.some(c => getMenuItem(c.menu_item_id)?.submitted_by);
-  if (hasMitraItem && State.orderType === "dine-in") {
-    State.orderType = "delivery";
-    State.selectedTable = null;
-    showToast("Tidak bisa dine-in karena terdapat menu dari luar cafe", "warning");
-  }
-  const total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
-  const discount = calcPromoDiscount();
-  const afterDiscount = total - discount;
-  const shippingCost = State.orderType === "delivery" && State.deliveryLocation
-    ? calcShippingCost(State.deliveryLocation.lat, State.deliveryLocation.lng) : 0;
-  const serviceFee = calcCustomerFee(total, State.orderType);
-  return `
+async function renderCustomerCart() {
+  try {
+    showSkeleton('customer-cart', 'cart');
+    var promos = await API.getPromos();
+    var users = await API.getUsers();
+    hideSkeleton('customer-cart');
+
+    if (State.cart.length === 0) return renderEmptyCart();
+    var activePromo = getActivePromo();
+    var hasMitraItem = State.cart.some(c => getMenuItem(c.menu_item_id)?.submitted_by);
+    if (hasMitraItem && State.orderType === "dine-in") {
+      State.orderType = "delivery";
+      State.selectedTable = null;
+      showToast("Tidak bisa dine-in karena terdapat menu dari luar cafe", "warning");
+    }
+    var total = State.cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
+    var discount = calcPromoDiscount();
+    var afterDiscount = total - discount;
+    var shippingCost = State.orderType === "delivery" && State.deliveryLocation
+      ? calcShippingCost(State.deliveryLocation.lat, State.deliveryLocation.lng) : 0;
+    var serviceFee = calcCustomerFee(total, State.orderType);
+    return `
   <div class="animate-fade-up">
     <h2 class="font-display text-xl font-bold mb-4">Keranjang Anda</h2>
     ${renderCartItems(State.cart, activePromo)}
@@ -241,4 +247,10 @@ function renderCustomerCart() {
     ${renderPaymentTiming()}
     ${renderPlaceOrderButton()}
   </div>`;
+  } catch (err) {
+    console.error('Failed to load cart:', err);
+    showToast('Gagal memuat data keranjang', 'error');
+    hideSkeleton('customer-cart');
+    return '<div class="text-center py-12 animate-fade-up"><i class="fas fa-exclamation-triangle text-4xl mb-3" style="color:var(--danger)"></i><p style="color:var(--muted)">Gagal memuat data</p></div>';
+  }
 }

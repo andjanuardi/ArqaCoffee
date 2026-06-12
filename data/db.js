@@ -1,25 +1,7 @@
 // ============================================================
-// DATA — Seed database with localStorage persistence
+// DATA — Seed database (data now comes from API, seed is fallback only)
 // ============================================================
-const STORAGE_KEY = "arqa_db";
-
-function loadDB() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {}
-  return null;
-}
-
-function saveDB() {
-  try {
-    DB._updatedAt = Date.now();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
-  } catch (e) {}
-}
-
-const DB =
-  loadDB() ||
+var DB =
   (function () {
     return {
       users: [
@@ -816,94 +798,4 @@ const DB =
     };
   })();
 
-if (!DB._updatedAt) DB._updatedAt = 0;
-
-if (!localStorage.getItem(STORAGE_KEY)) saveDB();
-
-// Migration: ensure shipping config exists in cafe
-if (DB.cafe && !DB.cafe.shipping) {
-  DB.cafe.shipping = { rate_per_km: 3000, min: 5000, max: 50000 };
-  saveDB();
-}
-
-// Migration: ensure rates config exists in cafe
-if (DB.cafe && !DB.cafe.rates) {
-  DB.cafe.rates = {
-    courier: { shipping: { rate_per_km: 3000, min: 5000, max: 50000 }, service_fee: { type: 'percent', value: 5 } },
-    mitra: { service_fee: { type: 'percent', value: 5 } },
-    customer: { service_fee: { type: 'fixed', value: 1000 } },
-  };
-  saveDB();
-}
-
-// Migration: ensure waiter user exists when localStorage has stale data
-if (!DB.users.some(u => u.role === 'waiter')) {
-  DB.users.push({
-    id: "u7",
-    name: "Wina Waiters",
-    email: "waiter@arqa.coffee",
-    password: "waiter123",
-    role: "waiter",
-    phone: "081234567896",
-    avatar: "W",
-    address: "",
-  });
-  saveDB();
-}
-
-// Migration: ensure mitra_juru_masak user exists
-if (!DB.users.some(u => u.role === 'mitra_juru_masak')) {
-  DB.users.push({
-    id: "u9",
-    name: "Rizky Mitra",
-    email: "mitra@arqa.coffee",
-    password: "mitra123",
-    role: "mitra_juru_masak",
-    phone: "081234567898",
-    avatar: "M",
-    address: "",
-  });
-  saveDB();
-}
-
-// Migration: ensure playground user and data exists
-if (!DB.users.some(u => u.role === 'playground')) {
-  DB.users.push({
-    id: "u8",
-    name: "Rina Playground",
-    email: "playground@arqa.coffee",
-    password: "playground123",
-    role: "playground",
-    phone: "081234567897",
-    avatar: "R",
-    address: "",
-  });
-  if (!DB.playgroundTickets) DB.playgroundTickets = [];
-  if (!DB.pgStockItems) DB.pgStockItems = [];
-  if (!DB.pgStockMovements) DB.pgStockMovements = [];
-  saveDB();
-}
-if (!DB.mitraPayouts) DB.mitraPayouts = [];
-
-// Migration: ensure pgStockItems have image field
-(DB.pgStockItems || []).forEach(s => { if (!s.image) s.image = ''; });
-
-// Migration: ensure pgStockItems have category field
-(DB.pgStockItems || []).forEach(s => { if (!s.category) s.category = 'Makanan'; });
-
-// Migration: ensure cafe has address field
-if (DB.cafe && !DB.cafe.address) {
-  DB.cafe.address = "Sinabang, Simeulue Timur, Simeulue, Aceh, Sumatra, 23891, Indonesia";
-}
-
-// Migration: ensure stockItems have price field
-(DB.stockItems || []).forEach(s => { if (s.price === undefined) s.price = 0; });
-
-// Migration: init ongkir_status for delivery orders
-(DB.orders || []).forEach(o => {
-  if (o.shipping_cost > 0 && o.order_type === "delivery" && o.ongkir_status === undefined) {
-    if (o.payment_method !== "cod" && o.status === "completed") {
-      o.ongkir_status = "unpaid";
-    }
-  }
-});
+/* All migrations removed — data now comes from API */

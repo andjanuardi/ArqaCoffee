@@ -1,27 +1,43 @@
 // ============================================================
 // KITCHEN VIEW — Queue
 // ============================================================
-function renderKitchenView() {
-  const tab = State.currentTab.kitchen || "queue";
-  if (tab === "queue") {
-    if (!isCheckedIn()) {
-      return `
-    <div class="animate-fade-up">
-      <div class="card text-center py-6" style="border-color:rgba(231,76,60,.2)">
-        <i class="fas fa-fire-burner text-3xl mb-2" style="color:var(--danger)"></i>
-        <p class="text-sm font-semibold mb-1" style="color:var(--danger)">Belum Check-in Hari Ini</p>
-        <p class="text-xs mb-3" style="color:var(--muted)">Lakukan check-in di profil sebelum melihat antrian</p>
-        <button onclick="showGeoAttendanceModal()" class="btn-primary text-sm px-5 py-2" style="font-size:13px">
-          <i class="fas fa-clock mr-1"></i>Check-in
-        </button>
-      </div>
-    </div>`;
+async function renderKitchenView() {
+  try {
+    showSkeleton('kitchen-content', 'orders');
+    var tab = State.currentTab.kitchen || "queue";
+    var orders = await API.getOrders();
+    var menuItems = await API.getMenu();
+    var tables = await API.getTables();
+    var attendances = await API.getAttendances();
+    DB.orders = orders;
+    DB.menuItems = menuItems;
+    DB.tables = tables;
+    DB.attendances = attendances;
+    hideSkeleton('kitchen-content');
+    if (tab === "queue") {
+      if (!isCheckedIn()) {
+        return `
+      <div class="animate-fade-up">
+        <div class="card text-center py-6" style="border-color:rgba(231,76,60,.2)">
+          <i class="fas fa-fire-burner text-3xl mb-2" style="color:var(--danger)"></i>
+          <p class="text-sm font-semibold mb-1" style="color:var(--danger)">Belum Check-in Hari Ini</p>
+          <p class="text-xs mb-3" style="color:var(--muted)">Lakukan check-in di profil sebelum melihat antrian</p>
+          <button onclick="showGeoAttendanceModal()" class="btn-primary text-sm px-5 py-2" style="font-size:13px">
+            <i class="fas fa-clock mr-1"></i>Check-in
+          </button>
+        </div>
+      </div>`;
+      }
+      return renderKitchenQueue((i, mi) => !mi.submitted_by);
     }
+    if (tab === "history") return renderKitchenHistory();
+    if (tab === "profile") return renderGenericProfile();
     return renderKitchenQueue((i, mi) => !mi.submitted_by);
+  } catch (e) {
+    hideSkeleton('kitchen-content');
+    showToast('Error loading data: ' + e.message, 'error');
+    return '<div class="p-4 text-center" style="color:var(--danger)">Error loading data</div>';
   }
-  if (tab === "history") return renderKitchenHistory();
-  if (tab === "profile") return renderGenericProfile();
-  return renderKitchenQueue((i, mi) => !mi.submitted_by);
 }
 
 function renderKitchenQueue(itemFilterFn, renderExtraFn) {

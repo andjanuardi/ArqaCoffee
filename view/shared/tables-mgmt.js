@@ -1,45 +1,70 @@
 // ------------------------------------------------------------------
 // TABLE MANAGEMENT
 // ------------------------------------------------------------------
-function renderAdminTablesMgmt() {
-  return `
-  <div class="animate-fade-up">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="font-display text-xl font-bold">Kelola Meja</h2>
-      <button onclick="addTable()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
-    </div>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-      ${DB.tables.map(t => `
-      <div class="card text-center" style="position:relative">
-        <button onclick="event.stopPropagation(); confirmDeleteTable('${t.id}')" class="btn-sm" style="position:absolute;top:6px;left:6px;background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px;line-height:1"><i class="fas fa-trash"></i></button>
-        <div class="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center text-2xl" style="background:${t.status === 'available' ? 'rgba(39,174,96,.1)' : 'rgba(231,76,60,.1)'}">
-          <i class="fas fa-chair" style="color:${t.status === 'available' ? 'var(--success)' : 'var(--danger)'}"></i>
-        </div>
-        <div class="font-bold text-lg">Meja ${t.number}</div>
-        <div class="text-xs mb-2" style="color:var(--muted)">QR: ${t.qr_code}</div>
-        <span class="badge ${t.status === 'available' ? 'badge-ready' : 'badge-cooking'}">${t.status === 'available' ? 'Tersedia' : 'Terisi'}</span>
-        <div class="mt-3 flex gap-2">
-          <button onclick="toggleTableStatus('${t.id}')" class="btn-secondary btn-sm flex-1 text-center">Toggle Status</button>
-          <button onclick="showTableQR('${t.id}')" class="btn-sm text-center" style="flex:0 0 auto;background:rgba(224,122,58,.12);color:var(--accent);border:1px solid rgba(224,122,58,.2);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:11px" title="Cetak QR"><i class="fas fa-qrcode mr-1"></i>QR</button>
-        </div>
-      </div>`).join('')}
-    </div>
-  </div>`;
+async function renderAdminTablesMgmt() {
+  try {
+    showSkeleton('admin-tables', 'list');
+    var tables = await API.getTables();
+    DB.tables = tables;
+    return `
+    <div class="animate-fade-up">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="font-display text-xl font-bold">Kelola Meja</h2>
+        <button onclick="addTable()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        ${tables.map(function(t) {
+          return `
+        <div class="card text-center" style="position:relative">
+          <button onclick="event.stopPropagation(); confirmDeleteTable('${t.id}')" class="btn-sm" style="position:absolute;top:6px;left:6px;background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px;line-height:1"><i class="fas fa-trash"></i></button>
+          <div class="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center text-2xl" style="background:${t.status === 'available' ? 'rgba(39,174,96,.1)' : 'rgba(231,76,60,.1)'}">
+            <i class="fas fa-chair" style="color:${t.status === 'available' ? 'var(--success)' : 'var(--danger)'}"></i>
+          </div>
+          <div class="font-bold text-lg">Meja ${t.number}</div>
+          <div class="text-xs mb-2" style="color:var(--muted)">QR: ${t.qr_code}</div>
+          <span class="badge ${t.status === 'available' ? 'badge-ready' : 'badge-cooking'}">${t.status === 'available' ? 'Tersedia' : 'Terisi'}</span>
+          <div class="mt-3 flex gap-2">
+            <button onclick="toggleTableStatus('${t.id}')" class="btn-secondary btn-sm flex-1 text-center">Toggle Status</button>
+            <button onclick="showTableQR('${t.id}')" class="btn-sm text-center" style="flex:0 0 auto;background:rgba(224,122,58,.12);color:var(--accent);border:1px solid rgba(224,122,58,.2);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:11px" title="Cetak QR"><i class="fas fa-qrcode mr-1"></i>QR</button>
+          </div>
+        </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  } catch(e) { console.error(e); showToast('Gagal memuat meja', 'error'); return ''; }
+  finally { hideSkeleton('admin-tables'); }
 }
 
-function addTable() {
-  const num = (DB.tables.length + 1).toString();
-  DB.tables.push({ id: 't' + Date.now(), number: num, qr_code: 'ARQA-T' + num, status: 'available', capacity: 4 });
-  showToast(`Meja ${num} ditambahkan`, 'success'); render();
+async function addTable() {
+  try {
+    var tables = await API.getTables();
+    var num = (tables.length + 1).toString();
+    await API.createTable({
+      id: 't' + Date.now(),
+      number: num,
+      qr_code: 'ARQA-T' + num,
+      status: 'available',
+      capacity: 4
+    });
+    DB.tables = await API.getTables();
+    showToast('Meja ' + num + ' ditambahkan', 'success');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal menambah meja', 'error'); }
 }
 
-function toggleTableStatus(id) {
-  const t = DB.tables.find(x => x.id === id);
-  if (t) { t.status = t.status === 'available' ? 'occupied' : 'available'; render(); }
+async function toggleTableStatus(id) {
+  try {
+    var t = DB.tables.find(function(x) { return x.id === id; });
+    if (!t) return;
+    var newStatus = t.status === 'available' ? 'occupied' : 'available';
+    await API.updateTable(id, { status: newStatus });
+    DB.tables = await API.getTables();
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal mengubah status meja', 'error'); }
 }
 
 function confirmDeleteTable(id) {
-  const t = DB.tables.find(x => x.id === id);
+  var t = DB.tables.find(function(x) { return x.id === id; });
   if (!t) return;
   showModal(`
     <div>
@@ -53,15 +78,20 @@ function confirmDeleteTable(id) {
   `);
 }
 
-function confirmDeleteTableAction(id) {
-  DB.tables = DB.tables.filter(x => x.id !== id);
-  closeModal(); showToast('Meja dihapus', 'info'); render();
+async function confirmDeleteTableAction(id) {
+  try {
+    await API.deleteTable(id);
+    DB.tables = DB.tables.filter(function(x) { return x.id !== id; });
+    closeModal();
+    showToast('Meja dihapus', 'info');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal menghapus meja', 'error'); }
 }
 
 function showTableQR(id) {
-  const t = DB.tables.find(x => x.id === id);
+  var t = DB.tables.find(function(x) { return x.id === id; });
   if (!t) return;
-  const data = encodeURIComponent(t.qr_code);
+  var data = encodeURIComponent(t.qr_code);
   showModal(`
     <div id="qr-print-area">
       <h3 class="font-display text-lg font-bold mb-2 text-center">Meja ${t.number}</h3>
@@ -79,32 +109,36 @@ function showTableQR(id) {
 }
 
 function downloadTableQR() {
-  const img = document.querySelector('#qr-print-area img');
-  const label = document.querySelector('#qr-print-area h3')?.textContent || 'QR-Meja';
+  var img = document.querySelector('#qr-print-area img');
+  var label = document.querySelector('#qr-print-area h3')?.textContent || 'QR-Meja';
   if (!img) return;
-  const c = document.createElement('canvas');
+  var c = document.createElement('canvas');
   c.width = 400; c.height = 430;
-  const ctx = c.getContext('2d');
+  var ctx = c.getContext('2d');
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
-  const i = new Image();
+  var i = new Image();
   i.crossOrigin = 'anonymous';
   i.src = img.src;
-  i.onload = () => {
+  i.onload = function() {
     ctx.drawImage(i, 60, 50, 280, 280);
     ctx.fillStyle = '#000';
     ctx.font = 'bold 18px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(label, 200, 380);
-    const a = document.createElement('a');
+    var a = document.createElement('a');
     a.download = label.replace(/\s+/g, '-') + '.png';
     a.href = c.toDataURL('image/png');
     a.click();
   };
 }
 
-function deleteTable(id) {
-  const t = DB.tables.find(x => x.id === id);
-  if (!t) return;
-  DB.tables = DB.tables.filter(x => x.id !== id);
-  showToast('Meja ' + t.number + ' dihapus', 'info'); render();
+async function deleteTable(id) {
+  try {
+    var t = DB.tables.find(function(x) { return x.id === id; });
+    if (!t) return;
+    await API.deleteTable(id);
+    DB.tables = DB.tables.filter(function(x) { return x.id !== id; });
+    showToast('Meja ' + t.number + ' dihapus', 'info');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal menghapus meja', 'error'); }
 }

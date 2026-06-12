@@ -1,58 +1,64 @@
 // ------------------------------------------------------------------
 // STOCK MANAGEMENT
 // ------------------------------------------------------------------
-function renderStockManagement() {
-  if (!State.stockSearch) State.stockSearch = '';
-  const bySearch = DB.stockItems.filter(s => !State.stockSearch || s.name.toLowerCase().includes(State.stockSearch.toLowerCase()));
-  const sorted = [...bySearch].sort((a, b) => {
-    const aPct = a.min_quantity > 0 ? a.current_quantity / a.min_quantity : a.current_quantity;
-    const bPct = b.min_quantity > 0 ? b.current_quantity / b.min_quantity : b.current_quantity;
-    return aPct - bPct;
-  });
-  return `
-  <div class="animate-fade-up">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="font-display text-xl font-bold">Stok Bahan Baku Cafe</h2>
-      <button onclick="showAddStockModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
-    </div>
-    <div class="card mb-4" style="padding:10px">
-      <input type="text" class="input-field text-sm w-full" placeholder="Cari bahan..." value="${State.stockSearch}" oninput="State.stockSearch=this.value;render()">
-    </div>
-    <div class="space-y-3">
-      ${sorted.map(s => {
-        const pct = Math.min(100, Math.round(s.current_quantity / (s.min_quantity * 3) * 100));
-        const isLow = s.current_quantity <= s.min_quantity;
-        return `
-        <div class="card ${isLow ? 'animate-breathe' : ''}">
-          <div class="flex justify-between items-center mb-2">
-            <div class="font-semibold text-sm">${s.name} ${isLow ? '<span style="color:var(--danger);font-size:11px"><i class="fas fa-exclamation-triangle"></i> Rendah</span>' : ''}</div>
-            <div class="flex items-center gap-2">
-              <div class="text-sm font-bold" style="color:${isLow ? 'var(--danger)' : 'var(--accent)'}">${s.current_quantity} ${s.unit}</div>
-              <button onclick="showEditStockModal('${s.id}')" class="btn-sm" style="background:rgba(224,122,58,.12);color:var(--accent);border:none;padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-pen"></i></button>
-              ${s.current_quantity === 0 ? `<button onclick="deleteStockItem('${s.id}')" class="btn-sm" style="background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-trash"></i></button>` : ''}
+async function renderStockManagement() {
+  try {
+    showSkeleton('stock-management', 'list');
+    var stockItems = await API.getStock();
+    DB.stockItems = stockItems;
+    if (!State.stockSearch) State.stockSearch = '';
+    var bySearch = stockItems.filter(function(s) { return !State.stockSearch || s.name.toLowerCase().indexOf(State.stockSearch.toLowerCase()) !== -1; });
+    var sorted = [...bySearch].sort(function(a, b) {
+      var aPct = a.min_quantity > 0 ? a.current_quantity / a.min_quantity : a.current_quantity;
+      var bPct = b.min_quantity > 0 ? b.current_quantity / b.min_quantity : b.current_quantity;
+      return aPct - bPct;
+    });
+    return `
+    <div class="animate-fade-up">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="font-display text-xl font-bold">Stok Bahan Baku Cafe</h2>
+        <button onclick="showAddStockModal()" class="btn-primary btn-sm"><i class="fas fa-plus mr-1"></i>Tambah</button>
+      </div>
+      <div class="card mb-4" style="padding:10px">
+        <input type="text" class="input-field text-sm w-full" placeholder="Cari bahan..." value="${State.stockSearch}" oninput="State.stockSearch=this.value;render()">
+      </div>
+      <div class="space-y-3">
+        ${sorted.map(function(s) {
+          var pct = Math.min(100, Math.round(s.current_quantity / (s.min_quantity * 3) * 100));
+          var isLow = s.current_quantity <= s.min_quantity;
+          return `
+          <div class="card ${isLow ? 'animate-breathe' : ''}">
+            <div class="flex justify-between items-center mb-2">
+              <div class="font-semibold text-sm">${s.name} ${isLow ? '<span style="color:var(--danger);font-size:11px"><i class="fas fa-exclamation-triangle"></i> Rendah</span>' : ''}</div>
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-bold" style="color:${isLow ? 'var(--danger)' : 'var(--accent)'}">${s.current_quantity} ${s.unit}</div>
+                <button onclick="showEditStockModal('${s.id}')" class="btn-sm" style="background:rgba(224,122,58,.12);color:var(--accent);border:none;padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-pen"></i></button>
+                ${s.current_quantity === 0 ? '<button onclick="deleteStockItem(\'' + s.id + '\')" class="btn-sm" style="background:rgba(231,76,60,.12);color:var(--danger);border:none;padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-trash"></i></button>' : ''}
+              </div>
             </div>
-          </div>
-          <div class="stock-bar"><div class="stock-bar-fill" style="width:${pct}%;background:${isLow ? 'var(--danger)' : 'var(--accent)'}"></div></div>
-          <div class="flex justify-between mt-2">
-            <span class="text-xs" style="color:var(--accent)">${formatCurrency(s.price || 0)} / ${s.unit}</span>
-            <span class="text-xs" style="color:var(--muted)">Minimum: ${s.min_quantity} ${s.unit}</span>
-          </div>
-          <div class="flex justify-between mt-1">
-            <span></span>
-            <div class="flex gap-1">
-              <button onclick="showRestockModal('${s.id}')" class="btn-sm" style="background:rgba(39,174,96,.15);color:var(--success);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-plus"></i></button>
-              <button onclick="showReduceStockModal('${s.id}')" class="btn-sm" style="background:rgba(231,76,60,.15);color:var(--danger);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-minus"></i></button>
+            <div class="stock-bar"><div class="stock-bar-fill" style="width:${pct}%;background:${isLow ? 'var(--danger)' : 'var(--accent)'}"></div></div>
+            <div class="flex justify-between mt-2">
+              <span class="text-xs" style="color:var(--accent)">${formatCurrency(s.price || 0)} / ${s.unit}</span>
+              <span class="text-xs" style="color:var(--muted)">Minimum: ${s.min_quantity} ${s.unit}</span>
             </div>
-          </div>
-        </div>`;
-      }).join('')}
-      ${sorted.length === 0 ? '<div class="text-center py-6 text-sm" style="color:var(--muted)">Tidak ada bahan baku ditemukan</div>' : ''}
-    </div>
-  </div>`;
+            <div class="flex justify-between mt-1">
+              <span></span>
+              <div class="flex gap-1">
+                <button onclick="showRestockModal('${s.id}')" class="btn-sm" style="background:rgba(39,174,96,.15);color:var(--success);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-plus"></i></button>
+                <button onclick="showReduceStockModal('${s.id}')" class="btn-sm" style="background:rgba(231,76,60,.15);color:var(--danger);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px"><i class="fas fa-minus"></i></button>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+        ${sorted.length === 0 ? '<div class="text-center py-6 text-sm" style="color:var(--muted)">Tidak ada bahan baku ditemukan</div>' : ''}
+      </div>
+    </div>`;
+  } catch(e) { console.error(e); showToast('Gagal memuat stok', 'error'); return ''; }
+  finally { hideSkeleton('stock-management'); }
 }
 
 function showEditStockModal(id) {
-  const s = DB.stockItems.find(x => x.id === id);
+  var s = DB.stockItems.find(function(x) { return x.id === id; });
   if (!s) return;
   showModal(`
     <div>
@@ -66,19 +72,26 @@ function showEditStockModal(id) {
   `);
 }
 
-function saveEditStock(id) {
-  const s = DB.stockItems.find(x => x.id === id);
-  if (!s) return;
-  const name = document.getElementById('edit-stock-name')?.value;
-  if (!name) { showToast('Nama bahan wajib diisi', 'warning'); return; }
-  s.name = name;
-  s.min_quantity = parseInt(document.getElementById('edit-stock-min')?.value || '3');
-  s.updated_at = new Date().toISOString();
-  closeModal(); showToast('Bahan baku diperbarui', 'success'); render();
+async function saveEditStock(id) {
+  try {
+    var s = DB.stockItems.find(function(x) { return x.id === id; });
+    if (!s) return;
+    var name = document.getElementById('edit-stock-name')?.value;
+    if (!name) { showToast('Nama bahan wajib diisi', 'warning'); return; }
+    await API.updateStockItem(id, {
+      name: name,
+      min_quantity: parseInt(document.getElementById('edit-stock-min')?.value || '3'),
+      updated_at: new Date().toISOString()
+    });
+    DB.stockItems = await API.getStock();
+    closeModal();
+    showToast('Bahan baku diperbarui', 'success');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal memperbarui bahan', 'error'); }
 }
 
 function deleteStockItem(id) {
-  const s = DB.stockItems.find(x => x.id === id);
+  var s = DB.stockItems.find(function(x) { return x.id === id; });
   if (!s) return;
   showModal(`
     <div>
@@ -92,24 +105,41 @@ function deleteStockItem(id) {
   `);
 }
 
-function confirmDeleteStockItem(id) {
-  DB.stockItems = DB.stockItems.filter(x => x.id !== id);
-  closeModal(); showToast('Bahan baku dihapus', 'info'); render();
+async function confirmDeleteStockItem(id) {
+  try {
+    await API.deleteStockItem(id);
+    DB.stockItems = DB.stockItems.filter(function(x) { return x.id !== id; });
+    closeModal();
+    showToast('Bahan baku dihapus', 'info');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal menghapus bahan', 'error'); }
 }
 
-function adjustStock(id, type) {
-  const s = DB.stockItems.find(x => x.id === id);
-  if (!s) return;
-  const qty = type === 'in' ? 5 : 2;
-  s.current_quantity = type === 'in' ? s.current_quantity + qty : Math.max(0, s.current_quantity - qty);
-  DB.stockMovements.push({ id: 'sm' + Date.now(), stock_item_id: id, user_id: State.currentUser.id, type, quantity: qty, notes: type === 'in' ? 'Restok' : 'Pemakaian', created_at: new Date().toISOString() });
-  if (s.current_quantity <= s.min_quantity) notifyLowStock(s);
-  showToast(`${s.name}: ${type === 'in' ? '+' + qty : '-' + qty} ${s.unit}`, 'success');
-  render();
+async function adjustStock(id, type) {
+  try {
+    var s = DB.stockItems.find(function(x) { return x.id === id; });
+    if (!s) return;
+    var qty = type === 'in' ? 5 : 2;
+    var newQty = type === 'in' ? s.current_quantity + qty : Math.max(0, s.current_quantity - qty);
+    await API.updateStockItem(id, { current_quantity: newQty, updated_at: new Date().toISOString() });
+    await API.createStockMovement({
+      id: 'sm' + Date.now(),
+      stock_item_id: id,
+      user_id: State.currentUser.id,
+      type: type,
+      quantity: qty,
+      notes: type === 'in' ? 'Restok' : 'Pemakaian',
+      created_at: new Date().toISOString()
+    });
+    DB.stockItems = await API.getStock();
+    if (newQty <= s.min_quantity) notifyLowStock(s);
+    showToast(s.name + ': ' + (type === 'in' ? '+' + qty : '-' + qty) + ' ' + s.unit, 'success');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal menyesuaikan stok', 'error'); }
 }
 
 function showReduceStockModal(id) {
-  const s = DB.stockItems.find(x => x.id === id);
+  var s = DB.stockItems.find(function(x) { return x.id === id; });
   if (!s) return;
   showModal(`
     <div>
@@ -130,22 +160,34 @@ function showReduceStockModal(id) {
   `);
 }
 
-function confirmReduceStock(id) {
-  const s = DB.stockItems.find(x => x.id === id);
-  if (!s) return;
-  const qty = parseInt(document.getElementById('reduce-stock-qty')?.value || '0');
-  if (qty <= 0) { showToast('Jumlah harus lebih dari 0', 'warning'); return; }
-  if (qty > s.current_quantity) { showToast('Stok tidak mencukupi', 'warning'); return; }
-  s.current_quantity = Math.max(0, s.current_quantity - qty);
-  DB.stockMovements.push({ id: 'sm' + Date.now(), stock_item_id: id, user_id: State.currentUser.id, type: 'out', quantity: qty, notes: 'Pemakaian', created_at: new Date().toISOString() });
-  if (s.current_quantity <= s.min_quantity) notifyLowStock(s);
-  showToast(`${s.name}: -${qty} ${s.unit}`, 'success');
-  closeModal();
-  render();
+async function confirmReduceStock(id) {
+  try {
+    var s = DB.stockItems.find(function(x) { return x.id === id; });
+    if (!s) return;
+    var qty = parseInt(document.getElementById('reduce-stock-qty')?.value || '0');
+    if (qty <= 0) { showToast('Jumlah harus lebih dari 0', 'warning'); return; }
+    if (qty > s.current_quantity) { showToast('Stok tidak mencukupi', 'warning'); return; }
+    var newQty = Math.max(0, s.current_quantity - qty);
+    await API.updateStockItem(id, { current_quantity: newQty, updated_at: new Date().toISOString() });
+    await API.createStockMovement({
+      id: 'sm' + Date.now(),
+      stock_item_id: id,
+      user_id: State.currentUser.id,
+      type: 'out',
+      quantity: qty,
+      notes: 'Pemakaian',
+      created_at: new Date().toISOString()
+    });
+    DB.stockItems = await API.getStock();
+    if (newQty <= s.min_quantity) notifyLowStock(s);
+    showToast(s.name + ': -' + qty + ' ' + s.unit, 'success');
+    closeModal();
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal mengurangi stok', 'error'); }
 }
 
 function showRestockModal(id) {
-  const s = DB.stockItems.find(x => x.id === id);
+  var s = DB.stockItems.find(function(x) { return x.id === id; });
   if (!s) return;
   showModal(`
     <div>
@@ -170,20 +212,43 @@ function showRestockModal(id) {
   `);
 }
 
-function confirmRestock(id) {
-  const s = DB.stockItems.find(x => x.id === id);
-  if (!s) return;
-  const qty = parseInt(document.getElementById('restock-qty')?.value || '0');
-  if (qty <= 0) { showToast('Jumlah harus lebih dari 0', 'warning'); return; }
-  s.current_quantity = s.current_quantity + qty;
-  DB.stockMovements.push({ id: 'sm' + Date.now(), stock_item_id: id, user_id: State.currentUser.id, type: 'in', quantity: qty, notes: 'Restok', created_at: new Date().toISOString() });
-  const asExpense = document.getElementById('restock-as-expense')?.checked;
-  if (asExpense && s.price) {
-    DB.expenses.push({ id: 'e' + Date.now(), date: new Date().toLocaleDateString('sv-SE'), time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }), category: 'Bahan Baku', source: 'Cafe', amount: qty * s.price, note: 'Restok ' + s.name + ' (' + qty + ' ' + s.unit + ')', volume: qty, unit: s.unit, unitPrice: s.price });
-  }
-  showToast(`${s.name}: +${qty} ${s.unit}`, 'success');
-  closeModal();
-  render();
+async function confirmRestock(id) {
+  try {
+    var s = DB.stockItems.find(function(x) { return x.id === id; });
+    if (!s) return;
+    var qty = parseInt(document.getElementById('restock-qty')?.value || '0');
+    if (qty <= 0) { showToast('Jumlah harus lebih dari 0', 'warning'); return; }
+    var newQty = s.current_quantity + qty;
+    await API.updateStockItem(id, { current_quantity: newQty, updated_at: new Date().toISOString() });
+    await API.createStockMovement({
+      id: 'sm' + Date.now(),
+      stock_item_id: id,
+      user_id: State.currentUser.id,
+      type: 'in',
+      quantity: qty,
+      notes: 'Restok',
+      created_at: new Date().toISOString()
+    });
+    DB.stockItems = await API.getStock();
+    var asExpense = document.getElementById('restock-as-expense')?.checked;
+    if (asExpense && s.price) {
+      await API.createExpense({
+        id: 'e' + Date.now(),
+        date: new Date().toLocaleDateString('sv-SE'),
+        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+        category: 'Bahan Baku',
+        source: 'Cafe',
+        amount: qty * s.price,
+        note: 'Restok ' + s.name + ' (' + qty + ' ' + s.unit + ')',
+        volume: qty,
+        unit: s.unit,
+        unitPrice: s.price
+      });
+    }
+    showToast(s.name + ': +' + qty + ' ' + s.unit, 'success');
+    closeModal();
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal menambah stok', 'error'); }
 }
 
 function showAddStockModal() {
@@ -201,9 +266,22 @@ function showAddStockModal() {
   `);
 }
 
-function addStockItem() {
-  const name = document.getElementById('new-stock-name')?.value;
-  if (!name) { showToast('Nama bahan wajib diisi', 'warning'); return; }
-  DB.stockItems.push({ id: 's' + Date.now(), name, unit: document.getElementById('new-stock-unit')?.value || 'kg', current_quantity: 0, price: parseInt(document.getElementById('new-stock-price')?.value || '0'), min_quantity: parseInt(document.getElementById('new-stock-min')?.value || '3'), updated_at: new Date().toISOString() });
-  closeModal(); showToast('Bahan baku ditambahkan', 'success'); render();
+async function addStockItem() {
+  try {
+    var name = document.getElementById('new-stock-name')?.value;
+    if (!name) { showToast('Nama bahan wajib diisi', 'warning'); return; }
+    await API.createStockItem({
+      id: 's' + Date.now(),
+      name: name,
+      unit: document.getElementById('new-stock-unit')?.value || 'kg',
+      current_quantity: 0,
+      price: parseInt(document.getElementById('new-stock-price')?.value || '0'),
+      min_quantity: parseInt(document.getElementById('new-stock-min')?.value || '3'),
+      updated_at: new Date().toISOString()
+    });
+    DB.stockItems = await API.getStock();
+    closeModal();
+    showToast('Bahan baku ditambahkan', 'success');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal menambah bahan', 'error'); }
 }

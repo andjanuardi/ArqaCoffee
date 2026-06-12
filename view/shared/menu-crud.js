@@ -2,7 +2,7 @@
 // MENU ITEM CRUD
 // ------------------------------------------------------------------
 function showEditMenuItemModal(id) {
-  const m = DB.menuItems.find(x => x.id === id);
+  var m = DB.menuItems.find(function(x) { return x.id === id; });
   if (!m) return;
   showModal(`
     <div>
@@ -30,7 +30,7 @@ function showEditMenuItemModal(id) {
 }
 
 function deleteMenuItem(id) {
-  const m = DB.menuItems.find(x => x.id === id);
+  var m = DB.menuItems.find(function(x) { return x.id === id; });
   if (!m) return;
   showModal(`
     <div>
@@ -44,56 +44,71 @@ function deleteMenuItem(id) {
   `);
 }
 
-function confirmDeleteMenuItem(id) {
-  DB.menuItems = DB.menuItems.filter(x => x.id !== id);
-  closeModal(); showToast('Menu dihapus', 'info'); render();
+async function confirmDeleteMenuItem(id) {
+  try {
+    await API.deleteMenuItem(id);
+    DB.menuItems = DB.menuItems.filter(function(x) { return x.id !== id; });
+    closeModal();
+    showToast('Menu dihapus', 'info');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal menghapus menu', 'error'); }
 }
 
-function saveEditMenuItem(id) {
-  const m = DB.menuItems.find(x => x.id === id);
-  if (!m) return;
-  const name = document.getElementById('edit-menu-name')?.value;
-  const price = parseInt(document.getElementById('edit-menu-price')?.value || '0');
-  const mode = document.getElementById('edit-img-mode')?.value;
-  let image = document.getElementById('edit-img-url')?.value;
-  if (mode === 'upload') {
-    const preview = document.getElementById('edit-img-preview');
-    const img = preview && preview.querySelector('img');
-    if (img) image = img.src;
-  }
-  let cat = document.getElementById('edit-menu-cat')?.value;
-  if (cat === '__new__' || !cat) {
-    cat = document.getElementById('edit-menu-cat-custom')?.value.trim() || m.category;
-  }
-  if (!name) { showToast('Nama menu wajib diisi', 'warning'); return; }
-  m.name = name;
-  m.price = price;
-  if (image) m.image = image;
-  if (cat) m.category = cat;
-  m.tax_percentage = parseFloat(document.getElementById('edit-menu-tax')?.value) || 0;
-  m.description = document.getElementById('edit-menu-desc')?.value || '';
-  closeModal(); showToast('Menu berhasil diperbarui', 'success'); render();
+async function saveEditMenuItem(id) {
+  try {
+    var m = DB.menuItems.find(function(x) { return x.id === id; });
+    if (!m) return;
+    var name = document.getElementById('edit-menu-name')?.value;
+    var price = parseInt(document.getElementById('edit-menu-price')?.value || '0');
+    var modeEl = document.getElementById('edit-img-mode');
+    var mode = modeEl ? modeEl.value : null;
+    var imgEl = document.getElementById('edit-img-url');
+    var image = imgEl ? imgEl.value : null;
+    if (mode === 'upload') {
+      var preview = document.getElementById('edit-img-preview');
+      var img = preview && preview.querySelector('img');
+      if (img) image = img.src;
+    }
+    var catEl = document.getElementById('edit-menu-cat');
+    var cat = catEl ? catEl.value : null;
+    if (cat === '__new__' || !cat) {
+      var catCustomEl = document.getElementById('edit-menu-cat-custom');
+      cat = catCustomEl ? catCustomEl.value.trim() : m.category;
+      if (!cat) cat = m.category;
+    }
+    if (!name) { showToast('Nama menu wajib diisi', 'warning'); return; }
+    var updateData = { name: name, price: price };
+    if (image) updateData.image = image;
+    if (cat) updateData.category = cat;
+    updateData.tax_percentage = parseFloat(document.getElementById('edit-menu-tax')?.value) || 0;
+    updateData.description = document.getElementById('edit-menu-desc')?.value || '';
+    await API.updateMenuItem(id, updateData);
+    DB.menuItems = await API.getMenu();
+    closeModal();
+    showToast('Menu berhasil diperbarui', 'success');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal memperbarui menu', 'error'); }
 }
 
 function getCategoryOptions(selected, prefix) {
   prefix = prefix || 'new';
-  const cats = [...new Set(DB.menuItems.map(m => m.category).filter(Boolean))];
-  if (!cats.includes('coffee')) cats.unshift('coffee');
-  if (!cats.includes('non-coffee')) cats.unshift('non-coffee');
-  if (!cats.includes('food')) cats.push('food');
-  if (!cats.includes('snack')) cats.push('snack');
-  const unique = [...new Set(cats)];
-  const labelMap = { coffee: 'Kopi', 'non-coffee': 'Non-Kopi', food: 'Makanan', snack: 'Snack' };
-  const opts = unique.map(c => `<option value="${c}" ${selected === c ? 'selected' : ''}>${labelMap[c] || c}</option>`).join('');
-  return `<select id="${prefix}-menu-cat" class="input-field text-sm" onchange="if(this.value==='__new__'){document.getElementById('${prefix}-cat-container').style.display='block';this.style.display='none'}">${opts}<option value="__new__">+ Tambah Baru...</option></select>
-    <div id="${prefix}-cat-container" style="display:none"><input id="${prefix}-menu-cat-custom" class="input-field text-sm mt-1" placeholder="Nama kategori baru..."></div>`;
+  var cats = [...new Set(DB.menuItems.map(function(m) { return m.category; }).filter(Boolean))];
+  if (cats.indexOf('coffee') === -1) cats.unshift('coffee');
+  if (cats.indexOf('non-coffee') === -1) cats.unshift('non-coffee');
+  if (cats.indexOf('food') === -1) cats.push('food');
+  if (cats.indexOf('snack') === -1) cats.push('snack');
+  var unique = [...new Set(cats)];
+  var labelMap = { coffee: 'Kopi', 'non-coffee': 'Non-Kopi', food: 'Makanan', snack: 'Snack' };
+  var opts = unique.map(function(c) { return '<option value="' + c + '" ' + (selected === c ? 'selected' : '') + '>' + (labelMap[c] || c) + '</option>'; }).join('');
+  return '<select id="' + prefix + '-menu-cat" class="input-field text-sm" onchange="if(this.value===\'__new__\'){document.getElementById(\'' + prefix + '-cat-container\').style.display=\'block\';this.style.display=\'none\'}">' + opts + '<option value="__new__">+ Tambah Baru...</option></select>'
+    + '<div id="' + prefix + '-cat-container" style="display:none"><input id="' + prefix + '-menu-cat-custom" class="input-field text-sm mt-1" placeholder="Nama kategori baru..."></div>';
 }
 
 function showAddMenuItemModal() {
   showModal(`
     <div>
       <h3 class="font-display text-lg font-bold mb-4">Tambah Menu</h3>
-      ${State.currentUser?.role === 'mitra_juru_masak' ? `<div class="mb-4 p-3 rounded-xl flex items-start gap-2 text-xs" style="background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.2);color:var(--warning)"><i class="fas fa-info-circle mt-0.5"></i><span>Menu baru akan dikirim ke Admin untuk persetujuan terlebih dahulu.</span></div>` : ''}
+      ${State.currentUser?.role === 'mitra_juru_masak' ? '<div class="mb-4 p-3 rounded-xl flex items-start gap-2 text-xs" style="background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.2);color:var(--warning)"><i class="fas fa-info-circle mt-0.5"></i><span>Menu baru akan dikirim ke Admin untuk persetujuan terlebih dahulu.</span></div>' : ''}
       <div class="space-y-3">
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Nama Item</label><input id="add-menu-name" class="input-field text-sm" placeholder="Nama menu"></div>
         <div><label class="text-xs font-semibold mb-1 block" style="color:var(--muted)">Deskripsi</label><textarea id="add-menu-desc" class="input-field text-sm min-h-[60px]" placeholder="Deskripsi menu"></textarea></div>
@@ -113,28 +128,48 @@ function showAddMenuItemModal() {
   `);
 }
 
-function addMenuItem() {
-  const name = document.getElementById('add-menu-name')?.value;
-  const price = parseInt(document.getElementById('add-menu-price')?.value || '0');
-  if (!name) { showToast('Nama menu wajib diisi', 'warning'); return; }
-  const id = 'm' + Date.now();
-  const mode = document.getElementById('add-img-mode')?.value;
-  let image = document.getElementById('add-img-url')?.value;
-  if (mode === 'upload') {
-    const preview = document.getElementById('add-img-preview');
-    const img = preview && preview.querySelector('img');
-    if (img) image = img.src;
-  }
-  if (!image) image = `https://picsum.photos/seed/${Date.now()}/400/300`;
-  let cat = document.getElementById('add-menu-cat')?.value;
-  if (cat === '__new__' || !cat) {
-    cat = document.getElementById('add-menu-cat-custom')?.value.trim() || 'coffee';
-  }
-  const tax_percentage = parseFloat(document.getElementById('add-menu-tax')?.value) || 0;
-  const isMitra = State.currentUser?.role === 'mitra_juru_masak';
-  const menuData = { id, name, description: document.getElementById('add-menu-desc')?.value || '', price, category: cat, image, is_available: true, tax_percentage, is_approved: !isMitra };
-  if (isMitra) menuData.submitted_by = State.currentUser.name;
-  DB.menuItems.push(menuData);
-  const msg = isMitra ? 'Menu dikirim untuk persetujuan Admin' : 'Menu ditambahkan';
-  closeModal(); showToast(msg, 'success'); render();
+async function addMenuItem() {
+  try {
+    var name = document.getElementById('add-menu-name')?.value;
+    var price = parseInt(document.getElementById('add-menu-price')?.value || '0');
+    if (!name) { showToast('Nama menu wajib diisi', 'warning'); return; }
+    var id = 'm' + Date.now();
+    var modeEl = document.getElementById('add-img-mode');
+    var mode = modeEl ? modeEl.value : null;
+    var imgEl = document.getElementById('add-img-url');
+    var image = imgEl ? imgEl.value : null;
+    if (mode === 'upload') {
+      var preview = document.getElementById('add-img-preview');
+      var img = preview && preview.querySelector('img');
+      if (img) image = img.src;
+    }
+    if (!image) image = 'https://picsum.photos/seed/' + Date.now() + '/400/300';
+    var catEl = document.getElementById('add-menu-cat');
+    var cat = catEl ? catEl.value : null;
+    if (cat === '__new__' || !cat) {
+      var catCustomEl = document.getElementById('add-menu-cat-custom');
+      cat = catCustomEl ? catCustomEl.value.trim() : 'coffee';
+      if (!cat) cat = 'coffee';
+    }
+    var tax_percentage = parseFloat(document.getElementById('add-menu-tax')?.value) || 0;
+    var isMitra = State.currentUser?.role === 'mitra_juru_masak';
+    var menuData = {
+      id: id,
+      name: name,
+      description: document.getElementById('add-menu-desc')?.value || '',
+      price: price,
+      category: cat,
+      image: image,
+      is_available: true,
+      tax_percentage: tax_percentage,
+      is_approved: !isMitra
+    };
+    if (isMitra) menuData.submitted_by = State.currentUser.name;
+    await API.createMenuItem(menuData);
+    DB.menuItems = await API.getMenu();
+    var msg = isMitra ? 'Menu dikirim untuk persetujuan Admin' : 'Menu ditambahkan';
+    closeModal();
+    showToast(msg, 'success');
+    await render();
+  } catch(e) { console.error(e); showToast('Gagal menambah menu', 'error'); }
 }

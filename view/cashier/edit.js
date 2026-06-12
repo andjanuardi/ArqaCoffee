@@ -34,11 +34,11 @@ function cancelCashierOrder(id) {
   `);
 }
 
-function confirmCancelCashierOrder(id) {
-  const reasonEl = document.getElementById("cashier-cancel-reason");
-  let reason = reasonEl ? reasonEl.value : "";
+async function confirmCancelCashierOrder(id) {
+  var reasonEl = document.getElementById("cashier-cancel-reason");
+  var reason = reasonEl ? reasonEl.value : "";
   if (reason === "Lainnya") {
-    const otherEl = document.getElementById("cashier-cancel-reason-other");
+    var otherEl = document.getElementById("cashier-cancel-reason-other");
     reason = otherEl ? otherEl.value.trim() : "";
   }
   if (!reason) {
@@ -46,77 +46,91 @@ function confirmCancelCashierOrder(id) {
     return;
   }
 
-  const idx = DB.orders.findIndex((x) => x.id === id);
-  if (idx === -1) {
-    closeModal();
-    return;
-  }
-  const o = DB.orders[idx];
-
-  if (o.status !== "pending") {
-    showToast(
-      "Pesanan tidak dapat dibatalkan karena sudah diproses",
-      "warning",
-    );
-    closeModal();
-    return;
-  }
-
-  if (o.order_type === "dine-in" && o.table_id) {
-    const hasOtherOrders = DB.orders.some(
-      (x) =>
-        x.id !== id &&
-        x.table_id === o.table_id &&
-        x.status !== "completed" &&
-        x.status !== "cancelled" &&
-        x.status !== "rejected",
-    );
-    if (!hasOtherOrders) {
-      const t = getTable(o.table_id);
-      if (t) t.status = "available";
+  try {
+    var ordersData = await API.getOrders();
+    var o = ordersData.find(function(x) { return x.id === id; });
+    if (!o) {
+      closeModal();
+      return;
     }
-  }
 
-  const customer = getUser(o.user_id);
-  if (customer) {
-    addNotification({
-      title: 'Pesanan Dibatalkan',
-      message: '#' + o.id.slice(-5).toUpperCase() + ' — Pesanan Anda dibatalkan oleh kasir. Alasan: ' + reason,
-      type: 'order',
-      icon: 'fa-ban',
-      targetRoles: ['customer', 'kitchen', 'admin', 'manager'],
-      relatedOrderId: o.id
+    if (o.status !== "pending") {
+      showToast(
+        "Pesanan tidak dapat dibatalkan karena sudah diproses",
+        "warning",
+      );
+      closeModal();
+      return;
+    }
+
+    if (o.order_type === "dine-in" && o.table_id) {
+      var allOrdersData = await API.getOrders();
+      var hasOtherOrders = allOrdersData.some(
+        function(x) {
+          return x.id !== id &&
+            x.table_id === o.table_id &&
+            x.status !== "completed" &&
+            x.status !== "cancelled" &&
+            x.status !== "rejected";
+        }
+      );
+      if (!hasOtherOrders) {
+        await API.updateTable(o.table_id, { status: "available" });
+      }
+    }
+
+    var customer = getUser(o.user_id);
+    if (customer) {
+      addNotification({
+        title: 'Pesanan Dibatalkan',
+        message: '#' + o.id.slice(-5).toUpperCase() + ' — Pesanan Anda dibatalkan oleh kasir. Alasan: ' + reason,
+        type: 'order',
+        icon: 'fa-ban',
+        targetRoles: ['customer', 'kitchen', 'admin', 'manager'],
+        relatedOrderId: o.id
+      });
+    }
+
+    await API.updateOrder(id, {
+      status: "cancelled",
+      reject_reason: reason
     });
-  }
 
-  o.status = "cancelled";
-  o.reject_reason = reason;
-  DB.mitraPayouts = DB.mitraPayouts.filter(p => p.order_id !== id || p.status === 'paid');
-  showToast("Pesanan berhasil dibatalkan", "success");
-  closeModal();
-  render();
+    showToast("Pesanan berhasil dibatalkan", "success");
+    closeModal();
+    render();
+  } catch (e) {
+    console.error(e);
+    showToast("Gagal membatalkan pesanan", "error");
+  }
 }
 
-function editCashierOrder(id) {
-  const o = DB.orders.find((x) => x.id === id);
-  if (!o) return;
-  if (o.status !== "pending") {
-    showToast("Pesanan yang sudah diproses tidak bisa diedit", "warning");
-    return;
+async function editCashierOrder(id) {
+  try {
+    var ordersData = await API.getOrders();
+    var o = ordersData.find(function(x) { return x.id === id; });
+    if (!o) { showToast("Pesanan tidak ditemukan", "error"); return; }
+    if (o.status !== "pending") {
+      showToast("Pesanan yang sudah diproses tidak bisa diedit", "warning");
+      return;
+    }
+
+    State.cashierCart = o.items.filter(function(i) { return i.status !== "rejected"; }).map(function(i) {
+      var m = getMenuItem(i.menu_item_id);
+      return {
+        menu_item_id: i.menu_item_id,
+        quantity: i.quantity,
+        unit_price: i.unit_price,
+        notes: i.notes || "",
+        menu_item: m,
+      };
+    });
+
+    State.editingOrderId = id;
+    State.currentTab.cashier = "create";
+    render();
+  } catch (e) {
+    console.error(e);
+    showToast("Gagal memuat data pesanan", "error");
   }
-
-  State.cashierCart = o.items.filter(i => i.status !== "rejected").map((i) => {
-    const m = getMenuItem(i.menu_item_id);
-    return {
-      menu_item_id: i.menu_item_id,
-      quantity: i.quantity,
-      unit_price: i.unit_price,
-      notes: i.notes || "",
-      menu_item: m,
-    };
-  });
-
-  State.editingOrderId = id;
-  State.currentTab.cashier = "create";
-  render();
 }

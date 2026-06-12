@@ -9,7 +9,7 @@ function cancelOrder(id) {
       </div>
       <h3 class="font-display text-lg font-bold mb-2">Batalkan Pesanan?</h3>
       <p class="text-sm mb-4" style="color:var(--muted)">Apakah Anda yakin ingin membatalkan pesanan ini? Silakan pilih alasan pembatalan.</p>
-      
+
       <div class="text-left mb-6">
         <label class="text-xs font-semibold mb-2 block" style="color:var(--muted)">Alasan Pembatalan</label>
         <select id="cancel-reason" class="input-field text-sm w-full mb-3" style="background:var(--bg2);" onchange="document.getElementById('cancel-reason-other-container').style.display = this.value === 'Lainnya' ? 'block' : 'none'">
@@ -20,7 +20,7 @@ function cancelOrder(id) {
           <option value="Tidak jadi pesan">Tidak jadi pesan</option>
           <option value="Lainnya">Lainnya...</option>
         </select>
-        
+
         <div id="cancel-reason-other-container" style="display:none;">
           <input type="text" id="cancel-reason-other" class="input-field text-sm w-full" placeholder="Ketik alasan spesifik di sini...">
         </div>
@@ -34,12 +34,12 @@ function cancelOrder(id) {
   `);
 }
 
-function confirmCancelOrder(id) {
-  const reasonEl = document.getElementById("cancel-reason");
-  let reason = reasonEl ? reasonEl.value : "";
+async function confirmCancelOrder(id) {
+  var reasonEl = document.getElementById("cancel-reason");
+  var reason = reasonEl ? reasonEl.value : "";
 
   if (reason === "Lainnya") {
-    const otherEl = document.getElementById("cancel-reason-other");
+    var otherEl = document.getElementById("cancel-reason-other");
     reason = otherEl ? otherEl.value.trim() : "";
   }
 
@@ -48,50 +48,57 @@ function confirmCancelOrder(id) {
     return;
   }
 
-  const idx = DB.orders.findIndex((x) => x.id === id);
-  if (idx === -1) {
-    closeModal();
-    return;
-  }
-  const o = DB.orders[idx];
-
-  if (o.status !== "pending") {
-    showToast(
-      "Pesanan tidak dapat dibatalkan karena sudah diproses",
-      "warning",
-    );
-    closeModal();
-    return;
-  }
-
-  if (o.order_type === "dine-in" && o.table_id) {
-    const hasOtherOrders = DB.orders.some(
-      (x) =>
-        x.id !== id &&
-        x.table_id === o.table_id &&
-        x.status !== "completed" &&
-        x.status !== "cancelled" &&
-        x.status !== "rejected",
-    );
-    if (!hasOtherOrders) {
-      const t = getTable(o.table_id);
-      if (t) t.status = "available";
+  try {
+    var ordersData = await API.getOrders();
+    var o = ordersData.find(function(x) { return x.id === id; });
+    if (!o) {
+      closeModal();
+      return;
     }
+
+    if (o.status !== "pending") {
+      showToast(
+        "Pesanan tidak dapat dibatalkan karena sudah diproses",
+        "warning",
+      );
+      closeModal();
+      return;
+    }
+
+    if (o.order_type === "dine-in" && o.table_id) {
+      var allOrdersData = await API.getOrders();
+      var hasOtherOrders = allOrdersData.some(
+        function(x) {
+          return x.id !== id &&
+            x.table_id === o.table_id &&
+            x.status !== "completed" &&
+            x.status !== "cancelled" &&
+            x.status !== "rejected";
+        }
+      );
+      if (!hasOtherOrders) {
+        await API.updateTable(o.table_id, { status: "available" });
+      }
+    }
+
+    await API.updateOrder(id, {
+      status: "cancelled",
+      reject_reason: "Dibatalkan Pelanggan: " + reason
+    });
+
+    addNotification({
+      title: 'Pesanan Dibatalkan',
+      message: '#' + o.id.slice(-5).toUpperCase() + ' dibatalkan oleh pelanggan: ' + reason,
+      type: 'warning',
+      icon: 'fa-ban',
+      targetRoles: ['cashier', 'kitchen', 'admin', 'manager'],
+      relatedOrderId: o.id
+    });
+    showToast("Pesanan berhasil dibatalkan", "success");
+    closeModal();
+    render();
+  } catch (e) {
+    console.error(e);
+    showToast("Gagal membatalkan pesanan", "error");
   }
-
-  o.status = "cancelled";
-  o.reject_reason = "Dibatalkan Pelanggan: " + reason;
-  DB.mitraPayouts = DB.mitraPayouts.filter(p => p.order_id !== id || p.status === 'paid');
-
-  addNotification({
-    title: 'Pesanan Dibatalkan',
-    message: '#' + o.id.slice(-5).toUpperCase() + ' dibatalkan oleh pelanggan: ' + reason,
-    type: 'warning',
-    icon: 'fa-ban',
-    targetRoles: ['cashier', 'kitchen', 'admin', 'manager'],
-    relatedOrderId: o.id
-  });
-  showToast("Pesanan berhasil dibatalkan", "success");
-  closeModal();
-  render();
 }

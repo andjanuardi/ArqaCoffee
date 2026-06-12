@@ -85,10 +85,14 @@ function renderGeoAttendanceCard(u, att) {
     </div>`;
 }
 
-function showGeoAttendanceModal() {
-  const u = State.currentUser;
-  const today = new Date().toLocaleDateString('sv-SE');
-  const att = DB.attendances.find(a => a.user_id === u.id && !a.check_out && new Date(a.check_in).toLocaleDateString('sv-SE') === today);
+async function showGeoAttendanceModal() {
+  var u = State.currentUser;
+  var today = new Date().toLocaleDateString('sv-SE');
+  var att = null;
+  try {
+    var attendances = await API.getAttendances();
+    att = attendances.find(function(a) { return a.user_id === u.id && !a.check_out && new Date(a.check_in).toLocaleDateString('sv-SE') === today; });
+  } catch (e) { console.error(e); }
   if (att) {
     showModal(`
       <div class="text-center">
@@ -154,27 +158,32 @@ function initModalCheckinMap() {
   mkMarker(ARQA_COORDS.lat, ARQA_COORDS.lng);
 }
 
-function modalCheckIn() {
-  const coords = State.pendingCheckinCoords;
+async function modalCheckIn() {
+  var coords = State.pendingCheckinCoords;
   if (!coords) { showToast('Tunggu lokasi dimuat...', 'warning'); return; }
-  const dist = calcDistance(coords.lat, coords.lng, ARQA_COORDS.lat, ARQA_COORDS.lng);
+  var dist = calcDistance(coords.lat, coords.lng, ARQA_COORDS.lat, ARQA_COORDS.lng);
   if (dist > ARQA_RADIUS) {
     showToast('Anda di luar radius kafe (' + Math.round(dist) + 'm). Check-in hanya dalam ' + ARQA_RADIUS + 'm', 'warning');
     return;
   }
-  DB.attendances.push({
-    id: 'a' + Date.now(),
-    user_id: State.currentUser.id,
-    check_in: new Date().toISOString(),
-    check_out: null,
-    lat: coords.lat,
-    lng: coords.lng,
-    status: 'present',
-  });
-  delete State.pendingCheckinCoords;
-  closeModal();
-  showToast('Check-in berhasil — lokasi tersimpan', 'success');
-  render();
+  try {
+    await API.createAttendance({
+      id: 'a' + Date.now(),
+      user_id: State.currentUser.id,
+      check_in: new Date().toISOString(),
+      check_out: null,
+      lat: coords.lat,
+      lng: coords.lng,
+      status: 'present',
+    });
+    delete State.pendingCheckinCoords;
+    closeModal();
+    showToast('Check-in berhasil — lokasi tersimpan', 'success');
+    render();
+  } catch (e) {
+    console.error('[modalCheckIn]', e);
+    showToast('Gagal check-in: ' + e.message, 'error');
+  }
 }
 
 function modalCheckOut() {
@@ -182,53 +191,58 @@ function modalCheckOut() {
   staffCheckOut();
 }
 
-function staffCheckIn() {
-  const coords = State.pendingCheckinCoords;
+async function staffCheckIn() {
+  var coords = State.pendingCheckinCoords;
   if (!coords) {
     showToast('Tunggu lokasi dimuat...', 'warning');
     return;
   }
-  const dist = calcDistance(coords.lat, coords.lng, ARQA_COORDS.lat, ARQA_COORDS.lng);
+  var dist = calcDistance(coords.lat, coords.lng, ARQA_COORDS.lat, ARQA_COORDS.lng);
   if (dist > ARQA_RADIUS) {
     showToast('Anda di luar radius kafe (' + Math.round(dist) + 'm). Check-in hanya dalam ' + ARQA_RADIUS + 'm', 'warning');
     return;
   }
-  DB.attendances.push({
-    id: 'a' + Date.now(),
-    user_id: State.currentUser.id,
-    check_in: new Date().toISOString(),
-    check_out: null,
-    lat: coords.lat,
-    lng: coords.lng,
-    status: 'present',
-  });
-  delete State.pendingCheckinCoords;
-  showToast('Check-in berhasil — lokasi tersimpan', 'success');
-  render();
+  try {
+    await API.createAttendance({
+      id: 'a' + Date.now(),
+      user_id: State.currentUser.id,
+      check_in: new Date().toISOString(),
+      check_out: null,
+      lat: coords.lat,
+      lng: coords.lng,
+      status: 'present',
+    });
+    delete State.pendingCheckinCoords;
+    showToast('Check-in berhasil — lokasi tersimpan', 'success');
+    render();
+  } catch (e) {
+    console.error('[staffCheckIn]', e);
+    showToast('Gagal check-in: ' + e.message, 'error');
+  }
 }
 
-function staffCheckOut() {
-  const today = new Date().toLocaleDateString('sv-SE');
-  const att = DB.attendances.find(a => a.user_id === State.currentUser.id && !a.check_out && new Date(a.check_in).toLocaleDateString('sv-SE') === today);
+async function staffCheckOut() {
+  var today = new Date().toLocaleDateString('sv-SE');
+  var att = null;
+  try {
+    var attendances = await API.getAttendances();
+    att = attendances.find(function(a) { return a.user_id === State.currentUser.id && !a.check_out && new Date(a.check_in).toLocaleDateString('sv-SE') === today; });
+  } catch (e) { console.error(e); }
   if (!att) { showToast('Belum check-in hari ini', 'warning'); return; }
   var role = State.currentUser.role;
-  if (!navigator.geolocation) {
-    att.check_out = new Date().toISOString();
-    addNotification({ title:'Check-Out', message:'Check-out berhasil', type:'info', icon:'fa-sign-out-alt', targetRoles:[role] });
-    showToast('Check-out berhasil', 'success');
-    render();
-    return;
-  }
+  var doCheckout = async function() {
+    try {
+      await API.updateAttendance(att.id, { check_out: new Date().toISOString() });
+      addNotification({ title:'Check-Out', message:'Check-out berhasil', type:'info', icon:'fa-sign-out-alt', targetRoles:[role] });
+      showToast('Check-out berhasil', 'success');
+      render();
+    } catch (e) { console.error(e); showToast('Gagal check-out', 'error'); }
+  };
+  if (!navigator.geolocation) { await doCheckout(); return; }
   navigator.geolocation.getCurrentPosition(function(pos) {
-    att.check_out = new Date().toISOString();
-    addNotification({ title:'Check-Out', message:'Check-out berhasil — lokasi tersimpan', type:'info', icon:'fa-sign-out-alt', targetRoles:[role] });
-    showToast('Check-out berhasil — lokasi tersimpan', 'success');
-    render();
+    doCheckout();
   }, function() {
-    att.check_out = new Date().toISOString();
-    addNotification({ title:'Check-Out', message:'Check-out berhasil', type:'info', icon:'fa-sign-out-alt', targetRoles:[role] });
-    showToast('Check-out berhasil (tanpa lokasi)', 'success');
-    render();
+    doCheckout();
   }, { enableHighAccuracy: true, timeout: 10000 });
 }
 
